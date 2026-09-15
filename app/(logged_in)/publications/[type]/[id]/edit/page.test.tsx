@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import { EditPublicationsViewProps } from './EditPublicationsView';
 import EditPublicationsPage from './page';
-import { CONTENT_MUTATION_RESULTS, LocalizedEditorState,MENU_ACTION_CONFIGS, MenuActionId } from '~/constants/publications';
+import { CONTENT_MUTATION_RESULTS, LocalizedEditorState, MENU_ACTION_CONFIGS, MenuActionId } from '~/constants/publications';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { SerializedContent } from '~/shared/components/content-editor';
 import { usePublicationManager } from '~/shared/hooks/use-publications-manager/usePublicationsManager';
@@ -51,6 +51,7 @@ const baseMockManager = {
   editorResetKey: 0,
   resetEditorState: jest.fn(),
   updateResource: jest.fn(),
+  updatePreviewResource: jest.fn(),
   deleteResource: jest.fn()
 };
 
@@ -87,9 +88,9 @@ jest.mock('../../create/CreatePublicationsView', () => ({
   )
 }));
 
-
 const handleSaveSlug = 'slug';
 const mockHandleSave = jest.fn().mockResolvedValue({ id: 11, slug: handleSaveSlug });
+const mockHandlePreviewSave = jest.fn().mockResolvedValue({ id: 11, slug: handleSaveSlug });
 
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
@@ -98,14 +99,16 @@ describe('EditPublicationsPage Container', () => {
     jest.clearAllMocks();
     errorSpy.mockClear();
 
-
     baseMockManager.updateResource.mockResolvedValue({ data: { id: '1' } });
+    baseMockManager.updatePreviewResource.mockResolvedValue({ data: { id: '1' } });
     baseMockManager.deleteResource.mockResolvedValue({ data: { id: '1' } });
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
     (useUpsertPublication as jest.Mock).mockReturnValue({
-      mockUpsertData: true, handleSave: mockHandleSave
+      mockUpsertData: true,
+      handleSave: mockHandleSave,
+      handlePreviewSave: mockHandlePreviewSave
     });
   });
 
@@ -119,9 +122,7 @@ describe('EditPublicationsPage Container', () => {
     render(<EditPublicationsPage />);
 
     expect(useUpsertPublication).toHaveBeenCalledWith({ type: 'media', id: '456' });
-
     expect(screen.getByTestId('mock-create-view')).toBeInTheDocument();
-
     expect(screen.queryByTestId('mock-edit-view')).not.toBeInTheDocument();
   });
 
@@ -165,23 +166,25 @@ describe('EditPublicationsPage Container', () => {
       currentData: { ...baseMockManager.currentData, status: BaseContentStatuses.Published }
     });
     (fetchPreview as jest.Mock).mockResolvedValue(null);
+
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-preview'));
 
-
     await waitFor(() => {
       expect(fetchPreview).toHaveBeenCalledTimes(1);
     });
-    expect(mockHandleSave).toHaveBeenCalledWith(BaseContentStatuses.Published);
-    expect(baseMockManager.updateResource).toHaveBeenCalledWith(BaseContentStatuses.Published, {
-      content: baseMockManager.editedContent
-    });
-    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'uk', draftId: '123' });
-
+    expect(mockHandlePreviewSave).toHaveBeenCalled();
+    expect(baseMockManager.updatePreviewResource).toHaveBeenCalledWith(
+      11,
+      BaseContentStatuses.Draft,
+      { content: baseMockManager.editedContent }
+    );
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'uk', draftId: 11 });
   });
 
-  it('should not redirect to preview page when onPreview is triggered if no slug from manager', async () => {
+  it('should not redirect to preview page when onPreview is triggered if no slug from manager for media', async () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'media', id: '123' });
     (usePublicationManager as jest.Mock).mockReturnValue({
       ...baseMockManager,
       currentData: {
@@ -192,7 +195,7 @@ describe('EditPublicationsPage Container', () => {
 
     render(<EditPublicationsPage />);
 
-    fireEvent.click(screen.getByTestId('trigger-preview'));
+    fireEvent.click(screen.getByTestId('trigger-media-preview'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
@@ -243,7 +246,6 @@ describe('EditPublicationsPage Container', () => {
     jest.useRealTimers();
   });
 
-
   it('should handle PUBLISH action correctly', async () => {
     render(<EditPublicationsPage />);
 
@@ -284,38 +286,18 @@ describe('EditPublicationsPage Container', () => {
   });
 
   describe('when manager action handlers return data as null', () => {
-    it('should trigger toast.error and not call mockPush when PUBLISH returns data null', async () => {
+    it.each([
+      [MenuActionId.PUBLISH, 'trigger-publish', MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage],
+      [MenuActionId.PUBLICATE_AND_EXIT, 'trigger-save-exit', MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage],
+      [MenuActionId.CANCEL_PUBLICATION, 'trigger-cancel-publication', MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage]
+    ])('should trigger toast.error and not call mockPush when %s returns data null', async (_, triggerId, expectedToast) => {
       baseMockManager.updateResource.mockResolvedValue({ data: null });
 
       render(<EditPublicationsPage />);
-      fireEvent.click(screen.getByTestId('trigger-publish'));
+      fireEvent.click(screen.getByTestId(triggerId));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage);
-        expect(mockPush).not.toHaveBeenCalled();
-      });
-    });
-
-    it('should trigger toast.error and not call mockPush when PUBLICATE_AND_EXIT returns data null', async () => {
-      baseMockManager.updateResource.mockResolvedValue({ data: null });
-
-      render(<EditPublicationsPage />);
-      fireEvent.click(screen.getByTestId('trigger-save-exit'));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage);
-        expect(mockPush).not.toHaveBeenCalled();
-      });
-    });
-
-    it('should trigger toast.error and not call mockPush when CANCEL_PUBLICATION returns data null', async () => {
-      baseMockManager.updateResource.mockResolvedValue({ data: null });
-
-      render(<EditPublicationsPage />);
-      fireEvent.click(screen.getByTestId('trigger-cancel-publication'));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage);
+        expect(toast.error).toHaveBeenCalledWith(expectedToast);
         expect(mockPush).not.toHaveBeenCalled();
       });
     });
@@ -340,6 +322,7 @@ describe('EditPublicationsPage Container', () => {
       currentLanguage: 'EN'
     });
     (fetchPreview as jest.Mock).mockResolvedValue(null);
+
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-preview'));
@@ -347,7 +330,7 @@ describe('EditPublicationsPage Container', () => {
     await waitFor(() => {
       expect(fetchPreview).toHaveBeenCalledTimes(1);
     });
-    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'en', draftId: '123' });
+    expect(fetchPreview).toHaveBeenCalledWith({ slug: `news/${handleSaveSlug}`, lang: 'en', draftId: 11 });
   });
 
   it('should handle preview for media type', async () => {
@@ -364,11 +347,13 @@ describe('EditPublicationsPage Container', () => {
     expect(fetchPreview).toHaveBeenCalledWith({ slug: '/news?tab=press', lang: 'uk', draftId: '456' });
   });
 
-  it('should show an error toast when onPreview is triggered and handleSave throws a non-Error string', async () => {
+  it('should show an error toast when onPreview is triggered and handlePreviewSave throws a non-Error string', async () => {
     (useUpsertPublication as jest.Mock).mockReturnValue({
       mockUpsertData: true,
-      handleSave: jest.fn().mockRejectedValue('String Error')
+      handleSave: mockHandleSave,
+      handlePreviewSave: jest.fn().mockRejectedValue('String Error')
     });
+
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-preview'));
@@ -379,13 +364,14 @@ describe('EditPublicationsPage Container', () => {
   });
 
   it.each([
-    ['handleSave returns undefined', undefined],
-    ['handleSave returns id undefined', { slug: 'slug' }],
-    ['handleSave returns slug undefined', { id: '11' }],
+    ['handlePreviewSave returns undefined', undefined],
+    ['handlePreviewSave returns id undefined', { slug: 'slug' }],
+    ['handlePreviewSave returns slug undefined', { id: 11 }],
   ])('should show an error toast when onPreview is triggered and %s', async (_, resolvedValue) => {
     (useUpsertPublication as jest.Mock).mockReturnValue({
       mockUpsertData: true,
-      handleSave: jest.fn().mockResolvedValue(resolvedValue)
+      handleSave: mockHandleSave,
+      handlePreviewSave: jest.fn().mockResolvedValue(resolvedValue)
     });
 
     render(<EditPublicationsPage />);
@@ -397,7 +383,6 @@ describe('EditPublicationsPage Container', () => {
       expect(fetchPreview).not.toHaveBeenCalled();
     });
   });
-
 
   it('should catch non-Error mutation errors and trigger a toast.error', async () => {
     (usePublicationManager as jest.Mock).mockReturnValue({

@@ -1,38 +1,11 @@
-import dayjs, { type Dayjs } from 'dayjs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
-import { resolveSharedLocalizedFields } from './normalizeSharedLocalizedFields';
-import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
-import { seoFormErrors } from '~/constants/errors';
-import {
-  ADMIN_TITLE_LENGTH,
-  FetchedPublicationData,
-  ImageCropData,
-  initialSeoValue,
-  PAGE_TITLES,
-  PUBLICATION_SEO_REQUIRED,
-  PUBLICATIONS_TYPES,
-  PublicationsItemType
-} from '~/constants/publications';
-import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
-import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
-import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
-import type {
-  SeoBlockErrors,
-  SeoBlockValue
-} from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
-import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
-import { useCreateEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
-import {
-  useCreateMediaMention,
-  useMediaMentionById,
-  useUpdateMediaMention
-} from '~/shared/hooks/use-media-mentions/useMediaMentions';
-import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { getDateIsoString, parseDate, usePublicationForm, validatePublicationSeo } from './usePublicationForm';
+import { usePublicationStrategy } from './usePublicationStrategy';
+import { PAGE_TITLES, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
+import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
 const ERROR_CONFIG: Array<{
   key: string;
@@ -47,354 +20,112 @@ const ERROR_CONFIG: Array<{
     handle: () => toast.error('Публікація з такими даними вже існує.')
   }
 ];
+
 interface UseUpsertPublicationProps {
   type: PublicationsItemType;
   id?: string;
 }
 
-const isValidDate = (date: Dayjs | null | undefined): date is Dayjs => Boolean(date?.isValid());
-
-const parseDate = (dateVal: Dayjs | string | null | undefined) => {
-  if (!dateVal) return null;
-
-  if (typeof dateVal !== 'string') return isValidDate(dateVal) ? dateVal : null;
-
-  const trimmedDateVal = dateVal.trim();
-  if (!trimmedDateVal) return null;
-
-  const timestamp = Number(trimmedDateVal);
-  const parsedDate = dayjs(Number.isNaN(timestamp) ? trimmedDateVal : timestamp);
-
-  return isValidDate(parsedDate) ? parsedDate : null;
-};
-
-const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate(date) ? date.toISOString() : undefined);
-
-const getPublicationSeoMetaErrors = (
-  meta: LocalizedMeta,
-  locale: 'uk' | 'en',
-  requiredFields: Readonly<{ title: boolean; description: boolean }>,
-  options: { altRequired?: boolean } = {}
-): Partial<Record<keyof LocalizedMeta, string>> => {
-  const getError = (field: SeoField, value: string, required = false): string => {
-    const code = validateSeoField(field, value, { required });
-    return code ? seoFormErrors[locale][code] : '';
-  };
-
-  const isRequired = (field: 'title' | 'description', value: string): boolean =>
-    requiredFields[field] || Boolean(value.trim());
-
-  const altValue = meta.altText?.[locale] ?? '';
-  const altRequired = Boolean(options.altRequired) || Boolean(altValue.trim());
-
-  return {
-    title: getError('title', meta.title, isRequired('title', meta.title)),
-    description: getError('description', meta.description, isRequired('description', meta.description)),
-    keywords: getError('keywords', meta.keywords),
-    altText: getError('altText', altValue, altRequired)
-  };
-};
-
-const getTicketUrlError = (value: string, locale: 'uk' | 'en'): string => {
-  if (!value.trim()) return seoFormErrors[locale].required;
-  try {
-    new URL(value);
-    return '';
-  } catch {
-    return seoFormErrors[locale].invalidUrl;
-  }
-};
-
-const validatePublicationSeo = (
-  seoValue: SeoBlockValue,
-  publicationType: PublicationsItemType
-): { seoErrors: SeoBlockErrors; hasMetaErrors: boolean; hasUrlErrors: boolean } => {
-  const { uk: ukMeta, en: enMeta } = seoValue.meta;
-  const hasUrlErrors = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
-  const altRequired = isValidHttpUrl(seoValue.ogImage);
-
-  const seoErrors: SeoBlockErrors = {
-    meta: {
-      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk, { altRequired }),
-      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en, { altRequired })
-    },
-    ...(publicationType === 'events' && hasUrlErrors
-      ? {
-        ticketUrl: {
-          uk: getTicketUrlError(seoValue.ticketUrl?.uk ?? '', 'uk'),
-          en: getTicketUrlError(seoValue.ticketUrl?.en ?? '', 'en')
-        }
-      }
-      : {})
-  };
-
-  return {
-    seoErrors,
-    hasMetaErrors: Object.values(seoErrors.meta).some((errors) => Object.values(errors).some(Boolean)),
-    hasUrlErrors
-  };
-};
-
 export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) => {
   const isEditing = Boolean(id);
-
   const isValidType = PUBLICATIONS_TYPES.includes(type);
   const publicationType = type;
   const mode = isEditing ? 'Редагування' : 'Створення';
   const pageTitle = isValidType ? `${mode} ${PAGE_TITLES[publicationType]}` : '';
 
-  const newsQuery = useNewsById(id as string, { skip: type !== 'news' || !isEditing });
-  const eventQuery = useEventById(id as string, { skip: type !== 'events' || !isEditing });
-  const mediaQuery = useMediaMentionById(id as string, { skip: type !== 'media' || !isEditing });
+  const { findSystemPreviewDocument } = useSystemPreview();
 
-  const [createNews] = useCreateNews();
-  const [createEvent] = useCreateEvent();
-  const [createMediaMention] = useCreateMediaMention();
-
-  const [updateEvent] = useUpdateEvent();
-  const [updateNews] = useUpdateNews();
-  const [updateMediaMention] = useUpdateMediaMention();
-
-  const [adminTitle, setAdminTitle] = useState('');
-  const [adminTitleError, setAdminTitleError] = useState('');
-  const [canonicalUrlError, setCanonicalUrlError] = useState('');
-  const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
-  const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
-
-  const [crop, setCrop] = useState<ImageCropData>(null);
-
-  const [initialState, setInitialState] = useState<{
-    adminTitle: string;
-    publishDate: string | null;
-    seoValue: SeoBlockValue;
-    crop: ImageCropData;
-  } | null>(null);
-  const [forceShowErrors, setForceShowErrors] = useState(false);
-  const [seoErrors, setSeoErrors] = useState<SeoBlockErrors | undefined>();
-
-  const latestDataRef = useRef({
-    adminTitle: '',
-    publishDate: null as Dayjs | null,
-    seoValue: initialSeoValue,
-    crop: null as ImageCropData | null
-  });
+  const strategy = usePublicationStrategy(type, id);
+  const form = usePublicationForm();
 
   const isInitializedRef = useRef(false);
 
-  const changeAdminTitle = (val: string) => {
-    latestDataRef.current.adminTitle = val;
-    setAdminTitle(val);
-  };
-  const validateAdminTitle = (val: string) => {
-    const length = val.trim().length;
-    let error = '';
-
-    if (!length) {
-      error = seoFormErrors.uk.required;
-    } else if (length < ADMIN_TITLE_LENGTH.min) {
-      error = seoFormErrors.uk.minLength;
-    } else if (length > ADMIN_TITLE_LENGTH.max) {
-      error = seoFormErrors.uk.adminTitleMaxLength;
-    }
-
-    setAdminTitleError(error);
-    return !error;
-  };
-  const changePublishDate = (val: Dayjs | null) => {
-    latestDataRef.current.publishDate = val;
-    setPublishDate(val);
-  };
-  const changeSeoValue = (val: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => {
-    const newValue = typeof val === 'function' ? val(latestDataRef.current.seoValue) : val;
-    latestDataRef.current.seoValue = newValue;
-    setSeoValue(newValue);
-    setSeoErrors(undefined);
-  };
-
-  const changeCrop = (val: ImageCropData) => {
-    latestDataRef.current.crop = val;
-    setCrop(val);
-  };
-
   useEffect(() => {
-    if (!isEditing || isInitializedRef.current) return;
+    if (!isEditing || isInitializedRef.current || !strategy.data) return;
 
-    let fetchedData: FetchedPublicationData | null = null;
+    const fetchedData = strategy.data;
+    form.setAdminTitle(fetchedData.adminTitle || '');
 
-    if (type === 'news' && newsQuery.data?.newsById) {
-      fetchedData = newsQuery.data.newsById as FetchedPublicationData;
-    } else if (type === 'events' && eventQuery.data?.eventById) {
-      fetchedData = eventQuery.data.eventById as FetchedPublicationData;
-    } else if (type === 'media' && mediaQuery.data?.mediaMentionById) {
-      fetchedData = mediaQuery.data.mediaMentionById as FetchedPublicationData;
-    }
+    const mainDate = strategy.extractDate(fetchedData);
+    form.setPublishDate(parseDate(mainDate));
+    form.setCrop(fetchedData.coverImage?.crop ?? null);
 
-    if (fetchedData) {
-      changeAdminTitle(fetchedData.adminTitle || '');
+    const getLangMeta = (lang: 'uk' | 'en') => {
+      const start = parseDate(fetchedData?.eventDateTimeStart);
+      const end = parseDate(fetchedData?.eventDateTimeEnd);
 
-      const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
-      changePublishDate(parseDate(mainDate));
-
-      const {
-        altText: sharedAltText,
-        ticketUrl: sharedTicketUrl,
-        crop: nextCrop
-      } = resolveSharedLocalizedFields(type, fetchedData);
-
-      changeCrop(nextCrop);
-
-      const getLangMeta = (lang: 'uk' | 'en') => {
-        const start = parseDate(fetchedData?.eventDateTimeStart);
-        const end = parseDate(fetchedData?.eventDateTimeEnd);
-
-        return {
-          title: fetchedData?.title?.[lang] || '',
-          description: fetchedData?.description?.[lang] || '',
-          keywords: fetchedData?.keywords?.[lang] || '',
-
-          canonicalUrl: type === 'media' ? fetchedData?.url || '' : '',
-          altText: sharedAltText,
-          startDateTime: getDateIsoString(start),
-          endDateTime: getDateIsoString(end)
-        };
-      };
-
-      const nextSeoValue: SeoBlockValue = {
-        meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
-        ogImage: fetchedData.coverImage?.src || null,
-        allowIndexing: {
-          uk: fetchedData.allowIndexation?.uk ?? true,
-          en: fetchedData.allowIndexation?.en ?? true
+      return {
+        title: fetchedData?.title?.[lang] || '',
+        description: fetchedData?.description?.[lang] || '',
+        keywords: fetchedData?.keywords?.[lang] || '',
+        canonicalUrl: type === 'media' ? fetchedData?.url || '' : '',
+        altText: {
+          uk: fetchedData?.coverImage?.alt?.uk || '',
+          en: fetchedData?.coverImage?.alt?.en || ''
         },
-        ticketUrl: sharedTicketUrl
+        startDateTime: getDateIsoString(start),
+        endDateTime: getDateIsoString(end)
       };
+    };
 
-      changeSeoValue(nextSeoValue);
+    const initialSeo = {
+      meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
+      ogImage: fetchedData.coverImage?.src || null,
+      allowIndexing: {
+        uk: fetchedData.allowIndexation?.uk ?? true,
+        en: fetchedData.allowIndexation?.en ?? true
+      },
+      ticketUrl: {
+        uk: fetchedData.ticketUrl?.uk || '',
+        en: fetchedData.ticketUrl?.en || ''
+      }
+    };
 
-      setInitialState({
-        adminTitle: fetchedData.adminTitle || '',
-        publishDate: getDateIsoString(parseDate(mainDate)) ?? null,
-        seoValue: nextSeoValue,
-        crop: nextCrop
-      });
+    form.setSeoValue(initialSeo);
 
-      isInitializedRef.current = true;
-    }
-  }, [isEditing, type, newsQuery.data, eventQuery.data, mediaQuery.data]);
+    form.setInitialState({
+      adminTitle: fetchedData.adminTitle || '',
+      publishDate: getDateIsoString(parseDate(mainDate)) ?? null,
+      seoValue: initialSeo,
+      crop: fetchedData.coverImage?.crop ?? null
+    });
+
+    isInitializedRef.current = true;
+  }, [isEditing, type, strategy, form]);
 
   const handleSave = async (status: BaseContentStatuses) => {
     if (!isValidType) return;
 
-    const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
-    const { uk: ukMeta, en: enMeta } = seoValue.meta;
-    const startDateTime = ukMeta.startDateTime;
-    const endDateTime = ukMeta.endDateTime;
+    const { adminTitle, seoValue, publishDate } = form.latestDataRef.current;
 
-    const titleLength = adminTitle.trim().length;
-    const isTitleInvalid = titleLength < ADMIN_TITLE_LENGTH.min || titleLength > ADMIN_TITLE_LENGTH.max;
+    const isTitleInvalid = !adminTitle.trim();
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
 
-    const eventDatesValidation = validateEventDates(publicationType, startDateTime, endDateTime);
-    const { isInvalid: areEventDatesInvalid } = eventDatesValidation;
+    const {
+      seoErrors: nextSeoErrors,
+      hasMetaErrors,
+      hasUrlErrors
+    } = validatePublicationSeo(seoValue, publicationType);
 
-    const { seoErrors: nextSeoErrors, hasMetaErrors, hasUrlErrors } = validatePublicationSeo(seoValue, publicationType);
-
-    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || areEventDatesInvalid) {
-      if (isTitleInvalid) validateAdminTitle(adminTitle);
-
-      if (hasMetaErrors || hasUrlErrors || areEventDatesInvalid) {
-        setSeoErrors(applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation));
-        setForceShowErrors(true);
+    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid) {
+      if (isTitleInvalid) form.setAdminTitleError('Обов\'язкове поле');
+      if (hasMetaErrors || hasUrlErrors) {
+        form.setSeoErrors(nextSeoErrors);
+        form.setForceShowErrors(true);
       }
       return;
     }
 
-    const commonInput = {
-      adminTitle,
-      title: { uk: ukMeta.title || adminTitle, en: enMeta.title || adminTitle },
-      description: { uk: ukMeta.description || '', en: enMeta.description || '' },
-      keywords: { uk: ukMeta.keywords || '', en: enMeta.keywords || '' },
-      allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
-      publishedAt: getDateIsoString(publishDate),
-      coverImage: {
-        src: seoValue.ogImage || '',
-        alt: {
-          uk: ukMeta.altText?.uk?.trim() || '',
-          en: enMeta.altText?.en?.trim() || ''
-        },
-        caption: { uk: '', en: '' },
-        ...buildCoverImageCropPayload(crop)
-      }
-    };
-
     try {
-      const emptyContent = { uk: { content: { blocks: [] } }, en: { content: { blocks: [] } } };
-      const isUpdate = isEditing && id;
+      const payload = form.buildCommonInput();
+      const targetId = (isEditing && id) ? id : undefined;
+      const formState = { adminTitle, publishDate: getDateIsoString(publishDate) ?? null, seoValue, crop: form.latestDataRef.current.crop };
 
-      const saveStrategies: Record<
-        string,
-        () => Promise<{
-          id: string | undefined;
-          slug: string | undefined;
-        }>
-      > = {
-        events: async () => {
-          const payload = {
-            ...commonInput,
-            eventLink: adminTitle,
-            eventDateTimeStart: startDateTime!,
-            eventDateTimeEnd: ukMeta.endDateTime ?? null,
-            ticketUrl: seoValue.ticketUrl,
-            status: status as unknown as EventStatus
-          };
-          if (isUpdate)
-            return updateEvent({ id, input: payload }).then((data) => ({
-              id: data.data?.updateEvent.id,
-              slug: data.data?.updateEvent.slug
-            }));
-          return createEvent({
-            ...payload,
-            content: emptyContent
-          }).then((r) => ({ id: r.data?.createEvent?.id, slug: r.data?.createEvent?.slug }));
-        },
-        news: async () => {
-          const payload = {
-            ...commonInput,
-            newsDate: commonInput.publishedAt,
-            status: status as unknown as NewsStatus
-          };
-          if (isUpdate)
-            return updateNews({ id, input: payload }).then((data) => ({
-              id: data.data?.updateNews.id,
-              slug: data.data?.updateNews.slug
-            }));
-          return createNews({
-            ...payload,
-            content: emptyContent
-          }).then((r) => ({ id: r.data?.createNews?.id, slug: r.data?.createNews?.slug }));
-        },
-        media: async () => {
-          const payload = {
-            ...commonInput,
-            url: ukMeta.canonicalUrl || enMeta.canonicalUrl || adminTitle,
-            status: status as unknown as MediaStatus
-          };
-          if (isUpdate) {
-            const response = await updateMediaMention(id, payload);
-            return { id: response.data?.updateMediaMention?.id, slug: response.data?.updateMediaMention?.slug };
-          } else {
-            const response = await createMediaMention(payload);
-            return { id: response.data?.createMediaMention?.id, slug: response.data?.createMediaMention?.slug };
-          }
-        }
-      };
+      const result = await strategy.saveDocument(status, payload, formState, targetId);
+      form.setCanonicalUrlError('');
 
-      const result = await saveStrategies[publicationType]?.();
-      setCanonicalUrlError('');
-
-      return { id: result?.id, slug: result.slug };
+      return { id: result?.id, slug: result?.slug };
     } catch (error: unknown) {
-      console.error('Error: ', error);
       if (error instanceof Error) {
         const errorMessage = error.message || '';
         const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
@@ -404,59 +135,52 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           return;
         }
 
-        matched.handle({ setCanonicalUrlError });
+        matched.handle({ setCanonicalUrlError: form.setCanonicalUrlError });
       }
     }
   };
 
-  const handleDateTimeChange = useCallback((start: string | undefined, end: string | undefined) => {
-    changeSeoValue((prev) => ({
-      ...prev,
-      meta: {
-        uk: { ...prev.meta.uk, startDateTime: start, endDateTime: end },
-        en: { ...prev.meta.en, startDateTime: start, endDateTime: end }
-      }
-    }));
-  }, []);
+  const handlePreviewSave = async () => {
+    if (!strategy.previewConfig) return null;
 
-  const hasUnsavedChanges =
-    initialState !== null &&
-    JSON.stringify({
-      adminTitle,
-      publishDate: getDateIsoString(publishDate) ?? null,
-      seoValue,
-      crop
-    }) !==
-      JSON.stringify({
-        adminTitle: initialState.adminTitle,
-        publishDate: initialState.publishDate,
-        seoValue: initialState.seoValue,
-        crop: initialState.crop
-      });
+    const { slug: previewSlug, query: DocumentQuery, itemsAccessor } = strategy.previewConfig;
+
+    try {
+      const existingDocId = await findSystemPreviewDocument(
+        DocumentQuery,
+        { filters: { search: previewSlug } },
+        previewSlug,
+        itemsAccessor
+      );
+
+      const basePayload = form.buildCommonInput();
+      const { adminTitle, seoValue, publishDate, crop } = form.latestDataRef.current;
+      const formState = { adminTitle, publishDate: getDateIsoString(publishDate) ?? null, seoValue, crop };
+
+      const previewPayload = {
+        ...basePayload,
+        slug: previewSlug,
+        adminTitle: previewSlug,
+        allowIndexation: { uk: false, en: false }
+      };
+
+      const result = await strategy.saveDocument(BaseContentStatuses.Draft, previewPayload, formState, existingDocId);
+
+      return result ? { id: result.id as string, slug: result.slug as string } : null;
+    } catch {
+      toast.error('Щось пішло не так при збереженні прев\'ю.');
+      return null;
+    }
+  };
 
   return {
     isEditing,
-    isLoading: isEditing && (newsQuery.loading || eventQuery.loading || mediaQuery.loading),
+    isLoading: isEditing && strategy.loading,
     isValidType,
     publicationType,
     pageTitle,
-    adminTitle,
-    setAdminTitle: changeAdminTitle,
-    adminTitleError,
-    validateAdminTitle,
-    setAdminTitleError,
-    canonicalUrlError,
-    setCanonicalUrlError,
-    publishDate,
-    setPublishDate: changePublishDate,
-    seoValue,
-    setSeoValue: changeSeoValue,
-    hasUnsavedChanges,
-    seoErrors,
-    forceShowErrors,
-    crop,
-    setCrop: changeCrop,
+    ...form,
     handleSave,
-    handleDateTimeChange
+    handlePreviewSave
   };
 };
