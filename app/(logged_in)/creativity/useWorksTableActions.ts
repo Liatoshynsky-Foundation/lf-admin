@@ -15,12 +15,7 @@ export function useWorksTableActions() {
 
   const [groupToUngroup, setGroupToUngroup] = useState<string | null>(null);
 
-  const handleError = (error: unknown, toastMessage: string, logPrefix?: string) => {
-    if (logPrefix) {
-      console.error(logPrefix, error);
-    } else {
-      console.error(error);
-    }
+  const handleError = (toastMessage: string) => {
     toast.error(toastMessage);
   };
 
@@ -48,8 +43,8 @@ export function useWorksTableActions() {
         }
       });
       toast.success(newStatus === OpusStatus.Published ? 'Групу опубліковано' : 'Групу знято з публікації');
-    } catch (error) {
-      handleError(error, 'Помилка при зміні статусу');
+    } catch {
+      handleError('Помилка при зміні статусу');
     }
   };
 
@@ -64,8 +59,8 @@ export function useWorksTableActions() {
       });
       toast.success('Групу успішно розгруповано');
       setGroupToUngroup(null);
-    } catch (error) {
-      handleError(error, 'Помилка при розгрупуванні групи');
+    } catch {
+      handleError('Помилка при розгрупуванні групи');
     }
   };
 
@@ -76,8 +71,8 @@ export function useWorksTableActions() {
       await navigator.clipboard.writeText(shareUrl);
 
       toast.success('Посилання скопійовано в буфер обміну.');
-    } catch (error) {
-      handleError(error, 'Не вдалося скопіювати посилання. Спробуйте ще раз.', 'Помилка копіювання: ');
+    } catch {
+      handleError('Не вдалося скопіювати посилання. Спробуйте ще раз.');
     }
   };
 

@@ -30,7 +30,6 @@ export async function up(db: Db) {
 
   for (const doc of allDocs) {
     if (!doc.title) {
-      console.warn(`Skipping document with _id=${doc._id}: no title found`);
       continue;
     }
 

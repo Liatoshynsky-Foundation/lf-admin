@@ -196,7 +196,6 @@ describe('EditPublicationsPage Container', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Не вдалося завантажити slug для попереднього перегляду'));
     });
 
     expect(fetchPreview).not.toHaveBeenCalled();
@@ -405,17 +404,12 @@ describe('EditPublicationsPage Container', () => {
       updateResource: jest.fn().mockRejectedValue('String Mutation Error')
     });
 
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
-
     render(<EditPublicationsPage />);
 
     fireEvent.click(screen.getByTestId('trigger-publish'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Помилка: String Mutation Error');
-      expect(consoleSpy).toHaveBeenCalled();
     });
-
-    consoleSpy.mockRestore();
   });
 });

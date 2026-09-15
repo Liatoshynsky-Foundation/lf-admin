@@ -30,7 +30,6 @@ export const useFiles = (options: UseFilesOptions = {}) => {
         setFiles(data.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error occurred');
-        console.error(err);
       } finally {
         setLoading(false);
       }

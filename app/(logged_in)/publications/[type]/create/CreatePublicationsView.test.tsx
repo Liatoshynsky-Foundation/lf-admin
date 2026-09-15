@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import React, { MouseEvent, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
@@ -68,7 +68,15 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
 });
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label, value, onChange }: { label: string; value: any; onChange: (val: any) => void }) => (
+  DatePicker: ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: Dayjs | null;
+    onChange: (val: Dayjs) => void;
+  }) => (
     <div data-testid="mock-date-picker">
       <label>{label}</label>
       <input
@@ -117,8 +125,8 @@ type MockSeoBlockProps = {
     value: SeoBlockValue['meta']['uk'],
     onChange: (val: SeoBlockValue['meta']['uk']) => void
   ) => ReactNode;
-  value?: any;
-  onChange?: (val: any) => void;
+  value?: SeoBlockValue;
+  onChange?: (val: SeoBlockValue) => void;
 };
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
@@ -130,7 +138,7 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
         <div data-testid="seo-children">{children}</div>
 
         <div data-testid="seo-extra-fields">
-          {extraFields && onChange
+          {extraFields && onChange && value
             ? extraFields('uk', dummyValue, (val) =>
               onChange({
                 ...value,

@@ -9,7 +9,6 @@ type MockResponse = {
 
 describe('useFiles', () => {
   let fetchSpy: jest.SpyInstance;
-  let consoleErrorSpy: jest.SpyInstance;
 
   const mockFetchResponse = (data: unknown, ok = true): MockResponse => ({
     ok,
@@ -18,11 +17,9 @@ describe('useFiles', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     if (!globalThis.fetch) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      globalThis.fetch = jest.fn() as any;
+      globalThis.fetch = jest.fn() as unknown as typeof fetch;
     }
 
     fetchSpy = jest.spyOn(globalThis, 'fetch');
@@ -30,7 +27,6 @@ describe('useFiles', () => {
 
   afterEach(() => {
     fetchSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
   });
 
   it('fetches files automatically when autoFetch is true', async () => {

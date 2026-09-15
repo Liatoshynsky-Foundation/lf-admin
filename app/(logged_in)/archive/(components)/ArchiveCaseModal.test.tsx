@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from './ArchiveCaseModal';
@@ -46,7 +46,14 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 
 jest.mock('./archive-case-modal-view/ArchiveCaseModalView', () => ({
   __esModule: true,
-  ArchiveCaseModalView: (props: any) => (
+  ArchiveCaseModalView: (props: {
+    isOpen?: boolean;
+    caseNumber?: string;
+    mode?: string;
+    handleOpenUploadFlow?: () => void;
+    handleSave?: () => void;
+    handleCancel?: () => void;
+  }) => (
     <div data-testid="archive-case-modal-view">
       <span data-testid="view-is-open">{String(props.isOpen)}</span>
       <span data-testid="view-case-number">{props.caseNumber}</span>
@@ -144,7 +151,15 @@ jest.mock('~/shared/components/media-modal/MediaModal', () => ({
 
 jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => ({
   __esModule: true,
-  default: ({ accept, invalidFileError, fileTooLargeError }: any) => (
+  default: ({
+    accept,
+    invalidFileError,
+    fileTooLargeError,
+  }: {
+    accept?: string;
+    invalidFileError?: string;
+    fileTooLargeError?: string;
+  }) => (
     <div data-testid="upload-view">
       <span data-testid="upload-accept">{accept}</span>
       <span data-testid="upload-invalid-error">{invalidFileError}</span>
@@ -361,7 +376,10 @@ describe('ArchiveCaseModal', () => {
   });
 
   describe('onSave callback passed into useArchiveCaseModal', () => {
-    const execSave = async (props: any, inputOverrides: any = {}) => {
+    const execSave = async (
+      props: Partial<ComponentProps<typeof ArchiveCaseModal>> = {},
+      inputOverrides: Record<string, string | undefined> = {}
+    ) => {
       const onSaved = jest.fn();
       renderModal({ ...props, onSaved });
       const callArgs = (useArchiveCaseModal as jest.Mock).mock.calls[0][0];

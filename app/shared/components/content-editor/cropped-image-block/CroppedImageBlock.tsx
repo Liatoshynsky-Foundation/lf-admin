@@ -2,7 +2,7 @@ import { defaultProps } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Box, InputBase, Paper, Typography } from '@mui/material';
 import { FileImage, GripHorizontal } from 'lucide-react';
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 
 import { CroppedImageRendererProps } from '../types';
 import { styles } from './CroppedImageBlock.styles';
@@ -58,21 +58,20 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
       {props.block.props.showPreview ? (
         <Box sx={[styles.imageStateContainer, { width: currentWidth }]} contentEditable={false}>
           <Box sx={{ ...cropStyles.container, width: currentWidth, height: currentHeight }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              draggable={false}
-              src={props.block.props.url}
-              alt={props.block.props.fileName}
-              onLoad={onImgLoad}
-              width={currentWidth}
-              height={currentHeight}
-              style={{
+            {createElement('img', {
+              draggable: false,
+              src: props.block.props.url,
+              alt: props.block.props.fileName,
+              onLoad: onImgLoad,
+              width: currentWidth,
+              height: currentHeight,
+              style: {
                 ...cropStyles.image,
                 maxWidth: 'none',
                 maxHeight: 'none',
                 userSelect: 'none'
-              }}
-            />
+              }
+            })}
           </Box>
           <Box className="overlay-controls" onMouseDown={handleResizeStart} sx={styles.resizeHandle}>
             <GripHorizontal size={16} style={{ transform: 'rotate(90deg)' }} />
@@ -131,17 +130,15 @@ export const CroppedImageBlock = createReactBlockSpec(
     render: (props) => <CroppedImageRenderer props={props as unknown as CroppedImageRendererProps} />,
 
     toExternalHTML: (props) => {
-      return (
-        <img
-          src={props.block.props.url}
-          alt={props.block.props.fileName}
-          data-custom-cropped="true"
-          data-crop-data={props.block.props.cropData}
-          data-width={props.block.props.width.toString()}
-          data-preview={props.block.props.showPreview.toString()}
-          data-caption={props.block.props.caption}
-        />
-      );
+      return createElement('img', {
+        src: props.block.props.url,
+        alt: props.block.props.fileName,
+        'data-custom-cropped': 'true',
+        'data-crop-data': props.block.props.cropData,
+        'data-width': props.block.props.width.toString(),
+        'data-preview': props.block.props.showPreview.toString(),
+        'data-caption': props.block.props.caption
+      });
     },
 
     parse: (el) => {

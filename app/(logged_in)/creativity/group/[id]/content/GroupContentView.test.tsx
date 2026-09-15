@@ -134,7 +134,13 @@ jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
 }));
 
 jest.mock('~/shared/components/sortable-list/SortableList', () => ({
-  SortableList: ({ onDragEnd, children }: any) => (
+  SortableList: ({
+    onDragEnd,
+    children,
+  }: {
+    onDragEnd: (event: { active: { id: string }; over: { id: string } | null }) => void;
+    children?: React.ReactNode;
+  }) => (
     <div data-testid="mock-sortable-list">
       <button
         data-testid="simulate-drag-end"

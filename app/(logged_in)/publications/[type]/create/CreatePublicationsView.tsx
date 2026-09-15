@@ -128,7 +128,6 @@ export default function CreatePublicationsView({
     const result = await handleSave(BaseContentStatuses.Draft);
     if (!result) {
       toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Receiving the result from handleSave for preview had failed: ', result);
       return;
     };
 
@@ -136,7 +135,6 @@ export default function CreatePublicationsView({
 
     if (!slug || !id) {
       toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Not slug or id was found for preview');
       return;
     }
 

@@ -614,7 +614,9 @@ describe('useGroupContent Hook', () => {
 
     it('should navigate to edit page on handleBackClick if "from" param is "create"', () => {
       const mockSearchParams = { get: jest.fn().mockReturnValue('create') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(
+        mockSearchParams as unknown as ReturnType<typeof nextNavigation.useSearchParams>
+      );
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -742,7 +744,7 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, '');
+        result.current.handleFieldChange('titlePrefix', '');
       });
 
       await act(async () => {
@@ -845,7 +847,7 @@ describe('useGroupContent Hook', () => {
       });
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, 'sineop');
+        result.current.handleFieldChange('titlePrefix', 'sineop');
 
         result.current.handleFieldChange('compositions', [
           {
@@ -1023,7 +1025,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('genre', 'Pop', true);
       });
 
-      expect((result.current.groupData?.genre as any).uk).toBe('Pop');
+      expect(result.current.groupData?.genre.uk).toBe('Pop');
     });
 
     it('should trigger validation error when groupTitle is too short', async () => {
@@ -1447,7 +1449,9 @@ describe('useGroupContent Hook', () => {
   describe('Navigation', () => {
     it('should navigate to edit page on handleBackClick if "from" param is "edit"', () => {
       const mockSearchParams = { get: jest.fn().mockReturnValue('edit') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(
+        mockSearchParams as unknown as ReturnType<typeof nextNavigation.useSearchParams>
+      );
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1460,7 +1464,9 @@ describe('useGroupContent Hook', () => {
 
     it('should navigate to creativity page on handleBackClick if "from" param is absent', () => {
       const mockSearchParams = { get: jest.fn().mockReturnValue(null) };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(
+        mockSearchParams as unknown as ReturnType<typeof nextNavigation.useSearchParams>
+      );
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1473,11 +1479,13 @@ describe('useGroupContent Hook', () => {
   });
   describe('Saving', () => {
     it('should forcefully trigger none handleSave', async () => {
-      const originalSplit = String.prototype.split;
-      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+      const originalSplit: (this: string, separator: string | RegExp, limit?: number) => string[] =
+        String.prototype.split;
+      const mockSplit = function (this: string, separator: string | RegExp, limit?: number) {
         if (this === 'trigger-empty-split') return [] as unknown as string[];
         return originalSplit.call(this, separator, limit);
-      });
+      };
+      jest.spyOn(String.prototype, 'split').mockImplementation(mockSplit as unknown as typeof String.prototype.split);
 
       const edgeOpus = {
         ...mockFetchedOpus,

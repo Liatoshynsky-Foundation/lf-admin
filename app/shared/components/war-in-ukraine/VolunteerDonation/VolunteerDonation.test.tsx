@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { VolunteerPaymentMethodData } from '../VolunteerDonationMethodCard/VolunteerDonationMethodCard';
 import { VolunteerDonation } from './VolunteerDonation';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
@@ -27,7 +28,17 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: any) => (
+  default: ({
+    title,
+    children,
+    hidden,
+    onToggleVisibility,
+  }: {
+    title?: React.ReactNode;
+    children?: React.ReactNode;
+    hidden?: boolean;
+    onToggleVisibility?: () => void;
+  }) => (
     <div data-testid="collapsible-block" data-hidden={hidden}>
       <span>{title}</span>
       <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
@@ -39,7 +50,13 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ imageUrl, onChangeImage }: any) => (
+  ImagePreviewBlock: ({
+    imageUrl,
+    onChangeImage,
+  }: {
+    imageUrl?: string;
+    onChangeImage: (url: string) => void;
+  }) => (
     <div data-testid="image-preview-block" data-url={imageUrl}>
       <button 
         type="button" 
@@ -53,11 +70,19 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({
+    title,
+    value,
+    onChange,
+  }: {
+    title?: string;
+    value?: unknown;
+    onChange: (val: string | { target: { value: string } }) => void;
+  }) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}
-        value={value || ''}
+        value={typeof value === 'string' || typeof value === 'number' ? value : ''}
         onChange={(e) => onChange(e)}
         data-testid={`input-${title}`}
       />
@@ -81,12 +106,26 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: any) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem,
+  }: {
+    items: Array<Partial<VolunteerPaymentMethodData>>;
+    addBtnLabel?: string;
+    onCreate: () => void;
+    onChange: (item: Partial<VolunteerPaymentMethodData>) => void;
+    onDelete: (id?: string | number) => void;
+    renderItem?: (args: { item: Partial<VolunteerPaymentMethodData>; index: number }) => React.ReactNode;
+  }) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-method-btn" onClick={() => onCreate()}>
         {addBtnLabel}
       </button>
-      {items.map((item: any, index: number) => (
+      {items.map((item: Partial<VolunteerPaymentMethodData>, index: number) => (
         <div key={item.id || index} data-testid={`method-row-${index}`}>
 
           {renderItem && renderItem({ item, index })}
@@ -115,7 +154,7 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
 }));
 
 jest.mock('../VolunteerDonationMethodCard/VolunteerDonationMethodCard', () => ({
-  VolunteerDonationMethodCard: ({ method }: any) => (
+  VolunteerDonationMethodCard: ({ method }: { method: VolunteerPaymentMethodData }) => (
     <div data-testid="donation-method-card">{method.value}</div>
   )
 }));
@@ -167,8 +206,7 @@ describe('VolunteerDonation', () => {
 
   it('renders correctly for English locale with fallbacks for missing fields and methods', () => {
     const incompleteBlock = {
-      hidden: true,
-      // Відсутні title, caption, imageSrc та paymentMethods для покриття умовних гілок (|| '') та ([] інші)
+      hidden: true
     };
 
     (usePageBlock as jest.Mock).mockReturnValue({ block: incompleteBlock });

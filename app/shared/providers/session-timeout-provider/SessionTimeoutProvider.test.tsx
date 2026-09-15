@@ -166,7 +166,6 @@ describe('SessionTimeoutProvider', () => {
   });
 
   it('still redirects even if logoutAction rejects', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     (logoutAction as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     render(
@@ -181,8 +180,6 @@ describe('SessionTimeoutProvider', () => {
       expect(mockLogout).toHaveBeenCalledTimes(1);
       expect(mockPush).toHaveBeenCalledWith('/login?reason=inactivity');
     });
-
-    consoleSpy.mockRestore();
   });
 
   it('resets the timer on pointerdown activity', () => {

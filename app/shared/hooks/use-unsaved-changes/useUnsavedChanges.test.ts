@@ -21,7 +21,7 @@ describe('useUnsavedChanges', () => {
     mockedUseStore.mockImplementation((selector) =>
       selector({
         setDirtyPath
-      } as any)
+      } as unknown as Parameters<typeof selector>[0])
     );
   });
 

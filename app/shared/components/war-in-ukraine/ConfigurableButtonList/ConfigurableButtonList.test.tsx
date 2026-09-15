@@ -16,12 +16,26 @@ beforeAll(() => {
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: any) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem,
+  }: {
+    items: Array<Partial<ClickableButtonData>>;
+    addBtnLabel?: string;
+    onCreate: () => void;
+    onChange: (item: Partial<ClickableButtonData>) => void;
+    onDelete: (id?: string) => void;
+    renderItem: (args: { item: Partial<ClickableButtonData>; index: number }) => React.ReactNode;
+  }) => (
     <div data-testid="configurable-list">
       <button type="button" data-testid="create-btn" onClick={() => onCreate()}>
         {addBtnLabel}
       </button>
-      {items.map((item: any, index: number) => (
+      {items.map((item: Partial<ClickableButtonData>, index: number) => (
         <div key={item.id || index} data-testid={`item-row-${index}`}>
           {renderItem({ item, index })}
           <button
@@ -45,7 +59,7 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
 }));
 
 jest.mock('../PrincipleHopeButtonCard/PrincipleHopeButtonCard', () => ({
-  PrincipleHopeButtonCard: ({ button }: any) => (
+  PrincipleHopeButtonCard: ({ button }: { button: Partial<ClickableButtonData> }) => (
     <div data-testid="button-card">{button.link}</div>
   )
 }));
@@ -83,7 +97,7 @@ describe('ConfigurableButtonList', () => {
   });
 
   it('normalizes buttons list if fields are missing in raw props', () => {
-    const rawIncompleteButtons: any[] = [
+    const rawIncompleteButtons: Partial<ClickableButtonData>[] = [
       { id: '2', link: 'https://incomplete.com' }
     ];
 
@@ -101,7 +115,7 @@ describe('ConfigurableButtonList', () => {
   });
 
   it('normalizes a fully empty button object, generating an id and default fields', () => {
-    const emptyButtons: any[] = [{}];
+    const emptyButtons: Partial<ClickableButtonData>[] = [{}];
 
     render(
       <ConfigurableButtonList

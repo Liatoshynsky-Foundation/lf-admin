@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { ClickableButtonData } from '../ConfigurableButtonList/ConfigurableButtonList';
 import { YermolenkoLinks } from './YermolenkoLinks';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -15,7 +16,17 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: any) => (
+  default: ({
+    title,
+    children,
+    hidden,
+    onToggleVisibility,
+  }: {
+    title?: React.ReactNode;
+    children?: React.ReactNode;
+    hidden?: boolean;
+    onToggleVisibility?: () => void;
+  }) => (
     <div data-testid="collapsible-block" data-hidden={hidden}>
       <span>{title}</span>
       <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
@@ -27,7 +38,13 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('../ConfigurableButtonList/ConfigurableButtonList', () => ({
-  ConfigurableButtonList: ({ buttons, onChange }: any) => (
+  ConfigurableButtonList: ({
+    buttons,
+    onChange,
+  }: {
+    buttons: Partial<ClickableButtonData>[];
+    onChange: (newButtons: Partial<ClickableButtonData>[]) => void;
+  }) => (
     <div data-testid="configurable-button-list" data-count={buttons.length}>
       <button type="button" data-testid="trigger-buttons-change" onClick={() => onChange([{ id: 'btn-1', link: 'https://test.com' }])}>
         Change Buttons
@@ -37,11 +54,25 @@ jest.mock('../ConfigurableButtonList/ConfigurableButtonList', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({
+    title,
+    value,
+    onChange,
+  }: {
+    title?: string;
+    value?: unknown;
+    onChange: (val: string | { target: { value: string } }) => void;
+  }) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}
-        value={typeof value === 'object' && value !== null ? JSON.stringify(value) : (value || '')}
+        value={
+          typeof value === 'object' && value !== null
+            ? JSON.stringify(value)
+            : typeof value === 'string' || typeof value === 'number'
+              ? value
+              : ''
+        }
         onChange={(e) => {
           if (title === 'Опис') {
             onChange(e.target.value);

@@ -7,7 +7,12 @@ describe('generateUniqueSlug', () => {
   const expectSlugGeneration = async (
     title: string,
     expectedSlug: string,
-    options: { checkExists?: jest.Mock; slugifyOptions?: any; fallbackSlug?: string; maxAttempts?: number } = {}
+    options: {
+      checkExists?: jest.Mock;
+      slugifyOptions?: Parameters<typeof generateUniqueSlug>[1]['slugifyOptions'];
+      fallbackSlug?: string;
+      maxAttempts?: number;
+    } = {}
   ) => {
     const checkExists = options.checkExists || createMockCheckExists();
     const slug = await generateUniqueSlug(title, { checkExists, ...options });
@@ -105,7 +110,7 @@ describe('generateUniqueSlug', () => {
       ['numeric title', 123]
     ])('should throw error for %s', async (_, title) => {
       const checkExists = jest.fn();
-      // @ts-expect-error Testing invalid input
+      // @ts-expect-error invalid title
       await expect(generateUniqueSlug(title, { checkExists })).rejects.toThrow(utilsErrors.EMPTY_TITLE_FOR_SLUG);
       expect(checkExists).not.toHaveBeenCalled();
     });

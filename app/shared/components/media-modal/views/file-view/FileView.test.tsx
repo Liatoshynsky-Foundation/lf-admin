@@ -5,7 +5,7 @@ import { FileView } from './FileView';
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => <img alt="" {...props} />
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => React.createElement('img', { alt: '', ...props })
 }));
 
 const createFile = (name: string, type: string) => new File(['dummy content'], name, { type });

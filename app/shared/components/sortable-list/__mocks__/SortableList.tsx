@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 
 interface SortableListMockProps {
   children: ReactNode;
-  onDragEnd?: (event: any) => void;
+  onDragEnd?: (event: { active: { id: string }; over: { id: string } }) => void;
   items?: string[];
 }
 
@@ -10,7 +10,7 @@ export const SortableList = ({ children, onDragEnd, items }: SortableListMockPro
   return (
     <div // NOSONAR - was explicitly added to avoid triggering sonarqube(typescript:S6848) & sonarqube(typescript:S1082)
       data-testid="mock-sortable-list"
-      onClick={(e: any) => {
+      onClick={(e: React.MouseEvent<HTMLDivElement> & { activeId?: string; overId?: string }) => {
         if(!onDragEnd) return;
         
         const activeId = e.activeId || (items && items.length >= 2 ? items[0] : '');

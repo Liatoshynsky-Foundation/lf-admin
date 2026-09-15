@@ -61,8 +61,8 @@ export const useSavePageBlocks = (slug: string, blockIdToPublish?: string) => {
 
       blocksToPublish = {
         ...publishedBlocks,
-        [blockIdToPublish]: (current as Record<string, any>)[blockIdToPublish]
-      };
+        [blockIdToPublish]: (current as Record<string, unknown>)[blockIdToPublish]
+      } as typeof current;
 
       blocksOrderToPublish = publishedBlocksOrder;
       const isDuplicateFounders = blockIdToPublish === 'FoundationFounders' && blocksOrderToPublish.includes('founders');

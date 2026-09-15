@@ -66,7 +66,6 @@ describe('LogoutModal', () => {
   });
 
   it('should handle logout error gracefully', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     (logoutAction as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
     render(<LogoutModal {...defaultProps} />);
@@ -74,10 +73,7 @@ describe('LogoutModal', () => {
     fireEvent.click(screen.getByText('Вийти'));
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith('Помилка при виході', expect.any(Error));
       expect(screen.getByText('Вийти')).toBeInTheDocument();
     });
-
-    consoleSpy.mockRestore();
   });
 });

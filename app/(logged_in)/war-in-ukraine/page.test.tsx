@@ -24,7 +24,13 @@ jest.mock('~/shared/components/editable-page-layout/EditablePageLayout', () => (
 }));
 
 jest.mock('~/shared/components/sortable-list/SortableList', () => ({
-  SortableList: ({ children, onDragEnd }: { children: React.ReactNode; onDragEnd: (e: any) => void }) => (
+  SortableList: ({
+    children,
+    onDragEnd,
+  }: {
+    children: React.ReactNode;
+    onDragEnd: (e: DragEndEvent) => void;
+  }) => (
     <div data-testid="sortable-list" onClick={() => onDragEnd({} as DragEndEvent)}>
       {children}
     </div>

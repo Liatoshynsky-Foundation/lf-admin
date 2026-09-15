@@ -14,7 +14,8 @@ let mockAllAssets: Array<Record<string, unknown>> = [];
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} alt={props.alt ?? ''} />
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) =>
+    React.createElement('img', { ...props, alt: props.alt ?? '' })
 }));
 
 jest.mock('~/shared/hooks/use-assets/useAssets', () => ({

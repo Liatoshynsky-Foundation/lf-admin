@@ -1,8 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
+import { JSONContent } from '@tiptap/react';
+import { ChangeEvent } from 'react';
 
 import { useBlockFieldHandlers } from './useBlockFieldHandlers';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { useStore } from '~/store';
+
+type PageId = (typeof PAGE_IDS)[keyof typeof PAGE_IDS];
+type BlockId = (typeof BLOCK_IDS)[keyof typeof BLOCK_IDS];
 
 jest.mock('~/store');
 jest.mock('~/src/shared/utils/formHelpers');
@@ -10,8 +16,8 @@ jest.mock('~/src/shared/utils/formHelpers');
 describe('useBlockFieldHandlers', () => {
   const mockSetField = jest.fn();
 
-  const pageId = 'test-page' as any;
-  const blockId = 'test-block' as any;
+  const pageId = 'test-page' as unknown as PageId;
+  const blockId = 'test-block' as unknown as BlockId;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,7 +56,9 @@ describe('useBlockFieldHandlers', () => {
       const { result } = renderHook(() => useBlockFieldHandlers(pageId, blockId, currentLocale, blockData));
 
       act(() => {
-        result.current.handleLocalizedTextChange('buttonText')({ target: { value: 'New english text' } } as any);
+        result.current.handleLocalizedTextChange('buttonText')(
+          { target: { value: 'New english text' } } as unknown as ChangeEvent<HTMLInputElement>
+        );
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'buttonText', {
@@ -74,7 +82,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [{ type: 'text', text: 'Новий опис' }] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleDescriptionChange(newTipTapContent as unknown as JSONContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
@@ -92,7 +100,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleDescriptionChange(newTipTapContent as unknown as JSONContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {

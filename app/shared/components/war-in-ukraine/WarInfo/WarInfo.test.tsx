@@ -15,7 +15,13 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children }: any) => (
+  default: ({
+    title,
+    children,
+  }: {
+    title?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
     <div data-testid="collapsible-block">
       <span>{title}</span>
       {children}
@@ -24,11 +30,25 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({
+    title,
+    value,
+    onChange,
+  }: {
+    title?: string;
+    value?: unknown;
+    onChange: (val: string | { target: { value: string } }) => void;
+  }) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}
-        value={typeof value === 'object' && value !== null ? JSON.stringify(value) : (value || '')}
+        value={
+          typeof value === 'object' && value !== null
+            ? JSON.stringify(value)
+            : typeof value === 'string' || typeof value === 'number'
+              ? value
+              : ''
+        }
         onChange={(e) => {
           if (title === 'Опис блоку') {
             onChange(e.target.value);
