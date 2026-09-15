@@ -225,6 +225,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
 
   const fallbackTitle = item.adminTitle;
   const title = toLocalizedCardValue(item.title, fallbackTitle);
+  const titleData = toLocalizedCardValue(item.adminTitle, fallbackTitle);
   const titleText = getPrimaryText(item.title, fallbackTitle);
   const sortTitle = fallbackTitle || titleText;
   const sortableDate = getSortableDate(item.createdAt, item.updatedAt, item.publishedAt, item.newsDate);
@@ -234,7 +235,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
     id: item.id,
     title: titleText,
     sortTitle,
-    titleData: title,
+    titleData,
     type: 'news',
     slug: item.slug,
     cardType: mapCardType('news'),
@@ -262,6 +263,7 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
 
   const fallbackTitle = item.adminTitle;
   const title = toLocalizedCardValue(item.title, fallbackTitle);
+  const titleData = toLocalizedCardValue(item.adminTitle, fallbackTitle);
   const titleText = getPrimaryText(item.title, fallbackTitle);
   const sortTitle = fallbackTitle || titleText;
   const sortableDate = getSortableDate(item.publishedAt, item.eventDateTimeStart, item.eventDateTimeEnd);
@@ -273,7 +275,7 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
     title: titleText,
     sortTitle,
     slug: item.slug,
-    titleData: title,
+    titleData,
     type: 'events',
     cardType: mapCardType('events'),
     dateAdded: sortableDate,
@@ -299,7 +301,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
   const publicationStatus = item.status;
 
   const fallbackTitle = item.adminTitle;
-  const titleData = toLocalizedCardValue(item.title, fallbackTitle);
+  const titleData = toLocalizedCardValue(item.adminTitle, fallbackTitle);
   const titleText = getPrimaryText(item.title, fallbackTitle);
   const sortTitle = fallbackTitle || titleText;
   const sortableDate = getSortableDate(item.createdAt, item.updatedAt, item.publishedAt);
