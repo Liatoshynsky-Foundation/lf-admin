@@ -220,6 +220,30 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"publish"');
   });
 
+  it('should add the unpublish action for published funds when unpublish handler is provided', () => {
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Published }],
+      onUnpublish: jest.fn()
+    });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"unpublish"');
+  });
+
+  it('should not add the unpublish action for non-published funds', () => {
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
+      onUnpublish: jest.fn()
+    });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
+  });
+
+  it('should not add the unpublish action when no unpublish handler is provided', () => {
+    renderComponent({ funds: [{ ...fund, status: BaseContentStatuses.Published }] });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
+  });
+
   describe('should render state UIs', () => {
     it('should render the "not created yet" fallback when there are no funds and no active criteria', () => {
       renderComponent({ funds: [], hasActiveSearch: false, hasActiveStatusFilter: false });

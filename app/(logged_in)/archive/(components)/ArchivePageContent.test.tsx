@@ -69,7 +69,7 @@ function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: str
 
 jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
   __esModule: true,
-  FundsTable: ({ funds, cases = [], hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => (
+  FundsTable: ({ funds, cases = [], hasActiveSearch, hasActiveStatusFilter, onPublish, onUnpublish }: FundsTableProps) => (
     <div data-testid="funds-table">
       <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
       <div data-testid="funds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
@@ -78,6 +78,7 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
           <div key={fund.id} data-testid={`funds-table-item-${fund.id}`}>
             {fund.name} - {fund.fundNumber} - {fund.status}
             <button onClick={() => onPublish?.(fund)}>publish {fund.id}</button>
+            <button onClick={() => onUnpublish?.(fund)}>unpublish {fund.id}</button>
           </div>
         ))}
       </div>
@@ -532,6 +533,56 @@ describe('ArchivePageContent', () => {
 
       expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH);
       expect(mockUpdateFund).not.toHaveBeenCalled();
+    });
+
+    it('should unpublish a published fund', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'published' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      expect(mockUpdateFund).toHaveBeenCalledWith({ id: '1', input: { status: 'hidden' } });
+      expect(toast.success).toHaveBeenCalledWith('Фонд успішно сховано');
+      await waitFor(() => expect(screen.getByTestId('funds-table-item-1')).toHaveTextContent('hidden'));
+      expect(mockCheckFundPublishWarning).not.toHaveBeenCalled();
+    });
+
+    it('should not try to unpublish a fund that is not published', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'hidden' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      expect(mockUpdateFund).not.toHaveBeenCalled();
+    });
+
+    it('should show an error toast when unpublishing fails', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'published' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+      mockUpdateFund.mockRejectedValueOnce(new Error('boom'));
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Не вдалося сховати фонд'));
+      expect(screen.getByTestId('funds-table-item-1')).toHaveTextContent('published');
     });
   });
 

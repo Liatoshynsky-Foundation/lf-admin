@@ -124,7 +124,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const [knownFundPageCount, setKnownFundPageCount] = useState(0);
   const [knownFundTotal, setKnownFundTotal] = useState(0);
   const [publishCandidate, setPublishCandidate] = useState<Fund | null>(null);
-  const [publishedOverrides, setPublishedOverrides] = useState<Record<string, string>>({});
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, { status: BaseContentStatuses; updatedAt: string }>>({});
   const [updateFund] = useUpdateFund();
   const checkFundPublishWarning = useFundPublishWarning();
 
@@ -185,10 +185,10 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const fundsWithOverrides = useMemo(
     () =>
       funds.map((fund) => {
-        const updatedAt = publishedOverrides[fund.id];
-        return updatedAt ? { ...fund, status: BaseContentStatuses.Published, updatedAt } : fund;
+        const override = statusOverrides[fund.id];
+        return override ? { ...fund, status: override.status, updatedAt: override.updatedAt } : fund;
       }),
-    [funds, publishedOverrides]
+    [funds, statusOverrides]
   );
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
@@ -233,7 +233,10 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
       });
       const updatedAt = result?.data?.updateFund?.updatedAt ?? new Date().toISOString();
 
-      setPublishedOverrides((prev) => ({ ...prev, [fund.id]: updatedAt }));
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [fund.id]: { status: BaseContentStatuses.Published, updatedAt }
+      }));
       toast.success(FUND_PUBLISH_SUCCESS_MESSAGE);
     } catch {
       toast.error(FundErrors.FAILED_TO_PUBLISH);
@@ -261,6 +264,28 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     }
 
     await publishFund(fund);
+  };
+
+  const handleUnpublishRequest = async (fund: Fund) => {
+    if (fund.status !== BaseContentStatuses.Published) {
+      return;
+    }
+
+    try {
+      const result = await updateFund({
+        id: fund.id,
+        input: { status: FundStatus.Hidden }
+      });
+      const updatedAt = result?.data?.updateFund?.updatedAt ?? new Date().toISOString();
+
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [fund.id]: { status: BaseContentStatuses.Hidden, updatedAt }
+      }));
+      toast.success('Фонд успішно сховано');
+    } catch {
+      toast.error('Не вдалося сховати фонд');
+    }
   };
 
   const handleConfirmEmptyFundPublish = async () => {
@@ -296,6 +321,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
           onDeleted={refetch}
           onCaseChanged={refetchCases}
           onPublish={handlePublishRequest}
+          onUnpublish={handleUnpublishRequest}
         />
       );
     }

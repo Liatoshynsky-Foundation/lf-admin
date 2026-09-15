@@ -59,6 +59,7 @@ export interface FundsTableProps {
   onDeleted?: () => Promise<unknown>;
   onCaseChanged?: () => Promise<unknown>;
   onPublish?: (fund: Fund) => void;
+  onUnpublish?: (fund: Fund) => void;
 }
 
 export const FundsTable = ({
@@ -68,7 +69,8 @@ export const FundsTable = ({
   hasActiveStatusFilter,
   onDeleted,
   onCaseChanged,
-  onPublish
+  onPublish,
+  onUnpublish
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
   const [deleteCase] = useDeleteCase();
@@ -80,8 +82,12 @@ export const FundsTable = ({
 
   const fundRows = funds.map((fund) => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
+    const canUnpublish = fund.status === BaseContentStatuses.Published && Boolean(onUnpublish);
     const statusActions = [
       ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
+      ...(canUnpublish
+        ? [{ id: 'unpublish', text: { name: 'Сховати' }, onClick: () => onUnpublish?.(fund) }]
+        : []),
       {
         id: 'delete',
         text: { name: 'Видалити' },
