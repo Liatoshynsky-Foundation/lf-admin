@@ -22,17 +22,17 @@ import {
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
-import type { SeoBlockErrors, SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type {
+  SeoBlockErrors,
+  SeoBlockValue
+} from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
 import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
 import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import {
-  OpusNumberKind,
-  OpusStatus
-} from '~/types/graphql/generated/graphql';
+import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
 import type {
   FetchedOpusData,
   OpusCompositionData,
@@ -61,19 +61,13 @@ const getSeoMetaErrors = (
   };
 };
 
-const getAltText = (
-  altText: string | undefined,
-  hasOgImage: boolean,
-  fallback: string
-): string => {
+const getAltText = (altText: string | undefined, hasOgImage: boolean, fallback: string): string => {
   const trimmedAlt = altText?.trim();
 
-  return hasOgImage ? (trimmedAlt ?? '') : (trimmedAlt || fallback);
+  return hasOgImage ? (trimmedAlt ?? '') : trimmedAlt || fallback;
 };
 
-export const toCompositionInput = (
-  composition: OpusCompositionData
-): OpusCompositionInput => ({
+export const toCompositionInput = (composition: OpusCompositionData): OpusCompositionInput => ({
   id: composition.id,
   name: composition.name.trim(),
   genre: composition.genre.trim() || undefined,
@@ -104,22 +98,15 @@ export type UseUpsertOpusResult = {
   isLoading: boolean;
 
   details: OpusDetailsValue;
-  setDetails: (
-    value:
-      | OpusDetailsValue
-      | ((prev: OpusDetailsValue) => OpusDetailsValue)
-  ) => void;
+  setDetails: (value: OpusDetailsValue | ((prev: OpusDetailsValue) => OpusDetailsValue)) => void;
 
   detailsErrors: OpusDetailsErrors;
+  handleDetailsFieldBlur: (field: 'number' | 'name' | 'creationYear', value: string) => void;
 
   compositionErrors: Record<string, string>;
 
   seoValue: SeoBlockValue;
-  setSeoValue: (
-    value:
-      | SeoBlockValue
-      | ((prev: SeoBlockValue) => SeoBlockValue)
-  ) => void;
+  setSeoValue: (value: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => void;
 
   seoErrors?: SeoBlockErrors;
 
@@ -128,14 +115,10 @@ export type UseUpsertOpusResult = {
 
   isSaved: boolean;
 
-  handleSave: (
-    status: BaseContentStatuses
-  ) => Promise<string | undefined>;
+  handleSave: (status: BaseContentStatuses) => Promise<string | undefined>;
 };
 
-export const useUpsertOpus = (
-  { id }: UseUpsertOpusProps = {}
-): UseUpsertOpusResult => {
+export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusResult => {
   const isEditing = Boolean(id);
   const opusQuery = useOpusById(id ?? '', { skip: !isEditing });
 
@@ -151,10 +134,9 @@ export const useUpsertOpus = (
 
   const [compositionErrors, setCompositionErrors] = useState<Record<string, string>>({});
 
-  const [seoValue, setSeoValue] =
-    useState<SeoBlockValue>(initialOpusSeoValue);
+  const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialOpusSeoValue);
   const [seoErrors, setSeoErrors] = useState<SeoBlockErrors>({ meta: { uk: {}, en: {} } });
-    
+
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [isSaved, setIsSaved] = useState(isEditing);
 
@@ -163,34 +145,29 @@ export const useUpsertOpus = (
 
   const clearCompositionErrors = useCallback(() => setCompositionErrors({}), []);
 
-  const changeDetails = useCallback((
-    value:
-      | OpusDetailsValue
-      | ((prev: OpusDetailsValue) => OpusDetailsValue)
-  ) => {
-    const previousDetails = latestDataRef.current.details;
+  const changeDetails = useCallback(
+    (value: OpusDetailsValue | ((prev: OpusDetailsValue) => OpusDetailsValue)) => {
+      const previousDetails = latestDataRef.current.details;
 
-    const next =
-      typeof value === 'function'
-        ? value(previousDetails)
-        : value;
+      const next = typeof value === 'function' ? value(previousDetails) : value;
 
-    latestDataRef.current.details = next;
+      latestDataRef.current.details = next;
 
-    setDetails(next);
-    setIsSaved(false);
+      setDetails(next);
+      setIsSaved(false);
 
-    if (next.compositions !== previousDetails.compositions) {
-      clearCompositionErrors();
-    }
+      if (next.compositions !== previousDetails.compositions) {
+        clearCompositionErrors();
+      }
 
-
-    setDetailsErrors((prev) => ({
-      number: next.number.trim() ? '' : prev.number,
-      name: next.name.trim() ? '' : prev.name,
-      creationYear: next.creationYear.trim() ? '' : prev.creationYear
-    }));
-  }, [clearCompositionErrors]);
+      setDetailsErrors((prev) => ({
+        number: next.number.trim() ? '' : prev.number,
+        name: next.name.trim() ? '' : prev.name,
+        creationYear: next.creationYear.trim() ? '' : prev.creationYear
+      }));
+    },
+    [clearCompositionErrors]
+  );
 
   const changeSeoValue = useCallback((value: SeoBlockValue | ((prev: SeoBlockValue) => SeoBlockValue)) => {
     const next = typeof value === 'function' ? value(latestDataRef.current.seoValue) : value;
@@ -272,28 +249,44 @@ export const useUpsertOpus = (
     setIsSaved(true);
   }, [changeDetails, changeSeoValue, changeCrop, isEditing, opusQuery.data]);
 
+  const validateDetailsField = (field: 'number' | 'name' | 'creationYear', value: string): string => {
+    const trimmedValue = value.trim();
+
+    if (field === 'number') {
+      if (!trimmedValue) {
+        return OPUS_VALIDATION_MESSAGES.numberRequired;
+      } else if (!/^\d+$/.test(trimmedValue) || Number(trimmedValue) <= 0) {
+        return OPUS_VALIDATION_MESSAGES.numberInvalid;
+      }
+    }
+
+    if (field === 'name') {
+      if (!trimmedValue) {
+        return OPUS_VALIDATION_MESSAGES.nameRequired;
+      } else if (trimmedValue.length < OPUS_FIELD_LIMITS.name.min) {
+        return OPUS_VALIDATION_MESSAGES.nameTooShort;
+      }
+    }
+
+    if (field === 'creationYear' && !trimmedValue) {
+      return OPUS_VALIDATION_MESSAGES.creationYearRequired;
+    }
+
+    return '';
+  };
+
+  const handleDetailsFieldBlur = (field: 'number' | 'name' | 'creationYear', value: string): void => {
+    const error = validateDetailsField(field, value);
+    setDetailsErrors((prev) => ({
+      ...prev,
+      [field]: error
+    }));
+  };
+
   const validateDetails = (value: OpusDetailsValue): boolean => {
-    const number = value.number.trim();
-    const name = value.name.trim();
-    const creationYear = value.creationYear.trim();
-
-    let numberError = '';
-
-    if (!number) {
-      numberError = OPUS_VALIDATION_MESSAGES.numberRequired;
-    } else if (!/^\d+$/.test(number) || Number(number) <= 0) {
-      numberError = OPUS_VALIDATION_MESSAGES.numberInvalid;
-    }
-
-    let nameError = '';
-
-    if (!name) {
-      nameError = OPUS_VALIDATION_MESSAGES.nameRequired;
-    } else if (name.length < OPUS_FIELD_LIMITS.name.min) {
-      nameError = OPUS_VALIDATION_MESSAGES.nameTooShort;
-    }
-
-    const creationYearError = creationYear ? '' : OPUS_VALIDATION_MESSAGES.creationYearRequired;
+    const numberError = validateDetailsField('number', value.number);
+    const nameError = validateDetailsField('name', value.name);
+    const creationYearError = validateDetailsField('creationYear', value.creationYear);
 
     const errors: OpusDetailsErrors = {
       number: numberError,
@@ -313,7 +306,7 @@ export const useUpsertOpus = (
     }
 
     if (invalidIds.length > 0) {
-      toast.error( COMPOSITION_NAME_REQUIRED_ERROR);
+      toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
     }
 
     const hasTopLevelValidationErrors = Boolean(numberError || nameError || creationYearError);
@@ -334,9 +327,7 @@ export const useUpsertOpus = (
     );
   };
 
-  const handleMutationError = (
-    error: unknown
-  ): void => {
+  const handleMutationError = (error: unknown): void => {
     const message = getErrorMessage(error);
 
     const duplicateError = getDuplicateCompositionError(error);
@@ -355,9 +346,7 @@ export const useUpsertOpus = (
 
     if (isCompositionNameRequiredError(error)) {
       const invalidIds = getInvalidCompositionIds(latestDataRef.current.details.compositions);
-      setCompositionErrors(
-        Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, '']))
-      );
+      setCompositionErrors(Object.fromEntries(invalidIds.map((id) => [`compositions.${id}.name`, ''])));
 
       toast.error(COMPOSITION_NAME_REQUIRED_ERROR);
       return;
@@ -396,8 +385,8 @@ export const useUpsertOpus = (
     const input = {
       numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
       number: Number(currentDetails.number.trim()),
-      name: { 
-        uk: opusName, 
+      name: {
+        uk: opusName,
         en: isEditing ? undefined : opusName
       },
       additionalText: currentDetails.additionalText.trim() || undefined,
@@ -418,7 +407,7 @@ export const useUpsertOpus = (
         src: currentSeo.ogImage || opusName,
         alt: {
           uk: getAltText(ukMeta.altText?.uk, hasOgImage, opusName),
-          en: getAltText(enMeta.altText?.en, hasOgImage, opusName),
+          en: getAltText(enMeta.altText?.en, hasOgImage, opusName)
         },
         caption: { uk: opusName, en: opusName },
         ...(currentCrop && { crop: currentCrop })
@@ -426,7 +415,6 @@ export const useUpsertOpus = (
       status: status as unknown as OpusStatus,
       publishedAt: status === BaseContentStatuses.Published ? new Date().toISOString() : undefined
     };
-
 
     try {
       let savedId: string | undefined;
@@ -440,21 +428,13 @@ export const useUpsertOpus = (
       }
 
       if (!savedId) {
-        toast.error(
-          isEditing
-            ? OPUS_MUTATION_RESULTS.updateFailed
-            : OPUS_MUTATION_RESULTS.createFailed
-        );
+        toast.error(isEditing ? OPUS_MUTATION_RESULTS.updateFailed : OPUS_MUTATION_RESULTS.createFailed);
         return undefined;
       }
 
       setIsSaved(true);
 
-      toast.success(
-        isEditing
-          ? OPUS_MUTATION_RESULTS.updated
-          : OPUS_MUTATION_RESULTS.created
-      );
+      toast.success(isEditing ? OPUS_MUTATION_RESULTS.updated : OPUS_MUTATION_RESULTS.created);
       return savedId;
     } catch (error) {
       handleMutationError(error);
@@ -468,6 +448,7 @@ export const useUpsertOpus = (
     details,
     setDetails: changeDetails,
     detailsErrors,
+    handleDetailsFieldBlur,
     compositionErrors,
     seoValue,
     setSeoValue: changeSeoValue,

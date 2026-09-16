@@ -26,6 +26,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     details,
     setDetails,
     detailsErrors,
+    handleDetailsFieldBlur,
     compositionErrors,
     seoValue,
     setSeoValue,
@@ -73,6 +74,7 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
               value={details}
               onChange={setDetails}
               errors={detailsErrors}
+              handleBlur={handleDetailsFieldBlur}
               compositionErrors={compositionErrors}
             />
           </AccordionDetails>
