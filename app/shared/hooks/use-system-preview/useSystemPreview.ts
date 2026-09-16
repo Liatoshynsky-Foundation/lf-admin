@@ -26,8 +26,7 @@ export const useSystemPreview = () => {
       const existingDoc = items?.find((g) => g.slug === previewSlug);
 
       return existingDoc?.id;
-    } catch (error) {
-      console.error('Error finding system preview document:', error);
+    } catch {
       return undefined;
     }
   };

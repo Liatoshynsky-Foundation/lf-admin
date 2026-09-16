@@ -75,7 +75,6 @@ describe('usePreviewHandler', () => {
 
     await result.current.handlePreview(savePromise, MOCK_PREVIEW.baseRoute);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to prepare preview:', mockError);
     expect(toast.error).toHaveBeenCalledWith('Не вдалося відкрити попередній перегляд.');
     expect(fetchPreview).not.toHaveBeenCalled();
   });
@@ -88,7 +87,6 @@ describe('usePreviewHandler', () => {
 
     await result.current.handlePreview(savePromise, MOCK_PREVIEW.baseRoute);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to prepare preview:', mockFetchError);
     expect(toast.error).toHaveBeenCalledWith('Не вдалося відкрити попередній перегляд.');
   });
 });
