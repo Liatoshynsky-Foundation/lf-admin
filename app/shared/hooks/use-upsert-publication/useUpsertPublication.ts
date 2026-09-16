@@ -187,13 +187,15 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   };
   const validateAdminTitle = (val: string) => {
     const length = val.trim().length;
-    const error = !length
-      ? 'Обов\'язкове поле'
-      : length < ADMIN_TITLE_LENGTH.min
-        ? seoFormErrors.uk.minLength
-        : length > ADMIN_TITLE_LENGTH.max
-          ? seoFormErrors.uk.adminTitleMaxLength
-          : '';
+    let error = '';
+
+    if (!length) {
+      error = 'Обов\'язкове поле';
+    } else if (length < ADMIN_TITLE_LENGTH.min) {
+      error = seoFormErrors.uk.minLength;
+    } else if (length > ADMIN_TITLE_LENGTH.max) {
+      error = seoFormErrors.uk.adminTitleMaxLength;
+    }
 
     setAdminTitleError(error);
     return !error;
@@ -295,11 +297,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const eventDatesValidation = validateEventDates(publicationType, startDateTime, endDateTime);
     const { isInvalid: areEventDatesInvalid } = eventDatesValidation;
 
-    const {
-      seoErrors: nextSeoErrors,
-      hasMetaErrors,
-      hasUrlErrors
-    } = validatePublicationSeo(seoValue, publicationType);
+    const { seoErrors: nextSeoErrors, hasMetaErrors, hasUrlErrors } = validatePublicationSeo(seoValue, publicationType);
 
     if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || areEventDatesInvalid) {
       if (isTitleInvalid) validateAdminTitle(adminTitle);
