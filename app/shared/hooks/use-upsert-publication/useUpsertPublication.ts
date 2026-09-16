@@ -190,7 +190,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     let error = '';
 
     if (!length) {
-      error = 'Обов\'язкове поле';
+      error = seoFormErrors.uk.required;
     } else if (length < ADMIN_TITLE_LENGTH.min) {
       error = seoFormErrors.uk.minLength;
     } else if (length > ADMIN_TITLE_LENGTH.max) {
