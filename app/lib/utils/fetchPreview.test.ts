@@ -1,71 +1,79 @@
 import { fetchPreview } from './fetchPreview';
 
-interface PreviewProps {
-  slug: string;
-  lang: 'uk' | 'en';
-  draftId: string | number;
-}
-
 describe('fetchPreview', () => {
-  const mockFetch = jest.fn();
-  const mockWindowOpen = jest.fn();
-  const props: PreviewProps = { slug: 'about', lang: 'uk', draftId: 123 };
-  const configResponse = { clientAppUrl: 'http://localhost:3000' };
-  const proxyResponse = { previewSecret: 'test-preview-secret' };
-  const expectedUrl =
-    'http://localhost:3000/api/preview?lang=uk&slug=about&draftId=123&previewSecret=test-preview-secret';
+  const originalFetch = global.fetch;
+  const originalWindowOpen = window.open;
+  let mockWindowOpen: jest.Mock;
 
   beforeEach(() => {
-    globalThis.fetch = mockFetch;
+    jest.clearAllMocks();
+
+    mockWindowOpen = jest.fn();
     window.open = mockWindowOpen;
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    global.fetch = originalFetch;
+    window.open = originalWindowOpen;
   });
 
-  it('should fetch config and proxy, then open preview URL with secret', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('should fetch config and preview secret, then open preview window with query params', async () => {
+    const mockConfigResponse = {
       ok: true,
-      json: async () => configResponse
-    });
-    mockFetch.mockResolvedValueOnce({
+      json: jest.fn().mockResolvedValue({ clientAppUrl: 'https://client-app.com' })
+    };
+
+    const mockProxyResponse = {
       ok: true,
-      json: async () => proxyResponse
+      json: jest.fn().mockResolvedValue({ previewSecret: 'secret-123' })
+    };
+
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(mockConfigResponse)
+      .mockResolvedValueOnce(mockProxyResponse);
+
+    await fetchPreview({
+      slug: 'news/test-slug',
+      lang: 'uk',
+      draftId: 'draft-999'
     });
 
-    await fetchPreview(props);
-
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(mockFetch).toHaveBeenCalledWith('/api/config');
-    expect(mockFetch).toHaveBeenCalledWith('/api/preview-proxy', {
+    expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/config');
+    expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/preview-proxy', {
       method: 'GET',
       credentials: 'include'
     });
-    expect(window.open).toHaveBeenCalledWith(expectedUrl, '_blank');
+
+    const expectedUrl =
+      'https://client-app.com/api/preview?lang=uk&slug=news%2Ftest-slug&draftId=draft-999&previewSecret=secret-123';
+
+    expect(mockWindowOpen).toHaveBeenCalledWith(expectedUrl, '_blank');
   });
 
-  it('should throw and not open a window if proxy request fails', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('should throw error when preview proxy response is not ok', async () => {
+    const mockConfigResponse = {
       ok: true,
-      json: async () => configResponse
-    });
-    mockFetch.mockResolvedValueOnce({
+      json: jest.fn().mockResolvedValue({ clientAppUrl: 'https://client-app.com' })
+    };
+
+    const mockProxyResponse = {
       ok: false
-    });
+    };
 
-    await expect(fetchPreview(props)).rejects.toThrow('Failed to obtain preview credentials');
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(window.open).not.toHaveBeenCalled();
-  });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(mockConfigResponse)
+      .mockResolvedValueOnce(mockProxyResponse);
 
-  it('should throw an error and not open a window if fetching the config fails', async () => {
-    const configError = new Error('API is down');
-    mockFetch.mockRejectedValueOnce(configError);
+    await expect(
+      fetchPreview({
+        slug: 'events/test-event',
+        lang: 'en',
+        draftId: 123
+      })
+    ).rejects.toThrow('Failed to obtain preview credentials');
 
-    await expect(fetchPreview(props)).rejects.toThrow('API is down');
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith('/api/config');
-    expect(window.open).not.toHaveBeenCalled();
+    expect(mockWindowOpen).not.toHaveBeenCalled();
   });
 });

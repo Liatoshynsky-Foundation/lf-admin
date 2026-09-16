@@ -112,8 +112,7 @@ describe('useSystemPreview', () => {
     expect(documentId).toBeUndefined();
   });
 
-  it('should log error and return undefined when apollo query throws error', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should return undefined when apollo query throws error', async () => {
     const queryError = new Error('GraphQL Network Error');
     mockApolloQuery.mockRejectedValue(queryError);
 
@@ -127,8 +126,5 @@ describe('useSystemPreview', () => {
     );
 
     expect(documentId).toBeUndefined();
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Error finding system preview document:', queryError);
-
-    consoleErrorSpy.mockRestore();
   });
 });

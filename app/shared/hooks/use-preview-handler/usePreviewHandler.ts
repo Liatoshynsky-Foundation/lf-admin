@@ -19,8 +19,7 @@ export const usePreviewHandler = () => {
       const previewSlug = `${baseRoute}/${result.slug}`;
 
       await fetchPreview({ slug: previewSlug, lang: 'uk', draftId: result.id });
-    } catch (error) {
-      console.error('Failed to prepare preview:', error);
+    } catch {
       toast.error('Не вдалося відкрити попередній перегляд.');
     }
   };

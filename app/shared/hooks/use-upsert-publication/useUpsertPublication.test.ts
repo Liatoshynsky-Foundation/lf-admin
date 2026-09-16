@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
+import dayjs, { type Dayjs } from 'dayjs';
 import toast from 'react-hot-toast';
 
 import { usePublicationForm, validatePublicationSeo } from './usePublicationForm';
 import { usePublicationStrategy } from './usePublicationStrategy';
 import { useUpsertPublication } from './useUpsertPublication';
-import { initialSeoValue } from '~/constants/publications';
+import { initialSeoValue, PublicationsItemType } from '~/constants/publications';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -58,11 +59,11 @@ describe('useUpsertPublication', () => {
   const mockSetForceShowErrors = jest.fn();
   const mockSetCanonicalUrlError = jest.fn();
 
-  const setupFormMockState = (customTitle: string = MOCK_PUBLICATION.adminTitle) => {
+  const setupFormMockState = (customTitle: string = MOCK_PUBLICATION.adminTitle, customPublishDate: Dayjs | null = null) => {
     (usePublicationForm as jest.Mock).mockReturnValue({
       adminTitle: customTitle,
       seoValue: createMockSeoValue(),
-      publishDate: null,
+      publishDate: customPublishDate,
       crop: null,
       buildCommonInput: mockBuildCommonInput,
       setAdminTitle: mockSetAdminTitle,
@@ -77,7 +78,7 @@ describe('useUpsertPublication', () => {
       latestDataRef: {
         current: {
           adminTitle: customTitle,
-          publishDate: null,
+          publishDate: customPublishDate,
           seoValue: createMockSeoValue(),
           crop: null
         }
@@ -314,7 +315,8 @@ describe('useUpsertPublication', () => {
 
   describe('Branch & Edge Case Coverage', () => {
     it('should return empty pageTitle and block handleSave when publication type is invalid', async () => {
-      const { result } = renderHook(() => useUpsertPublication({ type: 'invalid' as any }));
+      const invalidType = 'invalid' as PublicationsItemType;
+      const { result } = renderHook(() => useUpsertPublication({ type: invalidType }));
 
       expect(result.current.pageTitle).toBe('');
       expect(result.current.isValidType).toBe(false);
@@ -383,31 +385,8 @@ describe('useUpsertPublication', () => {
     });
 
     it('should fail validation and return early when publishDate is invalid', async () => {
-      const invalidDate = { isValid: () => false };
-      (usePublicationForm as jest.Mock).mockReturnValue({
-        adminTitle: MOCK_PUBLICATION.adminTitle,
-        seoValue: createMockSeoValue(),
-        publishDate: invalidDate,
-        crop: null,
-        buildCommonInput: mockBuildCommonInput,
-        setAdminTitle: mockSetAdminTitle,
-        setPublishDate: mockSetPublishDate,
-        setCrop: mockSetCrop,
-        setSeoValue: mockSetSeoValue,
-        setInitialState: mockSetInitialState,
-        setAdminTitleError: mockSetAdminTitleError,
-        setForceShowErrors: mockSetForceShowErrors,
-        setSeoErrors: mockSetSeoErrors,
-        setCanonicalUrlError: mockSetCanonicalUrlError,
-        latestDataRef: {
-          current: {
-            adminTitle: MOCK_PUBLICATION.adminTitle,
-            publishDate: invalidDate as any,
-            seoValue: createMockSeoValue(),
-            crop: null
-          }
-        }
-      });
+      const invalidDate = dayjs('invalid-date-string');
+      setupFormMockState(MOCK_PUBLICATION.adminTitle, invalidDate);
 
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 

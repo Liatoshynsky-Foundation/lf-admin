@@ -205,7 +205,7 @@ const isPublicationCardStatus = (status: string): status is PublicationsStatusVa
 };
 
 const isSystemPreviewItem = (slug?: string | null): boolean => {
-  return Boolean(slug?.includes('sys-preview'));
+  return Boolean(slug?.startsWith('sys-preview'));
 };
 
 const mapCardType = (type: PublicationsItemType): ContentType => {
