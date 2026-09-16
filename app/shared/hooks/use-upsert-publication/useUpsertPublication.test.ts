@@ -505,7 +505,7 @@ describe('useUpsertPublication Hook', () => {
         result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(result.current.adminTitleError).toBe('Обов\'язкове поле');
+      expect(result.current.adminTitleError).toBe('Обов\ʼязкове поле.');
       expect(mockCreateNews).not.toHaveBeenCalled();
     });
 
