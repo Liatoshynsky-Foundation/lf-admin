@@ -1,23 +1,64 @@
-import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
-import type { ContactInformation, ContactsPayload, SocialNetworkFormItem } from '../../../constants/contacts';
+import {
+  type ContactInformation,
+  CONTACTS_SAVE_ERROR,
+  CONTACTS_SAVE_SUCCESS,
+  type SocialNetworkFormItem
+} from '~/constants/contacts';
+import { safeMutate } from '~/lib/utils/safeMutate';
+import {
+  SocialNetworkTypes,
+  type UpdateContactsInput as GraphQLUpdateContactsInput,
+  type UpdateContactsMutation,
+  type UpdateContactsMutationVariables,
+  useUpdateContactsMutation
+} from '~/types/graphql/generated/graphql';
 
-type UpdateContactsInput = {
+export type ContactsUpdateInput = {
   contactInformation: ContactInformation;
   socialNetworks: SocialNetworkFormItem[];
 };
 
+export const mapContactsInput = ({
+  contactInformation: { foundationName, address, phone, email },
+  socialNetworks
+}: ContactsUpdateInput): GraphQLUpdateContactsInput => ({
+  contactInformation: {
+    foundationName: { uk: foundationName.uk, en: foundationName.en },
+    address: { uk: address.uk, en: address.en },
+    phone,
+    email
+  },
+  socialNetworks: socialNetworks.map(({ platform, link }) => ({
+    icon: platform as SocialNetworkTypes,
+    link
+  }))
+});
+
 export const useUpsertContacts = () => {
-  const updateContacts = useCallback(({ contactInformation, socialNetworks }: UpdateContactsInput) => {
-    const payload: ContactsPayload = {
-      ...contactInformation,
-      socialNetworks: socialNetworks.map(({ id: _id, ...socialNetwork }) => socialNetwork)
-    };
+  const [mutate, { loading, error }] = useUpdateContactsMutation();
 
-    // Temporary POST placeholder
-    // eslint-disable-next-line no-console
-    console.log(payload);
-  }, []);
+  const updateContacts = async (input: ContactsUpdateInput) => {
+    try {
+      const result = await safeMutate<UpdateContactsMutation, UpdateContactsMutationVariables>(
+        mutate,
+        { input: mapContactsInput(input) },
+        CONTACTS_SAVE_ERROR,
+        CONTACTS_SAVE_ERROR
+      );
 
-  return { updateContacts };
+      if (result.errors?.length) {
+        throw new Error(result.errors[0].message);
+      }
+
+      toast.success(CONTACTS_SAVE_SUCCESS);
+      return result;
+    } catch (mutationError) {
+      toast.error(mutationError instanceof Error ? mutationError.message : CONTACTS_SAVE_ERROR);
+      return null;
+    }
+  };
+
+  return { updateContacts, loading, error };
 };

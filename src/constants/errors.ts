@@ -93,6 +93,6 @@ export const contactsValidationErrors = {
   LOCALIZED_FIELD_REQUIRED: 'Поле обов’язкове для заповнення',
   EMAIL_INVALID: 'Некоректна електронна адреса',
   PHONE_INVALID: 'Телефон має відповідати формату +38 XXX XXX XXXX',
-  PLATFORM_INVALID: 'Некоректна соціальна мережа',
+  PLATFORM_INVALID: 'Оберіть зображення соціальної мережі',
   LINK_INVALID: 'Посилання на соціальну мережу має бути коректною URL-адресою'
 } as const;

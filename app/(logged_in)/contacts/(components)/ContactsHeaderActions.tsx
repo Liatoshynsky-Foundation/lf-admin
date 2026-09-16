@@ -8,13 +8,14 @@ import LanguageSwitcher from '~/shared/components/language-switcher/LanguageSwit
 type ContactsHeaderActionsProps = Readonly<{
   onLanguageChange: (locale: ContactsLocale) => void;
   onSave: () => void;
+  saving?: boolean;
 }>;
 
-export const ContactsHeaderActions = ({ onLanguageChange, onSave }: ContactsHeaderActionsProps) => {
+export const ContactsHeaderActions = ({ onLanguageChange, onSave, saving = false }: ContactsHeaderActionsProps) => {
   return (
     <Box sx={styles.container}>
       <LanguageSwitcher languageSwitcher={onLanguageChange} />
-      <Button variant="filled" color="tertiary" size="medium" onClick={onSave}>
+      <Button variant="filled" color="tertiary" size="medium" onClick={onSave} loading={saving}>
         Зберегти
       </Button>
     </Box>

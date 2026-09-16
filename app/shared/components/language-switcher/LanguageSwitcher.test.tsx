@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import LanguageSwitcher from './LanguageSwitcher';
+import { useStore } from '~/store';
 
 class MockResizeObserver {
   observe() {
@@ -32,6 +33,10 @@ describe('LanguageSwitcher', () => {
     mockLanguageSwitcher.mockClear();
   });
 
+  afterEach(() => {
+    useStore.getState().setLocale('uk');
+  });
+
   it('should render language buttons', () => {
     render(<LanguageSwitcher languageSwitcher={mockLanguageSwitcher} />);
     expect(screen.getByText('Українська')).toBeInTheDocument();
@@ -56,5 +61,12 @@ describe('LanguageSwitcher', () => {
     render(<LanguageSwitcher languageSwitcher={mockLanguageSwitcher} />);
     const ukrainianButton = screen.getByText('Українська');
     expect(ukrainianButton).toBeInTheDocument();
+  });
+
+  it('should render with English as the active language', () => {
+    useStore.getState().setLocale('en');
+    render(<LanguageSwitcher languageSwitcher={mockLanguageSwitcher} />);
+
+    expect(screen.getByText('English')).toBeInTheDocument();
   });
 });

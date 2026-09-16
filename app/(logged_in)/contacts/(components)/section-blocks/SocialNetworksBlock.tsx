@@ -17,11 +17,23 @@ import ConfigurableList from '~/components/configurable-list/ConfigurableList';
 
 type SocialNetworkFieldProps = Readonly<{
   item: SocialNetworkFormItem;
-  onPlatformMenuOpen: (itemId: number, anchor: HTMLElement) => void;
+  index: number;
+  onPlatformMenuOpen: (index: number, anchor: HTMLElement) => void;
   onItemChange: (item: SocialNetworkFormItem) => void;
+  errors: Record<string, string>;
+  onFieldChange: (index: number) => void;
+  onFieldBlur: (index: number) => void;
 }>;
 
-const SocialNetworkField = ({ item, onPlatformMenuOpen, onItemChange }: SocialNetworkFieldProps) => {
+const SocialNetworkField = ({
+  item,
+  onPlatformMenuOpen,
+  onItemChange,
+  errors,
+  index,
+  onFieldChange,
+  onFieldBlur
+}: SocialNetworkFieldProps) => {
   const selectedOption = SOCIAL_NETWORK_OPTIONS.find((option) => option.value === item.platform);
   const Icon = selectedOption?.icon;
 
@@ -34,11 +46,17 @@ const SocialNetworkField = ({ item, onPlatformMenuOpen, onItemChange }: SocialNe
           </Box>
         ) : undefined
       }
-      onIconClick={(event) => onPlatformMenuOpen(item.id, event.currentTarget)}
+      onIconClick={(event) => onPlatformMenuOpen(index, event.currentTarget)}
       label="URL"
       value={item.link}
-      onChange={(link) => onItemChange({ ...item, link })}
+      onChange={(link) => {
+        onItemChange({ ...item, link });
+        onFieldChange(index);
+      }}
       iconButtonVariant={selectedOption ? 'filled' : 'outlined'}
+      error={Boolean(errors[`${index}.link`] || errors[`${index}.icon`])}
+      helperText={errors[`${index}.link`] || errors[`${index}.icon`]}
+      onBlur={() => onFieldBlur(index)}
     />
   );
 };
@@ -56,11 +74,20 @@ const renderSocialNetworkOptionIcon = (option: SocialNetworkOption) => {
 type SocialNetworksBlockProps = Readonly<{
   items: SocialNetworkFormItem[];
   onChange: (items: SocialNetworkFormItem[]) => void;
+  errors?: Record<string, string>;
+  onFieldChange?: (index: number) => void;
+  onFieldBlur?: (index: number) => void;
 }>;
 
-export const SocialNetworksBlock = ({ items, onChange }: SocialNetworksBlockProps) => {
+export const SocialNetworksBlock = ({
+  items,
+  onChange,
+  errors = {},
+  onFieldChange = () => undefined,
+  onFieldBlur = () => undefined
+}: SocialNetworksBlockProps) => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [activeItemId, setActiveItemId] = useState<number | null>(null);
+  const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
 
   const addSocialNetwork = () => {
     const nextId = (items.at(-1)?.id ?? -1) + 1;
@@ -76,20 +103,21 @@ export const SocialNetworksBlock = ({ items, onChange }: SocialNetworksBlockProp
     onChange(items.filter((item) => item.id !== id));
   };
 
-  const openPlatformMenu = (itemId: number, anchor: HTMLElement) => {
-    setActiveItemId(itemId);
+  const openPlatformMenu = (index: number, anchor: HTMLElement) => {
+    setActiveItemIndex(index);
     setMenuAnchor(anchor);
   };
 
   const closePlatformMenu = () => {
-    setActiveItemId(null);
+    setActiveItemIndex(null);
     setMenuAnchor(null);
   };
 
   const selectPlatform = (platform: SocialNetworkPlatform) => {
-    if (activeItemId === null) return;
+    if (activeItemIndex === null) return;
 
-    onChange(items.map((item) => (item.id === activeItemId ? { ...item, platform } : item)));
+    onChange(items.map((item, index) => (index === activeItemIndex ? { ...item, platform } : item)));
+    onFieldChange(activeItemIndex);
 
     closePlatformMenu();
   };
@@ -100,8 +128,16 @@ export const SocialNetworksBlock = ({ items, onChange }: SocialNetworksBlockProp
 
       <ConfigurableList<SocialNetworkFormItem>
         items={items}
-        renderItem={({ item }) => (
-          <SocialNetworkField item={item} onPlatformMenuOpen={openPlatformMenu} onItemChange={updateSocialNetwork} />
+        renderItem={({ item, index }) => (
+          <SocialNetworkField
+            item={item}
+            index={index}
+            onPlatformMenuOpen={openPlatformMenu}
+            onItemChange={updateSocialNetwork}
+            errors={errors}
+            onFieldChange={onFieldChange}
+            onFieldBlur={onFieldBlur}
+          />
         )}
         addBtnLabel="Додати соціальну мережу"
         editable
