@@ -508,7 +508,7 @@ describe('Publications page integration', () => {
         allNews: [
           {
             ...NEWS_ITEMS[0],
-            title: 'Raw string title value'
+            adminTitle: 'Raw string title value'
           }
         ]
       },
