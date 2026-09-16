@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { MouseEventHandler, SVGProps } from 'react';
 
 import { UploadView } from './UploadView';
@@ -42,6 +42,24 @@ describe('UploadView', () => {
     jest.restoreAllMocks();
   });
 
+  const mockImageDimensions = (width: number, height: number) => {
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: () => 'blob:test' });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+    jest.spyOn(global, 'Image').mockImplementation(() => {
+      const image = {
+        naturalWidth: width,
+        naturalHeight: height,
+        set src(_value: string) {
+          queueMicrotask(() => image.onload?.(new Event('load')));
+        },
+        onload: undefined as ((event: Event) => void) | undefined,
+        onerror: undefined as ((event: Event) => void) | undefined
+      } as unknown as HTMLImageElement;
+
+      return image;
+    });
+  };
+
   it('should render idle state', () => {
     renderView();
 
@@ -77,16 +95,17 @@ describe('UploadView', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onPick for image selected via input', () => {
+  it('should call onPick for image selected via input', async () => {
     const onPick = jest.fn();
     renderView({ onPick });
+    mockImageDimensions(1200, 800);
 
     const input = screen.getByTestId('UploadView-fileInput');
     const file = createFile('test.png', 'image/png');
 
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(onPick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
     expect(onPick).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'upload',
@@ -120,16 +139,17 @@ describe('UploadView', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/підтримуються лише зображення/i);
   });
 
-  it('should call onPick for image file drop', () => {
+  it('should call onPick for image file drop', async () => {
     const onPick = jest.fn();
     renderView({ onPick });
+    mockImageDimensions(1200, 800);
 
     const dropzone = screen.getByTestId('UploadView-dropzone');
     const file = createFile('dropped.jpg', 'image/jpeg');
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
 
-    expect(onPick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
   });
 
   it('should support keyboard open on Enter and Space', () => {
@@ -193,16 +213,42 @@ describe('UploadView', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
-  it('should handle custom validation and accept image by extension', () => {
+  it('should handle custom validation and accept image by extension', async () => {
     const onPick = jest.fn();
     renderView({ onPick });
+    mockImageDimensions(1200, 800);
 
     const input = screen.getByTestId('UploadView-fileInput');
     const file = createFile('test.png', '');
 
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(onPick).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
     expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'test.png' });
+  });
+
+  it('should reject an image exceeding 6000px before picking it', async () => {
+    const onPick = jest.fn();
+    renderView({ onPick });
+    mockImageDimensions(6001, 6000);
+
+    fireEvent.change(screen.getByTestId('UploadView-fileInput'), {
+      target: { files: [createFile('large.png', 'image/png')] }
+    });
+
+    expect(onPick).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Це зображення занадто велике'));
+  });
+
+  it('should accept an image with both dimensions at the 6000px limit', async () => {
+    const onPick = jest.fn();
+    renderView({ onPick });
+    mockImageDimensions(6000, 6000);
+
+    fireEvent.change(screen.getByTestId('UploadView-fileInput'), {
+      target: { files: [createFile('valid.png', 'image/png')] }
+    });
+
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
   });
 });
