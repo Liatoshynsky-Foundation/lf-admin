@@ -32,7 +32,7 @@ interface ImagePreviewBlockProps extends StackProps {
   showAlternativeText?: boolean;
   altTextError?: string;
   altTextErrorState?: boolean;
-  onBlurAltText?: () => void;
+  onBlurAltText?: (value: string) => void;
   disabled?: boolean;
   locale?: 'uk' | 'en';
   aspectRatio?: number;
@@ -239,12 +239,12 @@ export const ImagePreviewBlock = ({
           label={alternativeTextLabel ?? 'Alt текст зображення'}
           value={localAltText}
           onChange={(e) => setLocalAltText(e.target.value)}
-          onBlur={() => {
+          onBlur={(e) => {
             if (localAltText !== altTextRef.current && localAltText !== lastSentRef.current) {
               lastSentRef.current = localAltText;
               onChangeAltText?.(localAltText);
             }
-            onBlurAltText?.();
+            onBlurAltText?.(e.target.value);
           }}
           fullWidth
           margin="none"

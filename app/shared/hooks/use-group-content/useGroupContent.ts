@@ -89,31 +89,37 @@ const validatePerformance = (
   }
 };
 
+const getPhotoAltTextError = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return OPUS_VALIDATION_MESSAGES.photoAltText;
+  } 
+
+  if (trimmedValue.length > OPUS_FIELD_LIMITS.altText.max) {
+    return OPUS_VALIDATION_MESSAGES.captionTooLong;
+  }
+
+  if (trimmedValue.length < OPUS_FIELD_LIMITS.altText.min) {
+    return OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+  }
+
+  return '';
+};
+
 const validatePhotoAltText = (
   photo: GroupPhoto,
   newErrors: Record<string, string>,
   setCurrentLanguage: (lang: EditorLanguage) => void
 ) => {
-  const altUk = (photo.altText?.uk || '').trim();
-  const altEn = (photo.altText?.en || '').trim();
+  const altUkError = getPhotoAltTextError((photo.altText?.uk || '').trim());
+  const altEnError = getPhotoAltTextError((photo.altText?.en || '').trim());
 
-  if (!altUk) {
-    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoAltText;
+  if (altUkError) {
+    newErrors[`photos[${photo.id}].altText.uk`] = altUkError;
     setCurrentLanguage('UA');
-  } else if (altUk.length > OPUS_FIELD_LIMITS.altText.max) {
-    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
-    setCurrentLanguage('UA');
-  } else if (altUk.length < OPUS_FIELD_LIMITS.altText.min) {
-    newErrors[`photos[${photo.id}].altText.uk`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
-    setCurrentLanguage('UA');
-  } else if (!altEn) {
-    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoAltText;
-    setCurrentLanguage('EN');
-  } else if (altEn.length > OPUS_FIELD_LIMITS.altText.max) {
-    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
-    setCurrentLanguage('EN');
-  } else if (altEn.length < OPUS_FIELD_LIMITS.altText.min) {
-    newErrors[`photos[${photo.id}].altText.en`] = OPUS_VALIDATION_MESSAGES.photoTextTooShort;
+  } else if (altEnError) {
+    newErrors[`photos[${photo.id}].altText.en`] = altEnError;
     setCurrentLanguage('EN');
   }
 };
@@ -465,6 +471,23 @@ export const useGroupContent = (id: string) => {
     return Object.keys(newErrors).length === 0 && !hasDuplicateCompositionNames;
   };
 
+  const handlePhotoAltTextBlur = (photoId: string, value: string) => {
+    const error = getPhotoAltTextError(value);
+    const errorKey = `photos[${photoId}].altText.${langKey}`;
+
+    setErrors((previous) => {
+      const newErrors = { ...previous };
+      
+      if (error) {
+        newErrors[errorKey] = error;
+      } else {
+        delete newErrors[errorKey];
+      }
+
+      return newErrors;
+    });
+  }; 
+
   const handleFieldChange = (field: GroupDataField | 'blocksOrder', value: unknown, isMultilingual = false) => {
     if (shouldExitAfterSave) return;
     if (errors[field as string]) {
@@ -580,6 +603,7 @@ export const useGroupContent = (id: string) => {
     handleOpen,
     handleClose,
     handleFieldChange,
+    handlePhotoAltTextBlur,
     handlePublishClick,
     handleMenuOptionClick,
     isDeleteModalOpen,

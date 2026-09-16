@@ -47,6 +47,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     handleOpen,
     handleClose,
     handleFieldChange,
+    handlePhotoAltTextBlur,
     handlePublishClick,
     handleMenuOptionClick,
     isDeleteModalOpen,
@@ -102,6 +103,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
             photos={groupData.photos}
             errors={errors}
             onChange={(newPhotos) => handleFieldChange('photos', newPhotos)}
+            onBlurPhotoAltText={handlePhotoAltTextBlur}
           />
         </CollapsibleBlock>
       );
