@@ -51,23 +51,23 @@ describe('ContactInformationBlock', () => {
     fireEvent.blur(phoneInput);
     fireEvent.blur(emailInput);
 
-    expect(onChange).toHaveBeenNthCalledWith(1, {
-      ...CONTACT_INFORMATION,
-      foundationName: { ...CONTACT_INFORMATION.foundationName, uk: UPDATED_CONTACT_NAME }
-    });
-    expect(onChange).toHaveBeenNthCalledWith(2, {
-      ...CONTACT_INFORMATION,
-      address: { ...CONTACT_INFORMATION.address, uk: UPDATED_CONTACT_LOCATION }
-    });
-    expect(onChange).toHaveBeenNthCalledWith(3, { ...CONTACT_INFORMATION, phone: FORMATTED_UPDATED_PHONE });
-    expect(onChange).toHaveBeenNthCalledWith(4, { ...CONTACT_INFORMATION, email: UPDATED_EMAIL });
-    expect(onFieldChange).toHaveBeenNthCalledWith(1, 'foundationName', CONTACT_LOCALES.uk);
-    expect(onFieldChange).toHaveBeenNthCalledWith(2, 'address', CONTACT_LOCALES.uk);
-    expect(onFieldChange).toHaveBeenNthCalledWith(3, 'phone');
-    expect(onFieldChange).toHaveBeenNthCalledWith(4, 'email');
-    expect(onFieldBlur).toHaveBeenNthCalledWith(1, 'foundationName', CONTACT_LOCALES.uk);
-    expect(onFieldBlur).toHaveBeenNthCalledWith(2, 'address', CONTACT_LOCALES.uk);
-    expect(onFieldBlur).toHaveBeenNthCalledWith(3, 'phone');
-    expect(onFieldBlur).toHaveBeenNthCalledWith(4, 'email');
+    expect(onChange.mock.calls).toEqual([
+      [{ ...CONTACT_INFORMATION, foundationName: { ...CONTACT_INFORMATION.foundationName, uk: UPDATED_CONTACT_NAME } }],
+      [{ ...CONTACT_INFORMATION, address: { ...CONTACT_INFORMATION.address, uk: UPDATED_CONTACT_LOCATION } }],
+      [{ ...CONTACT_INFORMATION, phone: FORMATTED_UPDATED_PHONE }],
+      [{ ...CONTACT_INFORMATION, email: UPDATED_EMAIL }]
+    ]);
+    expect(onFieldChange.mock.calls).toEqual([
+      ['foundationName', CONTACT_LOCALES.uk],
+      ['address', CONTACT_LOCALES.uk],
+      ['phone'],
+      ['email']
+    ]);
+    expect(onFieldBlur.mock.calls).toEqual([
+      ['foundationName', CONTACT_LOCALES.uk],
+      ['address', CONTACT_LOCALES.uk],
+      ['phone'],
+      ['email']
+    ]);
   });
 });
