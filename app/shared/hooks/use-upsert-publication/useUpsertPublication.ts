@@ -6,6 +6,7 @@ import { resolveSharedLocalizedFields } from './normalizeSharedLocalizedFields';
 import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
 import { seoFormErrors } from '~/constants/errors';
 import {
+  ADMIN_TITLE_LENGTH,
   FetchedPublicationData,
   ImageCropData,
   initialSeoValue,
@@ -185,13 +186,17 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setAdminTitle(val);
   };
   const validateAdminTitle = (val: string) => {
-    if (!val.trim()) {
-      setAdminTitleError('Обов\'язкове поле');
-      return false;
-    }
+    const length = val.trim().length;
+    const error = !length
+      ? 'Обов\'язкове поле'
+      : length < ADMIN_TITLE_LENGTH.min
+        ? seoFormErrors.uk.minLength
+        : length > ADMIN_TITLE_LENGTH.max
+          ? seoFormErrors.uk.adminTitleMaxLength
+          : '';
 
-    setAdminTitleError('');
-    return true;
+    setAdminTitleError(error);
+    return !error;
   };
   const changePublishDate = (val: Dayjs | null) => {
     latestDataRef.current.publishDate = val;
@@ -283,7 +288,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     const startDateTime = ukMeta.startDateTime;
     const endDateTime = ukMeta.endDateTime;
 
-    const isTitleInvalid = !adminTitle.trim();
+    const titleLength = adminTitle.trim().length;
+    const isTitleInvalid = titleLength < ADMIN_TITLE_LENGTH.min || titleLength > ADMIN_TITLE_LENGTH.max;
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
 
     const eventDatesValidation = validateEventDates(publicationType, startDateTime, endDateTime);
@@ -296,7 +302,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     } = validatePublicationSeo(seoValue, publicationType);
 
     if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || areEventDatesInvalid) {
-      if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
+      if (isTitleInvalid) validateAdminTitle(adminTitle);
 
       if (hasMetaErrors || hasUrlErrors || areEventDatesInvalid) {
         setSeoErrors(applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation));

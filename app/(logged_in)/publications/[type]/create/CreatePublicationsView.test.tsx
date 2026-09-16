@@ -50,7 +50,9 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
   }) {
     return (
       <div>
-        <button data-testid="btn-preview" onClick={onPreview}>Preview</button>
+        <button data-testid="btn-preview" onClick={onPreview}>
+          Preview
+        </button>
         <button data-testid="btn-publish" onClick={onPublish}>
           Publish
         </button>
@@ -86,7 +88,13 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
 }));
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields', () => ({
-  SeoDateTimeFields: () => <div data-testid="mock-seo-datetime-fields" />
+  SeoDateTimeFields: ({ onStartBlur, forceShowErrors }: { onStartBlur?: () => void; forceShowErrors?: boolean }) => (
+    <div data-testid="mock-seo-datetime-fields" data-force-show-errors={String(forceShowErrors)}>
+      <button data-testid="btn-start-date-blur" onClick={onStartBlur}>
+        Blur start date
+      </button>
+    </div>
+  )
 }));
 
 jest.mock('~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField', () => ({
@@ -160,8 +168,12 @@ jest.mock('~/components/delete-card-modal/DeleteCardModal', () => {
     if (!open) return null;
     return (
       <div data-testid="mock-delete-modal">
-        <button data-testid="btn-close-delete-modal" onClick={onClose}>Close</button>
-        <button data-testid="btn-confirm-delete-modal" onClick={onDelete}>Delete</button>
+        <button data-testid="btn-close-delete-modal" onClick={onClose}>
+          Close
+        </button>
+        <button data-testid="btn-confirm-delete-modal" onClick={onDelete}>
+          Delete
+        </button>
       </div>
     );
   };
@@ -204,7 +216,7 @@ const createMockData = (
   ...overrides
 });
 
-const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('CreatePublicationsView Component', () => {
   beforeEach(() => {
@@ -315,7 +327,7 @@ describe('CreatePublicationsView Component', () => {
     it('should trigger onPreview when a eye icon is clicked', () => {
       const mockOnPreview = jest.fn();
       const mockData = createMockData({
-        publicationType: 'news',
+        publicationType: 'news'
       });
       render(<CreatePublicationsView data={mockData} onPreview={mockOnPreview} />);
 
@@ -537,7 +549,6 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-
   describe('onEdit action', () => {
     it('should save draft and redirect to edit page when edit button is clicked', async () => {
       const handleSave = jest.fn().mockResolvedValue({ id: 'news-456' });
@@ -604,5 +615,56 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
     });
   });
-});
+  it('should call validateAdminTitle with the field value on admin title blur', () => {
+    const mockValidateAdminTitle = jest.fn(() => true);
+    const mockData = createMockData({ publicationType: 'news', validateAdminTitle: mockValidateAdminTitle });
 
+    render(<CreatePublicationsView data={mockData} />);
+
+    const input = screen.getByLabelText('Нотатки адміністратора');
+    fireEvent.blur(input, { target: { value: 'Blurred Title' } });
+
+    expect(mockValidateAdminTitle).toHaveBeenCalledWith('Blurred Title');
+  });
+
+  it('should force-show start date errors after the start date field is blurred (events)', () => {
+    const mockData = createMockData({ publicationType: 'events', forceShowErrors: false });
+
+    render(<CreatePublicationsView data={mockData} />);
+
+    expect(screen.getByTestId('mock-seo-datetime-fields')).toHaveAttribute('data-force-show-errors', 'false');
+
+    fireEvent.click(screen.getByTestId('btn-start-date-blur'));
+
+    expect(screen.getByTestId('mock-seo-datetime-fields')).toHaveAttribute('data-force-show-errors', 'true');
+  });
+
+  it('should show a generic error toast with the stringified error when handleSave throws a non-Error value', async () => {
+    const mockHandleSave = jest.fn().mockRejectedValue('a plain string failure');
+    const mockData = createMockData({ publicationType: 'media', handleSave: mockHandleSave });
+    render(<CreatePublicationsView data={mockData} />);
+
+    fireEvent.click(screen.getByTestId('btn-publish'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка: a plain string failure');
+    });
+  });
+
+  it('should pass null to the date picker when publishDate is set but invalid', () => {
+    const mockData = createMockData({ publicationType: 'news', publishDate: dayjs('not-a-date') });
+    render(<CreatePublicationsView data={mockData} />);
+
+    expect(screen.getByTestId('date-picker-input')).toHaveValue('');
+  });
+
+  it('should call setPublishDate with null when the date picker returns an invalid date', () => {
+    const mockSetPublishDate = jest.fn();
+    const mockData = createMockData({ publicationType: 'news', setPublishDate: mockSetPublishDate });
+    render(<CreatePublicationsView data={mockData} />);
+
+    fireEvent.change(screen.getByTestId('date-picker-input'), { target: { value: 'not-a-valid-date' } });
+
+    expect(mockSetPublishDate).toHaveBeenCalledWith(null);
+  });
+});

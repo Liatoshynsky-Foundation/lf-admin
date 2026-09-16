@@ -509,6 +509,25 @@ describe('useUpsertPublication Hook', () => {
       expect(mockCreateNews).not.toHaveBeenCalled();
     });
 
+    it.each([
+      ['short', 'A', 'Введіть щонайменше 2 символа.'],
+      ['long', 'a'.repeat(251), 'Значення не може перевищувати 250 символів.']
+    ])('should block save when adminTitle is %s', async (_caseName, adminTitle, expectedError) => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      act(() => {
+        result.current.setAdminTitle(adminTitle);
+        result.current.setSeoValue(createValidSeoState('news'));
+      });
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Draft);
+      });
+
+      expect(result.current.adminTitleError).toBe(expectedError);
+      expect(mockCreateNews).not.toHaveBeenCalled();
+    });
+
     it('should block save and set forceShowErrors if SEO data is invalid', async () => {
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
 
@@ -1140,5 +1159,112 @@ describe('useUpsertPublication Hook', () => {
       expect(result.current.publishDate?.isValid()).toBe(false);
       expect(result.current.hasUnsavedChanges).toBe(true);
     });
+  });
+  it('should accept an already-valid Dayjs value (non-string branch)', async () => {
+    const validDayjsDate = dayjs('2024-03-03T00:00:00.000Z');
+    const fetchedNewsData = createFetchedNewsData({
+      adminTitle: 'Dayjs Date News',
+      newsDate: validDayjsDate as unknown as string
+    });
+
+    mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+    const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+    await waitFor(() => {
+      expect(result.current.publishDate?.toISOString()).toBe(validDayjsDate.toISOString());
+    });
+  });
+
+  it('should return null for an invalid Dayjs value (non-string branch)', async () => {
+    const invalidDayjsDate = dayjs('not-a-real-date');
+    const fetchedNewsData = createFetchedNewsData({
+      adminTitle: 'Invalid Dayjs News',
+      newsDate: invalidDayjsDate as unknown as string
+    });
+
+    mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+    const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+    await waitFor(() => {
+      expect(result.current.adminTitle).toBe('Invalid Dayjs News');
+    });
+    expect(result.current.publishDate).toBeNull();
+  });
+
+  it('should return null for a whitespace-only date string', async () => {
+    const fetchedNewsData = createFetchedNewsData({ adminTitle: 'Whitespace Date News', newsDate: '   ' });
+
+    mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+    const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+    await waitFor(() => {
+      expect(result.current.adminTitle).toBe('Whitespace Date News');
+    });
+    expect(result.current.publishDate).toBeNull();
+  });
+
+  it('should return null for a non-numeric, unparseable date string', async () => {
+    const fetchedNewsData = createFetchedNewsData({
+      adminTitle: 'Garbage Date News',
+      newsDate: 'not-a-parseable-date'
+    });
+
+    mockNewsQuery.mockReturnValue({ data: { newsById: fetchedNewsData }, loading: false });
+
+    const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: '123' }));
+
+    await waitFor(() => {
+      expect(result.current.adminTitle).toBe('Garbage Date News');
+    });
+    expect(result.current.publishDate).toBeNull();
+  });
+  it('should return the max-length error when called directly with an over-long title', () => {
+    const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+    let isValid: boolean | undefined;
+    act(() => {
+      isValid = result.current.validateAdminTitle('a'.repeat(251));
+    });
+
+    expect(isValid).toBe(false);
+    expect(result.current.adminTitleError).toBe(seoFormErrors.uk.adminTitleMaxLength);
+  });
+  it('should surface a "required" error (not "invalidUrl") for both locales when ticketUrl is blank', async () => {
+    const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+    act(() => {
+      result.current.setAdminTitle('Event Title');
+      const seoState = createValidSeoState('events');
+      seoState.ticketUrl = { uk: '', en: '   ' };
+      result.current.setSeoValue(seoState);
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.required);
+    expect(result.current.seoErrors?.ticketUrl?.en).toBe(seoFormErrors.en.required);
+    expect(mockCreateEvent).not.toHaveBeenCalled();
+  });
+  it('should default ticketUrl to empty strings when ticketUrl object is undefined for events', async () => {
+    const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+    act(() => {
+      result.current.setAdminTitle('Event Title');
+      const seoState = createValidSeoState('events');
+      seoState.ticketUrl = undefined as unknown as SeoBlockValue['ticketUrl'];
+      result.current.setSeoValue(seoState);
+    });
+
+    await act(async () => {
+      await result.current.handleSave(BaseContentStatuses.Draft);
+    });
+
+    expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.required);
+    expect(result.current.seoErrors?.ticketUrl?.en).toBe(seoFormErrors.en.required);
   });
 });
