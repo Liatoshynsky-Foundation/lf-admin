@@ -17,7 +17,7 @@ export const EditablePageLayout = ({
   const setLocale = useStore((s: any) => s.setLocale);
   const discardChanges = useStore((s: any) => s.discardChanges);
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
-  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
+  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug, undefined, headerTitle);
 
   return (
     <div>

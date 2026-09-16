@@ -17,7 +17,7 @@ import {
   useUpsertPageDraftMutation
 } from '~/types/graphql/generated/graphql';
 
-export const useSavePageBlocks = (slug: string, blockIdToPublish?: string) => {
+export const useSavePageBlocks = (slug: string, blockIdToPublish?: string, pageTitle?: string) => {
   const markSaved = useStore((s) => s.saveAsDraft);
   const client = useApolloClient();
 
@@ -25,66 +25,73 @@ export const useSavePageBlocks = (slug: string, blockIdToPublish?: string) => {
   const [publishMutate, publishState] = usePublishPageMutation();
 
   const save = async () => {
-    const state = useStore.getState();
+    try {
+      const state = useStore.getState();
 
-    const current = state.blocks[slug];
-    const currentBlocksOrder = state.blocksOrder[slug];
+      const current = state.blocks[slug];
+      const currentBlocksOrder = state.blocksOrder[slug];
 
-    if (current == null) throw new Error('No page blocks found');
-    await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
-      upsertDraft,
-      { input: { slug, blocks: current, blocksOrder: currentBlocksOrder } },
-      'Network error while saving draft',
-      'Failed to save draft'
-    );
+      if (current == null) throw new Error('No page blocks found');
+      await safeMutate<UpsertPageDraftMutation, UpsertPageDraftMutationVariables>(
+        upsertDraft,
+        { input: { slug, blocks: current, blocksOrder: currentBlocksOrder } },
+        'Network error while saving draft',
+        'Failed to save draft'
+      );
 
-    let blocksToPublish = current;
-    let blocksOrderToPublish = currentBlocksOrder;
+      let blocksToPublish = current;
+      let blocksOrderToPublish = currentBlocksOrder;
 
-    if (blocksOrderToPublish.includes('founders') && blocksOrderToPublish.includes('FoundationFounders')) {
-      blocksOrderToPublish = blocksOrderToPublish.filter((id: string) => id !== 'FoundationFounders');
-    }
-
-    if (blockIdToPublish) {
-      const { data } = await client.query<GetPageQuery, GetPageQueryVariables>({
-        query: GetPageDocument,
-        variables: { slug },
-        fetchPolicy: 'network-only'
-      });
-
-      const publishedBlocks = data.pageBlocks?.blocks || {};
-      let publishedBlocksOrder = data.pageBlocks?.blocksOrder || currentBlocksOrder;
-
-      if (publishedBlocksOrder.includes('founders') && publishedBlocksOrder.includes('FoundationFounders')) {
-        publishedBlocksOrder = publishedBlocksOrder.filter((id: string) => id !== 'FoundationFounders');
+      if (blocksOrderToPublish.includes('founders') && blocksOrderToPublish.includes('FoundationFounders')) {
+        blocksOrderToPublish = blocksOrderToPublish.filter((id: string) => id !== 'FoundationFounders');
       }
 
-      blocksToPublish = {
-        ...publishedBlocks,
-        [blockIdToPublish]: (current as Record<string, any>)[blockIdToPublish]
-      };
+      if (blockIdToPublish) {
+        const { data } = await client.query<GetPageQuery, GetPageQueryVariables>({
+          query: GetPageDocument,
+          variables: { slug },
+          fetchPolicy: 'network-only'
+        });
 
-      blocksOrderToPublish = publishedBlocksOrder;
-      const isDuplicateFounders = blockIdToPublish === 'FoundationFounders' && blocksOrderToPublish.includes('founders');
-      
-      if (!blocksOrderToPublish.includes(blockIdToPublish) && !isDuplicateFounders) {
-        blocksOrderToPublish = [...blocksOrderToPublish, blockIdToPublish];
+        const publishedBlocks = data.pageBlocks?.blocks || {};
+        let publishedBlocksOrder = data.pageBlocks?.blocksOrder || currentBlocksOrder;
+
+        if (publishedBlocksOrder.includes('founders') && publishedBlocksOrder.includes('FoundationFounders')) {
+          publishedBlocksOrder = publishedBlocksOrder.filter((id: string) => id !== 'FoundationFounders');
+        }
+
+        blocksToPublish = {
+          ...publishedBlocks,
+          [blockIdToPublish]: (current as Record<string, any>)[blockIdToPublish]
+        };
+
+        blocksOrderToPublish = publishedBlocksOrder;
+        const isDuplicateFounders = blockIdToPublish === 'FoundationFounders' && blocksOrderToPublish.includes('founders');
+
+        if (!blocksOrderToPublish.includes(blockIdToPublish) && !isDuplicateFounders) {
+          blocksOrderToPublish = [...blocksOrderToPublish, blockIdToPublish];
+        }
       }
+
+      const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
+        publishMutate,
+        { input: { slug, blocks: blocksToPublish, blocksOrder: blocksOrderToPublish } },
+        'Network error while publishing',
+        'Failed to publish page'
+      );
+
+      const published = response.data?.publishPage;
+      if (!published) throw new Error('Server did not return published page');
+
+      markSaved(slug);
+      toast.success(
+        pageTitle ? TOAST_MESSAGES.PAGE_UPDATED(pageTitle) : TOAST_MESSAGES.SUCCESS_SAVE_DATA
+      );
+      return published;
+    } catch (error) {
+      toast.error(TOAST_MESSAGES.PAGE_UPDATE_FAILED);
+      throw error;
     }
-
-    const response = await safeMutate<PublishPageMutation, PublishPageMutationVariables>(
-      publishMutate,
-      { input: { slug, blocks: blocksToPublish, blocksOrder: blocksOrderToPublish } },
-      'Network error while publishing',
-      'Failed to publish page'
-    );
-
-    const published = response.data?.publishPage;
-    if (!published) throw new Error('Server did not return published page');
-
-    markSaved(slug);
-    toast.success(TOAST_MESSAGES.SUCCESS_SAVE_DATA);
-    return published;
   };
 
   return {

@@ -2,7 +2,8 @@ export const PAGE_IDS = {
   ABOUT_US: 'about-us',
   PRIVACY_POLICY: 'privacy-policy',
   ARTISTRY: 'artistry',
-  WAR_IN_UKRAINE: 'war-in-ukraine'
+  WAR_IN_UKRAINE: 'war-in-ukraine',
+  ARCHIVE: 'archive'
 };
 
 export const BLOCK_IDS = {
@@ -30,5 +31,6 @@ export const BLOCK_IDS = {
   PRINCIPLE_OF_HOPE: 'PrincipleOfHope',
   WAR_CAROUSEL: 'WarCarousel',
   YERMOLENKO_LINKS: 'YermolenkoLinks',
-  VOLUNTEER_DONATION: 'VolunteerDonation'
+  VOLUNTEER_DONATION: 'VolunteerDonation',
+  PAGE_CAPTION: 'PageCaption',
 } as const;

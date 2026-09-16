@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { TOAST_MESSAGES } from '~/constants';
 import { initialSeoValue } from '~/constants/publications';
 import {
   mapPageToSeoBlockValue,
@@ -45,10 +46,9 @@ export const usePageSeo = (slug: string) => {
         refetchQueries: ['GetPageSeo']
       });
 
-      toast.success('SEO збережено успішно');
-    } catch (err) {
-      toast.error('Щось пішло не так, спробуйте знову');
-      console.error(err);
+      toast.success(TOAST_MESSAGES.SEO_SAVED);
+    } catch {
+      toast.error(TOAST_MESSAGES.PAGE_UPDATE_FAILED);
     }
   };
 
