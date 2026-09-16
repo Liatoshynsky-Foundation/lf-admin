@@ -30,7 +30,6 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     compositionErrors,
     seoValue,
     setSeoValue,
-    seoErrors,
     crop,
     setCrop,
     isSaved,
@@ -84,7 +83,6 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
           <SeoMetadataBlock
             showAlternativeText
             required={false}
-            errors={seoErrors}
             value={seoValue}
             onChange={setSeoValue}
             crop={{ uk: crop, en: crop }}
