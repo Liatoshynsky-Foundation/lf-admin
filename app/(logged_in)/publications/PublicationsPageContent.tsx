@@ -228,7 +228,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
   const titleData = toLocalizedCardValue(item.adminTitle, fallbackTitle);
   const titleText = getPrimaryText(item.title, fallbackTitle);
   const sortTitle = fallbackTitle || titleText;
-  const sortableDate = getSortableDate(item.createdAt, item.updatedAt, item.publishedAt, item.newsDate);
+  const sortableDate = getSortableDate(item.publishedAt, item.newsDate, item.createdAt, item.updatedAt);
   const coverImage = item.coverImage;
 
   return {
@@ -304,7 +304,7 @@ const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null
   const titleData = toLocalizedCardValue(item.adminTitle, fallbackTitle);
   const titleText = getPrimaryText(item.title, fallbackTitle);
   const sortTitle = fallbackTitle || titleText;
-  const sortableDate = getSortableDate(item.createdAt, item.updatedAt, item.publishedAt);
+  const sortableDate = getSortableDate(item.publishedAt, item.createdAt, item.updatedAt);
 
   return {
     id: item.id,
@@ -453,18 +453,22 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
   }, [activeTab, mediaItems, eventItems, newsItems, sortValue]);
 
   const titleOptions = useMemo(() => getPublicationSearchOptions(visibleItems), [visibleItems]);
-  const resolvedToolbarProps = useMemo(
-    () => ({
+  const resolvedToolbarProps = useMemo(() => {
+    if (!toolbarProps.search) {
+      return {
+        ...toolbarProps,
+        search: undefined
+      };
+    }
+
+    return {
       ...toolbarProps,
-      search: toolbarProps.search
-        ? {
-          ...toolbarProps.search,
-          options: titleOptions
-        }
-        : undefined
-    }),
-    [titleOptions, toolbarProps]
-  );
+      search: {
+        ...toolbarProps.search,
+        options: titleOptions
+      }
+    };
+  }, [titleOptions, toolbarProps]);
   const hasActiveCriteria = Boolean(toolbarProps.search?.search.trim()) || Boolean(toolbarProps.activeFiltersCount);
   const hasBaseItems = visibleItems.length > 0;
   const isLoading = getActiveTabState(

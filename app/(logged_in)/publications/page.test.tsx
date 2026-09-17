@@ -40,7 +40,7 @@ const mockSortProps = {
 };
 
 type QuerySortOption = {
-  field: 'adminTitle' | 'createdAt';
+  field: 'adminTitle' | 'createdAt' | 'publishedAt';
   order: 'asc' | 'desc';
 };
 
@@ -174,12 +174,12 @@ const getRawDate = (item: {
     return item.publishedAt || item.eventDateTimeStart || item.eventDateTimeEnd || '1970-01-01T00:00:00.000Z';
   }
   if (item.__typename === 'News') {
-    return item.createdAt || item.updatedAt || item.publishedAt || item.newsDate || '1970-01-01T00:00:00.000Z';
+    return item.publishedAt || item.newsDate || item.createdAt || item.updatedAt || '1970-01-01T00:00:00.000Z';
   }
-  return item.createdAt || item.updatedAt || item.publishedAt || '1970-01-01T00:00:00.000Z';
+  return item.publishedAt || item.createdAt || item.updatedAt || '1970-01-01T00:00:00.000Z';
 };
 
-const sortItems = <
+function sortItems<
   T extends {
     __typename?: string;
     createdAt?: string | null;
@@ -191,10 +191,7 @@ const sortItems = <
     adminTitle?: string | null;
     title?: { uk?: string | null; en?: string | null } | string | null;
   }
->(
-    items: T[],
-    sortValue: string
-  ): T[] => {
+>(items: T[], sortValue: string): T[] {
   return [...items].sort((left, right) => {
     const leftTitleRaw =
       left.adminTitle || (typeof left.title === 'string' ? left.title : left.title?.uk || left.title?.en || '');
@@ -219,7 +216,7 @@ const sortItems = <
     }
     return rightDate - leftDate;
   });
-};
+}
 
 const buildNewsResponse = (options?: QueryHookOptions) => {
   if (options?.skip) return { data: undefined, loading: false, error: undefined };
@@ -387,6 +384,7 @@ describe('Publications page integration', () => {
     expect(screen.getAllByTestId('publication-card')).toHaveLength(5);
     expect(screen.getByText('Новина про фестиваль')).toBeInTheDocument();
     expect(screen.getByText('Головна подія сезону')).toBeInTheDocument();
+    expect(screen.getAllByTestId('publication-card-title')[0]).toHaveTextContent('Інтерв’ю про нову постановку');
   });
 
   it('shows and closes the creation menu correctly', () => {
@@ -438,8 +436,12 @@ describe('Publications page integration', () => {
 
   it.each([
     { sortValue: 'name_asc', expectedTitle: 'Вечір камерної музики', description: 'name_asc alphabetical sorting' },
-    { sortValue: 'name_desc', expectedTitle: 'Програма резиденції оголошена', description: 'name_desc alphabetical reverse sorting' },
-    { sortValue: 'date_asc', expectedTitle: 'Головна подія сезону', description: 'date_asc sorting' } 
+    {
+      sortValue: 'name_desc',
+      expectedTitle: 'Програма резиденції оголошена',
+      description: 'name_desc alphabetical reverse sorting'
+    },
+    { sortValue: 'date_asc', expectedTitle: 'Головна подія сезону', description: 'date_asc sorting' }
   ])('handles $description correctly', ({ sortValue, expectedTitle }) => {
     mockSortValue.mockReturnValue(sortValue);
     render(<PublicationsPageContent activeTab="all" />);
@@ -447,7 +449,7 @@ describe('Publications page integration', () => {
     const titles = screen.getAllByTestId('publication-card-title').map((el) => el.textContent);
     expect(titles[0]).toBe(expectedTitle);
   });
-  
+
   it('renders loading states for specific active tabs', () => {
     mockUseAllNews.mockReturnValue({ data: undefined, loading: true, error: undefined });
 
