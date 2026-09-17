@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 
 import { Query } from './Query';
 import { GraphQLContext } from '~/back-shared/types/container/types';
-import { PageStatus } from '~/types/enums/common.enums';
+import { PageCategory, PageStatus } from '~/types/enums/common.enums';
 
 describe('page Query', () => {
   it('should throw if not admin', async () => {
@@ -38,7 +38,7 @@ describe('page Query', () => {
   describe('pages', () => {
     it('should throw if not admin', async () => {
       await expect(
-        Query.pages({}, { category: 'foundation' as any }, { admin: false } as unknown as GraphQLContext)
+        Query.pages({}, { category: PageCategory.Foundation }, { admin: false } as unknown as GraphQLContext)
       ).rejects.toThrow(GraphQLError);
     });
 
@@ -46,7 +46,7 @@ describe('page Query', () => {
       const mockPages = [{ id: 'p1', title: 'Page 1' }];
       const repo = { findPages: jest.fn().mockResolvedValue(mockPages) };
       const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
-      const res = await Query.pages({}, { category: 'foundation' as any }, ctx);
+      const res = await Query.pages({}, { category: PageCategory.Foundation }, ctx);
       expect(res).toBe(mockPages);
       expect(repo.findPages).toHaveBeenCalledWith('foundation');
     });
@@ -55,7 +55,7 @@ describe('page Query', () => {
       const repo = { findPages: jest.fn().mockResolvedValue([]) };
       const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
       await expect(
-        Query.pages({}, { category: 'foundation' as any }, ctx)
+        Query.pages({}, { category: PageCategory.Foundation }, ctx)
       ).rejects.toThrow(GraphQLError);
     });
 
@@ -63,7 +63,7 @@ describe('page Query', () => {
       const repo = { findPages: jest.fn().mockResolvedValue(null) };
       const ctx = { admin: true, requestContainer: { cradle: { pageRepository: repo } } } as unknown as GraphQLContext;
       await expect(
-        Query.pages({}, { category: 'foundation' as any }, ctx)
+        Query.pages({}, { category: PageCategory.Foundation }, ctx)
       ).rejects.toThrow(GraphQLError);
     });
   });

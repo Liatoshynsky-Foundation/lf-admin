@@ -73,7 +73,6 @@ export default function EditPublicationsPage() {
 
     if (!slug) {
       toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Не вдалося завантажити slug для попереднього перегляду');
       return;
     }
 
@@ -136,7 +135,6 @@ export default function EditPublicationsPage() {
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
-      console.error(`Action ${actionId} failed`, err);
     }
   };
 

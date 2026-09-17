@@ -2,12 +2,9 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { resolveSharedLocalizedFields } from './normalizeSharedLocalizedFields';
-import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
 import { seoFormErrors } from '~/constants/errors';
 import {
   FetchedPublicationData,
-  ImageCropData,
   initialSeoValue,
   PAGE_TITLES,
   PUBLICATION_SEO_REQUIRED,
@@ -16,7 +13,6 @@ import {
 } from '~/constants/publications';
 import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
-import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 import type {
   SeoBlockErrors,
   SeoBlockValue
@@ -30,6 +26,7 @@ import {
   useUpdateMediaMention
 } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useCreateNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
+import { CropRect, LocalizedCropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { EventStatus, MediaStatus, NewsStatus } from '~/types/graphql/generated/graphql';
 
@@ -69,11 +66,25 @@ const parseDate = (dateVal: Dayjs | string | null | undefined) => {
 
 const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate(date) ? date.toISOString() : undefined);
 
+const resolveSharedLocalizedFields = <T,>(
+  raw: T | { uk?: T | null; en?: T | null } | null | undefined,
+  fallback: T
+): { uk: T; en: T } => {
+  if (raw && typeof raw === 'object' && ('uk' in raw || 'en' in raw)) {
+    const localized = raw as { uk?: T | null; en?: T | null };
+    const canonical = localized.uk ?? localized.en ?? fallback;
+    return { uk: canonical, en: canonical };
+  }
+
+  const canonical = (raw as T | null | undefined) ?? fallback;
+  return { uk: canonical, en: canonical };
+};
+
 const getPublicationSeoMetaErrors = (
   meta: LocalizedMeta,
   locale: 'uk' | 'en',
   requiredFields: Readonly<{ title: boolean; description: boolean }>,
-  options: { altRequired?: boolean } = {}
+  altRequired: boolean
 ): Partial<Record<keyof LocalizedMeta, string>> => {
   const getError = (field: SeoField, value: string, required = false): string => {
     const code = validateSeoField(field, value, { required });
@@ -83,14 +94,11 @@ const getPublicationSeoMetaErrors = (
   const isRequired = (field: 'title' | 'description', value: string): boolean =>
     requiredFields[field] || Boolean(value.trim());
 
-  const altValue = meta.altText?.[locale] ?? '';
-  const altRequired = Boolean(options.altRequired) || Boolean(altValue.trim());
-
   return {
     title: getError('title', meta.title, isRequired('title', meta.title)),
     description: getError('description', meta.description, isRequired('description', meta.description)),
     keywords: getError('keywords', meta.keywords),
-    altText: getError('altText', altValue, altRequired)
+    altText: getError('altText', meta.altText?.[locale] ?? '', altRequired)
   };
 };
 
@@ -104,20 +112,41 @@ const getTicketUrlError = (value: string, locale: 'uk' | 'en'): string => {
   }
 };
 
+const getEventDateErrors = (
+  meta: LocalizedMeta,
+  locale: 'uk' | 'en'
+): { startDateTime: string; endDateTime: string } => {
+  const startDateTime = meta.startDateTime ? '' : seoFormErrors[locale].required;
+
+  let endDateTime = '';
+  if (meta.endDateTime && meta.startDateTime && dayjs(meta.endDateTime).isBefore(dayjs(meta.startDateTime))) {
+    endDateTime = seoFormErrors[locale].endBeforeStart;
+  }
+
+  return { startDateTime, endDateTime };
+};
+
 const validatePublicationSeo = (
   seoValue: SeoBlockValue,
   publicationType: PublicationsItemType
 ): { seoErrors: SeoBlockErrors; hasMetaErrors: boolean; hasUrlErrors: boolean } => {
   const { uk: ukMeta, en: enMeta } = seoValue.meta;
   const hasUrlErrors = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
-  const altRequired = isValidHttpUrl(seoValue.ogImage);
+  const isEvents = publicationType === 'events';
+  const altRequired = Boolean(seoValue.ogImage);
+
+  const buildMetaErrors = (meta: LocalizedMeta, locale: 'uk' | 'en') => {
+    const requiredFields = PUBLICATION_SEO_REQUIRED[locale];
+    const errors = getPublicationSeoMetaErrors(meta, locale, requiredFields, altRequired);
+    return isEvents ? { ...errors, ...getEventDateErrors(meta, locale) } : errors;
+  };
 
   const seoErrors: SeoBlockErrors = {
     meta: {
-      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk, { altRequired }),
-      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en, { altRequired })
+      uk: buildMetaErrors(ukMeta, 'uk'),
+      en: buildMetaErrors(enMeta, 'en')
     },
-    ...(publicationType === 'events' && hasUrlErrors
+    ...(isEvents
       ? {
         ticketUrl: {
           uk: getTicketUrlError(seoValue.ticketUrl?.uk ?? '', 'uk'),
@@ -160,13 +189,13 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
 
-  const [crop, setCrop] = useState<ImageCropData>(null);
+  const [crop, setCrop] = useState<LocalizedCropRect | null>(null);
 
   const [initialState, setInitialState] = useState<{
     adminTitle: string;
     publishDate: string | null;
     seoValue: SeoBlockValue;
-    crop: ImageCropData;
+    crop: LocalizedCropRect | null;
   } | null>(null);
   const [forceShowErrors, setForceShowErrors] = useState(false);
   const [seoErrors, setSeoErrors] = useState<SeoBlockErrors | undefined>();
@@ -175,7 +204,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     adminTitle: '',
     publishDate: null as Dayjs | null,
     seoValue: initialSeoValue,
-    crop: null as ImageCropData | null
+    crop: null as LocalizedCropRect | null
   });
 
   const isInitializedRef = useRef(false);
@@ -184,14 +213,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     latestDataRef.current.adminTitle = val;
     setAdminTitle(val);
   };
-  const validateAdminTitle = (val: string) => {
-    if (!val.trim()) {
-      setAdminTitleError('Обов\'язкове поле');
-      return false;
-    }
-
-    setAdminTitleError('');
-    return true;
+  const validateAdminTitle = (val: string): boolean => {
+    const isValid = Boolean(val.trim());
+    setAdminTitleError(isValid ? '' : 'Обов\'язкове поле');
+    return isValid;
   };
   const changePublishDate = (val: Dayjs | null) => {
     latestDataRef.current.publishDate = val;
@@ -204,7 +229,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     setSeoErrors(undefined);
   };
 
-  const changeCrop = (val: ImageCropData) => {
+  const changeCrop = (val: LocalizedCropRect | null) => {
     latestDataRef.current.crop = val;
     setCrop(val);
   };
@@ -228,13 +253,24 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const mainDate = type === 'news' ? fetchedData.newsDate : fetchedData.publishedAt;
       changePublishDate(parseDate(mainDate));
 
-      const {
-        altText: sharedAltText,
-        ticketUrl: sharedTicketUrl,
-        crop: nextCrop
-      } = resolveSharedLocalizedFields(type, fetchedData);
+      const isEvents = type === 'events';
 
-      changeCrop(nextCrop);
+      const resolvedCrop = resolveSharedLocalizedFields<CropRect | null>(fetchedData.coverImage?.crop, null);
+      changeCrop(resolvedCrop);
+
+      const sharedAltText = isEvents
+        ? resolveSharedLocalizedFields<string>(fetchedData.coverImage?.alt, '')
+        : {
+          uk: fetchedData?.coverImage?.alt?.uk || '',
+          en: fetchedData?.coverImage?.alt?.en || ''
+        };
+
+      const resolvedTicketUrl = isEvents
+        ? resolveSharedLocalizedFields<string>(fetchedData.ticketUrl, '')
+        : {
+          uk: fetchedData.ticketUrl?.uk || '',
+          en: fetchedData.ticketUrl?.en || ''
+        };
 
       const getLangMeta = (lang: 'uk' | 'en') => {
         const start = parseDate(fetchedData?.eventDateTimeStart);
@@ -252,23 +288,23 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
         };
       };
 
-      const nextSeoValue: SeoBlockValue = {
+      const resolvedSeoValue: SeoBlockValue = {
         meta: { uk: getLangMeta('uk'), en: getLangMeta('en') },
         ogImage: fetchedData.coverImage?.src || null,
         allowIndexing: {
           uk: fetchedData.allowIndexation?.uk ?? true,
           en: fetchedData.allowIndexation?.en ?? true
         },
-        ticketUrl: sharedTicketUrl
+        ticketUrl: resolvedTicketUrl
       };
 
-      changeSeoValue(nextSeoValue);
+      changeSeoValue(resolvedSeoValue);
 
       setInitialState({
         adminTitle: fetchedData.adminTitle || '',
         publishDate: getDateIsoString(parseDate(mainDate)) ?? null,
-        seoValue: nextSeoValue,
-        crop: nextCrop
+        seoValue: resolvedSeoValue,
+        crop: resolvedCrop
       });
 
       isInitializedRef.current = true;
@@ -280,14 +316,9 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     const { adminTitle, seoValue, publishDate, crop } = latestDataRef.current;
     const { uk: ukMeta, en: enMeta } = seoValue.meta;
-    const startDateTime = ukMeta.startDateTime;
-    const endDateTime = ukMeta.endDateTime;
 
     const isTitleInvalid = !adminTitle.trim();
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
-
-    const eventDatesValidation = validateEventDates(publicationType, startDateTime, endDateTime);
-    const { isInvalid: areEventDatesInvalid } = eventDatesValidation;
 
     const {
       seoErrors: nextSeoErrors,
@@ -295,11 +326,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       hasUrlErrors
     } = validatePublicationSeo(seoValue, publicationType);
 
-    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || areEventDatesInvalid) {
+    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid) {
       if (isTitleInvalid) setAdminTitleError('Обов\'язкове поле');
-
-      if (hasMetaErrors || hasUrlErrors || areEventDatesInvalid) {
-        setSeoErrors(applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation));
+      if (hasMetaErrors || hasUrlErrors) {
+        setSeoErrors(nextSeoErrors);
         setForceShowErrors(true);
       }
       return;
@@ -338,7 +368,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           const payload = {
             ...commonInput,
             eventLink: adminTitle,
-            eventDateTimeStart: startDateTime!,
+            eventDateTimeStart: ukMeta.startDateTime ?? null,
             eventDateTimeEnd: ukMeta.endDateTime ?? null,
             ticketUrl: seoValue.ticketUrl,
             status: status as unknown as EventStatus
@@ -350,6 +380,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
             }));
           return createEvent({
             ...payload,
+            eventDateTimeStart: payload.eventDateTimeStart ?? '',
             content: emptyContent
           }).then((r) => ({ id: r.data?.createEvent?.id, slug: r.data?.createEvent?.slug }));
         },
@@ -390,7 +421,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       return { id: result?.id, slug: result.slug };
     } catch (error: unknown) {
-      console.error('Error: ', error);
       if (error instanceof Error) {
         const errorMessage = error.message || '';
         const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
@@ -439,8 +469,8 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     adminTitle,
     setAdminTitle: changeAdminTitle,
     adminTitleError,
-    validateAdminTitle,
     setAdminTitleError,
+    validateAdminTitle,
     canonicalUrlError,
     setCanonicalUrlError,
     publishDate,

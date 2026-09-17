@@ -2,10 +2,19 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { CarouselImageCard, CarouselImageData } from './CarouselImageCard';
-import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, initialCrop }: any) => (
+  ImagePreviewBlock: ({
+    imageUrl,
+    fileName,
+    onChangeImage,
+    initialCrop,
+  }: {
+    imageUrl?: string;
+    fileName?: string;
+    onChangeImage: (url: string, crop?: { rect: { x: number; y: number; width: number; height: number } }) => void;
+    initialCrop?: unknown;
+  }) => (
     <div data-testid="image-preview-block" data-url={imageUrl} data-filename={fileName}>
       <button
         type="button"
@@ -27,7 +36,17 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange, label }: any) => (
+  CustomTextField: ({
+    title,
+    value,
+    onChange,
+    label,
+  }: {
+    title?: string;
+    value?: string;
+    onChange: (val: string | { target: { value: string } }) => void;
+    label?: string;
+  }) => (
     <div data-testid={`textfield-${title}`}>
       <label>{title}</label>
       <input
@@ -95,10 +114,10 @@ describe('CarouselImageCard', () => {
   });
 
   it('renders with fallback image src and filename when image data is missing', () => {
-    const bareImage: CarouselImageData = { id: 9, src: '', alt: {} as any };
+    const bareImage: CarouselImageData = { id: 9, src: '', alt: {} as unknown as CarouselImageData['alt'] };
     render(<CarouselImageCard image={bareImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
 
-    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', DEFAULT_IMAGE_PLACEHOLDER);
+    expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-url', '/images/light-logo.svg');
     expect(screen.getByTestId('image-preview-block')).toHaveAttribute('data-filename', 'image');
   });
 
@@ -177,7 +196,12 @@ describe('CarouselImageCard', () => {
   });
 
   it('falls back to empty strings for alt/caption when the image has no existing localized values', () => {
-    const bareImage: CarouselImageData = { id: 5, src: '/images/bare.jpg', alt: {} as any, caption: {} as any };
+    const bareImage: CarouselImageData = {
+      id: 5,
+      src: '/images/bare.jpg',
+      alt: {} as unknown as CarouselImageData['alt'],
+      caption: {} as unknown as CarouselImageData['caption']
+    };
     render(<CarouselImageCard image={bareImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
 
     fireEvent.click(screen.getByTestId('direct-string-btn-Альтернативний текст'));
@@ -226,7 +250,8 @@ describe('CarouselImageCard', () => {
   });
 
   it('falls back to default "Carousel image" alt text when no alt exists for the current locale on file change', () => {
-    const bareImage: CarouselImageData = { id: 7, src: '', alt: {} as any };
+    // Intentionally incomplete localized data (missing uk/en) to exercise the component's fallback rendering.
+    const bareImage: CarouselImageData = { id: 7, src: '', alt: {} as unknown as CarouselImageData['alt'] };
     render(<CarouselImageCard image={bareImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
 
     fireEvent.click(screen.getByTestId('mock-change-image-no-crop-btn'));

@@ -45,7 +45,7 @@ const mockItems: ActionMenuGroups = [
     ]
   },
   {
-    items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => console.log('Delete clicked') }]
+    items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => {} }]
   }
 ];
 

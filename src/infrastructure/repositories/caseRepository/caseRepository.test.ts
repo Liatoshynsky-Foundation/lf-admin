@@ -63,7 +63,7 @@ describe('caseRepository', () => {
     order: 0
   };
 
-  const mockAndFetchCase = async (overrides: any, cipher?: string, reqDesc = 1, reqCase = 1) => {
+  const mockAndFetchCase = async (overrides: Partial<DbCase>, cipher?: string, reqDesc = 1, reqCase = 1) => {
     const doc = { ...createMockCaseDoc(overrides), ...(cipher !== undefined && { cipher }) };
     findOneMock.mockResolvedValue({ toObject: () => doc });
     return await repository.findByFundAndNumbers(mockFundId, reqDesc, reqCase);

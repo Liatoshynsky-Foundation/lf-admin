@@ -2,7 +2,7 @@ import { GET } from './route';
 
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: (body: any) => ({
+    json: <T>(body: T) => ({
       status: 200,
       json: async () => body
     })

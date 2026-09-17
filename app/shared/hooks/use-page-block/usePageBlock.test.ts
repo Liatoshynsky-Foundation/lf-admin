@@ -31,7 +31,7 @@ describe('usePageBlock hook', () => {
   });
 
   it('should return undefined if the page or block does not exist', () => {
-    const { result } = renderHook(() => usePageBlock('nonExistentPage', 'IntroSection' as any));
+    const { result } = renderHook(() => usePageBlock('nonExistentPage', 'IntroSection'));
 
     expect(result.current.block).toBeUndefined();
   });

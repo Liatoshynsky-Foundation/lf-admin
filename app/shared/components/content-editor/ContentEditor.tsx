@@ -42,8 +42,7 @@ export const ContentEditor = ({
       } else {
         onSaveComplete?.(false);
       }
-    } catch (error) {
-      console.error('Error saving content:', error);
+    } catch {
       onSaveComplete?.(false);
     } finally {
       setIsSaving(false);

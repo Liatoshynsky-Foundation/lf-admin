@@ -1,6 +1,5 @@
 'use client';
 
-import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
 import {
   Block,
@@ -220,9 +219,8 @@ export const BlockNoteEditor = (props: BlockNoteEditorProps) => {
           Object.defineProperty(event, 'clipboardData', {
             value: dt
           });
-        } catch (e) {
+        } catch {
           toast.error('Помилка обробки вставленого тексту');
-          console.error('Помилка обробки вставленого тексту:', e);
         }
         return defaultPasteHandler();
       }

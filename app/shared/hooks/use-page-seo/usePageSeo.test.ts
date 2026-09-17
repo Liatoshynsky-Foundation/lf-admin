@@ -135,7 +135,6 @@ describe('usePageSeo', () => {
   });
 
   it('should show error toast when save fails', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockUpdatePageSeo.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => usePageSeo('about-us'));
@@ -146,8 +145,6 @@ describe('usePageSeo', () => {
 
     expect(toast.error).toHaveBeenCalledWith('Щось пішло не так, спробуйте знову');
     expect(toast.success).not.toHaveBeenCalled();
-
-    consoleErrorSpy.mockRestore();
   });
 
   it('should render pageExtraFields with canonical url value', () => {

@@ -38,7 +38,13 @@ jest.mock('~/shared/components/filtering-toolbar', () => ({
 }));
 
 jest.mock('~/shared/components/page-header/PageHeader', () => ({
-  PageHeader: ({ title, action }: any) => (
+  PageHeader: ({
+    title,
+    action,
+  }: {
+    title: React.ReactNode;
+    action?: React.ReactNode;
+  }) => (
     <div>
       <h1>{title}</h1>
       <div>{action}</div>

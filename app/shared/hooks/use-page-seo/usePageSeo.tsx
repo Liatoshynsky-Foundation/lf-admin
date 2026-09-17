@@ -46,9 +46,8 @@ export const usePageSeo = (slug: string) => {
       });
 
       toast.success('SEO збережено успішно');
-    } catch (err) {
+    } catch {
       toast.error('Щось пішло не так, спробуйте знову');
-      console.error(err);
     }
   };
 

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 import type { DateTimePickerProps } from './DateTimePicker';
 import DateTimePicker from './DateTimePicker';
@@ -14,8 +14,8 @@ jest.mock('@mui/x-date-pickers/DesktopDateTimePicker', () => ({
     slotProps
   }: {
     label?: string;
-    value?: dayjs.Dayjs | null;
-    onChange: (value: dayjs.Dayjs | null) => void;
+    value?: Dayjs | null;
+    onChange: (value: Dayjs | null) => void;
     slotProps?: {
       textField?: {
         error?: boolean;

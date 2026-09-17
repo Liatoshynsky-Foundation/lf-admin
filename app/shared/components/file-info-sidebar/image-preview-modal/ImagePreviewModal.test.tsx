@@ -73,12 +73,17 @@ describe('ImagePreviewModal', () => {
     wheelHandler = null;
     wheelOptions = undefined;
 
-    addSpy = jest.spyOn(globalThis, 'addEventListener').mockImplementation((type: any, listener: any, options: any) => {
-      if (type === 'wheel') {
-        wheelHandler = listener as (e: WheelEvent) => void;
-        wheelOptions = options;
-      }
-    });
+    addSpy = jest.spyOn(globalThis, 'addEventListener').mockImplementation(
+      (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+      ) => {
+        if (type === 'wheel') {
+          wheelHandler = listener as (e: WheelEvent) => void;
+          wheelOptions = options;
+        }
+      });
 
     removeSpy = jest.spyOn(globalThis, 'removeEventListener').mockImplementation(() => {});
   });

@@ -11,7 +11,15 @@ jest.mock('./PrincipleHopeButtonCard.styles', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({
+    title,
+    value,
+    onChange,
+  }: {
+    title?: string;
+    value?: string;
+    onChange: (val: string | { target: { value: string } }) => void;
+  }) => (
     <div data-testid={`textfield-${title}`}>
       <label>{title}</label>
       <input
@@ -75,8 +83,8 @@ describe('PrincipleHopeButtonCard', () => {
   it('renders with empty values when shortText/fullText/link are missing', () => {
     const bareButton: ClickableButtonData = {
       id: 'btn-2',
-      shortText: {} as any,
-      fullText: {} as any,
+      shortText: {} as unknown as ClickableButtonData['shortText'],
+      fullText: {} as unknown as ClickableButtonData['fullText'],
       link: ''
     };
 
@@ -180,8 +188,8 @@ describe('PrincipleHopeButtonCard', () => {
   it('falls back to empty strings when updating shortText/fullText for a button with no existing localized values', () => {
     const bareButton: ClickableButtonData = {
       id: 'btn-3',
-      shortText: {} as any,
-      fullText: {} as any,
+      shortText: {} as unknown as ClickableButtonData['shortText'],
+      fullText: {} as unknown as ClickableButtonData['fullText'],
       link: ''
     };
 

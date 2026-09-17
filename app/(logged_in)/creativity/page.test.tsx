@@ -157,14 +157,31 @@ jest.mock('~/shared/hooks/use-share/useShare', () => ({
   }))
 }));
 
+interface MockActionMenuItem {
+  id: string;
+  href?: string;
+  text: { name: string };
+  onClick?: () => void;
+}
+
+interface MockActionMenuSection {
+  items: MockActionMenuItem[];
+}
+
 jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
   __esModule: true,
-  default: ({ anchorEl, menuItems }: { anchorEl: HTMLElement | null; menuItems: any[] }) => {
+  default: ({
+    anchorEl,
+    menuItems,
+  }: {
+    anchorEl: HTMLElement | null;
+    menuItems: MockActionMenuSection[];
+  }) => {
     if (!anchorEl) return null;
     return (
       <div data-testid="dropdown-menu">
         {menuItems.flatMap((section) =>
-          section.items.map((item: any) =>
+          section.items.map((item: MockActionMenuItem) =>
             item.href ? (
               <a key={item.id} role="menuitem" href={item.href}>
                 {item.text.name}

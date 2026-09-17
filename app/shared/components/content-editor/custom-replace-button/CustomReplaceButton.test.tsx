@@ -82,7 +82,7 @@ describe('CustomReplaceButton', () => {
       });
     };
 
-    const expectUpdate = async (modalResult: MediaModalResult, expectedProps: Record<string, any>) => {
+    const expectUpdate = async (modalResult: MediaModalResult, expectedProps: Record<string, unknown>) => {
       triggerModalFlow(modalResult);
       await waitFor(() => {
         expect(mockUpdateBlock).toHaveBeenCalledTimes(1);

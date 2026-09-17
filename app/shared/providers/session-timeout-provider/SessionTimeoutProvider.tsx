@@ -26,9 +26,7 @@ export function SessionTimeoutProvider({ children }: Wrapper) {
   const handleInactivity = useCallback(async () => {
     try {
       await logoutAction();
-    } catch (error) {
-      console.error('Failed to clear session on inactivity logout:', error);
-    }
+    } catch {}
 
     logout();
     router.push('/login?reason=inactivity');

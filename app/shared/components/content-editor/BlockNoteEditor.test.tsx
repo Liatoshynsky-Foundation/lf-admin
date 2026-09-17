@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import toast from 'react-hot-toast';
@@ -182,7 +180,7 @@ describe('BlockNoteEditor', () => {
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    originalError = console.error;
+    ({ error: originalError } = console);
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((...args) => {
       const firstArg = args[0];
       if (typeof firstArg === 'string' && firstArg.includes('was not wrapped in act')) {
@@ -600,14 +598,9 @@ describe('BlockNoteEditor', () => {
 
       Object.freeze(event);
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       capturedCreateOptions?.pasteHandler({ event, defaultPasteHandler: mockDefaultPasteHandler });
 
       expect(toast.error).toHaveBeenCalledWith('Помилка обробки вставленого тексту');
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should append files to DataTransfer if present in clipboardData', () => {

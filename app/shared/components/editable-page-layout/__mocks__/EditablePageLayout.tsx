@@ -4,6 +4,7 @@ import { Header } from '~/shared/components/header/__mocks__/Header';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
+import type { StoreState } from '~/store/types';
 
 export const EditablePageLayout = ({
   pageSlug,
@@ -14,8 +15,8 @@ export const EditablePageLayout = ({
   headerTitle: string;
   children: React.ReactNode;
 }) => {
-  const setLocale = useStore((s: any) => s.setLocale);
-  const discardChanges = useStore((s: any) => s.discardChanges);
+  const setLocale = useStore((s: StoreState) => s.setLocale);
+  const discardChanges = useStore((s: StoreState) => s.discardChanges);
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug);
 

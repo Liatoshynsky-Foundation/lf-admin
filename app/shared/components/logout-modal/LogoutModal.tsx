@@ -24,8 +24,7 @@ const LogoutModal = ({ open, onClose, disableScrollLock }: LogoutModalProps) => 
       await logoutAction();
       router.push('/login');
       router.refresh();
-    } catch (error) {
-      console.error('Помилка при виході', error);
+    } catch {
       setIsLoggingOut(false);
     }
   };

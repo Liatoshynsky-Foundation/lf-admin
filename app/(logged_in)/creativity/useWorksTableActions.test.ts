@@ -43,7 +43,6 @@ describe('useWorksTableActions', () => {
   const mockDeleteOpus = jest.fn();
 
   const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
-  let consoleErrorSpy: jest.SpyInstance;
 
   beforeAll(() => {
     Object.defineProperty(navigator, 'clipboard', {
@@ -73,12 +72,6 @@ describe('useWorksTableActions', () => {
     (useDeleteOpusMutation as jest.MockedFunction<typeof useDeleteOpusMutation>).mockReturnValue([
       mockDeleteOpus
     ] as unknown as ReturnType<typeof useDeleteOpusMutation>);
-
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
   });
 
   describe('Initial State & Setters', () => {
@@ -181,7 +174,7 @@ describe('useWorksTableActions', () => {
       expect(statusFieldFn()).toBe(OpusStatus.Published);
     });
 
-    it('should catch error, log it, and show error toast when update fails', async () => {
+    it('should catch error and show error toast when update fails', async () => {
       mockUpdateOpusStatus.mockRejectedValueOnce(MOCK_ERROR);
 
       const { result } = renderHook(() => useWorksTableActions());
@@ -190,7 +183,6 @@ describe('useWorksTableActions', () => {
         await result.current.handlePublishStatusChange(MOCK_GROUP_ID, OpusStatus.Published);
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.STATUS_ERROR);
     });
   });
@@ -227,7 +219,7 @@ describe('useWorksTableActions', () => {
       expect(result.current.groupToUngroup).toBeNull();
     });
 
-    it('should catch error, log it, and show error toast when delete fails', async () => {
+    it('should catch error and show error toast when delete fails', async () => {
       mockDeleteOpus.mockRejectedValueOnce(MOCK_ERROR);
       const { result } = renderHook(() => useWorksTableActions());
 
@@ -239,7 +231,6 @@ describe('useWorksTableActions', () => {
         await result.current.handleConfirmUngroup();
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.UNGROUP_ERROR);
     });
   });
@@ -260,7 +251,7 @@ describe('useWorksTableActions', () => {
       expect(toast.success).toHaveBeenCalledWith(TOAST_MESSAGES.SHARE_SUCCESS);
     });
 
-    it('should catch error, log it, and show error toast when clipboard access fails', async () => {
+    it('should catch error and show error toast when clipboard access fails', async () => {
       const mockWriteText = jest.fn().mockRejectedValueOnce(MOCK_ERROR);
       (navigator.clipboard.writeText as jest.Mock) = mockWriteText;
 
@@ -270,7 +261,6 @@ describe('useWorksTableActions', () => {
         await result.current.handleShareGroup(MOCK_GROUP_ID);
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Помилка копіювання: ', MOCK_ERROR);
       expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.SHARE_ERROR);
     });
   });

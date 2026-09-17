@@ -125,16 +125,6 @@ const saveNewsDraftAndExpectCreation = async (result: ReturnType<typeof setupPub
 };
 
 describe('useUpsertPublication Hook', () => {
-  let consoleErrorSpy: jest.SpyInstance;
-
-  beforeAll(() => {
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterAll(() => {
-    consoleErrorSpy.mockRestore();
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
     mockNewsQuery.mockReturnValue({ data: undefined, loading: false });

@@ -27,16 +27,16 @@ export const isAudioUploadFile = (file: File): boolean => matchesAudio(file.type
 export const isPdfUploadFile = (file: File): boolean => matchesPdf(file.type, file.name);
 
 export const isAnyAllowedFile = (file: File): boolean => {
-  const extension = file.name.split('.').pop()?.toLowerCase() as any;
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
 
-  const isValidExtension = FILES_UPLOAD_ALLOWED_EXTENSIONS.includes(extension);
+  const isValidExtension = (FILES_UPLOAD_ALLOWED_EXTENSIONS as readonly string[]).includes(extension);
 
   if (extension === 'rar') {
     return isValidExtension;
   }
 
   const isValidMimeType =
-    FILES_UPLOAD_ALLOWED_MIME_TYPES.includes(file.type as any) ||
+    (FILES_UPLOAD_ALLOWED_MIME_TYPES as readonly string[]).includes(file.type) ||
     file.type === '' ||
     file.type === 'application/octet-stream';
 

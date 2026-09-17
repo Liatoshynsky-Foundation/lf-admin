@@ -19,7 +19,7 @@ export interface MockEditableSectionListProps {
   readonly onCreateItem: () => { readonly id: string };
   readonly onDeleteItem: (id: string) => void;
   readonly sectionLabel: string;
-  readonly onDragEnd?: (event: any) => void;
+  readonly onDragEnd?: (event: { active: { id: string }; over: { id: string } | null }) => void;
 }
 
 export const EditableSectionList = ({

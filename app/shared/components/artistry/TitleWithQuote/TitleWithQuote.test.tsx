@@ -20,7 +20,15 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ value, onChange, title }: any) => (
+  CustomTextField: ({
+    value,
+    onChange,
+    title,
+  }: {
+    value?: string;
+    onChange: (val: string) => void;
+    title?: string;
+  }) => (
     <div data-testid="custom-text-field">
       <span>{title}</span>
       <input data-testid="title-input" value={value || ''} onChange={(e) => onChange(e.target.value)} />
@@ -29,7 +37,17 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
 }));
 
 jest.mock('~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock', () => ({
-  QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: any) => (
+  QuoteBlock: ({
+    title,
+    description,
+    onTitleChange,
+    onDescriptionChange,
+  }: {
+    title?: string;
+    description?: string;
+    onTitleChange: (val: string) => void;
+    onDescriptionChange: (val: string) => void;
+  }) => (
     <div data-testid="quote-block">
       <input data-testid="source-input" value={title || ''} onChange={(e) => onTitleChange(e.target.value)} />
       <input
@@ -55,12 +73,13 @@ describe('TitleWithQuote Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseStore.mockImplementation((selector: any) => {
-      return selector({
-        locale: 'uk',
-        setField: mockSetField
+    mockUseStore.mockImplementation(
+      (selector: (state: { locale: string; setField: typeof mockSetField }) => unknown) => {
+        return selector({
+          locale: 'uk',
+          setField: mockSetField
+        });
       });
-    });
   });
 
   it('should render EditBlockSkeleton when block is undefined', () => {

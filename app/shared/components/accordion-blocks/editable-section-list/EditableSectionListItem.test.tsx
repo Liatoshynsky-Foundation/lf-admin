@@ -8,7 +8,9 @@ import { createDocNode } from '~/__mocks__/utils';
 jest.mock('~/components/design-system/text-field/TextField');
 
 jest.mock('../../sortable-item-wrapper/SortableItemWrapper', () => ({
-  SortableItemWrapper: ({ children }: any) => <div data-testid="sortable-wrapper">{children}</div>
+  SortableItemWrapper: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sortable-wrapper">{children}</div>
+  )
 }));
 const onChangeItemMock = jest.fn();
 describe('EditableSectionListItem', () => {
