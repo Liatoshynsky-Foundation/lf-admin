@@ -18,9 +18,10 @@ type GroupPhotosSectionProps = {
   currentLanguage: EditorLanguage;
   errors?: Record<string, string>;
   onChange: (photos: GroupPhoto[]) => void;
+  onBlurPhotoAltText: (photoId: string, value: string) => void;
 };
 
-export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }: GroupPhotosSectionProps) => {
+export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange, onBlurPhotoAltText }: GroupPhotosSectionProps) => {
   const { photoIdToDelete, setPhotoIdToDelete, handleAddPhoto, handleUpdatePhoto, handleConfirmDelete } =
     useGroupPhotos(photos, onChange);
 
@@ -82,7 +83,7 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
                         altText: newAltText
                       });
                     }}
-                    onBlurAltText={() => {
+                    onBlurAltText={(value) => {
                       const currentUk = photo.altText?.uk || '';
                       const currentEn = photo.altText?.en || '';
 
@@ -92,6 +93,8 @@ export const GroupPhotosSection = ({ photos, currentLanguage, errors, onChange }
                           en: currentEn.trim()
                         }
                       });
+
+                      onBlurPhotoAltText(photo.id || '', value);
                     }}
                     initialCrop={photo.crop}
                     aspectRatio={CROP_RATIOS.GROUP_PHOTO}
