@@ -170,12 +170,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   }, [appliedSearch, filterValues]);
 
   useEffect(() => {
-    if (totalPages > 0) {
-      setKnownFundPageCount(totalPages);
-    }
-    if (total > 0) {
-      setKnownFundTotal(total);
-    }
+    setKnownFundPageCount(totalPages);
+    setKnownFundTotal(total);
   }, [total, totalPages]);
 
   const handlePageChange = (_: ChangeEvent<unknown>, value: number) => {

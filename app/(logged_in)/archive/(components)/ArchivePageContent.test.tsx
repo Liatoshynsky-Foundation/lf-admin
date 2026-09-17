@@ -69,7 +69,15 @@ function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: str
 
 jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
   __esModule: true,
-  FundsTable: ({ funds, cases = [], hasActiveSearch, hasActiveStatusFilter, onPublish, onUnpublish }: FundsTableProps) => (
+  FundsTable: ({
+    funds,
+    cases = [],
+    hasActiveSearch,
+    hasActiveStatusFilter,
+    onDeleted,
+    onPublish,
+    onUnpublish
+  }: FundsTableProps) => (
     <div data-testid="funds-table">
       <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
       <div data-testid="funds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
@@ -77,6 +85,7 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
         {funds.map((fund) => (
           <div key={fund.id} data-testid={`funds-table-item-${fund.id}`}>
             {fund.name} - {fund.fundNumber} - {fund.status}
+            <button onClick={() => onDeleted?.()}>delete {fund.id}</button>
             <button onClick={() => onPublish?.(fund)}>publish {fund.id}</button>
             <button onClick={() => onUnpublish?.(fund)}>unpublish {fund.id}</button>
           </div>
@@ -769,6 +778,44 @@ describe('ArchivePageContent', () => {
   });
 
   describe('pagination', () => {
+    it('should clear cached fund pagination after deleting the final fund when cases remain', async () => {
+      const refetchFunds = jest.fn(async () => undefined);
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        total: 1,
+        totalPages: 1,
+        loading: false,
+        error: undefined,
+        refetch: refetchFunds
+      });
+      mockUseAllCases.mockReturnValue({
+        cases: Array.from({ length: 10 }, (_, index) => mockCase({ id: String(index), caseNumber: index })),
+        loading: false,
+        error: undefined
+      });
+
+      const { rerender } = render(<ArchivePageContent activeTab="all" />);
+
+      expect(within(screen.getByTestId('cases-list')).getAllByRole('listitem')).toHaveLength(7);
+      expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [],
+        total: 0,
+        totalPages: 0,
+        loading: false,
+        error: undefined,
+        refetch: refetchFunds
+      });
+      await refetchFunds();
+      rerender(<ArchivePageContent activeTab="all" />);
+
+      await waitFor(() => {
+        expect(within(screen.getByTestId('cases-list')).getAllByRole('listitem')).toHaveLength(ARCHIVE_ITEMS_PER_PAGE);
+        expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+      });
+    });
+
     it('should not render pagination when there is one page or fewer', () => {
       mockUsePaginatedFunds.mockReturnValue({
         funds: [mockFund()],
