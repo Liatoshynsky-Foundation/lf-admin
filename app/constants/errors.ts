@@ -143,6 +143,14 @@ export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
   INVALID_PDF_FILE: 'INVALID_PDF_FILE'
 };
 
+export const ResearchWorkErrors = {
+  RESEARCH_WORK_NOT_FOUND: (id: string) => `Research work with id "${id}" not found`
+};
+
+export const ResearchWorkErrorCodes: Record<keyof typeof ResearchWorkErrors, string> = {
+  RESEARCH_WORK_NOT_FOUND: 'RESEARCH_WORK_NOT_FOUND'
+};
+
 export const galleryErrors = {
   FAILED_TO_FETCH: 'Upload files failed'
 };

@@ -1,3 +1,4 @@
+import type { CollationOptions } from 'mongodb';
 import { ClientSession, FilterQuery, Model, Types, UpdateQuery } from 'mongoose';
 
 import {
@@ -20,8 +21,9 @@ export const createBaseRepository = <
   buildQuery?: (filters?: QueryFilters<TFilters>) => FilterQuery<TDbDoc>;
   getSort?: (filters?: TFilters) => Record<string, 1 | -1>;
   getDefaultSort?: (filters?: TFilters) => Record<string, 1 | -1>;
+  collation?: CollationOptions;
 }): IBaseRepository<TEntity, TFilters> => {
-  const { model, toEntity, buildQuery = () => ({}), getSort, getDefaultSort } = options;
+  const { model, toEntity, buildQuery = () => ({}), getSort, getDefaultSort, collation } = options;
 
   const extractQueryFilters = (filters?: TFilters): QueryFilters<TFilters> | undefined => {
     if (!filters) return undefined;
@@ -80,6 +82,9 @@ export const createBaseRepository = <
       }
 
       const queryBuilder = model.find(query).sort(sort);
+      if (collation) {
+        queryBuilder.collation(collation);
+      }
       if (session) queryBuilder.session(session);
 
       if (filters?.skip) {
