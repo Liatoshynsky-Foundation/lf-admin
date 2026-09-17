@@ -4,6 +4,7 @@ import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 
 const SLUG = 'archive';
 const COLLECTION = 'pages';
+const MIGRATION_ID = '1789554233928-add-archive-page';
 
 export async function up(db: Db): Promise<void> {
   const baseStorageUrl = process.env.STORAGE_BASE_URL;
@@ -44,11 +45,15 @@ export async function up(db: Db): Promise<void> {
     keywords: { uk: '', en: '' },
     canonicalUrl: { uk: '', en: '' },
     allowIndexation: { uk: true, en: true },
+    _migrationId: MIGRATION_ID,
     createdAt: now,
     updatedAt: now
   });
 }
 
 export async function down(db: Db): Promise<void> {
-  await db.collection(COLLECTION).deleteOne({ slug: SLUG });
+  await db.collection(COLLECTION).deleteOne({
+    slug: SLUG,
+    _migrationId: MIGRATION_ID
+  });
 }
