@@ -101,7 +101,7 @@ export default function SeoMetadataBlock({
   }, [forceShowErrors, isExternalValidation, showTicketUrl, value.ticketUrl?.en, value.ticketUrl?.uk]);
 
   const validateTicketUrl = (val: string, locale: 'uk' | 'en') => {
-    if (!val.trim()) return seoFormErrors[locale].required;
+    if (!val.trim()) return '';
     try {
       new URL(val);
       return '';
@@ -164,7 +164,6 @@ export default function SeoMetadataBlock({
           fullWidth
           size="small"
           sx={styles.textField}
-          required
         />
         {externalExtra}
       </>

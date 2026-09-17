@@ -38,8 +38,8 @@ describe('checkIsSeoInvalid', () => {
       expect(result).toBe(true);
     });
 
-    it('if type is "events" and ticketUrl is missing', () => {
-      const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', undefined);
+    it('if type is "events" and ticketUrl is invalid', () => {
+      const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', { uk: 'not-a-url', en: 'not-a-url' });
       expect(result).toBe(true);
     });
   });
@@ -51,6 +51,11 @@ describe('checkIsSeoInvalid', () => {
       ['type "events"', 'events']
     ])('if %s and both uk & en urls are correct & valid', (_, type) => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, type as PublicationsItemType, validTicketUrl);
+      expect(result).toBe(false);
+    });
+
+    it('if type is "event" and ticketUrl is empty', () => {
+      const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', { uk: '', en: '' });
       expect(result).toBe(false);
     });
 

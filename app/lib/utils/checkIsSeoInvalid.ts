@@ -16,7 +16,10 @@ export const checkIsSeoInvalid = (
   if (publicationType === 'events') {
     const ukUrl = ticketUrl?.uk ?? '';
     const enUrl = ticketUrl?.en ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
+    return (
+      (Boolean(ukUrl.trim()) && !isValidUrl(ukUrl)) ||
+      (Boolean(enUrl.trim()) && !isValidUrl(enUrl))
+    );
   }
   return false;
 };

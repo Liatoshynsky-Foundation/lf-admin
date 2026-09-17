@@ -167,13 +167,14 @@ describe('SeoMetadataBlock', () => {
     });
   });
 
-  it('shows required error for empty ticket url on blur', async () => {
+  it('shows no error for empty ticket url on blur', async () => {
     const user = userEvent.setup();
     renderBlock({ showTicketUrl: true });
     const inputs = screen.getAllByLabelText(/ticket url/i);
     await user.click(inputs[0]);
     await user.tab();
-    expect(await screen.findByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.invalidUrl)).not.toBeInTheDocument();
   });
 
   it('shows url format error for invalid ticket url', async () => {
@@ -195,10 +196,10 @@ describe('SeoMetadataBlock', () => {
     expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
-  it('triggers forceShowErrors effect for ticketUrl in both locales', () => {
+  it('does not show required errors for empty ticketUrl when forceShowErrors is enabled', () => {
     renderBlock({ showTicketUrl: true, forceShowErrors: true });
-    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
-    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.en.required)).not.toBeInTheDocument();
   });
 
   it('triggers forceShowErrors effect when ticketUrl has pre-existing valid/invalid values', () => {
@@ -314,7 +315,7 @@ describe('SeoMetadataBlock', () => {
     );
   });
 
-  it('handles forceShowErrors when only one locale ticketUrl is defined', () => {
+  it('allows empty ticketUrl in one locale when forceShowErrors is enabled', () => {
     renderBlock({
       showTicketUrl: true,
       forceShowErrors: true,
@@ -324,7 +325,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid-uk.com', en: '' }
       }
     });
-    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.en.required)).not.toBeInTheDocument();
 
     renderBlock({
       showTicketUrl: true,
@@ -335,7 +336,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: '', en: 'https://valid-en.com' }
       }
     });
-    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
   it('renders ticketUrl fields cleanly when value.ticketUrl is undefined', () => {
@@ -428,7 +429,7 @@ describe('SeoMetadataBlock', () => {
     expect(screen.queryByText(seoFormErrors.en.invalidUrl)).not.toBeInTheDocument();
   });
 
-  it('handles forceShowErrors when one locale ticketUrl is undefined in ticketUrl object', () => {
+  it('allows undefined ticketUrl for one locale when forceShowErrors is enabled', () => {
     renderBlock({
       showTicketUrl: true,
       forceShowErrors: true,
@@ -440,7 +441,7 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { uk: 'https://valid-uk.com' } as { uk: string; en: string }
       }
     });
-    expect(screen.getByText(seoFormErrors.en.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.en.required)).not.toBeInTheDocument();
 
     renderBlock({
       showTicketUrl: true,
@@ -453,6 +454,6 @@ describe('SeoMetadataBlock', () => {
         ticketUrl: { en: 'https://valid-en.com' } as { uk: string; en: string }
       }
     });
-    expect(screen.getByText(seoFormErrors.uk.required)).toBeInTheDocument();
+    expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 });
