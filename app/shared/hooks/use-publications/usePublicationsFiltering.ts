@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  PUBLICATIONS_FILTERS,
-  type PublicationsStatusValue
-} from '~/constants/publications';
+import { PUBLICATIONS_FILTERS, type PublicationsStatusValue } from '~/constants/publications';
 import {
   type FilesSortValue,
   SORT_FIELD_OPTIONS,
@@ -23,7 +20,8 @@ import {
   type NewsFiltersInput,
   NewsSortBy,
   NewsStatus,
-  SortOrder} from '~/types/graphql/generated/graphql';
+  SortOrder
+} from '~/types/graphql/generated/graphql';
 
 const SORT_STORAGE_KEY = 'publications_sort';
 
@@ -62,10 +60,9 @@ const mapPublicationStatus = <TStatus extends string>(
   return statusEnum[PUBLICATION_STATUS_TO_ENUM_KEY[status]];
 };
 
-
 type BaseContentSortEnum<TField extends string> = Readonly<{
   AdminTitle: TField;
-  CreatedAt: TField;
+  PublishedAt: TField;
 }>;
 
 type BaseContentSortOption<TField extends string> = Readonly<{
@@ -80,22 +77,22 @@ const getBaseContentSortOptions = <TField extends string>(
   if (sortValue === 'name_asc') {
     return [
       { field: sortFields.AdminTitle, order: SortOrder.Asc },
-      { field: sortFields.CreatedAt, order: SortOrder.Desc }
+      { field: sortFields.PublishedAt, order: SortOrder.Desc }
     ];
   }
 
   if (sortValue === 'name_desc') {
     return [
       { field: sortFields.AdminTitle, order: SortOrder.Desc },
-      { field: sortFields.CreatedAt, order: SortOrder.Desc }
+      { field: sortFields.PublishedAt, order: SortOrder.Desc }
     ];
   }
 
   if (sortValue === 'date_asc') {
-    return [{ field: sortFields.CreatedAt, order: SortOrder.Asc }];
+    return [{ field: sortFields.PublishedAt, order: SortOrder.Asc }];
   }
 
-  return [{ field: sortFields.CreatedAt, order: SortOrder.Desc }];
+  return [{ field: sortFields.PublishedAt, order: SortOrder.Desc }];
 };
 
 const getInitialSortValue = (): FilesSortValue => {
@@ -127,18 +124,26 @@ export function usePublicationsFiltering(): Readonly<{
     () => ({
       news: {
         search: normalizedSearch || undefined,
-        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, NewsStatus)) : undefined,
+        statuses: statusFilters.length
+          ? statusFilters.map((status) => mapPublicationStatus(status, NewsStatus))
+          : undefined,
         sort: getBaseContentSortOptions(sortValue, NewsSortBy) as NonNullable<NewsFiltersInput['sort']>
       },
       events: {
         search: normalizedSearch || undefined,
-        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, EventStatus)) : undefined,
+        statuses: statusFilters.length
+          ? statusFilters.map((status) => mapPublicationStatus(status, EventStatus))
+          : undefined,
         sort: getBaseContentSortOptions(sortValue, EventSortBy) as NonNullable<EventFiltersInput['sort']>
       },
       media: {
         search: normalizedSearch || undefined,
-        statuses: statusFilters.length ? statusFilters.map((status) => mapPublicationStatus(status, MediaStatus)) : undefined,
-        sort: getBaseContentSortOptions(sortValue, MediaMentionsSortBy) as NonNullable<MediaMentionsFiltersInput['sort']>
+        statuses: statusFilters.length
+          ? statusFilters.map((status) => mapPublicationStatus(status, MediaStatus))
+          : undefined,
+        sort: getBaseContentSortOptions(sortValue, MediaMentionsSortBy) as NonNullable<
+          MediaMentionsFiltersInput['sort']
+        >
       }
     }),
     [normalizedSearch, sortValue, statusFilters]
@@ -183,8 +188,7 @@ export function usePublicationsFiltering(): Readonly<{
         value: statusFilters,
         hideClearAction: true,
         menuMinWidth: filter.menuMinWidth,
-        onChange:
-          (value: string[]) => setStatusFilters(value as PublicationsStatusValue[])
+        onChange: (value: string[]) => setStatusFilters(value as PublicationsStatusValue[])
       })),
     [statusFilters]
   );

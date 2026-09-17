@@ -12,9 +12,11 @@ describe('usePublicationsFiltering', () => {
   it('builds backend request filters from toolbar state', () => {
     const { result } = renderHook(() => usePublicationsFiltering());
 
-    expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.CreatedAt, order: 'desc' }]);
-    expect(result.current.requestFilters.media.sort).toEqual([{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]);
-    expect(result.current.requestFilters.events.sort).toEqual([{ field: EventSortBy.CreatedAt, order: 'desc' }]);
+    expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.PublishedAt, order: 'desc' }]);
+    expect(result.current.requestFilters.media.sort).toEqual([
+      { field: MediaMentionsSortBy.PublishedAt, order: 'desc' }
+    ]);
+    expect(result.current.requestFilters.events.sort).toEqual([{ field: EventSortBy.PublishedAt, order: 'desc' }]);
 
     act(() => {
       result.current.toolbarProps.search?.setSearch(' фестиваль ');
@@ -27,17 +29,17 @@ describe('usePublicationsFiltering', () => {
     expect(result.current.requestFilters.news).toEqual({
       search: 'фестиваль',
       statuses: ['editing'],
-      sort: [{ field: NewsSortBy.CreatedAt, order: 'desc' }]
+      sort: [{ field: NewsSortBy.PublishedAt, order: 'desc' }]
     });
     expect(result.current.requestFilters.media).toEqual({
       search: 'фестиваль',
       statuses: ['editing'],
-      sort: [{ field: MediaMentionsSortBy.CreatedAt, order: 'desc' }]
+      sort: [{ field: MediaMentionsSortBy.PublishedAt, order: 'desc' }]
     });
     expect(result.current.requestFilters.events).toEqual({
       search: 'фестиваль',
       statuses: ['editing'],
-      sort: [{ field: EventSortBy.CreatedAt, order: 'desc' }]
+      sort: [{ field: EventSortBy.PublishedAt, order: 'desc' }]
     });
   });
 
@@ -53,15 +55,15 @@ describe('usePublicationsFiltering', () => {
     expect(result.current.sortProps.triggerLabel).toBe('А→Я');
     expect(result.current.requestFilters.news.sort).toEqual([
       { field: NewsSortBy.AdminTitle, order: 'asc' },
-      { field: NewsSortBy.CreatedAt, order: 'desc' }
+      { field: NewsSortBy.PublishedAt, order: 'desc' }
     ]);
     expect(result.current.requestFilters.media.sort).toEqual([
       { field: MediaMentionsSortBy.AdminTitle, order: 'asc' },
-      { field: MediaMentionsSortBy.CreatedAt, order: 'desc' }
+      { field: MediaMentionsSortBy.PublishedAt, order: 'desc' }
     ]);
     expect(result.current.requestFilters.events.sort).toEqual([
       { field: EventSortBy.AdminTitle, order: 'asc' },
-      { field: EventSortBy.CreatedAt, order: 'desc' }
+      { field: EventSortBy.PublishedAt, order: 'desc' }
     ]);
     expect(result.current.toolbarProps.search?.options).toEqual([]);
   });
@@ -148,7 +150,7 @@ describe('usePublicationsFiltering', () => {
     expect(result.current.sortValue).toBe('name_desc');
     expect(result.current.requestFilters.news.sort).toEqual([
       { field: NewsSortBy.AdminTitle, order: 'desc' },
-      { field: NewsSortBy.CreatedAt, order: 'desc' }
+      { field: NewsSortBy.PublishedAt, order: 'desc' }
     ]);
   });
 
@@ -180,7 +182,7 @@ describe('usePublicationsFiltering', () => {
     });
     expect(setItemSpy).toHaveBeenCalledWith('publications_sort', 'date_asc');
     expect(result.current.sortValue).toBe('date_asc');
-    expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.CreatedAt, order: 'asc' }]);
+    expect(result.current.requestFilters.news.sort).toEqual([{ field: NewsSortBy.PublishedAt, order: 'asc' }]);
   });
 
   it('handles sort field change to name when current sort already starts with name', () => {
