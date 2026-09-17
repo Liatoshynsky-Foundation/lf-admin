@@ -266,6 +266,8 @@ export const ADMIN_TITLE_LABELS: Record<PublicationsItemType, string> = {
   media: 'Нотатки адміністратора'
 } as const;
 
+export const ADMIN_TITLE_LENGTH = { min: 2, max: 250 } as const;
+
 export const PUBLICATION_SEO_REQUIRED = {
   uk: { title: true, description: true },
   en: { title: true, description: false }

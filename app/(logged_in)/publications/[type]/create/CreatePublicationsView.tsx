@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 import { PublishMenuItems } from './CreatePublicationsMenuItems';
 import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
-import {
-  ADMIN_TITLE_LABELS,
+import {   ADMIN_TITLE_LABELS,
+  ADMIN_TITLE_LENGTH ,
   MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
@@ -252,7 +252,10 @@ export default function CreatePublicationsView({
             error={Boolean(adminTitleError)}
             helperText={adminTitleError}
             sx={styles.textField}
-            slotProps={{ input: { sx: styles.textFieldInput } }}
+            slotProps={{
+              input: { sx: styles.textFieldInput },
+              htmlInput: { maxLength: ADMIN_TITLE_LENGTH.max }
+            }}
           />
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
             <DatePicker
