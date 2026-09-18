@@ -69,7 +69,15 @@ function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: str
 
 jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
   __esModule: true,
-  FundsTable: ({ funds, hasActiveSearch, hasActiveStatusFilter, onPublish }: FundsTableProps) => (
+  FundsTable: ({
+    funds,
+    cases = [],
+    hasActiveSearch,
+    hasActiveStatusFilter,
+    onDeleted,
+    onPublish,
+    onUnpublish
+  }: FundsTableProps) => (
     <div data-testid="funds-table">
       <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
       <div data-testid="funds-table-has-active-status-filter">{JSON.stringify(hasActiveStatusFilter)}</div>
@@ -77,10 +85,19 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
         {funds.map((fund) => (
           <div key={fund.id} data-testid={`funds-table-item-${fund.id}`}>
             {fund.name} - {fund.fundNumber} - {fund.status}
+            <button onClick={() => onDeleted?.()}>delete {fund.id}</button>
             <button onClick={() => onPublish?.(fund)}>publish {fund.id}</button>
+            <button onClick={() => onUnpublish?.(fund)}>unpublish {fund.id}</button>
           </div>
         ))}
       </div>
+      {cases.length > 0 && (
+        <ul data-testid="cases-list">
+          {cases.map((item) => (
+            <li key={item.id}>{item.name}</li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }));
@@ -526,6 +543,56 @@ describe('ArchivePageContent', () => {
       expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH);
       expect(mockUpdateFund).not.toHaveBeenCalled();
     });
+
+    it('should unpublish a published fund', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'published' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      expect(mockUpdateFund).toHaveBeenCalledWith({ id: '1', input: { status: 'hidden' } });
+      expect(toast.success).toHaveBeenCalledWith('Фонд успішно сховано');
+      await waitFor(() => expect(screen.getByTestId('funds-table-item-1')).toHaveTextContent('hidden'));
+      expect(mockCheckFundPublishWarning).not.toHaveBeenCalled();
+    });
+
+    it('should not try to unpublish a fund that is not published', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'hidden' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      expect(mockUpdateFund).not.toHaveBeenCalled();
+    });
+
+    it('should show an error toast when unpublishing fails', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'published' })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+      mockUpdateFund.mockRejectedValueOnce(new Error('boom'));
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('unpublish 1'));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Не вдалося сховати фонд'));
+      expect(screen.getByTestId('funds-table-item-1')).toHaveTextContent('published');
+    });
   });
 
   describe('cases content states', () => {
@@ -711,6 +778,44 @@ describe('ArchivePageContent', () => {
   });
 
   describe('pagination', () => {
+    it('should clear cached fund pagination after deleting the final fund when cases remain', async () => {
+      const refetchFunds = jest.fn(async () => undefined);
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund()],
+        total: 1,
+        totalPages: 1,
+        loading: false,
+        error: undefined,
+        refetch: refetchFunds
+      });
+      mockUseAllCases.mockReturnValue({
+        cases: Array.from({ length: 10 }, (_, index) => mockCase({ id: String(index), caseNumber: index })),
+        loading: false,
+        error: undefined
+      });
+
+      const { rerender } = render(<ArchivePageContent activeTab="all" />);
+
+      expect(within(screen.getByTestId('cases-list')).getAllByRole('listitem')).toHaveLength(7);
+      expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [],
+        total: 0,
+        totalPages: 0,
+        loading: false,
+        error: undefined,
+        refetch: refetchFunds
+      });
+      await refetchFunds();
+      rerender(<ArchivePageContent activeTab="all" />);
+
+      await waitFor(() => {
+        expect(within(screen.getByTestId('cases-list')).getAllByRole('listitem')).toHaveLength(ARCHIVE_ITEMS_PER_PAGE);
+        expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+      });
+    });
+
     it('should not render pagination when there is one page or fewer', () => {
       mockUsePaginatedFunds.mockReturnValue({
         funds: [mockFund()],

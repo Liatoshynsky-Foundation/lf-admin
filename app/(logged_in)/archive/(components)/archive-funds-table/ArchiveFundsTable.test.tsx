@@ -24,8 +24,12 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
 };
 
 const mockDeleteFund = jest.fn();
+const mockDeleteCase = jest.fn();
+const mockUpdateCase = jest.fn();
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
+  useDeleteCase: () => [mockDeleteCase],
+  useUpdateCase: () => [mockUpdateCase],
 }));
 
 jest.mock('~/shared/components/empty-state', () => ({
@@ -214,6 +218,30 @@ describe('ArchiveFundsTable', () => {
 
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('Опублікувати');
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"publish"');
+  });
+
+  it('should add the unpublish action for published funds when unpublish handler is provided', () => {
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Published }],
+      onUnpublish: jest.fn()
+    });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"unpublish"');
+  });
+
+  it('should not add the unpublish action for non-published funds', () => {
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
+      onUnpublish: jest.fn()
+    });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
+  });
+
+  it('should not add the unpublish action when no unpublish handler is provided', () => {
+    renderComponent({ funds: [{ ...fund, status: BaseContentStatuses.Published }] });
+
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
   });
 
   describe('should render state UIs', () => {

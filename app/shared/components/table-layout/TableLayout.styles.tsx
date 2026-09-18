@@ -13,6 +13,7 @@ export const singleLineEllipsis = {
 
 export const twoLineEllipsis = {
   display: '-webkit-box',
+  minWidth: 0,
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',

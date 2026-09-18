@@ -20,6 +20,7 @@ const createMockAllCasesNode = (
     caseNumber: number;
     caseName: { uk: string; en: string };
     caseDate: { uk: string; en: string };
+    caseDescriptions: { uk: string; en: string };
     sheetsNumber: number;
     status: string;
     updatedAt: string;
@@ -32,6 +33,7 @@ const createMockAllCasesNode = (
   caseNumber: 12,
   caseName: { uk: 'Справа', en: 'Case' },
   caseDate: { uk: '1920-1930', en: '1920-1930' },
+  caseDescriptions: { uk: 'Опис справи', en: 'Case description' },
   sheetsNumber: 5,
   status: 'published',
   updatedAt: '2023-01-01',
@@ -65,7 +67,10 @@ describe('useCases', () => {
           status: BaseContentStatuses.Published,
           dates: '1920-1930',
           updatedAt: '2023-01-01',
-          createdAt: '2022-01-01'
+          createdAt: '2022-01-01',
+          editCaseDate: '1920-1930',
+          editCaseDescriptions: 'Опис справи',
+          detailedCaseDescription: ''
         }
       ]);
       expect(result.current.loading).toBe(false);

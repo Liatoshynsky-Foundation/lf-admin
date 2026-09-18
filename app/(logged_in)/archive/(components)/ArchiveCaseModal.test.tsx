@@ -437,7 +437,8 @@ describe('ArchiveCaseModal', () => {
           caseDate: { uk: '2027', en: '2027' },
           sheetsNumber: '7',
           caseDescriptions: { uk: 'updated short desc', en: 'updated short desc' },
-          detailedCaseDescription: undefined
+          detailedCaseDescription: undefined,
+          pdfFile: null
         }
       });
       expect(mockUpdateCase.mock.calls[0][0]).not.toHaveProperty('input.fundId');
@@ -460,9 +461,9 @@ describe('ArchiveCaseModal', () => {
       );
     });
 
-    it('omits pdfFile from mutation input when pdfUrl is not provided', async () => {
+    it('sets pdfFile to null when pdfUrl is not provided', async () => {
       await execSave({ fundId: 'FUND-1' }, { pdfUrl: undefined });
-      expect(mockCreateCase.mock.calls[0][0]).not.toHaveProperty('pdfFile');
+      expect(mockCreateCase.mock.calls[0][0]).toHaveProperty('pdfFile', null);
     });
 
     it('passes both initialData and onSave to the hook when fundId/caseId and initialData are provided together', () => {

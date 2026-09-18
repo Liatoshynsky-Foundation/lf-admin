@@ -99,6 +99,7 @@ export const ArchiveCaseModalView = ({
             label={ARCHIVE_CASE_MODAL_LABELS.caseName}
             value={caseName}
             onChange={(e) => setCaseName(e.target.value)}
+            inputProps={{ maxLength: 150 }}
             required
             error={Boolean(fieldErrors.caseName)}
             helperText={fieldErrors.caseName}
@@ -119,6 +120,7 @@ export const ArchiveCaseModalView = ({
               label={ARCHIVE_CASE_MODAL_LABELS.caseDate}
               value={caseDate}
               onChange={(e) => setCaseDate(e.target.value)}
+              inputProps={{ maxLength: 150 }}
               required
               error={Boolean(fieldErrors.caseDate)}
               helperText={fieldErrors.caseDate}
@@ -128,6 +130,7 @@ export const ArchiveCaseModalView = ({
             label={ARCHIVE_CASE_MODAL_LABELS.caseDescriptions}
             value={caseDescriptions}
             onChange={(e) => setCaseDescriptions(e.target.value)}
+            inputProps={{ maxLength: 300 }}
             required
             error={Boolean(fieldErrors.caseDescriptions)}
             helperText={fieldErrors.caseDescriptions}
@@ -162,6 +165,9 @@ export const ArchiveCaseModalView = ({
               rows={7}
               value={detailedCaseDescription}
               onChange={(e) => setDetailedCaseDescription(e.target.value)}
+              inputProps={{ maxLength: 1000 }}
+              error={Boolean(fieldErrors.detailedCaseDescription)}
+              helperText={fieldErrors.detailedCaseDescription}
               fullWidth
               sx={styles.multilineTextField}
             />
