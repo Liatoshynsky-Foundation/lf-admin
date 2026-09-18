@@ -68,6 +68,20 @@ describe('usePreviewHandler', () => {
     });
   });
 
+  it('should pass custom lang to fetchPreview when provided', async () => {
+    (fetchPreview as jest.Mock).mockResolvedValue(undefined);
+    const savePromise = Promise.resolve({ id: MOCK_PREVIEW.id, slug: MOCK_PREVIEW.slug });
+    const { result } = renderHook(() => usePreviewHandler());
+
+    await result.current.handlePreview(savePromise, MOCK_PREVIEW.baseRoute, 'en');
+
+    expect(fetchPreview).toHaveBeenCalledWith({
+      slug: `${MOCK_PREVIEW.baseRoute}/${MOCK_PREVIEW.slug}`,
+      lang: 'en',
+      draftId: MOCK_PREVIEW.id
+    });
+  });
+
   it('should catch error when savePromise rejects and display toast error', async () => {
     const mockError = new Error('Save failed');
     const savePromise = Promise.reject(mockError);
