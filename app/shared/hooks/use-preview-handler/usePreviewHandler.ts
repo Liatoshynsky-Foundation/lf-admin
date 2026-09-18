@@ -1,5 +1,6 @@
 import toast from 'react-hot-toast';
 
+import { publicationErrors } from '~/constants/errors';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 
 export const usePreviewHandler = () => {
@@ -21,7 +22,7 @@ export const usePreviewHandler = () => {
 
       await fetchPreview({ slug: previewSlug, lang, draftId: result.id });
     } catch {
-      toast.error('Не вдалося відкрити попередній перегляд.');
+      toast.error(publicationErrors[lang].previewOpenFailed);
     }
   };
 
