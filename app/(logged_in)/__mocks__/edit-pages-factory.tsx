@@ -143,7 +143,7 @@ export const editPagesCommonTests = ({
       useSavePageBlocks: jest.Mock;
     };
     render(<Page />);
-    expect(useSavePageBlocks).toHaveBeenCalledWith(pageId);
+    expect(useSavePageBlocks).toHaveBeenCalledWith(pageId, undefined, expect.any(String));
   });
 
   it('should call setBlocksOrder with reordered blocks when drag ends', () => {

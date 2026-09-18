@@ -69,4 +69,11 @@ const warInUkraineDetailsSchema = new Schema({
 export const WarInUkrainePageModel =
   mongoose.models.WarInUkrainePage || PageModel.discriminator('WarInUkrainePage', warInUkraineDetailsSchema);
 
+const archiveDetailsSchema = new Schema({
+  blocks: { type: Schema.Types.Mixed, required: true }
+});
+
+export const ArchivePageModel =
+  mongoose.models.ArchivePage || PageModel.discriminator('ArchivePage', archiveDetailsSchema);
+
 export default PageModel;

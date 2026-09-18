@@ -53,7 +53,7 @@ export const EditablePageLayout = ({
   }, [data, setPageData, pageSlug]);
 
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
-  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug, blockIdToPublish);
+  const { save, loading: saveLoading } = useSavePageBlocks(pageSlug, blockIdToPublish, headerTitle);
   const isSaving = editorLoading || saveLoading;
 
   const handleSave = () => {
@@ -65,7 +65,7 @@ export const EditablePageLayout = ({
         return;
       }
     }
-    save();
+    void Promise.resolve(save()).catch(() => {});
   };
 
   useEffect(() => {
