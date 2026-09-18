@@ -41,6 +41,7 @@ describe('createBaseRepository', () => {
   const createMockQueryBuilder = (resolvedValue: TestDbDoc[] | TestDbDoc | null) => ({
     session: jest.fn().mockReturnThis(),
     sort: jest.fn().mockReturnThis(),
+    collation: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     lean: jest.fn().mockResolvedValue(resolvedValue)
@@ -270,6 +271,22 @@ describe('createBaseRepository', () => {
 
       expect(getDefaultSort).toHaveBeenCalled();
       expect(mockQueryBuilder.sort).toHaveBeenCalledWith({ name: 1 });
+      expect(mockQueryBuilder.collation).not.toHaveBeenCalled();
+    });
+
+    it('should apply collation when provided', async () => {
+      const mockQueryBuilder = createMockQueryBuilder([]);
+      (mockModel.find as jest.Mock).mockReturnValue(mockQueryBuilder);
+
+      const repository = createBaseRepository<TestEntity, TestDbDoc, TestFilters>({
+        model: mockModel,
+        toEntity,
+        collation: { locale: 'uk', strength: 2 }
+      });
+
+      await repository.findAll({});
+
+      expect(mockQueryBuilder.collation).toHaveBeenCalledWith({ locale: 'uk', strength: 2 });
     });
 
     it('should use getSort when provided with sort filters', async () => {

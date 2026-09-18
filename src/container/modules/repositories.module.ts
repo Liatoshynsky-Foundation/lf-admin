@@ -25,9 +25,11 @@ import { BrandingInfo } from '~/src/infrastructure/models/foundation-info/founda
 import { ContactInfo } from '~/src/infrastructure/models/foundation-info/foundationInfoContact';
 import FundModel from '~/src/infrastructure/models/fund.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
+import ResearchWorkModel from '~/src/infrastructure/models/researchWork.model';
 import { CaseRepository } from '~/src/infrastructure/repositories/caseRepository/caseRepository';
 import { ContactsRepository } from '~/src/infrastructure/repositories/contactsRepository/contactsRepository';
 import { FundRepository } from '~/src/infrastructure/repositories/fundRepository/fundRepository';
+import { ResearchWorkRepository } from '~/src/infrastructure/repositories/researchWorkRepository/researchWorkRepository';
 import { createFundLoader } from '~/src/interfaces/graphql/resolvers/case/fundLoader';
 
 export type RepositoriesModule = {
@@ -45,6 +47,7 @@ export type RepositoriesModule = {
   caseRepository: ReturnType<typeof CaseRepository>;
   contactsRepository: ReturnType<typeof ContactsRepository>;
   fundLoader: ReturnType<typeof createFundLoader>;
+  researchWorkRepository: ReturnType<typeof ResearchWorkRepository>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -63,7 +66,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     CaseModel: asValue(CaseModel),
     ContactInfo: asValue(ContactInfo),
     BrandingInfo: asValue(BrandingInfo),
-
+    ResearchWorkModel: asValue(ResearchWorkModel),
     RateLimitModel: asValue(RateLimit),
 
     adminRepository: asFunction(AdminRepository).scoped(),
@@ -81,5 +84,6 @@ export const registerRepositories = (container: AwilixContainer) => {
     caseRepository: asFunction(CaseRepository).scoped(),
     fundLoader: asFunction(createFundLoader).scoped(),
     contactsRepository: asFunction(ContactsRepository).scoped(),
+    researchWorkRepository: asFunction(ResearchWorkRepository).scoped(),
   });
 };
