@@ -1,3 +1,4 @@
+import { DragEndEvent } from '@dnd-kit/core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ChangeEvent, MouseEvent, ReactNode } from 'react';
 
@@ -35,6 +36,12 @@ type MockDeleteModalProps = {
   onDelete: () => void;
 };
 
+type MockSortableListProps = {
+  items: string[];
+  onDragEnd: (event: DragEndEvent) => void;
+  children: ReactNode;
+};
+
 jest.mock('./useGroupPhotos');
 
 jest.mock('~/public/icons/trash.svg', () => ({
@@ -45,6 +52,10 @@ jest.mock('~/public/icons/trash.svg', () => ({
 jest.mock('~/public/icons/plus.svg', () => ({
   __esModule: true,
   default: () => <span data-testid="icon-plus" />
+}));
+
+jest.mock('~/lib/utils/generateUniqueId', () => ({
+  generateUniqueId: () => ''
 }));
 
 jest.mock('~/shared/components/design-system/button/Button', () => ({
@@ -111,6 +122,27 @@ jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
       </div>
     );
   }
+}));
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => ({
+  SortableList: ({ items, onDragEnd, children }: MockSortableListProps) => (
+    <div data-testid="mock-sortable-list" data-items={items.join(',')}>
+      <button
+        data-testid="trigger-group-drag"
+        onClick={() =>
+          onDragEnd({
+            active: { id: items[0] },
+            over: { id: items[1] }
+          } as DragEndEvent)
+        }
+      />
+      {children}
+    </div>
+  )
+}));
+
+jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
+  SortableItemWrapper: ({ children }: { children: ReactNode }) => <div>{children}</div>
 }));
 
 const defaultPhotos: GroupPhoto[] = [
@@ -187,6 +219,23 @@ describe('GroupPhotosSection UI Component', () => {
     const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
     expect(captionInputs[0]).toHaveValue('Caption 1');
     expect(captionInputs[1]).toHaveValue('Caption 2');
+  });
+
+  it('should reorder photos when a drag ends over another photo', () => {
+    render(
+      <GroupPhotosSection
+        currentLanguage="UA"
+        photos={defaultPhotos}
+        onChange={mockOnChange}
+        onBlurPhotoAltText={mockonBlurPhotoAltText}
+      />
+    );
+
+    expect(screen.getByTestId('mock-sortable-list')).toHaveAttribute('data-items', '1,2');
+
+    fireEvent.click(screen.getByTestId('trigger-group-drag'));
+
+    expect(mockOnChange).toHaveBeenCalledWith([defaultPhotos[1], defaultPhotos[0]]);
   });
 
   it('should call handleAddPhoto when the add button is clicked', () => {
