@@ -42,6 +42,7 @@ type PaginatedEvents {
 }
 
 input CreateEventInput {
+  slug: String
   adminTitle: String!
   eventLink: String!
   title: JSON!
@@ -58,6 +59,7 @@ input CreateEventInput {
 }
 
 input UpdateEventInput {
+  slug: String
   adminTitle: String
   eventLink: String
   title: JSON

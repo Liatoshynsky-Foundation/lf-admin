@@ -7,6 +7,11 @@ export interface LocalizedString {
   en: string;
 }
 
+export interface LocalizedBoolean {
+  uk: boolean;
+  en: boolean;
+}
+
 export interface LocalizedJSON {
   uk: JSONContent;
   en: JSONContent;

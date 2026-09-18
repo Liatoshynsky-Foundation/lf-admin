@@ -11,7 +11,6 @@ import {
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
-import { fetchPreview } from '~/lib/utils/fetchPreview';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -41,18 +40,22 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
     onMenuOpen,
     onPublish,
     onPreview,
+    hidePreview,
     onEdit
   }: {
     onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
     onPublish?: () => void;
     onPreview?: () => void;
+    hidePreview?: boolean;
     onEdit?: () => void;
   }) {
     return (
       <div>
-        <button data-testid="btn-preview" onClick={onPreview}>
-          Preview
-        </button>
+        {!hidePreview && (
+          <button data-testid="btn-preview" onClick={onPreview}>
+            Preview
+          </button>
+        )}
         <button data-testid="btn-publish" onClick={onPublish}>
           Publish
         </button>
@@ -200,23 +203,29 @@ const createMockData = (
   adminTitle: '',
   setAdminTitle: jest.fn(),
   adminTitleError: '',
-  validateAdminTitle: jest.fn(() => true),
   setAdminTitleError: jest.fn(),
   publishDate: null,
   setPublishDate: jest.fn(),
   seoValue: initialSeoValue,
   setSeoValue: jest.fn(),
   seoErrors: undefined,
+  setSeoErrors: jest.fn(),
   crop: null,
   setCrop: jest.fn(),
   forceShowErrors: false,
+  setForceShowErrors: jest.fn(),
+  initialState: null,
+  setInitialState: jest.fn(),
+  buildCommonInput: jest.fn(),
+  latestDataRef: { current: { adminTitle: '', publishDate: null, seoValue: initialSeoValue, crop: null } },
   handleSave: jest.fn(),
+  handlePreviewSave: jest.fn().mockResolvedValue(null),
   handleDateTimeChange: jest.fn(),
   hasUnsavedChanges: false,
   ...overrides
 });
 
-const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
 describe('CreatePublicationsView Component', () => {
   beforeEach(() => {
@@ -415,79 +424,23 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-  describe('Preview actions (fallbackOnPreview, Lines 111-128)', () => {
-    it('should show error toast if handleSave returns null/undefined', async () => {
-      const handleSave = jest.fn().mockResolvedValue(null);
-      const mockData = createMockData({ publicationType: 'news', handleSave });
+  describe('Preview actions', () => {
+    it('should call onPreview when preview button is clicked in create mode', () => {
+      const onPreview = jest.fn();
+      const mockData = createMockData({ publicationType: 'news' });
 
-      render(<CreatePublicationsView data={mockData} />);
+      render(<CreatePublicationsView data={mockData} onPreview={onPreview} />);
       fireEvent.click(screen.getByTestId('btn-preview'));
 
-      await waitFor(() => {
-        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-      });
+      expect(onPreview).toHaveBeenCalledTimes(1);
     });
 
-    it('should show error toast if handleSave returns object with missing id or slug', async () => {
-      const handleSave = jest.fn().mockResolvedValue({ id: '', slug: '' });
-      const mockData = createMockData({ publicationType: 'news', handleSave });
+    it('should not render preview button for media publication type', () => {
+      const onPreview = jest.fn();
+      const mockData = createMockData({ publicationType: 'media' });
 
-      render(<CreatePublicationsView data={mockData} />);
-      fireEvent.click(screen.getByTestId('btn-preview'));
-
-      await waitFor(() => {
-        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-      });
-    });
-
-    it('should call fetchPreview with locale "uk" if seoValue.meta.uk.title is populated', async () => {
-      const handleSave = jest.fn().mockResolvedValue({ id: '123', slug: 'news-slug' });
-      const seoValue = {
-        ...initialSeoValue,
-        meta: {
-          ...initialSeoValue.meta,
-          uk: { ...initialSeoValue.meta.uk, title: 'Ukrainian Title' }
-        }
-      };
-      const mockData = createMockData({ publicationType: 'news', handleSave, seoValue });
-
-      render(<CreatePublicationsView data={mockData} />);
-      fireEvent.click(screen.getByTestId('btn-preview'));
-
-      await waitFor(() => {
-        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(fetchPreview).toHaveBeenCalledWith({
-          slug: '/preview/news-slug',
-          lang: 'uk',
-          draftId: '123'
-        });
-      });
-    });
-
-    it('should call fetchPreview with locale "en" if seoValue.meta.uk.title is empty', async () => {
-      const handleSave = jest.fn().mockResolvedValue({ id: '123', slug: 'news-slug' });
-      const seoValue = {
-        ...initialSeoValue,
-        meta: {
-          ...initialSeoValue.meta,
-          uk: { ...initialSeoValue.meta.uk, title: '' }
-        }
-      };
-      const mockData = createMockData({ publicationType: 'news', handleSave, seoValue });
-
-      render(<CreatePublicationsView data={mockData} />);
-      fireEvent.click(screen.getByTestId('btn-preview'));
-
-      await waitFor(() => {
-        expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
-        expect(fetchPreview).toHaveBeenCalledWith({
-          slug: '/preview/news-slug',
-          lang: 'en',
-          draftId: '123'
-        });
-      });
+      render(<CreatePublicationsView data={mockData} onPreview={onPreview} />);
+      expect(screen.queryByTestId('btn-preview')).not.toBeInTheDocument();
     });
   });
 
@@ -615,18 +568,6 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
     });
   });
-  it('should call validateAdminTitle with the field value on admin title blur', () => {
-    const mockValidateAdminTitle = jest.fn(() => true);
-    const mockData = createMockData({ publicationType: 'news', validateAdminTitle: mockValidateAdminTitle });
-
-    render(<CreatePublicationsView data={mockData} />);
-
-    const input = screen.getByLabelText('Нотатки адміністратора');
-    fireEvent.blur(input, { target: { value: 'Blurred Title' } });
-
-    expect(mockValidateAdminTitle).toHaveBeenCalledWith('Blurred Title');
-  });
-
   it('should force-show start date errors after the start date field is blurred (events)', () => {
     const mockData = createMockData({ publicationType: 'events', forceShowErrors: false });
 

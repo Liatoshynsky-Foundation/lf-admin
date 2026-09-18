@@ -14,7 +14,7 @@ import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerat
 import { EventStatus } from '~/types/enums/common.enums';
 
 export interface CreateEventArgs {
-  input: Omit<CreateEventInput, 'slug'>;
+  input: Omit<CreateEventInput, 'slug'> & { slug?: string };
 }
 
 interface UpdateEventArgs {
@@ -41,7 +41,7 @@ export const EventsMutation = {
 
     validateSeoLengths(input);
 
-    const slug = await generateUniqueSlug(titleUk, {
+    const slug = input.slug || await generateUniqueSlug(titleUk, {
       checkExists: async (s: string) => {
         const existing = await repo.findBySlug(s);
         return existing !== null;
@@ -83,7 +83,9 @@ export const EventsMutation = {
       delete updateData.meta;
     }
 
-    if (input.title?.uk) {
+    if (input.slug) {
+      updateData.slug = input.slug;
+    } else if (input.title?.uk) {
       updateData.slug = await generateUniqueSlug(input.title.uk, {
         checkExists: async (s: string) => {
           const ex = await repo.findBySlug(s);

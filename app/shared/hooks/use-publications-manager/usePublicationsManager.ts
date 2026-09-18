@@ -107,6 +107,23 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
     }
   };
 
+  const updatePreviewResource = async (previewId: string, status: string, extra = {}) => {
+    switch (type) {
+    case 'events':
+      return updateEvent({
+        id: previewId,
+        input: { ...extra, status: status as unknown as EventStatus }
+      });
+    case 'news':
+      return updateNews({
+        id: previewId,
+        input: { ...extra, status: status as unknown as NewsStatus }
+      });
+    default:
+      throw new Error(`Preview update unsupported for type: ${type}`);
+    }
+  };
+
   const resetEditorState = (emptyContent: LocalizedEditorState) => {
     setEditedContent(emptyContent);
     setEditorResetKey((prev) => prev + 1);
@@ -138,6 +155,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
     editorResetKey,
     resetEditorState,
     updateResource,
+    updatePreviewResource,
     deleteResource
   };
 }

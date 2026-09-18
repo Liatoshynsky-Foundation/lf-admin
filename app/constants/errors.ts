@@ -202,3 +202,23 @@ export const compositionMediaErrors = {
   ASSET_NAME_CONFLICT: (filename: string): string =>
     `Неможливо обрати файл «${filename}». Змініть назву або виберіть інший файл.`
 };
+
+export const publicationErrors = {
+  uk: {
+    previewPreparationFailed: 'Виникла помилка під час підготовки попереднього перегляду',
+    previewSlugFailed: 'Виникла помилка при отриманні даних для попереднього перегляду',
+    previewOpenFailed: 'Не вдалося відкрити попередній перегляд.',
+    duplicateData: 'Публікація з такими даними вже існує.',
+    duplicateCanonicalUrl: 'Публікація з таким canonical URL вже існує.',
+    genericError: 'Щось пішло не так. Спробуйте ще раз.'
+  },
+  en: {
+    previewPreparationFailed: 'An error occurred while preparing the preview',
+    previewSlugFailed: 'An error occurred while retrieving data for the preview',
+    previewOpenFailed: 'Failed to open preview.',
+    duplicateData: 'A publication with this data already exists.',
+    duplicateCanonicalUrl: 'A publication with this canonical URL already exists.',
+    genericError: 'Something went wrong. Please try again.'
+  }
+};
+
