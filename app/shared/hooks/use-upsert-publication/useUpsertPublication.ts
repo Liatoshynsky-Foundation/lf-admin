@@ -3,21 +3,20 @@ import toast from 'react-hot-toast';
 
 import { getDateIsoString, parseDate, usePublicationForm, validatePublicationSeo } from './usePublicationForm';
 import { usePublicationStrategy } from './usePublicationStrategy';
+import { publicationErrors } from '~/constants/errors';
 import { PAGE_TITLES, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-const ERROR_CONFIG: Array<{
-  key: string;
-  handle: (ctx: { setCanonicalUrlError: (msg: string) => void }) => void;
-}> = [
+const getErrorConfig = (locale: 'uk' | 'en') => [
   {
     key: 'url_1',
-    handle: ({ setCanonicalUrlError }) => setCanonicalUrlError('Публікація з таким canonical URL вже існує.')
+    handle: ({ setCanonicalUrlError }: { setCanonicalUrlError: (msg: string) => void }) =>
+      setCanonicalUrlError(publicationErrors[locale].duplicateCanonicalUrl)
   },
   {
     key: 'E11000',
-    handle: () => toast.error('Публікація з такими даними вже існує.')
+    handle: () => toast.error(publicationErrors[locale].duplicateData)
   }
 ];
 
@@ -93,7 +92,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     isInitializedRef.current = true;
   }, [isEditing, type, strategy, form]);
 
-  const handleSave = async (status: BaseContentStatuses) => {
+  const handleSave = async (status: BaseContentStatuses, locale: 'uk' | 'en' = 'uk') => {
     if (!isValidType) return;
 
     const { adminTitle, seoValue, publishDate } = form.latestDataRef.current;
@@ -128,10 +127,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     } catch (error: unknown) {
       if (error instanceof Error) {
         const errorMessage = error.message || '';
-        const matched = ERROR_CONFIG.find((item) => errorMessage.includes(item.key));
+        const errorConfig = getErrorConfig(locale);
+        const matched = errorConfig.find((item) => errorMessage.includes(item.key));
 
         if (!matched) {
-          toast.error('Щось пішло не так. Спробуйте ще раз.');
+          toast.error(publicationErrors[locale].genericError);
           return;
         }
 
@@ -140,7 +140,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     }
   };
 
-  const handlePreviewSave = async () => {
+  const handlePreviewSave = async (locale: 'uk' | 'en' = 'uk') => {
     if (!strategy.previewConfig) return null;
 
     const { slug: previewSlug, query: DocumentQuery, itemsAccessor } = strategy.previewConfig;
@@ -168,7 +168,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
       return result ? { id: result.id as string, slug: result.slug as string } : null;
     } catch {
-      toast.error('Щось пішло не так при збереженні прев\'ю.');
+      toast.error(publicationErrors[locale].previewPreparationFailed);
       return null;
     }
   };

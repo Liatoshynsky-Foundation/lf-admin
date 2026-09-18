@@ -199,7 +199,6 @@ describe('EditPublicationsPage Container', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Виникла помилка при отриманні даних для попереднього перегляду');
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Не вдалося завантажити slug для попереднього перегляду'));
     });
 
     expect(fetchPreview).not.toHaveBeenCalled();
@@ -367,7 +366,7 @@ describe('EditPublicationsPage Container', () => {
     ['handlePreviewSave returns undefined', undefined],
     ['handlePreviewSave returns id undefined', { slug: 'slug' }],
     ['handlePreviewSave returns slug undefined', { id: 11 }],
-  ])('should show an error toast when onPreview is triggered and %s', async (_, resolvedValue) => {
+  ])('should not trigger fetchPreview when onPreview is triggered and %s', async (_, resolvedValue) => {
     (useUpsertPublication as jest.Mock).mockReturnValue({
       mockUpsertData: true,
       handleSave: mockHandleSave,
@@ -379,7 +378,6 @@ describe('EditPublicationsPage Container', () => {
     fireEvent.click(screen.getByTestId('trigger-preview'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Виникла помилка підчас публікації для попереднього перегляду');
       expect(fetchPreview).not.toHaveBeenCalled();
     });
   });

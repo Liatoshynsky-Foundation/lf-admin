@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 import CreatePublicationsView from '../../create/CreatePublicationsView';
 import { EditPublicationsView } from './EditPublicationsView';
+import { publicationErrors } from '~/constants/errors';
 import {
   CONTENT_MUTATION_RESULTS,
   MENU_ACTION_CONFIGS,
@@ -72,10 +73,9 @@ export default function EditPublicationsPage() {
 
     try {
       if (type === 'events' || type === 'news') {
-        const result = await publicationData.handlePreviewSave();
+        const result = await publicationData.handlePreviewSave(locale);
 
         if (!result?.id || !result?.slug) {
-          toast.error('Виникла помилка підчас публікації для попереднього перегляду');
           return;
         }
 
@@ -93,17 +93,15 @@ export default function EditPublicationsPage() {
       const slug = manager.currentData?.slug;
 
       if (!slug) {
-        toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-        console.error('Не вдалося завантажити slug для попереднього перегляду');
+        toast.error(publicationErrors[locale].previewSlugFailed);
         return;
       }
 
       const currentStatus = (manager.currentData?.status ?? BaseContentStatuses.Draft) as BaseContentStatuses;
 
-      const result = await publicationData.handleSave(currentStatus);
+      const result = await publicationData.handleSave(currentStatus, locale);
 
       if (!result?.id || !result?.slug) {
-        toast.error('Виникла помилка підчас публікації для попереднього перегляду');
         return;
       }
 

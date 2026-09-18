@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { usePublicationForm, validatePublicationSeo } from './usePublicationForm';
 import { usePublicationStrategy } from './usePublicationStrategy';
 import { useUpsertPublication } from './useUpsertPublication';
+import { publicationErrors } from '~/constants/errors';
 import { initialSeoValue, PublicationsItemType } from '~/constants/publications';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -208,17 +209,17 @@ describe('useUpsertPublication', () => {
       {
         scenario: 'E11000 duplicate error',
         errorMsg: 'E11000',
-        assert: () => expect(toast.error).toHaveBeenCalledWith('Публікація з такими даними вже існує.')
+        assert: () => expect(toast.error).toHaveBeenCalledWith(publicationErrors.uk.duplicateData)
       },
       {
         scenario: 'canonical url duplicate error',
         errorMsg: 'Duplicate key url_1',
-        assert: () => expect(mockSetCanonicalUrlError).toHaveBeenCalledWith('Публікація з таким canonical URL вже існує.')
+        assert: () => expect(mockSetCanonicalUrlError).toHaveBeenCalledWith(publicationErrors.uk.duplicateCanonicalUrl)
       },
       {
         scenario: 'generic unknown error',
         errorMsg: 'Unknown Generic Error',
-        assert: () => expect(toast.error).toHaveBeenCalledWith('Щось пішло не так. Спробуйте ще раз.')
+        assert: () => expect(toast.error).toHaveBeenCalledWith(publicationErrors.uk.genericError)
       }
     ])('should handle $scenario correctly', async ({ errorMsg, assert }) => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -309,7 +310,7 @@ describe('useUpsertPublication', () => {
       });
 
       expect(res).toBeNull();
-      expect(toast.error).toHaveBeenCalledWith('Щось пішло не так при збереженні прев\'ю.');
+      expect(toast.error).toHaveBeenCalledWith(publicationErrors.uk.previewPreparationFailed);
     });
   });
 
