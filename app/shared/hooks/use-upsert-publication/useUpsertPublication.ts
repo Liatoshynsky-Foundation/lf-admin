@@ -96,7 +96,7 @@ const getPublicationSeoMetaErrors = (
 };
 
 const getTicketUrlError = (value: string, locale: 'uk' | 'en'): string => {
-  if (!value.trim()) return seoFormErrors[locale].required;
+  if (!value.trim()) return '';
   try {
     new URL(value);
     return '';

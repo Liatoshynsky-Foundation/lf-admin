@@ -1232,7 +1232,7 @@ describe('useUpsertPublication Hook', () => {
     expect(isValid).toBe(false);
     expect(result.current.adminTitleError).toBe(seoFormErrors.uk.adminTitleMaxLength);
   });
-  it('should surface a "required" error (not "invalidUrl") for both locales when ticketUrl is blank', async () => {
+  it('should allow save when ticketUrl is blank for both locales', async () => {
     const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
     act(() => {
@@ -1246,17 +1246,16 @@ describe('useUpsertPublication Hook', () => {
       await result.current.handleSave(BaseContentStatuses.Draft);
     });
 
-    expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.required);
-    expect(result.current.seoErrors?.ticketUrl?.en).toBe(seoFormErrors.en.required);
-    expect(mockCreateEvent).not.toHaveBeenCalled();
+    expect(mockCreateEvent).toHaveBeenCalled();
+    expect(result.current.seoErrors).toBeUndefined();
   });
-  it('should default ticketUrl to empty strings when ticketUrl object is undefined for events', async () => {
+  it('should allow save when ticketUrl object is undefined for events', async () => {
     const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
 
     act(() => {
       result.current.setAdminTitle('Event Title');
       const seoState = createValidSeoState('events');
-      seoState.ticketUrl = undefined as unknown as SeoBlockValue['ticketUrl'];
+      seoState.ticketUrl = undefined;
       result.current.setSeoValue(seoState);
     });
 
@@ -1264,7 +1263,7 @@ describe('useUpsertPublication Hook', () => {
       await result.current.handleSave(BaseContentStatuses.Draft);
     });
 
-    expect(result.current.seoErrors?.ticketUrl?.uk).toBe(seoFormErrors.uk.required);
-    expect(result.current.seoErrors?.ticketUrl?.en).toBe(seoFormErrors.en.required);
+    expect(mockCreateEvent).toHaveBeenCalled();
+    expect(result.current.seoErrors).toBeUndefined();
   });
 });
