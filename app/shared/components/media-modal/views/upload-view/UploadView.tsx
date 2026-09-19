@@ -24,8 +24,29 @@ export type Props = Readonly<{
 const DROP_HINT = 'Перетягніть файл сюди або оберіть вручну';
 const ERROR_ONLY_IMAGES = 'Підтримуються лише зображення';
 const ERROR_FILE_TOO_LARGE = 'Файл перевищує максимально допустимий розмір';
+const ERROR_IMAGE_DIMENSIONS = 'Це зображення занадто велике';
+const MAX_IMAGE_DIMENSION = 6000;
 
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
+
+const isImageDimensionValid = (file: File): Promise<boolean> => {
+  if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function') return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image.naturalWidth <= MAX_IMAGE_DIMENSION && image.naturalHeight <= MAX_IMAGE_DIMENSION);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(true);
+    };
+    image.src = objectUrl;
+  });
+};
 
 export function UploadView({
   onPick,
@@ -48,7 +69,7 @@ export function UploadView({
   }, []);
 
   const pickFile = useCallback(
-    (file: File) => {
+    async (file: File) => {
       if (!isAllowedFile(file)) {
         setError(invalidFileError);
         return;
@@ -56,6 +77,11 @@ export function UploadView({
 
       if (maxSizeBytes && file.size > maxSizeBytes) {
         setError(fileTooLargeError);
+        return;
+      }
+
+      if (isImageUploadFile(file) && !(await isImageDimensionValid(file))) {
+        setError(ERROR_IMAGE_DIMENSIONS);
         return;
       }
 
