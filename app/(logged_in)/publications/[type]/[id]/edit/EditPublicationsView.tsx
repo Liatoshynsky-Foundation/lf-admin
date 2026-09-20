@@ -88,7 +88,7 @@ export function EditPublicationsView({
         rightActionsComponent={
           <HeaderRightActions
             mode={type === 'media' ? 'seo' : 'edit'}
-            onPreview={onPreview}
+            onPreview={type === 'media' ? undefined : onPreview}
             onMenuOpen={(e) => handleOpen(e, 'publish')}
             onPublish={() => handlePublishActionClick(MenuActionId.PUBLISH)}
           />

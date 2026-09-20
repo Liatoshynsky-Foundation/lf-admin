@@ -29,6 +29,7 @@ export type CreateNewsGQLInput = {
   newsDate?: string;
   status?: NewsStatus;
   publishedAt?: string;
+  slug?: string;
 };
 
 export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
@@ -107,7 +108,7 @@ export const NewsMutation = {
 
     validateSeoLengths(trimmedInput);
 
-    const slug = await generateUniqueSlug(titleForSlug, {
+    const slug = input.slug || await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
         const existing = await repo.findBySlug(slug);
         return existing !== null;
@@ -175,6 +176,9 @@ export const NewsMutation = {
       await processContentFields(trimmedInput, updateData);
     }
 
+    if (input.slug) {
+      updateData.slug = input.slug;
+    }
     if (trimmedInput.title) {
       await processSlugUpdate(id, trimmedInput.title, repo, updateData);
       updateData.title = trimmedInput.title;

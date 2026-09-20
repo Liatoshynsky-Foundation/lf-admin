@@ -14,6 +14,7 @@ type CreateModeProps = BaseProps & {
   mode: 'create';
   onEdit?: () => void;
   onPreview?: () => void;
+  hidePreview?: boolean;
   editLabel?: string;
 };
 
@@ -22,6 +23,7 @@ type EditModeProps = BaseProps & {
   onPublish?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
   onPreview?: () => void;
+  hidePreview?: boolean;
   showPublish?: boolean;
 };
 
@@ -44,9 +46,11 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
     case 'create':
       return (
         <>
-          <IconButton onClick={props.onPreview} sx={styles.createContentIcon} aria-label="Передогляд">
-            <EyeIcon size={24} strokeWidth={1.5} />
-          </IconButton>
+          {!props.hidePreview && (
+            <IconButton onClick={props.onPreview} sx={styles.createContentIcon} aria-label="Передогляд">
+              <EyeIcon size={24} strokeWidth={1.5} />
+            </IconButton>
+          )}
           <Button disabled={disabled} onClick={props.onEdit} variant="contained" color="tertiary" disableElevation>
             {props.editLabel ?? 'Редагувати'}
           </Button>
@@ -58,9 +62,11 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
 
       return (
         <>
-          <IconButton onClick={props.onPreview} sx={styles.icon} aria-label="Передогляд">
-            <EyeIcon size={24} strokeWidth={1.5} />
-          </IconButton>
+          {!props.hidePreview && (
+            <IconButton onClick={props.onPreview} sx={styles.icon} aria-label="Передогляд">
+              <EyeIcon size={24} strokeWidth={1.5} />
+            </IconButton>
+          )}
 
           <Box sx={styles.group} role="group" aria-label="Дії публікації">
             {showPublish && (

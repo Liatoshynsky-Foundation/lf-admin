@@ -18,8 +18,6 @@ import {   ADMIN_TITLE_LABELS,
   PUBLICATION_SEO_REQUIRED,
   PUBLICATIONS_BASE_PATH} from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
-import { fetchPreview } from '~/lib/utils/fetchPreview';
-import { getPreviewSlug } from '~/lib/utils/getPreviewSlug';
 import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
@@ -50,7 +48,7 @@ export default function CreatePublicationsView({
     adminTitle,
     setAdminTitle,
     adminTitleError,
-    validateAdminTitle,
+    setAdminTitleError,
     canonicalUrlError,
     publishDate,
     setPublishDate,
@@ -123,32 +121,6 @@ export default function CreatePublicationsView({
 
   const handleClose = () => setAnchor(null);
 
-
-  const fallbackOnPreview = async () => {
-    const result = await handleSave(BaseContentStatuses.Draft);
-    if (!result) {
-      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Receiving the result from handleSave for preview had failed: ', result);
-      return;
-    };
-
-    const { id, slug } = result;
-
-    if (!slug || !id) {
-      toast.error('Виникла помилка при отриманні даних для попереднього перегляду');
-      console.error('Not slug or id was found for preview');
-      return;
-    }
-
-    const locale = seoValue.meta.uk.title ? 'uk' : 'en';
-
-    await fetchPreview({
-      slug: getPreviewSlug({ publicationType, dbSlug: slug }),
-      lang: locale,
-      draftId: id
-    });
-  };
-
   const handleMenuAction = async (actionId: MenuActionId) => {
     handleClose();
     try {
@@ -215,10 +187,10 @@ export default function CreatePublicationsView({
                 mode="edit"
                 onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
                 onMenuOpen={handleOpen}
-                onPreview={onPreview || fallbackOnPreview}
+                hidePreview
               />
             ) : (
-              <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview || fallbackOnPreview} />
+              <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview} />
             )
           }
         >
@@ -248,7 +220,7 @@ export default function CreatePublicationsView({
             label={ADMIN_TITLE_LABELS[publicationType]}
             value={adminTitle}
             onChange={(e) => setAdminTitle(e.target.value.toUpperCase())}
-            onBlur={(e) => validateAdminTitle(e.target.value)}
+            onBlur={() => setAdminTitleError(adminTitle ? '' : 'Обов\'язкове поле')}
             error={Boolean(adminTitleError)}
             helperText={adminTitleError}
             sx={styles.textField}

@@ -55,6 +55,7 @@ input NewsFiltersInput {
 }
 
 input CreateNewsInput {
+  slug: String
   adminTitle: String!
   title: JSON!
   description: JSON!
@@ -68,6 +69,7 @@ input CreateNewsInput {
 }
 
 input UpdateNewsInput {
+  slug: String
   adminTitle: String
   title: JSON
   description: JSON

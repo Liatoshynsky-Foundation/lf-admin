@@ -846,4 +846,38 @@ describe('Publications page integration', () => {
     render(<PublicationsPageContent activeTab="news" />);
     expect(screen.getByTestId('publication-card')).toBeInTheDocument();
   });
+
+  it('filters out system preview cards (sys-preview) for news, events, and media', () => {
+    mockUseAllNews.mockReturnValue({
+      data: {
+        allNews: [
+          { ...NEWS_ITEMS[0], adminTitle: 'sys-preview-news', slug: 'sys-preview-news' }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+    mockUseAllEvents.mockReturnValue({
+      data: {
+        allEvents: [
+          { ...EVENT_ITEMS[0], adminTitle: 'sys-preview-events', slug: 'sys-preview-events' }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+    mockUseAllMediaMentions.mockReturnValue({
+      data: {
+        allMediaMentions: [
+          { ...MEDIA_ITEMS[0], adminTitle: 'sys-preview-media', slug: 'sys-preview-media' }
+        ]
+      },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PublicationsPageContent activeTab="all" />);
+
+    expect(screen.queryByTestId('publication-card')).not.toBeInTheDocument();
+  });
 });

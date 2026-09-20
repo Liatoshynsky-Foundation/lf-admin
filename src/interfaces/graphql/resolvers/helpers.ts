@@ -91,6 +91,10 @@ export const processSlugUpdate = async <
   updateData: { slug?: string },
   session?: ClientSession
 ): Promise<void> => {
+  if (updateData.slug) {
+    return;
+  }
+
   const titleForSlug = extractTitleForSlug(title);
 
   if (titleForSlug) {

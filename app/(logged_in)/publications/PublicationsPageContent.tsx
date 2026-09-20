@@ -204,6 +204,10 @@ const isPublicationCardStatus = (status: string): status is PublicationsStatusVa
   return PUBLICATIONS_STATUSES.includes(status as PublicationsStatusValue);
 };
 
+const isSystemPreviewItem = (slug?: string | null): boolean => {
+  return Boolean(slug?.startsWith('sys-preview'));
+};
+
 const mapCardType = (type: PublicationsItemType): ContentType => {
   if (type === 'events') {
     return 'events';
@@ -217,7 +221,7 @@ const getPublicationEditHref = (item: Pick<PublicationCardItem, 'type' | 'id'>):
 };
 
 const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
-  if (!isPublicationCardStatus(item.status)) {
+  if (!isPublicationCardStatus(item.status) || isSystemPreviewItem(item.slug)) {
     return null;
   }
 
@@ -255,7 +259,7 @@ const mapNewsItem = (item: NewsItem): PublicationCardItem | null => {
 };
 
 const mapEventItem = (item: EventItem): PublicationCardItem | null => {
-  if (!isPublicationCardStatus(item.status)) {
+  if (!isPublicationCardStatus(item.status) || isSystemPreviewItem(item.slug)) {
     return null;
   }
 
@@ -294,7 +298,7 @@ const mapEventItem = (item: EventItem): PublicationCardItem | null => {
 };
 
 const mapMediaMentionItem = (item: MediaMentionItem): PublicationCardItem | null => {
-  if (!isPublicationCardStatus(item.status)) {
+  if (!isPublicationCardStatus(item.status) || isSystemPreviewItem(item.slug)) {
     return null;
   }
 
