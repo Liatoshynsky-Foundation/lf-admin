@@ -3,12 +3,12 @@ import type { PropsWithChildren } from 'react';
 
 import { styles } from './FileModalDescription.styles';
 
-type FileModalDescriptionProps = {
+type FileModalDescriptionProps = Readonly<{
   mode: 'delete' | 'rename';
   filename: string;
-};
+}>;
 
-export function SpanText({ children }: PropsWithChildren) {
+export function SpanText({ children }: Readonly<PropsWithChildren>) {
   return (
     <Box component="span" sx={styles.filename}>
       {children}

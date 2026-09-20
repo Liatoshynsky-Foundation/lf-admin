@@ -158,19 +158,13 @@ describe('GalleryView', () => {
     expect(screen.getByText('Усі зображення')).toBeInTheDocument();
   });
 
-  it('should render search button', () => {
+  it.each([
+    ['search button', 'GalleryView-search'],
+    ['favorites filter dropdown', 'GalleryView-favoritesFilter'],
+    ['media grid with mock assets', 'mocked-media-grid']
+  ])('should render the %s', (_element, testId) => {
     renderGalleryView();
-    expect(screen.getByTestId('GalleryView-search')).toBeInTheDocument();
-  });
-
-  it('should render the favorites filter dropdown', () => {
-    renderGalleryView();
-    expect(screen.getByTestId('GalleryView-favoritesFilter')).toBeInTheDocument();
-  });
-
-  it('should render media grid with mock assets', () => {
-    renderGalleryView();
-    expect(screen.getByTestId('mocked-media-grid')).toBeInTheDocument();
+    expect(screen.getByTestId(testId)).toBeInTheDocument();
   });
 
   it('should render multiple gallery cards', () => {
