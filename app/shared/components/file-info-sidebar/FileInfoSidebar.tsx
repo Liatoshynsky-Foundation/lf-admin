@@ -1,5 +1,5 @@
 import { ApolloCache } from '@apollo/client';
-import { Avatar, Box, CircularProgress, IconButton, Link, Typography, useTheme } from '@mui/material';
+import { Avatar, Box, CircularProgress, IconButton, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -9,7 +9,6 @@ import { type FileInfoSidebarVariant, styles } from './FileInfoSidebar.styles';
 import { ImagePreviewModal } from './image-preview-modal/ImagePreviewModal';
 import { useAutosavedDescription } from './useAutosavedDescription';
 import { downloadFile } from '~/lib/utils/downloadFile';
-import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import CloseIcon from '~/public/icons/close.svg';
 import DocIcon from '~/public/icons/doc.svg';
 import DownloadOutlinedIcon from '~/public/icons/download.svg';
@@ -82,13 +81,17 @@ const TYPE_ICON: Record<FileDetailsSidebarFile['type'], React.ComponentType> = {
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <Box sx={styles.section}>
-    <Typography variant='textSm' sx={styles.sectionTitle}>{title}</Typography>
+    <Typography variant="textSm" sx={styles.sectionTitle}>
+      {title}
+    </Typography>
     {children}
   </Box>
 );
 
 const RowText = ({ children }: { children: React.ReactNode }) => (
-  <Typography variant='textMd' sx={styles.rowText}>{children}</Typography>
+  <Typography variant="textMd" sx={styles.rowText}>
+    {children}
+  </Typography>
 );
 
 export function FileInfoSidebar({
@@ -103,8 +106,6 @@ export function FileInfoSidebar({
   const theme = useTheme();
   const fileId = file?.id;
   const filename = file?.filename ?? '—';
-  const usageLinks = file?.usageLinks ?? [];
-  const usageCount = usageLinks.length;
   const isStarred = !!file?.isStarred;
   const canEdit = !!fileId;
   const isImagePreview = file?.type === 'image' && !!file?.previewUrl;
@@ -196,7 +197,7 @@ export function FileInfoSidebar({
     ? {
       id: file.id,
       filename: file.filename,
-      usageRefs: file.usageLinks?.map((link) => ({ pageId: link.label, blockId: '' })) || []
+      usageRefs: []
     }
     : null;
 
@@ -207,7 +208,7 @@ export function FileInfoSidebar({
           <TypeIcon />
         </Box>
 
-        <Typography variant='bodyMd' sx={styles.headerTitle} title={filename}>
+        <Typography variant="bodyMd" sx={styles.headerTitle} title={filename}>
           {filename}
         </Typography>
 
@@ -266,10 +267,7 @@ export function FileInfoSidebar({
               disabled={!canEdit || !file?.downloadUrl || isDownloading}
             >
               {isDownloading ? (
-                <Box
-                  component="span"
-                  sx={styles.downloadSpinner}
-                >
+                <Box component="span" sx={styles.downloadSpinner}>
                   <CircularProgress size={16} color="inherit" />
                 </Box>
               ) : (
@@ -351,28 +349,6 @@ export function FileInfoSidebar({
             <RowText>Формат: {file?.format ?? '—'}</RowText>
             <RowText>Розмір: {file?.size ?? '—'}</RowText>
           </Box>
-        </Section>
-
-        <Section title={`Використання на сайті - ${formatUsageCount(usageCount)}`}>
-          {usageCount === 0 ? (
-            <Typography sx={styles.rowText} color="text.secondary">
-              —
-            </Typography>
-          ) : (
-            <Box component="ul" sx={styles.usageLinks}>
-              {usageLinks.map((u) => (
-                <li key={u.id}>
-                  {u.href ? (
-                    <Link href={u.href} sx={styles.usageLink} underline="none">
-                      {u.label}
-                    </Link>
-                  ) : (
-                    <Typography variant='bodyMd' sx={styles.usageLink}>{u.label}</Typography>
-                  )}
-                </li>
-              ))}
-            </Box>
-          )}
         </Section>
 
         <Section title="Опис">

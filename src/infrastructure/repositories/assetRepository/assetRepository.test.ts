@@ -143,15 +143,6 @@ describe('AssetRepository', () => {
       expect(buildQuery({ isStarred: true }).isStarred).toBe(true);
     });
 
-    it('should build isUsed filter using $exists operator', () => {
-      const { buildQuery } = getRepoConfig();
-
-      const usedQuery = buildQuery({ isUsed: true });
-      expect(usedQuery['usageRefs.0']).toEqual({ $exists: true });
-
-      const unusedQuery = buildQuery({ isUsed: false });
-      expect(unusedQuery['usageRefs.0']).toEqual({ $exists: false });
-    });
   });
 
   describe('getDefaultSort', () => {
@@ -211,13 +202,6 @@ describe('AssetRepository', () => {
         await expect(repository.deleteAsset('fake-id')).rejects.toThrow('Файл не знайдено');
       });
 
-      it('should throw and skip deletion if asset is in use', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({ usageRefs: [{ pageId: 'some-page' }] });
-
-        await expect(repository.deleteAsset('fake-id')).rejects.toThrow('Cannot delete: file is in use on the site.');
-        expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
-      });
-
       it('should log warning and throw when storage delete fails', async () => {
         mockAssetModel.findById.mockResolvedValueOnce({
           _id: 'fake-id',
@@ -252,6 +236,7 @@ describe('AssetRepository', () => {
 
       it.each([
         ['https://example.com/photos/piano.jpg', 'piano.jpg', 'photos', 'image'],
+        ['https://example.com/photos/my%20track.mp3', 'my track.mp3', 'photos', 'audio'],
         ['https://example.com/photos/%E0%A4%A.jpg', '%E0%A4%A.jpg', 'photos', 'image'],
         ['https://example.com/photos/fallback.jpg', 'fallback.jpg', 'photos', 'image'],
         ['https://example.com/piano.jpg', 'piano.jpg', '', 'image'],
@@ -444,24 +429,6 @@ describe('AssetRepository', () => {
         expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
       });
 
-      it('should block renaming files that are already in use', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
-          filename: 'used.png',
-          mimeType: 'image/png',
-          type: 'image',
-          url: 'https://example.com/photos/used.png',
-          usageRefs: [{ pageId: 'about' }]
-        });
-
-        await expect(repository.updateAsset('asset-id', { filename: 'new-name.png' })).rejects.toThrow(
-          'Cannot rename: file is in use on the site.'
-        );
-
-        expect(mockStorageExists).not.toHaveBeenCalled();
-        expect(mockStorageMove).not.toHaveBeenCalled();
-        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
-      });
-
       it('should not call findById when filename is not in the update data', async () => {
         mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(updatedDoc);
 
@@ -485,6 +452,15 @@ describe('AssetRepository', () => {
 
         expect(result?.id).toBe('asset-id');
       });
+    });
+
+    it('finds and maps assets by URL', async () => {
+      mockAssetModel.find.mockResolvedValueOnce([MOCK_ASSET_DOC]);
+
+      await expect(repository.findByUrls(['https://example.com/compositions/track.mp3'])).resolves.toEqual([
+        expect.objectContaining({ id: 'asset-id', usageRefs: [] })
+      ]);
+      expect(mockAssetModel.find).toHaveBeenCalledWith({ url: { $in: ['https://example.com/compositions/track.mp3'] } });
     });
 
     describe('createAsset', () => {
@@ -655,35 +631,5 @@ describe('AssetRepository', () => {
       });
     });
 
-    describe('addUsageRef', () => {
-      it('should call findOneAndUpdate with $addToSet on usageRefs', async () => {
-        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce({});
-
-        await repository.addUsageRef('https://example.com/photo.jpg', { pageId: 'about', blockId: 'hero' });
-
-        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
-          { url: 'https://example.com/photo.jpg' },
-          { $addToSet: { usageRefs: { pageId: 'about', blockId: 'hero' } } },
-          { session: undefined }
-        );
-      });
-
-      it('should find assets by URLs and remove a usage reference', async () => {
-        const usageRefs = { compositionId: 'composition-id' };
-        mockAssetModel.find.mockResolvedValueOnce([MOCK_ASSET_DOC]);
-
-        await expect(repository.findByUrls([MOCK_ASSET_DOC.url])).resolves.toEqual([
-          expect.objectContaining({ id: 'asset-id', url: MOCK_ASSET_DOC.url })
-        ]);
-        await repository.removeUsageRef(MOCK_ASSET_DOC.url, usageRefs);
-
-        expect(mockAssetModel.find).toHaveBeenCalledWith({ url: { $in: [MOCK_ASSET_DOC.url] } });
-        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
-          { url: MOCK_ASSET_DOC.url },
-          { $pull: { usageRefs: { ...usageRefs } } },
-          { session: undefined }
-        );
-      });
-    });
   });
 });

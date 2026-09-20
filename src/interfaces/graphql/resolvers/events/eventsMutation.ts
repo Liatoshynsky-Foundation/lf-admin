@@ -1,10 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import {
-  endpointRepositoryHandler,
-  markImagesAsUsed,
-  syncImagesCrops
-} from '../helpers';
+import { endpointRepositoryHandler, syncImagesCrops } from '../helpers';
 import { validateSeoLengths } from '../seoValidation';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -61,9 +57,6 @@ export const EventsMutation = {
       await syncImagesCrops(res.id, input.content);
     }
 
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
-
     return res;
   },
 
@@ -103,9 +96,6 @@ export const EventsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
-
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
 
     return res;
   },

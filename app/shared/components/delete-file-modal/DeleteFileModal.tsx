@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 
 import { styles } from './DeleteFileModal.styles';
 import Button from '~/components/design-system/button/Button';
+import { FileModalDescription } from '~/shared/components/file-modal-description/FileModalDescription';
 
 export interface UsageRef {
   pageId?: string;
@@ -50,7 +51,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
       <DialogContent sx={styles.content}>
         {isBlocked ? (
           <Box>
-            <Typography variant='textMd' sx={styles.description}>
+            <Typography variant="textMd" sx={styles.description}>
               Файл{' '}
               <Box component="span" sx={styles.filename}>
                 {file.filename}
@@ -64,7 +65,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
                 const uniqueKey = `${ref.pageId || 'no-page'}-${ref.blockId || 'no-block'}-${index}`;
                 return (
                   <li key={uniqueKey}>
-                    <Typography variant='textMd' component="span" sx={styles.usageItem}>
+                    <Typography variant="textMd" component="span" sx={styles.usageItem}>
                       {formatUsageRef(ref)}
                     </Typography>
                   </li>
@@ -73,15 +74,7 @@ const DeleteFileModal = ({ open, onClose, onConfirm, file, isDeleting, disableSc
             </Box>
           </Box>
         ) : (
-          <Typography variant='textMd' sx={styles.description}>
-            Ви збираєтесь видалити файл{' '}
-            <Box component="span" sx={styles.filename}>
-              {file.filename}
-            </Box>
-            .
-            <br />
-            Ви впевнені, що хочете продовжити?
-          </Typography>
+          <FileModalDescription mode="delete" filename={file.filename} />
         )}
       </DialogContent>
 

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import { renameFileModalStyles as styles } from './RenameFileModal.styles';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import { FileModalDescription } from '~/shared/components/file-modal-description/FileModalDescription';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 export type RenameFileModalProps = {
@@ -94,6 +95,8 @@ export function RenameFileModal({ open, onClose, fileId, currentFilename, onRena
           <CloseIcon />
         </IconButton>
       </Box>
+
+      <FileModalDescription mode="rename" filename={currentFilename} />
 
       <Box sx={styles.inputContainer}>
         <CustomTextField
