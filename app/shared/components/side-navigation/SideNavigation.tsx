@@ -100,7 +100,9 @@ export const SideBarNavigation = () => {
             </Link>
           </Box>
           <Box sx={styles.navigationContent}>
-            <Box sx={styles.spacer(open)} />
+            {NAVIGATION_DATA.main.length > 0 && (
+              <Box sx={styles.spacer(open)} />
+            )}
             <List sx={styles.list}>
               {renderItems(NAVIGATION_DATA.main)}
               <Divider sx={styles.divider} />

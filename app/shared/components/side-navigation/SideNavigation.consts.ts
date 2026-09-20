@@ -1,5 +1,5 @@
 export const NAVIGATION_DATA = {
-  main: [{ title: 'Головна', iconSrc: 'house', href: '/' }],
+  main: [],
   content: [
     {
       title: 'Основні сторінки',
@@ -35,13 +35,10 @@ export const NAVIGATION_DATA = {
     }
   ],
   other: [
-    { title: 'Звернення', iconSrc: 'contacts', href: '', disabled: true },
     {
       element: { title: 'Налаштування', iconSrc: 'settings' },
       collapseElements: [
-        { title: 'Основні', href: '', disabled: true },
         { title: 'SEO Налаштування', href: '', disabled: true },
-        { title: 'Користувачі та ролі', href: '', disabled: true },
         { title: 'Історія змін', href: '', disabled: true },
         { title: 'Системні логи', href: '/logs' }
       ]
