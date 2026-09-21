@@ -25,12 +25,17 @@ const DROP_HINT = 'Перетягніть файл сюди або оберіт�
 const ERROR_ONLY_IMAGES = 'Підтримуються лише зображення';
 const ERROR_FILE_TOO_LARGE = 'Файл перевищує максимально допустимий розмір';
 const ERROR_IMAGE_DIMENSIONS = 'Це зображення занадто велике';
+const ERROR_IMAGE_UNREADABLE = 'Не вдалося прочитати зображення';
 const MAX_IMAGE_DIMENSION = 6000;
 
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
 
-const isImageDimensionValid = (file: File): Promise<boolean> => {
-  if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function') return Promise.resolve(true);
+type ImageDimensionResult = 'valid' | 'too-large' | 'unreadable';
+
+const checkImageDimensions = (file: File): Promise<ImageDimensionResult> => {
+  if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    return Promise.resolve('valid');
+  }
 
   return new Promise((resolve) => {
     const image = new Image();
@@ -38,11 +43,13 @@ const isImageDimensionValid = (file: File): Promise<boolean> => {
 
     image.onload = () => {
       URL.revokeObjectURL(objectUrl);
-      resolve(image.naturalWidth <= MAX_IMAGE_DIMENSION && image.naturalHeight <= MAX_IMAGE_DIMENSION);
+      const withinBounds =
+        image.naturalWidth <= MAX_IMAGE_DIMENSION && image.naturalHeight <= MAX_IMAGE_DIMENSION;
+      resolve(withinBounds ? 'valid' : 'too-large');
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      resolve(true);
+      resolve('unreadable');
     };
     image.src = objectUrl;
   });
@@ -80,9 +87,18 @@ export function UploadView({
         return;
       }
 
-      if (isImageUploadFile(file) && !(await isImageDimensionValid(file))) {
-        setError(ERROR_IMAGE_DIMENSIONS);
-        return;
+      if (isImageUploadFile(file)) {
+        const dimensionResult = await checkImageDimensions(file);
+
+        if (dimensionResult === 'too-large') {
+          setError(ERROR_IMAGE_DIMENSIONS);
+          return;
+        }
+
+        if (dimensionResult === 'unreadable') {
+          setError(ERROR_IMAGE_UNREADABLE);
+          return;
+        }
       }
 
       setError(null);

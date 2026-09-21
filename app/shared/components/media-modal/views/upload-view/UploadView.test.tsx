@@ -236,8 +236,36 @@ describe('UploadView', () => {
       target: { files: [createFile('large.png', 'image/png')] }
     });
 
-    expect(onPick).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Це зображення занадто велике'));
+    expect(onPick).not.toHaveBeenCalled();
+  });
+
+  it('should reject an image that fails to decode', async () => {
+    const onPick = jest.fn();
+    renderView({ onPick });
+
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: () => 'blob:test' });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
+    jest.spyOn(global, 'Image').mockImplementation(() => {
+      const image = {
+        set src(_value: string) {
+          queueMicrotask(() => image.onerror?.(new Event('error')));
+        },
+        onload: undefined as ((event: Event) => void) | undefined,
+        onerror: undefined as ((event: Event) => void) | undefined
+      } as unknown as HTMLImageElement;
+
+      return image;
+    });
+
+    fireEvent.change(screen.getByTestId('UploadView-fileInput'), {
+      target: { files: [createFile('corrupt.png', 'image/png')] }
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Не вдалося прочитати зображення')
+    );
+    expect(onPick).not.toHaveBeenCalled();
   });
 
   it('should accept an image with both dimensions at the 6000px limit', async () => {
