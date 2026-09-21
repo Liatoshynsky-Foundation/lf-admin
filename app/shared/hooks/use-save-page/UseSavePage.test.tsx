@@ -1,4 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
+import toast from 'react-hot-toast';
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn()
+  }
+}));
 
 jest.mock('~/lib/utils/safeMutate', () => ({ safeMutate: jest.fn() }));
 jest.mock('~/types/graphql/generated/graphql', () => ({
@@ -13,6 +22,7 @@ jest.mock('@apollo/client', () => ({
 
 import { useApolloClient } from '@apollo/client';
 
+import { TOAST_MESSAGES } from '~/constants';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import * as graphqlModule from '~/types/graphql/generated/graphql';
 
@@ -85,7 +95,7 @@ beforeEach(() => {
 });
 
 it('saves draft and publishes, calling markSaved and returning published page', async () => {
-  const { result } = renderHook(() => useSavePageBlocks('test'));
+  const { result } = renderHook(() => useSavePageBlocks('test', undefined, 'Архів'));
 
   await act(async () => {
     await result.current.save();
@@ -100,6 +110,8 @@ it('saves draft and publishes, calling markSaved and returning published page', 
   });
 
   expect(markSavedMock).toHaveBeenCalledWith('test');
+  expect(toast.success).toHaveBeenCalledWith(TOAST_MESSAGES.PAGE_UPDATED('Архів'));
+  expect(toast.error).not.toHaveBeenCalled();
 });
 
 it('partially publishes a block if blockIdToPublish is provided', async () => {
@@ -126,6 +138,7 @@ it('throws when no page blocks found', async () => {
   storeState.blocks = {};
   const { result } = renderHook(() => useSavePageBlocks('test'));
   await expect(result.current.save()).rejects.toThrow('No page blocks found');
+  expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.PAGE_UPDATE_FAILED);
 });
 
 it('throws when publish returns no published page', async () => {
@@ -133,6 +146,7 @@ it('throws when publish returns no published page', async () => {
   const { result } = renderHook(() => useSavePageBlocks('test'));
   await expect(result.current.save()).rejects.toThrow('Server did not return published page');
   expect(markSavedMock).not.toHaveBeenCalled();
+  expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.PAGE_UPDATE_FAILED);
 });
 
 it('exposes loading and error values from mutations', () => {

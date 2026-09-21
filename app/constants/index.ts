@@ -3,5 +3,8 @@ export const stateNames = ['DISCONNECTED', 'CONNECTED', 'CONNECTING', 'DISCONNEC
 
 export const TOAST_MESSAGES = {
   SUCCESS_SAVE_DATA: 'Дані успішно збережено',
-  ERROR_SAVE_DATA: 'Помилка при збереженні даних'
+  ERROR_SAVE_DATA: 'Помилка при збереженні даних',
+  PAGE_UPDATED: (title: string) => `Сторінку «${title}» оновлено.`,
+  PAGE_UPDATE_FAILED: 'Не вдалося оновити сторінку. Спробуйте ще раз.',
+  SEO_SAVED: 'SEO збережено успішно'
 };

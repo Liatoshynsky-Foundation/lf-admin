@@ -48,13 +48,14 @@ export const EditParagraphsBlock = <T extends BlockIdsWithDescription>({
 
   const onParagraphChange = (index: number, val: JSONContent) => {
     const oldBlockDescription = block.description;
-    const currentContentArray = [...(oldBlockDescription[currentLocale].content || [])];
+    const localeDescription = oldBlockDescription[currentLocale];
+    const currentContentArray = [...(localeDescription?.content || [])];
     currentContentArray[index] = val;
 
     const newDescription = {
       ...oldBlockDescription,
       [currentLocale]: {
-        ...oldBlockDescription[currentLocale],
+        ...(localeDescription ?? { type: 'doc', content: [] }),
         content: currentContentArray
       }
     };

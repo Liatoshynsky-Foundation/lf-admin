@@ -3,6 +3,7 @@ import { createElement, Fragment } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { usePageSeo } from './usePageSeo';
+import { TOAST_MESSAGES } from '~/constants';
 import { initialSeoValue } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
@@ -130,12 +131,11 @@ describe('usePageSeo', () => {
       },
       refetchQueries: ['GetPageSeo']
     });
-    expect(toast.success).toHaveBeenCalledWith('SEO збережено успішно');
+    expect(toast.success).toHaveBeenCalledWith(TOAST_MESSAGES.SEO_SAVED);
     expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('should show error toast when save fails', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockUpdatePageSeo.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => usePageSeo('about-us'));
@@ -144,10 +144,8 @@ describe('usePageSeo', () => {
       await result.current.handleSave();
     });
 
-    expect(toast.error).toHaveBeenCalledWith('Щось пішло не так, спробуйте знову');
+    expect(toast.error).toHaveBeenCalledWith(TOAST_MESSAGES.PAGE_UPDATE_FAILED);
     expect(toast.success).not.toHaveBeenCalled();
-
-    consoleErrorSpy.mockRestore();
   });
 
   it('should render pageExtraFields with canonical url value', () => {
