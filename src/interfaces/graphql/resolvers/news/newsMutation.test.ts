@@ -321,6 +321,20 @@ describe('NewsMutation Resolvers', () => {
         })
       );
     });
+
+    it('should set current date if newsDate is not provided', async () => {
+      const currentDate = '2026-09-21T12:00:00.000Z';
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(currentDate));
+
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+
+      await NewsMutation.createNews({}, { input: baseInput }, adminContext);
+      const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
+
+      expect(createCallArg.newsDate).toBe(currentDate);
+    });
   });
 
   describe('updateNews', () => {

@@ -121,7 +121,7 @@ export const NewsMutation = {
       title: trimmedInput.title,
       description: processedInput.description,
       slug,
-      newsDate: input.newsDate,
+      git 
       status: input.status || NewsStatus.Draft,
       publishedAt: input.publishedAt,
       meta: { views: 0 }
