@@ -1,17 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import toast from 'react-hot-toast';
 
-import { FundsTable, FundsTableProps } from './ArchiveFundsTable';
+import { ArchiveCase, FundsTable, FundsTableProps } from './ArchiveFundsTable';
 import {
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
   ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE,
   ARCHIVE_EMPTY_STATE_TITLE,
-  ARCHIVE_FUNDS_TABLE_HEADERS,
+  ARCHIVE_FUNDS_TABLE_HEADERS
 } from '~/constants/archive';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 type EmptyStateProps = {
   title: string;
@@ -29,8 +31,68 @@ const mockUpdateCase = jest.fn();
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
   useDeleteCase: () => [mockDeleteCase],
-  useUpdateCase: () => [mockUpdateCase],
+  useUpdateCase: () => [mockUpdateCase]
 }));
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: { success: jest.fn(), error: jest.fn() }
+}));
+
+jest.mock('../ArchiveCaseModal', () => ({
+  ArchiveCaseModal: (props: {
+    isOpen: boolean;
+    setIsOpen: (open: boolean) => void;
+    onSaved: () => Promise<unknown>;
+    caseId: string;
+    fundId: string;
+  }) => (
+    <div data-testid="mock-case-modal">
+      <span data-testid="mock-case-modal-caseId">{props.caseId}</span>
+      <span data-testid="mock-case-modal-fundId">{props.fundId}</span>
+      <button data-testid="mock-case-modal-close" onClick={() => props.setIsOpen(false)}>
+        Close
+      </button>
+      <button data-testid="mock-case-modal-save" onClick={() => props.onSaved()}>
+        Save
+      </button>
+    </div>
+  )
+}));
+
+const setClipboardWriteText = (impl: (text: string) => Promise<void>) => {
+  const writeText = jest.fn(impl);
+  if (navigator.clipboard) {
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+      value: writeText,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+      writable: true
+    });
+  }
+  return writeText;
+};
+
+const clearClipboardWriteText = () => {
+  if (navigator.clipboard) {
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+  }
+};
 
 jest.mock('~/shared/components/empty-state', () => ({
   EmptyState: ({ title, description }: EmptyStateProps) => (
@@ -38,27 +100,49 @@ jest.mock('~/shared/components/empty-state', () => ({
       <div data-testid="mock-empty-state-title">{title}</div>
       <div data-testid="mock-empty-state-description">{description}</div>
     </div>
-  ),
+  )
 }));
 
 jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
-  DeleteCompositionModal: (props: { open: boolean; onClose: () => void; onConfirm: () => void; description: string }) => (
+  DeleteCompositionModal: (props: {
+    open: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    description: string;
+  }) => (
     <div data-testid="mock-delete-modal" data-open={props.open}>
       <span>{props.description}</span>
-      <button onClick={props.onClose} data-testid="mock-delete-close">Close</button>
-      <button onClick={props.onConfirm} data-testid="mock-delete-confirm">Confirm</button>
+      <button onClick={props.onClose} data-testid="mock-delete-close">
+        Close
+      </button>
+      <button onClick={props.onConfirm} data-testid="mock-delete-confirm">
+        Confirm
+      </button>
     </div>
   )
 }));
 
 jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
-  RowActions: ({ menuActions }: { menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] } }) => (
+  RowActions: ({
+    editAction,
+    menuActions
+  }: {
+    editAction?: { onEditClick?: () => void };
+    menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] };
+  }) => (
     <div data-testid="row-actions">
-      {menuActions.menuItems.flatMap(group => group.items).map(item => (
-        <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
-          {item.id}
+      {editAction?.onEditClick && (
+        <button data-testid="edit-action-direct" onClick={editAction.onEditClick}>
+          edit-direct
         </button>
-      ))}
+      )}
+      {menuActions.menuItems
+        .flatMap((group) => group.items)
+        .map((item) => (
+          <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
+            {item.id}
+          </button>
+        ))}
     </div>
   )
 }));
@@ -90,7 +174,7 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
           ))}
       </div>
     </div>
-  ),
+  )
 }));
 
 const defaultProps: FundsTableProps = {
@@ -103,11 +187,11 @@ const defaultProps: FundsTableProps = {
       cases: 20,
       dates: '1990 - 2000',
       status: BaseContentStatuses.Published,
-      updatedAt: '2023-01-01',
-    },
+      updatedAt: '2023-01-01'
+    }
   ],
   hasActiveSearch: false,
-  hasActiveStatusFilter: false,
+  hasActiveStatusFilter: false
 };
 
 const renderComponent = (overrides?: Partial<FundsTableProps>) => {
@@ -116,15 +200,28 @@ const renderComponent = (overrides?: Partial<FundsTableProps>) => {
 
 const fund = defaultProps.funds[0];
 const rowWithActions = {
-  type: 'individual', id: fund.id, plainData: {
-    ...defaultProps.funds[0], editAction: {
-      editHref: `/archive/fund/${fund.id}/edit`, editLabel: `Редагувати фонд Фонд ${fund.id}`
+  type: 'individual',
+  id: fund.id,
+  plainData: {
+    ...defaultProps.funds[0],
+    editAction: {
+      editHref: `/archive/fund/${fund.id}/edit`,
+      editLabel: `Редагувати фонд Фонд ${fund.id}`
     },
 
     menuActions: {
-      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fund.id}`
+      menuItems: [
+        {
+          items: [
+            { id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` },
+            { id: 'share', text: { name: 'Поширити' } }
+          ]
+        },
+        { items: [{ id: 'delete', text: { name: 'Видалити' } }] }
+      ],
+      menuTriggerLabel: `Дії для фонду Фонд ${fund.id}`
     }
-  },
+  }
 };
 
 describe('ArchiveFundsTable', () => {
@@ -180,7 +277,9 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
-      expect(screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))
+      ).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-close'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
@@ -213,6 +312,19 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"publish"');
   });
 
+  it('should call onPublish when the publish action is clicked', async () => {
+    const onPublishMock = jest.fn();
+    const user = userEvent.setup();
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
+      onPublish: onPublishMock
+    });
+
+    await user.click(screen.getByTestId('action-publish'));
+
+    expect(onPublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Hidden });
+  });
+
   it('should not add the publish action for non-hidden funds', () => {
     renderComponent({ onPublish: jest.fn() });
 
@@ -227,6 +339,19 @@ describe('ArchiveFundsTable', () => {
     });
 
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"unpublish"');
+  });
+
+  it('should call onUnpublish when the unpublish action is clicked', async () => {
+    const onUnpublishMock = jest.fn();
+    const user = userEvent.setup();
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Published }],
+      onUnpublish: onUnpublishMock
+    });
+
+    await user.click(screen.getByTestId('action-unpublish'));
+
+    expect(onUnpublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Published });
   });
 
   it('should not add the unpublish action for non-published funds', () => {
@@ -258,7 +383,9 @@ describe('ArchiveFundsTable', () => {
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
+        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+      );
     });
 
     it('should render the no search results fallback when both search and status filter are active', () => {
@@ -266,7 +393,9 @@ describe('ArchiveFundsTable', () => {
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
+        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+      );
     });
 
     it('should render the status-only fallback when only the status filter is active', () => {
@@ -274,6 +403,242 @@ describe('ArchiveFundsTable', () => {
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE);
+    });
+  });
+
+  describe('Share Fund Flow', () => {
+    afterEach(() => {
+      clearClipboardWriteText();
+      Reflect.deleteProperty(document, 'execCommand');
+    });
+
+    it('should copy fund link via the Clipboard API and show a success toast', async () => {
+      const writeText = setClipboardWriteText(() => Promise.resolve());
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/fund/${fund.id}/edit`));
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
+    it('should show an error toast when the Clipboard API rejects', async () => {
+      setClipboardWriteText(() => Promise.reject(new Error('denied')));
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    });
+
+    it('should fall back to execCommand copy and show a success toast when the Clipboard API is unavailable', async () => {
+      clearClipboardWriteText();
+      const execCommand = jest.fn().mockReturnValue(true);
+      Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true, writable: true });
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(execCommand).toHaveBeenCalledWith('copy');
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
+    it('should show an error toast when the fallback execCommand copy fails', async () => {
+      clearClipboardWriteText();
+      Object.defineProperty(document, 'execCommand', {
+        value: jest.fn().mockReturnValue(false),
+        configurable: true,
+        writable: true
+      });
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    });
+  });
+
+  describe('Case rows', () => {
+    const caseItem: ArchiveCase = {
+      id: 'c1',
+      name: 'Справа 1',
+      fundId: 'f1',
+      caseNumber: 5,
+      descriptionNumber: 2,
+      sheetsNumber: 100,
+      editCaseDate: '2020-01-01',
+      editCaseDescriptions: 'опис',
+      detailedCaseDescription: 'детальний опис',
+      status: BaseContentStatuses.Published,
+      updatedAt: '2023-05-01'
+    };
+
+    const renderWithCase = (overrides?: Partial<FundsTableProps> & { caseOverrides?: Partial<ArchiveCase> }) => {
+      const { caseOverrides, ...rest } = overrides ?? {};
+      return renderComponent({
+        funds: [],
+        cases: [{ ...caseItem, ...caseOverrides }],
+        ...rest
+      });
+    };
+
+    it('should render a case row with its edit, share, toggle-status and delete actions', () => {
+      renderWithCase();
+
+      const row = screen.getByTestId(`mock-table-layout-row-${caseItem.id}`);
+      expect(row).toBeInTheDocument();
+      expect(screen.getByTestId('action-edit')).toBeInTheDocument();
+      expect(screen.getByTestId('action-share')).toBeInTheDocument();
+      expect(screen.getByTestId('action-toggle-status')).toBeInTheDocument();
+      expect(screen.getByTestId('action-delete')).toBeInTheDocument();
+    });
+
+    it('should label the toggle action "Сховати" for a published case', () => {
+      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Published } });
+
+      expect(screen.getByTestId('action-toggle-status')).toHaveTextContent('toggle-status');
+      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent('Сховати');
+    });
+
+    it('should label the toggle action "Опублікувати" for a hidden case', () => {
+      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
+
+      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent('Опублікувати');
+    });
+
+    it('should open the edit modal for a case, and close it', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-edit'));
+
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-case-modal-caseId')).toHaveTextContent(caseItem.id);
+      expect(screen.getByTestId('mock-case-modal-fundId')).toHaveTextContent(caseItem.fundId);
+
+      await user.click(screen.getByTestId('mock-case-modal-close'));
+
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+    });
+
+    it('should also open the edit modal via the row\'s dedicated edit action', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('edit-action-direct'));
+
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+    });
+
+    it('should call onCaseChanged and close the modal when a case edit is saved', async () => {
+      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
+
+      await user.click(screen.getByTestId('action-edit'));
+      await user.click(screen.getByTestId('mock-case-modal-save'));
+
+      expect(onCaseChangedMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+    });
+
+    it('should toggle a published case to hidden and show the corresponding toast', async () => {
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Published }, onCaseChanged: onCaseChangedMock });
+
+      await user.click(screen.getByTestId('action-toggle-status'));
+
+      expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: CaseStatus.Hidden } });
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно сховано');
+      expect(onCaseChangedMock).toHaveBeenCalled();
+    });
+
+    it('should toggle a hidden case to published and show the corresponding toast', async () => {
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
+
+      await user.click(screen.getByTestId('action-toggle-status'));
+
+      expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: CaseStatus.Published } });
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+    });
+
+    it('should show the error message when toggling status rejects with an Error', async () => {
+      mockUpdateCase.mockRejectedValueOnce(new Error('Не вдалося змінити'));
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-toggle-status'));
+
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити');
+    });
+
+    it('should show a fallback error message when toggling status rejects with a non-Error', async () => {
+      mockUpdateCase.mockRejectedValueOnce('boom');
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-toggle-status'));
+
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити статус справи');
+    });
+
+    it('should delete a case, calling onCaseChanged, when confirmed', async () => {
+      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
+
+      await user.click(screen.getByTestId('action-delete'));
+      expect(
+        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити справу «${caseItem.name}»\\?`))
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+
+      expect(mockDeleteCase).toHaveBeenCalledWith({ id: caseItem.id });
+      expect(onCaseChangedMock).toHaveBeenCalled();
+    });
+
+    it('should not call onCaseChanged when deleting a case if it is not provided', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-delete'));
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+
+      expect(mockDeleteCase).toHaveBeenCalledWith({ id: caseItem.id });
+    });
+
+    it('should copy the case link and show a success toast', async () => {
+      const writeText = setClipboardWriteText(() => Promise.resolve());
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/cases?caseId=${caseItem.id}`));
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+
+      clearClipboardWriteText();
+    });
+
+    it('should show an error toast when copying the case link fails', async () => {
+      setClipboardWriteText(() => Promise.reject(new Error('denied')));
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+
+      clearClipboardWriteText();
     });
   });
 });
