@@ -236,7 +236,7 @@ describe('UploadView', () => {
       target: { files: [createFile('large.png', 'image/png')] }
     });
 
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Це зображення занадто велике'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Це зображення занадто велике');
     expect(onPick).not.toHaveBeenCalled();
   });
 
@@ -262,9 +262,7 @@ describe('UploadView', () => {
       target: { files: [createFile('corrupt.png', 'image/png')] }
     });
 
-    await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent('Не вдалося прочитати зображення')
-    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Не вдалося прочитати зображення');
     expect(onPick).not.toHaveBeenCalled();
   });
 
