@@ -198,6 +198,22 @@ const renderComponent = (overrides?: Partial<FundsTableProps>) => {
   return render(<FundsTable {...defaultProps} {...overrides} />);
 };
 
+const expectNoSearchResultsFallback = () => {
+  expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+  expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
+  expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
+    ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+  );
+};
+
+const expectCopyLinkSuccessToast = () => {
+  expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+};
+
+const expectCopyLinkErrorToast = () => {
+  expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+};
+
 const fund = defaultProps.funds[0];
 const rowWithActions = {
   type: 'individual',
@@ -381,21 +397,13 @@ describe('ArchiveFundsTable', () => {
     it('should render the no search results fallback when search is active (with or without status filter)', () => {
       renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: false });
 
-      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
-        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
-      );
+      expectNoSearchResultsFallback();
     });
 
     it('should render the no search results fallback when both search and status filter are active', () => {
       renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: true });
 
-      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
-        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
-      );
+      expectNoSearchResultsFallback();
     });
 
     it('should render the status-only fallback when only the status filter is active', () => {
@@ -420,7 +428,7 @@ describe('ArchiveFundsTable', () => {
       await user.click(screen.getByTestId('action-share'));
 
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/fund/${fund.id}/edit`));
-      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+      expectCopyLinkSuccessToast();
     });
 
     it('should show an error toast when the Clipboard API rejects', async () => {
@@ -430,7 +438,7 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-share'));
 
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+      expectCopyLinkErrorToast();
     });
 
     it('should fall back to execCommand copy and show a success toast when the Clipboard API is unavailable', async () => {
@@ -443,7 +451,7 @@ describe('ArchiveFundsTable', () => {
       await user.click(screen.getByTestId('action-share'));
 
       expect(execCommand).toHaveBeenCalledWith('copy');
-      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+      expectCopyLinkSuccessToast();
     });
 
     it('should show an error toast when the fallback execCommand copy fails', async () => {
@@ -458,7 +466,7 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-share'));
 
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+      expectCopyLinkErrorToast();
     });
   });
 
@@ -486,6 +494,20 @@ describe('ArchiveFundsTable', () => {
       });
     };
 
+    const setupCase = (overrides?: Partial<FundsTableProps> & { caseOverrides?: Partial<ArchiveCase> }) => {
+      const user = userEvent.setup();
+      renderWithCase(overrides);
+      return user;
+    };
+
+    const expectCaseModalOpen = () => {
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+    };
+
+    const expectCaseModalClosed = () => {
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+    };
+
     it('should render a case row with its edit, share, toggle-status and delete actions', () => {
       renderWithCase();
 
@@ -511,46 +533,42 @@ describe('ArchiveFundsTable', () => {
     });
 
     it('should open the edit modal for a case, and close it', async () => {
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-edit'));
 
-      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+      expectCaseModalOpen();
       expect(screen.getByTestId('mock-case-modal-caseId')).toHaveTextContent(caseItem.id);
       expect(screen.getByTestId('mock-case-modal-fundId')).toHaveTextContent(caseItem.fundId);
 
       await user.click(screen.getByTestId('mock-case-modal-close'));
 
-      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+      expectCaseModalClosed();
     });
 
     it('should also open the edit modal via the row\'s dedicated edit action', async () => {
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('edit-action-direct'));
 
-      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+      expectCaseModalOpen();
     });
 
     it('should call onCaseChanged and close the modal when a case edit is saved', async () => {
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = userEvent.setup();
-      renderWithCase({ onCaseChanged: onCaseChangedMock });
+      const user = setupCase({ onCaseChanged: onCaseChangedMock });
 
       await user.click(screen.getByTestId('action-edit'));
       await user.click(screen.getByTestId('mock-case-modal-save'));
 
       expect(onCaseChangedMock).toHaveBeenCalled();
-      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+      expectCaseModalClosed();
     });
 
     it('should toggle a published case to hidden and show the corresponding toast', async () => {
       mockUpdateCase.mockResolvedValueOnce(undefined);
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = userEvent.setup();
-      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Published }, onCaseChanged: onCaseChangedMock });
+      const user = setupCase({ caseOverrides: { status: BaseContentStatuses.Published }, onCaseChanged: onCaseChangedMock });
 
       await user.click(screen.getByTestId('action-toggle-status'));
 
@@ -561,8 +579,7 @@ describe('ArchiveFundsTable', () => {
 
     it('should toggle a hidden case to published and show the corresponding toast', async () => {
       mockUpdateCase.mockResolvedValueOnce(undefined);
-      const user = userEvent.setup();
-      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
+      const user = setupCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
 
       await user.click(screen.getByTestId('action-toggle-status'));
 
@@ -572,8 +589,7 @@ describe('ArchiveFundsTable', () => {
 
     it('should show the error message when toggling status rejects with an Error', async () => {
       mockUpdateCase.mockRejectedValueOnce(new Error('Не вдалося змінити'));
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-toggle-status'));
 
@@ -582,8 +598,7 @@ describe('ArchiveFundsTable', () => {
 
     it('should show a fallback error message when toggling status rejects with a non-Error', async () => {
       mockUpdateCase.mockRejectedValueOnce('boom');
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-toggle-status'));
 
@@ -592,8 +607,7 @@ describe('ArchiveFundsTable', () => {
 
     it('should delete a case, calling onCaseChanged, when confirmed', async () => {
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = userEvent.setup();
-      renderWithCase({ onCaseChanged: onCaseChangedMock });
+      const user = setupCase({ onCaseChanged: onCaseChangedMock });
 
       await user.click(screen.getByTestId('action-delete'));
       expect(
@@ -607,8 +621,7 @@ describe('ArchiveFundsTable', () => {
     });
 
     it('should not call onCaseChanged when deleting a case if it is not provided', async () => {
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
@@ -618,25 +631,23 @@ describe('ArchiveFundsTable', () => {
 
     it('should copy the case link and show a success toast', async () => {
       const writeText = setClipboardWriteText(() => Promise.resolve());
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-share'));
 
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/cases?caseId=${caseItem.id}`));
-      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+      expectCopyLinkSuccessToast();
 
       clearClipboardWriteText();
     });
 
     it('should show an error toast when copying the case link fails', async () => {
       setClipboardWriteText(() => Promise.reject(new Error('denied')));
-      const user = userEvent.setup();
-      renderWithCase();
+      const user = setupCase();
 
       await user.click(screen.getByTestId('action-share'));
 
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+      expectCopyLinkErrorToast();
 
       clearClipboardWriteText();
     });
