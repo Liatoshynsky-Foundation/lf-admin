@@ -85,7 +85,7 @@ async function copyToClipboard(value: string) {
       throw new Error('Clipboard copy failed');
     }
   } finally {
-    document.body.removeChild(textArea);
+    textArea.remove();
   }
 }
 
