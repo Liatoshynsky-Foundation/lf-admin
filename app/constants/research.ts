@@ -18,3 +18,20 @@ export const RESEARCH_STATUS_OPTIONS = [
 ] as const;
 
 export const RESEARCH_ITEMS_PER_PAGE = 8;
+
+export const RESEARCH_VALIDATION_MESSAGES = {
+  bibliographicDescriptionRequired: 'Бібліографічний опис є обов’язковим.',
+  bibliographicDescriptionMaxLength: 'Бібліографічний опис не може перевищувати 250 символів.',
+
+  authorRequired: 'Автор є обов’язковим.',
+  authorMaxLength: 'Значення не може перевищувати 150 символів.',
+
+  yearRequired: 'Рік є обов’язковим.',
+  yearMaxLength: 'Значення не може перевищувати 150 символів.',
+
+  keywordsMaxLength: 'Ключові слова не можуть перевищувати 250 символів.',
+
+  urlInvalid: 'Введіть коректне посилання.',
+
+  pdfInvalidType: 'Можна прикріпити лише PDF-файл.'
+} as const;
