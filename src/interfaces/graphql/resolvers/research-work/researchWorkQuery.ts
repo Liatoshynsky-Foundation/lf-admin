@@ -6,7 +6,7 @@ interface FindByIdArgs {
   id: string;
 }
 
-type FiltersGQLInput = Parameters<typeof mapFilters>[0];
+type FiltersGQLInput = Exclude<Parameters<typeof mapFilters>[0], undefined>;
 
 interface FilterArgs {
   filters?: FiltersGQLInput;

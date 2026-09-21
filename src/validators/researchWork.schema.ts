@@ -32,7 +32,7 @@ const optionalUrlSchema = z
       .pipe(z.url({ error: RESEARCH_VALIDATION_MESSAGES.urlInvalid }))
   ])
   .optional()
-  .transform((value) => (value === '' || value == null ? null : value));
+  .transform((value) => (value === '' ? null : value));
 
 const optionalKeywordsSchema = z
   .union([
@@ -41,7 +41,7 @@ const optionalKeywordsSchema = z
     z.string().trim().max(250, { message: RESEARCH_VALIDATION_MESSAGES.keywordsMaxLength })
   ])
   .optional()
-  .transform((value) => (value === '' || value == null ? null : value));
+  .transform((value) => (value === '' ? null : value));
 
 export const zResearchWorkSchema = z.object({
   bibliographicDescription: requiredString(

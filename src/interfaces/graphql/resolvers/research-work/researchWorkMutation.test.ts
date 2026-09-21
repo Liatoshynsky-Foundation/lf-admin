@@ -276,6 +276,27 @@ describe('ResearchWorkMutation', () => {
       expect(mockUpdate).toHaveBeenCalledWith(mockId, expect.objectContaining({ keywords: null }));
     });
 
+    it('does not wipe url or keywords when they are omitted from the update', async () => {
+      const current = createMockEntity({
+        url: 'https://example.com/existing',
+        keywords: 'існуючі'
+      });
+      mockFindById.mockResolvedValue(current);
+      mockUpdate.mockResolvedValue(createMockEntity({ author: 'Новий автор' }));
+
+      await ResearchWorkMutation.updateResearchWork(
+        {},
+        { id: mockId, input: { author: 'Новий автор' } },
+        adminContext
+      );
+
+      expect(mockUpdate).toHaveBeenCalledTimes(1);
+      const [, payload] = mockUpdate.mock.calls[0] as [string, Record<string, unknown>];
+      expect(payload).toEqual({ author: 'Новий автор' });
+      expect(payload).not.toHaveProperty('url');
+      expect(payload).not.toHaveProperty('keywords');
+    });
+
     it('throws BAD_USER_INPUT for invalid update input', async () => {
       await expect(
         ResearchWorkMutation.updateResearchWork(

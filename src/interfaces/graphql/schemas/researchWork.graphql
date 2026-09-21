@@ -1,9 +1,6 @@
 enum ResearchWorkStatus {
-  draft
   published
   hidden
-  archived
-  editing
 }
 
 type ResearchWorkPdfFile {

@@ -16,9 +16,9 @@ export type DbResearchWork = {
   bibliographicDescription: ResearchWork['bibliographicDescription'];
   author: ResearchWork['author'];
   year: ResearchWork['year'];
-  keywords?: ResearchWork['keywords'];
-  pdfFile?: ResearchWork['pdfFile'];
-  url?: ResearchWork['url'];
+  keywords?: Exclude<ResearchWork['keywords'], undefined>;
+  pdfFile?: Exclude<ResearchWork['pdfFile'], undefined>;
+  url?: Exclude<ResearchWork['url'], undefined>;
   status: ResearchWork['status'];
   publishedAt?: Date | string | null;
   createdAt: string | Date;
