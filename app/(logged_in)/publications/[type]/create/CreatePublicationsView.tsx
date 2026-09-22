@@ -106,7 +106,6 @@ export default function CreatePublicationsView({
         value={value.canonicalUrl ?? ''}
         externalError={canonicalUrlError}
         onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-        onBlur={() => { }}
         forceShowErrors={forceShowErrors}
       />
     ),
