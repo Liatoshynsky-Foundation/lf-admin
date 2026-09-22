@@ -250,7 +250,6 @@ describe('CarouselImageCard', () => {
   });
 
   it('falls back to default "Carousel image" alt text when no alt exists for the current locale on file change', () => {
-    // Intentionally incomplete localized data (missing uk/en) to exercise the component's fallback rendering.
     const bareImage: CarouselImageData = { id: 7, src: '', alt: {} as unknown as CarouselImageData['alt'] };
     render(<CarouselImageCard image={bareImage} currentLocale="uk" onChangeImage={mockOnChangeImage} />);
 
