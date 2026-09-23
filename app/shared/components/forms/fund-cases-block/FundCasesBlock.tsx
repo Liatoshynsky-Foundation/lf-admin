@@ -205,7 +205,7 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
       </Box>
 
       <Box sx={styles.content}>
-        <TableLayout data={rows} columns={columns} />
+        <TableLayout data={rows} columns={columns} withoutFirstColOffset={true} />
       </Box>
 
       {fundId && (

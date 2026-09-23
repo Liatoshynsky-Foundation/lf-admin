@@ -7,10 +7,11 @@ import { ColumnDef } from './Row.types';
 type HeaderRowProps<TGroup, TSub, TPlain> = Readonly<{
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
+  withoutFirstColOffset?: boolean;
 }>;
-export function HeaderRow<TGroup, TSub, TPlain>({ columns, gridTemplate }: HeaderRowProps<TGroup, TSub, TPlain>) {
+export function HeaderRow<TGroup, TSub, TPlain>({ columns, gridTemplate, withoutFirstColOffset}: HeaderRowProps<TGroup, TSub, TPlain>) {
   return (
-    <Box sx={styles.tableHeader(gridTemplate, columns[0]?.width ?? 'auto')}>
+    <Box sx={styles.tableHeader(gridTemplate, columns[0]?.width ?? 'auto', withoutFirstColOffset)}>
       {columns.map((col) => (
         <Typography key={col.id} sx={styles.headerTextCell()}>
           {col.headerLabel}

@@ -9,14 +9,15 @@ import { BaseRowData, ColumnDef } from './row-variants/Row.types';
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
+  withoutFirstColOffset?: boolean;
 }>;
 
-export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {
+export function TableLayout<TGroup, TSub, TPlain>({ data, columns, withoutFirstColOffset }: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
 
   return (
     <Box>
-      <HeaderRow columns={columns} gridTemplate={gridTemplate} />
+      <HeaderRow columns={columns} gridTemplate={gridTemplate} withoutFirstColOffset={withoutFirstColOffset} />
 
       {data.map((item) => {
         if (item.type === 'group') {

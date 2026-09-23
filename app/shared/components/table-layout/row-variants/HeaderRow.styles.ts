@@ -5,11 +5,15 @@ import {  singleLineEllipsis, tableBorderWidth, tableDividerColor, tableGap } fr
 export const styles = {
 
 
-  tableHeader: (gridTemplate: string, firstColWidth: string): SxProps<Theme> => {
+  tableHeader: (
+    gridTemplate: string,
+    firstColWidth: string,
+    withoutFirstColOffset = false,
+  ): SxProps<Theme> => {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
     return {
       display: 'grid',
-      gridTemplateColumns: `calc(${firstColWidth} + 26px) ${restTemplates}`,
+      gridTemplateColumns: `${withoutFirstColOffset ? firstColWidth : `calc(${firstColWidth} + 26px)`} ${restTemplates}`,
       columnGap: tableGap,
       alignItems: 'center',
       py: '16px',
