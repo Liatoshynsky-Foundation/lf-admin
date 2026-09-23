@@ -69,8 +69,14 @@ export const RESEARCH_MENU_ACTIONS = {
   edit: 'Редагувати',
   publish: 'Опублікувати',
   hide: 'Приховати',
-  delete: 'Видалити'
+  delete: 'Видалити',
+  share: 'Поширити'
 } as const;
+
+export const RESEARCH_WORK_NOT_FOUND = 'Роботу не знайдено';
+
+export const RESEARCH_WORK_ID_PARAM = 'research-work-id';
+export const RESEARCH_BASE_PATH = '/research';
 
 export const RESEARCH_URL_PLACEHOLDER = 'https://example.com';
 

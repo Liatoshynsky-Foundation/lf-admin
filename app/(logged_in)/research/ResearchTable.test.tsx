@@ -158,4 +158,15 @@ describe('ResearchTable', () => {
 
     expect(onToggleStatus).toHaveBeenCalledWith(secondWork);
   });
+
+  it('calls onShareWork when Share is clicked', async () => {
+    const user = userEvent.setup();
+    const onShareWork = jest.fn();
+
+    render(<ResearchTable works={[work]} onEditWork={jest.fn()} onShareWork={onShareWork} />);
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.share }));
+
+    expect(onShareWork).toHaveBeenCalledWith(work);
+  });
 });

@@ -32,3 +32,9 @@ query PaginatedResearchWorks($page: Int = 1, $limit: Int = 10, $filters: Researc
     totalPages
   }
 }
+
+query ResearchWorkById($id: ID!) {
+  researchWorkById(id: $id) {
+    ...ResearchWorkFields
+  }
+}

@@ -16,6 +16,7 @@ type ResearchContentProps = Readonly<{
   onEditWork: (work: ResearchWork) => void;
   onDeleteWork: (work: ResearchWork) => void;
   onToggleStatus: (work: ResearchWork) => void;
+  onShareWork: (work: ResearchWork) => void;
 }>;
 
 const emptyStateForReason = (emptyReason: ResearchEmptyReason) => {
@@ -36,7 +37,8 @@ export function ResearchContent({
   emptyReason,
   onEditWork,
   onDeleteWork,
-  onToggleStatus
+  onToggleStatus,
+  onShareWork
 }: ResearchContentProps) {
   if (visibleWorks.length === 0) {
     const emptyState = emptyStateForReason(emptyReason);
@@ -49,6 +51,7 @@ export function ResearchContent({
       onEditWork={onEditWork}
       onDeleteWork={onDeleteWork}
       onToggleStatus={onToggleStatus}
+      onShareWork={onShareWork}
     />
   );
 }

@@ -74,13 +74,17 @@ const buildMenuItems = (
   work: ResearchWork,
   onEditWork: (work: ResearchWork) => void,
   onDeleteWork: ((work: ResearchWork) => void) | undefined,
-  onToggleStatus: ((work: ResearchWork) => void) | undefined
+  onToggleStatus: ((work: ResearchWork) => void) | undefined,
+  onShareWork: ((work: ResearchWork) => void) | undefined
 ): ActionMenuGroups => {
   const isPublished = work.status === BaseContentStatuses.Published;
 
   return [
     {
-      items: [{ id: 'edit', text: { name: RESEARCH_MENU_ACTIONS.edit }, onClick: () => onEditWork(work) }]
+      items: [
+        { id: 'edit', text: { name: RESEARCH_MENU_ACTIONS.edit }, onClick: () => onEditWork(work) },
+        { id: 'share', text: { name: RESEARCH_MENU_ACTIONS.share }, onClick: () => onShareWork?.(work) }
+      ]
     },
     {
       items: [
@@ -99,12 +103,14 @@ export function ResearchTable({
   works,
   onEditWork,
   onDeleteWork,
-  onToggleStatus
+  onToggleStatus,
+  onShareWork
 }: Readonly<{
   works: readonly ResearchWork[];
   onEditWork: (work: ResearchWork) => void;
   onDeleteWork?: (work: ResearchWork) => void;
   onToggleStatus?: (work: ResearchWork) => void;
+  onShareWork?: (work: ResearchWork) => void;
 }>) {
   const rows: BaseRowData<unknown, unknown, PlainWork>[] = works.map((work) => ({
     type: 'individual',
@@ -116,7 +122,7 @@ export function ResearchTable({
         onEditClick: () => onEditWork(work)
       },
       menuActions: {
-        menuItems: buildMenuItems(work, onEditWork, onDeleteWork, onToggleStatus),
+        menuItems: buildMenuItems(work, onEditWork, onDeleteWork, onToggleStatus, onShareWork),
         menuTriggerLabel: `Дії для роботи ${work.author}`
       }
     }

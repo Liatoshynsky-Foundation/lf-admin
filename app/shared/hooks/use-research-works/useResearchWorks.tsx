@@ -22,6 +22,7 @@ import {
   useDeleteResearchWorkMutation,
   usePaginatedResearchWorksQuery,
   useResearchWorkAuthorsQuery,
+  useResearchWorkByIdQuery,
   useUpdateResearchWorkMutation,
   useUpdateResearchWorkStatusMutation
 } from '~/types/graphql/generated/graphql';
@@ -142,4 +143,23 @@ export const useDeleteResearchWork = () => {
   );
 
   return [deleteResearchWork, meta] as const;
+};
+
+export const useResearchWorkById = (id: string | null) => {
+  const { data, loading, error } = useResearchWorkByIdQuery({
+    variables: { id: id ?? '' },
+    skip: !id,
+    fetchPolicy: 'network-only'
+  });
+
+  const work = useMemo(
+    () => (data?.researchWorkById ? mapResearchWork(data.researchWorkById) : null),
+    [data?.researchWorkById]
+  );
+
+  return {
+    work,
+    loading,
+    error
+  };
 };

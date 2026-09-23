@@ -7,8 +7,10 @@ import toast from 'react-hot-toast';
 import { ResearchContent } from './ResearchContent';
 import { ResearchCreateAction } from './ResearchCreateAction';
 import { styles } from './ResearchPageContent.styles';
+import { useResearchUrlState } from './useResearchUrlState';
 import { useResearchWorksFiltering } from './useResearchWorksFiltering';
 import {
+  RESEARCH_BASE_PATH,
   RESEARCH_DELETE_CONFIRM,
   RESEARCH_ERROR_STATE_DESCRIPTION,
   RESEARCH_ERROR_STATE_TITLE,
@@ -16,7 +18,9 @@ import {
   RESEARCH_LOADING_STATE_DESCRIPTION,
   RESEARCH_LOADING_STATE_TITLE,
   RESEARCH_MUTATION_RESULTS,
-  RESEARCH_PAGE_TITLE
+  RESEARCH_PAGE_TITLE,
+  RESEARCH_WORK_ID_PARAM,
+  RESEARCH_WORK_NOT_FOUND
 } from '~/constants/research';
 import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
@@ -31,6 +35,7 @@ import {
   usePaginatedResearchWorks,
   useUpdateResearchWorkStatus
 } from '~/shared/hooks/use-research-works/useResearchWorks';
+import { useShare } from '~/shared/hooks/use-share/useShare';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { ResearchWorkStatus } from '~/types/graphql/generated/graphql';
 import type { ResearchWork } from '~/types/researchWork';
@@ -38,12 +43,15 @@ import type { ResearchWork } from '~/types/researchWork';
 export function ResearchPageContent() {
   const { requestFilters, searchValue, selectedFilters, toolbarProps, statusFilterProps, activeFiltersCount } =
     useResearchWorksFiltering();
+  const { workIdFromUrl, workFromUrl, isLoadingFromUrl, setWorkIdInUrl } = useResearchUrlState();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedWork, setSelectedWork] = useState<ResearchWork | null>(null);
+  const [dismissedUrlWorkId, setDismissedUrlWorkId] = useState<string | null>(null);
   const [workToDelete, setWorkToDelete] = useState<ResearchWork | null>(null);
   const [page, setPage] = useState(1);
+  const { handleShare } = useShare();
 
   const { items: visibleWorks, totalPages, loading, error } = usePaginatedResearchWorks(
     page,
@@ -53,21 +61,39 @@ export function ResearchPageContent() {
   const [deleteResearchWork] = useDeleteResearchWork();
   const [updateResearchWorkStatus] = useUpdateResearchWorkStatus();
 
+  const isEditOpenFromUrl = Boolean(
+    workIdFromUrl && workFromUrl && !isLoadingFromUrl && dismissedUrlWorkId !== workIdFromUrl
+  );
+  const activeWork = selectedWork ?? (isEditOpenFromUrl ? workFromUrl : null);
+  const isModalVisible = isModalOpen || isEditOpenFromUrl;
+  const activeModalMode: 'create' | 'edit' =
+    (isEditOpenFromUrl || modalMode === 'edit') ? 'edit' : 'create';
+
   const handleOpenCreate = () => {
+    if (workIdFromUrl) {
+      setDismissedUrlWorkId(workIdFromUrl);
+    }
     setModalMode('create');
     setSelectedWork(null);
     setIsModalOpen(true);
+    setWorkIdInUrl(null);
   };
 
   const handleOpenEdit = (work: ResearchWork) => {
+    setDismissedUrlWorkId(null);
     setModalMode('edit');
     setSelectedWork(work);
     setIsModalOpen(true);
+    setWorkIdInUrl(work.id);
   };
 
   const handleCloseModal = () => {
+    if (workIdFromUrl) {
+      setDismissedUrlWorkId(workIdFromUrl);
+    }
     setIsModalOpen(false);
     setSelectedWork(null);
+    setWorkIdInUrl(null);
   };
 
   const handleRequestDelete = (work: ResearchWork) => {
@@ -90,6 +116,10 @@ export function ResearchPageContent() {
     } catch (error) {
       toast.error(resolveErrorMessage(error, RESEARCH_MUTATION_RESULTS.deleteFailed));
     }
+  };
+
+  const handleShareWork = (work: ResearchWork) => {
+    handleShare(`${window.location.origin}${RESEARCH_BASE_PATH}?${RESEARCH_WORK_ID_PARAM}=${work.id}`);
   };
 
   const handleToggleStatus = async (work: ResearchWork) => {
@@ -128,6 +158,20 @@ export function ResearchPageContent() {
     }
   }, [page, totalPages]);
 
+  useEffect(() => {
+    if (!workIdFromUrl) {
+      setDismissedUrlWorkId(null);
+      return;
+    }
+
+    if (isLoadingFromUrl || workFromUrl) {
+      return;
+    }
+
+    toast.error(RESEARCH_WORK_NOT_FOUND);
+    setWorkIdInUrl(null);
+  }, [workIdFromUrl, workFromUrl, isLoadingFromUrl, setWorkIdInUrl]);
+
   let listContent = (
     <ResearchContent
       visibleWorks={visibleWorks}
@@ -135,6 +179,7 @@ export function ResearchPageContent() {
       onEditWork={handleOpenEdit}
       onDeleteWork={handleRequestDelete}
       onToggleStatus={handleToggleStatus}
+      onShareWork={handleShareWork}
     />
   );
 
@@ -162,21 +207,21 @@ export function ResearchPageContent() {
       )}
 
       <ResearchModal
-        key={selectedWork?.id ?? 'create'}
-        isOpen={isModalOpen}
-        mode={modalMode}
-        workId={selectedWork?.id}
-        existingPdfFile={selectedWork?.pdfFile}
+        key={activeWork?.id ?? 'create'}
+        isOpen={isModalVisible}
+        mode={activeModalMode}
+        workId={activeWork?.id}
+        existingPdfFile={activeWork?.pdfFile}
         onClose={handleCloseModal}
         initialData={
-          selectedWork
+          activeWork
             ? {
-              bibliographicDescription: selectedWork.bibliographicDescription,
-              author: selectedWork.author,
-              keywords: selectedWork.keywords,
-              caseDates: String(selectedWork.year),
-              url: selectedWork.url ?? '',
-              isVisibleOnSite: selectedWork.status === BaseContentStatuses.Published
+              bibliographicDescription: activeWork.bibliographicDescription,
+              author: activeWork.author,
+              keywords: activeWork.keywords,
+              caseDates: String(activeWork.year),
+              url: activeWork.url ?? '',
+              isVisibleOnSite: activeWork.status === BaseContentStatuses.Published
             }
             : undefined
         }

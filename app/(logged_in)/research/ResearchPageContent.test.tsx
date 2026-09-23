@@ -3,13 +3,21 @@ import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import { ResearchPageContent } from './ResearchPageContent';
+import { useResearchUrlState } from './useResearchUrlState';
 import { useResearchWorksFiltering } from './useResearchWorksFiltering';
-import { RESEARCH_DELETE_CONFIRM, RESEARCH_MUTATION_RESULTS } from '~/constants/research';
+import {
+  RESEARCH_BASE_PATH,
+  RESEARCH_DELETE_CONFIRM,
+  RESEARCH_MUTATION_RESULTS,
+  RESEARCH_WORK_ID_PARAM,
+  RESEARCH_WORK_NOT_FOUND
+} from '~/constants/research';
 import {
   useDeleteResearchWork,
   usePaginatedResearchWorks,
   useUpdateResearchWorkStatus
 } from '~/shared/hooks/use-research-works/useResearchWorks';
+import { useShare } from '~/shared/hooks/use-share/useShare';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { ResearchWorkStatus } from '~/types/graphql/generated/graphql';
 import type { ResearchWork } from '~/types/researchWork';
@@ -24,6 +32,10 @@ jest.mock('react-hot-toast', () => ({
 
 jest.mock('./useResearchWorksFiltering', () => ({
   useResearchWorksFiltering: jest.fn()
+}));
+
+jest.mock('./useResearchUrlState', () => ({
+  useResearchUrlState: jest.fn()
 }));
 
 jest.mock('~/shared/hooks/use-research-works/useResearchWorks', () => ({
@@ -51,6 +63,10 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
   )
 }));
 
+jest.mock('~/shared/hooks/use-share/useShare', () => ({
+  useShare: jest.fn()
+}));
+
 jest.mock('./ResearchCreateAction', () => ({
   ResearchCreateAction: ({ onClick }: { onClick: () => void }) => (
     <button type="button" onClick={onClick}>
@@ -65,13 +81,15 @@ jest.mock('./ResearchContent', () => ({
     emptyReason,
     onEditWork,
     onDeleteWork,
-    onToggleStatus
+    onToggleStatus,
+    onShareWork
   }: {
     visibleWorks: readonly ResearchWork[];
     emptyReason: string;
     onEditWork: (work: ResearchWork) => void;
     onDeleteWork: (work: ResearchWork) => void;
     onToggleStatus: (work: ResearchWork) => void;
+    onShareWork: (work: ResearchWork) => void;
   }) => (
     <div data-testid="mock-research-content" data-empty-reason={emptyReason}>
       {visibleWorks.length}
@@ -84,14 +102,24 @@ jest.mock('./ResearchContent', () => ({
       <button type="button" onClick={() => onToggleStatus(visibleWorks[0])}>
         toggle-status-first
       </button>
+      <button type="button" onClick={() => onShareWork(visibleWorks[0])}>
+        share-first
+      </button>
     </div>
   )
 }));
 
 jest.mock('~/shared/components/research-modal/ResearchModal', () => ({
   __esModule: true,
-  default: ({ isOpen, mode }: { isOpen: boolean; mode: string }) =>
-    isOpen ? <div data-testid="mock-research-modal">{mode}</div> : null
+  default: ({ isOpen, mode, onClose }: { isOpen: boolean; mode: string; onClose: () => void }) =>
+    isOpen ? (
+      <div data-testid="mock-research-modal">
+        <span>{mode}</span>
+        <button type="button" onClick={onClose}>
+          close-modal
+        </button>
+      </div>
+    ) : null
 }));
 
 jest.mock('~/shared/components/delete-card-modal/DeleteCardModal', () => ({
@@ -139,9 +167,11 @@ jest.mock('~/shared/components/pagination/Pagination', () => ({
 }));
 
 const mockedUseResearchWorksFiltering = jest.mocked(useResearchWorksFiltering);
+const mockedUseResearchUrlState = jest.mocked(useResearchUrlState);
 const mockedUsePaginatedResearchWorks = jest.mocked(usePaginatedResearchWorks);
 const mockedUseDeleteResearchWork = jest.mocked(useDeleteResearchWork);
 const mockedUseUpdateResearchWorkStatus = jest.mocked(useUpdateResearchWorkStatus);
+const mockedUseShare = jest.mocked(useShare);
 
 const sampleWork: ResearchWork = {
   id: '1',
@@ -158,6 +188,7 @@ const sampleWork: ResearchWork = {
 describe('ResearchPageContent', () => {
   const deleteResearchWork = jest.fn();
   const updateResearchWorkStatus = jest.fn();
+  const setWorkIdInUrl = jest.fn();
 
   const defaultFilteringMock = {
     requestFilters: {
@@ -189,6 +220,13 @@ describe('ResearchPageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     deleteResearchWork.mockResolvedValue({});
+    mockedUseShare.mockReturnValue({ handleShare: jest.fn() });
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: null,
+      workFromUrl: null,
+      isLoadingFromUrl: false,
+      setWorkIdInUrl
+    });
     mockedUseResearchWorksFiltering.mockReturnValue(
       defaultFilteringMock as unknown as ReturnType<typeof useResearchWorksFiltering>
     );
@@ -287,6 +325,24 @@ describe('ResearchPageContent', () => {
     fireEvent.click(screen.getByText('Додати роботу'));
 
     expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('create');
+    expect(setWorkIdInUrl).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps create mode when opening create while a deep-link id is still in the url', () => {
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: sampleWork.id,
+      workFromUrl: sampleWork,
+      isLoadingFromUrl: false,
+      setWorkIdInUrl
+    });
+
+    render(<ResearchPageContent />);
+    expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('edit');
+
+    fireEvent.click(screen.getByText('Додати роботу'));
+
+    expect(setWorkIdInUrl).toHaveBeenCalledWith(null);
+    expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('create');
   });
 
   it('opens the modal in edit mode with selected work data', () => {
@@ -295,6 +351,65 @@ describe('ResearchPageContent', () => {
     fireEvent.click(screen.getByText('edit-first'));
 
     expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('edit');
+    expect(setWorkIdInUrl).toHaveBeenCalledWith(sampleWork.id);
+  });
+
+  it('copies the research work URL when Share is triggered', () => {
+    const handleShare = jest.fn();
+    mockedUseShare.mockReturnValue({ handleShare });
+
+    render(<ResearchPageContent />);
+
+    fireEvent.click(screen.getByText('share-first'));
+
+    expect(handleShare).toHaveBeenCalledWith(
+      `${window.location.origin}${RESEARCH_BASE_PATH}?${RESEARCH_WORK_ID_PARAM}=${sampleWork.id}`
+    );
+  });
+
+  it('opens edit modal from deep-link work id', () => {
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: sampleWork.id,
+      workFromUrl: sampleWork,
+      isLoadingFromUrl: false,
+      setWorkIdInUrl
+    });
+
+    render(<ResearchPageContent />);
+
+    expect(screen.getByTestId('mock-research-modal')).toHaveTextContent('edit');
+  });
+
+  it('shows an error and clears url when deep-link work is missing', () => {
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: 'missing-id',
+      workFromUrl: null,
+      isLoadingFromUrl: false,
+      setWorkIdInUrl
+    });
+
+    render(<ResearchPageContent />);
+
+    expect(toast.error).toHaveBeenCalledWith(RESEARCH_WORK_NOT_FOUND);
+    expect(setWorkIdInUrl).toHaveBeenCalledWith(null);
+    expect(screen.queryByTestId('mock-research-modal')).not.toBeInTheDocument();
+  });
+
+  it('closes deep-link modal on the first close click even if url is still present', () => {
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: sampleWork.id,
+      workFromUrl: sampleWork,
+      isLoadingFromUrl: false,
+      setWorkIdInUrl
+    });
+
+    render(<ResearchPageContent />);
+    expect(screen.getByTestId('mock-research-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('close-modal'));
+
+    expect(setWorkIdInUrl).toHaveBeenCalledWith(null);
+    expect(screen.queryByTestId('mock-research-modal')).not.toBeInTheDocument();
   });
 
   it('opens delete confirmation and deletes the record on confirm', async () => {

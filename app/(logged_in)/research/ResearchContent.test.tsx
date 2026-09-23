@@ -41,7 +41,8 @@ const sampleWork: ResearchWork = {
 const emptyHandlers = {
   onEditWork: jest.fn(),
   onDeleteWork: jest.fn(),
-  onToggleStatus: jest.fn()
+  onToggleStatus: jest.fn(),
+  onShareWork: jest.fn()
 };
 
 describe('ResearchContent', () => {
