@@ -75,8 +75,8 @@ const columns: readonly ColumnDef<never, never, CaseRow>[] = [
   },
   {
     id: 'publishedAt',
-    headerLabel: '',
-    width: '48px',
+    headerLabel: 'Статус',
+    width: '60px',
     align: 'center',
     hasLeftDivider: true,
     hasRightDivider: true,

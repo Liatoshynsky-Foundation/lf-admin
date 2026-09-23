@@ -19,8 +19,12 @@ import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
+import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
+import {
+  CaseRowFields,
+  useArchiveCaseRowActions
+} from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
 import { useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -58,6 +62,7 @@ export interface FundsTableProps {
   onCaseChanged?: () => Promise<unknown>;
   onPublish?: (fund: Fund) => void;
   onUnpublish?: (fund: Fund) => void;
+  groupCasesByFund?: boolean;
 }
 
 export const FundsTable = ({
@@ -68,21 +73,21 @@ export const FundsTable = ({
   onDeleted,
   onCaseChanged,
   onPublish,
-  onUnpublish
+  onUnpublish,
+  groupCasesByFund = false
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({
     open: false
   });
+  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
 
-  const fundRows = funds.map((fund) => {
+  const buildFundRowData = (fund: Fund): FundRow => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
     const canUnpublish = fund.status === BaseContentStatuses.Published && Boolean(onUnpublish);
     const statusActions = [
       ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
-      ...(canUnpublish
-        ? [{ id: 'unpublish', text: { name: 'Сховати' }, onClick: () => onUnpublish?.(fund) }]
-        : []),
+      ...(canUnpublish ? [{ id: 'unpublish', text: { name: 'Сховати' }, onClick: () => onUnpublish?.(fund) }] : []),
       {
         id: 'delete',
         text: { name: 'Видалити' },
@@ -91,63 +96,81 @@ export const FundsTable = ({
     ];
 
     return {
-      type: 'individual' as const,
-      id: fund.id,
-      plainData: {
-        ...fund,
-        editAction: {
-          editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
-          editLabel: `Редагувати фонд ${fund.name}`
-        },
-        menuActions: {
-          menuItems: [
-            {
-              items: [
-                { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
-                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
-              ]
-            },
-            {
-              items: statusActions
-            }
-          ],
-          menuTriggerLabel: `Дії для фонду ${fund.name}`
-        }
+      ...fund,
+      editAction: {
+        editHref: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit`,
+        editLabel: `Редагувати фонд ${fund.name}`
+      },
+      menuActions: {
+        menuItems: [
+          {
+            items: [
+              { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
+              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
+            ]
+          },
+          {
+            items: statusActions
+          }
+        ],
+        menuTriggerLabel: `Дії для фонду ${fund.name}`
       }
     };
+  };
+
+  const buildOrphanCaseRowData = (caseRow: CaseRowFields): FundRow => ({
+    id: caseRow.id,
+    fundNumber: caseRow.cipher,
+    name: caseRow.name,
+    descriptions: caseRow.descriptionLabel,
+    cases: caseRow.caseLabel,
+    dates: caseRow.caseDate,
+    status: caseRow.status,
+    updatedAt: caseRow.updatedAt,
+    editAction: caseRow.editAction,
+    menuActions: caseRow.menuActions
   });
 
-  const columns: readonly ColumnDef<never, never, FundRow>[] = [
+  const columns: readonly ColumnDef<FundRow, CaseRowFields, FundRow>[] = [
     {
       id: 'fundNumber',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.fund,
       align: 'center',
-      width: '46px',
+      width: '96px',
       hasRightDivider: true,
+      renderGroup: (fund) => fund.fundNumber,
       renderPlain: (fund) => fund.fundNumber
     },
     {
       id: 'name',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.name,
       width: 'minmax(300px, 1fr)',
+      renderGroup: (fund) => fund.name,
+      renderSub: (caseRow) => caseRow.name,
       renderPlain: (fund) => fund.name
     },
     {
       id: 'descriptionsCount',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.descr,
       width: '96px',
+      renderGroup: (fund) => String(fund.descriptions),
+      renderSub: (caseRow) => caseRow.descriptionLabel,
       renderPlain: (fund) => String(fund.descriptions)
     },
     {
       id: 'casesCount',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.cases,
       width: '96px',
+      renderGroup: (fund) => String(fund.cases),
+      renderSub: (caseRow) => caseRow.caseLabel,
       renderPlain: (fund) => String(fund.cases)
     },
     {
       id: 'dates',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.dates,
       width: '160px',
+      renderGroup: (fund) => fund.dates,
+      renderSub: (caseRow) => caseRow.caseDate,
       renderPlain: (fund) => fund.dates
     },
     {
@@ -157,12 +180,25 @@ export const FundsTable = ({
       align: 'center',
       hasLeftDivider: true,
       hasRightDivider: true,
+      renderGroup: (fund) => <StatusBadge status={fund.status} updatedAt={fund.updatedAt} />,
+      renderSub: (caseRow) => <StatusBadge status={caseRow.status} updatedAt={caseRow.updatedAt} />,
       renderPlain: (fund) => <StatusBadge status={fund.status} updatedAt={fund.updatedAt} />
     },
     {
       id: 'actions',
       width: '96px',
       align: 'right',
+      renderGroup: (fund) => (
+        <RowActions
+          editAction={{
+            editLabel: fund.editAction.editLabel,
+            editHref: fund.editAction.editHref,
+            onEditClick: fund.editAction.onEditClick
+          }}
+          menuActions={fund.menuActions}
+        />
+      ),
+      renderSub: (caseRow) => <RowActions editAction={caseRow.editAction} menuActions={caseRow.menuActions} />,
       renderPlain: (fund) => (
         <RowActions
           editAction={{
@@ -195,23 +231,76 @@ export const FundsTable = ({
     );
   }
 
+  const deleteFundModal = (
+    <DeleteCompositionModal
+      open={deleteState.open}
+      onClose={() => setDeleteState({ open: false })}
+      title="Підтвердити видалення"
+      description={`Ви впевнені, що хочете видалити фонд «${deleteState.name ?? ''}»?`}
+      onConfirm={async () => {
+        if (!deleteState.id) return;
+        await deleteFund({ id: deleteState.id });
+        setDeleteState({ open: false });
+        await onDeleted?.();
+      }}
+    />
+  );
+
+  if (groupCasesByFund) {
+    const fundIds = new Set(funds.map((fund) => fund.id));
+    const casesByFund = new Map<string, ArchiveCase[]>();
+    const orphanCases: ArchiveCase[] = [];
+
+    cases.forEach((caseItem) => {
+      if (!fundIds.has(caseItem.fundId)) {
+        orphanCases.push(caseItem);
+        return;
+      }
+      const existing = casesByFund.get(caseItem.fundId) ?? [];
+      existing.push(caseItem);
+      casesByFund.set(caseItem.fundId, existing);
+    });
+
+    const rows: BaseRowData<FundRow, CaseRowFields, FundRow>[] = funds.map((fund) => ({
+      type: 'group' as const,
+      id: fund.id,
+      groupData: buildFundRowData(fund),
+      subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem))
+    }));
+
+    orphanCases.forEach((caseItem) => {
+      rows.push({
+        type: 'individual' as const,
+        id: caseItem.id,
+        plainData: buildOrphanCaseRowData(getCaseRow(caseItem))
+      });
+    });
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return (
+      <>
+        <TableLayout data={rows} columns={columns} offsetPlainRows />
+        {deleteFundModal}
+        {caseRowModals}
+      </>
+    );
+  }
+
+  const fundRows: BaseRowData<FundRow, CaseRowFields, FundRow>[] = funds.map((fund) => ({
+    type: 'individual' as const,
+    id: fund.id,
+    plainData: buildFundRowData(fund)
+  }));
+
   return (
     <>
       {fundRows.length > 0 && (
         <>
-          <TableLayout data={fundRows} columns={columns} />
-          <DeleteCompositionModal
-            open={deleteState.open}
-            onClose={() => setDeleteState({ open: false })}
-            title="Підтвердити видалення"
-            description={`Ви впевнені, що хочете видалити фонд «${deleteState.name ?? ''}»?`}
-            onConfirm={async () => {
-              if (!deleteState.id) return;
-              await deleteFund({ id: deleteState.id });
-              setDeleteState({ open: false });
-              await onDeleted?.();
-            }}
-          />
+          <TableLayout data={fundRows} columns={columns} withoutFirstColOffset />
+          {deleteFundModal}
         </>
       )}
       {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} />}

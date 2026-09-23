@@ -50,7 +50,7 @@ import { PageHeader } from '~/shared/components/page-header/PageHeader';
 import { Pagination } from '~/shared/components/pagination/Pagination';
 import { SearchStatusToolbar } from '~/shared/components/search-status-toolbar/SearchStatusToolbar';
 import { useAllCases } from '~/shared/hooks/use-cases/useCases';
-import { usePaginatedFunds, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
+import { useAllFunds, usePaginatedFunds, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus, FundStatus, SortOrder } from '~/types/graphql/generated/graphql';
 
@@ -67,6 +67,7 @@ interface PaginationParams {
   knownFundPageCount: number;
   knownFundTotal: number;
   sortedCasesLength: number;
+  orphanCasesLength: number;
 }
 
 const getPaginationData = ({
@@ -77,9 +78,14 @@ const getPaginationData = ({
   totalPages,
   knownFundPageCount,
   knownFundTotal,
-  sortedCasesLength
+  sortedCasesLength,
+  orphanCasesLength
 }: PaginationParams) => {
-  const fundPageCount = showFunds ? totalPages || knownFundPageCount : 0;
+  const fundPageCount = showFunds
+    ? knownFundTotal > 0
+      ? Math.ceil(knownFundTotal / ARCHIVE_ITEMS_PER_PAGE)
+      : totalPages || knownFundPageCount
+    : 0;
 
   const remainder = knownFundTotal % ARCHIVE_ITEMS_PER_PAGE;
   const fallbackItemCount = remainder || ARCHIVE_ITEMS_PER_PAGE;
@@ -90,29 +96,39 @@ const getPaginationData = ({
 
   const remainingCasesAfterFunds = Math.max(0, sortedCasesLength - firstCasePageCapacity);
   const isAllTabWithFunds = Boolean(isAllTab && fundPageCount > 0);
+  const isGroupedAllTab = isAllTabWithFunds && showFunds;
   const casesToPaginate = isAllTabWithFunds ? remainingCasesAfterFunds : sortedCasesLength;
   const casePageCount = showCases ? Math.ceil(casesToPaginate / ARCHIVE_ITEMS_PER_PAGE) : 0;
+  const lastFundPageCapacity = firstCasePageCapacity;
+  const orphanCasesAfterLastFundPage = Math.max(0, orphanCasesLength - lastFundPageCapacity);
+  const orphanCasePagesAfterLastFundPage = showCases
+    ? Math.ceil(orphanCasesAfterLastFundPage / ARCHIVE_ITEMS_PER_PAGE)
+    : 0;
 
-  const combinedPageCount = fundPageCount > 0 ? fundPageCount + casePageCount : casePageCount;
-  const totalArchivePages = isAllTab ? combinedPageCount : casePageCount || fundPageCount;
+  const combinedPageCount = fundPageCount > 0 ? fundPageCount + orphanCasePagesAfterLastFundPage : casePageCount;
+  const totalArchivePages = isGroupedAllTab ? combinedPageCount : isAllTab ? combinedPageCount : casePageCount || fundPageCount;
 
   const isMissingFunds = Boolean(!showFunds || page > fundPageCount);
   const isCasePage = Boolean(showCases && isMissingFunds);
-  const isBoundaryPage = Boolean(isAllTab && page === fundPageCount);
+  const isBoundaryPage = Boolean(isAllTab && !isGroupedAllTab && page === fundPageCount);
 
   const allTabCaseStartOffset = isBoundaryPage
     ? 0
     : firstCasePageCapacity + (page - fundPageCount - 1) * ARCHIVE_ITEMS_PER_PAGE;
   const caseStart = isAllTabWithFunds ? allTabCaseStartOffset : (page - 1) * ARCHIVE_ITEMS_PER_PAGE;
+  const orphanCaseStart = isGroupedAllTab
+    ? (page === fundPageCount ? 0 : lastFundPageCapacity + (page - fundPageCount - 1) * ARCHIVE_ITEMS_PER_PAGE)
+    : caseStart;
 
   const caseLimit = isBoundaryPage ? firstCasePageCapacity : ARCHIVE_ITEMS_PER_PAGE;
-  const isCaseVisible = Boolean(showCases && (isCasePage || isBoundaryPage));
+  const isCaseVisible = Boolean(showCases && (isGroupedAllTab || isCasePage || isBoundaryPage));
 
   return {
     fundPageCount,
     totalArchivePages,
     isCasePage,
     caseStart,
+    orphanCaseStart,
     caseLimit,
     isCaseVisible
   };
@@ -156,6 +172,9 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     },
     { skip: !showFunds }
   );
+  const { funds: allFunds, loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
+    skip: !isAllTab
+  });
 
   const {
     cases,
@@ -197,6 +216,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
+  const allFundIds = new Set(allFunds.map((fund) => fund.id));
+  const orphanCases = sortedCases.filter((caseItem) => !allFundIds.has(caseItem.fundId));
   const effectiveCasesLength = Math.max(sortedCases.length, casesLoading ? knownCasesLength : 0);
 
   const paginationData = getPaginationData({
@@ -207,32 +228,49 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     totalPages,
     knownFundPageCount,
     knownFundTotal,
-    sortedCasesLength: effectiveCasesLength
+    sortedCasesLength: effectiveCasesLength,
+    orphanCasesLength: orphanCases.length
   });
 
   const visibleFunds = paginationData.isCasePage ? [] : sortedFunds;
+  const visibleFundIds = new Set(visibleFunds.map((fund) => fund.id));
+  const groupedCases = sortedCases.filter((caseItem) => visibleFundIds.has(caseItem.fundId));
+  const visibleOrphanCases = orphanCases.slice(
+    paginationData.orphanCaseStart,
+    paginationData.orphanCaseStart +
+      (paginationData.isCasePage || page !== paginationData.fundPageCount
+        ? paginationData.caseLimit
+        : Math.max(0, ARCHIVE_ITEMS_PER_PAGE - visibleFunds.length))
+  );
   const visibleCases = paginationData.isCaseVisible
-    ? sortedCases.slice(paginationData.caseStart, paginationData.caseStart + paginationData.caseLimit)
+    ? paginationData.isCasePage
+      ? (isAllTab ? orphanCases : sortedCases).slice(
+        isAllTab ? paginationData.orphanCaseStart : paginationData.caseStart,
+        (isAllTab ? paginationData.orphanCaseStart : paginationData.caseStart) + paginationData.caseLimit
+      )
+      : !isAllTab
+        ? sortedCases.slice(paginationData.caseStart, paginationData.caseStart + paginationData.caseLimit)
+        : [...groupedCases, ...visibleOrphanCases]
     : [];
   const totalArchivePages = paginationData.totalArchivePages;
 
   useEffect(() => {
-    if (fundsLoading || casesLoading) {
+    if (fundsLoading || casesLoading || allFundsLoading) {
       return;
     }
 
     if (totalArchivePages > 0 && page > totalArchivePages) {
       setPage(totalArchivePages);
     }
-  }, [page, totalArchivePages, fundsLoading, casesLoading]);
+  }, [page, totalArchivePages, fundsLoading, casesLoading, allFundsLoading]);
 
   const hasActiveSearch = Boolean(appliedSearch);
   const hasActiveStatusFilter = !isAllStatus;
   const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
   const hasFunds = visibleFunds.length > 0;
   const hasCases = visibleCases.length > 0;
-  const isAllTabLoading = isAllTab && (fundsLoading || casesLoading);
-  const isAllTabError = isAllTab && Boolean(fundsError || casesError);
+  const isAllTabLoading = isAllTab && (fundsLoading || casesLoading || allFundsLoading);
+  const isAllTabError = isAllTab && Boolean(fundsError || casesError || allFundsError);
 
   const publishFund = async (fund: Fund) => {
     try {
@@ -331,6 +369,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
           onCaseChanged={refetchCases}
           onPublish={handlePublishRequest}
           onUnpublish={handleUnpublishRequest}
+          groupCasesByFund={isAllTab}
         />
       );
     }

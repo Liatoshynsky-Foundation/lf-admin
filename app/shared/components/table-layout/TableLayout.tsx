@@ -10,9 +10,15 @@ type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   withoutFirstColOffset?: boolean;
+  offsetPlainRows?: boolean;
 }>;
 
-export function TableLayout<TGroup, TSub, TPlain>({ data, columns, withoutFirstColOffset }: TableLayoutProps<TGroup, TSub, TPlain>) {
+export function TableLayout<TGroup, TSub, TPlain>({
+  data,
+  columns,
+  withoutFirstColOffset,
+  offsetPlainRows = false
+}: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
 
   return (
@@ -34,7 +40,16 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns, withoutFirstC
         }
 
         if (item.type === 'individual') {
-          return <PlainRow key={item.id} plainData={item.plainData} columns={columns} gridTemplate={gridTemplate} />;
+          return (
+            <PlainRow
+              key={item.id}
+              plainData={item.plainData}
+              columns={columns}
+              gridTemplate={gridTemplate}
+              firstColWidth={columns[0]?.width}
+              offsetFirstCol={offsetPlainRows}
+            />
+          );
         }
 
         return null;
