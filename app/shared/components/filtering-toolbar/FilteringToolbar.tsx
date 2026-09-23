@@ -22,6 +22,7 @@ export type FilteringToolbarFilterConfig = Readonly<{
   hideClearAction?: boolean;
   menuMinWidth?: number;
   clearLabel?: string;
+  persistLabel?: boolean;
 }>;
 
 export type FilteringToolbarProps = Readonly<{
@@ -201,6 +202,7 @@ function renderBottomContent({
               hideClearAction={filter.hideClearAction}
               menuMinWidth={filter.menuMinWidth}
               clearLabel={filter.clearLabel}
+              persistLabel={filter.persistLabel}
             />
           ))}
 

@@ -76,7 +76,7 @@ export const ResearchWorkRepository = ({
     model: ResearchWorkModel,
     toEntity,
     buildQuery: buildResearchWorkQuery,
-    getDefaultSort: () => ({ author: 1, bibliographicDescription: 1 }),
+    getDefaultSort: () => ({ author: 1, year: -1, bibliographicDescription: 1 }),
     collation: { locale: 'uk', strength: 2 }
   });
 

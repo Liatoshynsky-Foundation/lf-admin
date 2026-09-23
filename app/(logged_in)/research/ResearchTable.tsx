@@ -2,14 +2,16 @@
 
 import { Box, Typography } from '@mui/material';
 
-import type { ResearchWork } from './research.mock';
 import { styles } from './ResearchTable.styles';
+import { RESEARCH_MENU_ACTIONS } from '~/constants/research';
 import type { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import type { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
+import type { ResearchWork } from '~/types/researchWork';
 
 type PlainWork = ResearchWork & {
   editAction?: { editLabel: string; onEditClick?: () => void };
@@ -68,14 +70,41 @@ const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
   }
 ];
 
+const buildMenuItems = (
+  work: ResearchWork,
+  onEditWork: (work: ResearchWork) => void,
+  onDeleteWork: ((work: ResearchWork) => void) | undefined,
+  onToggleStatus: ((work: ResearchWork) => void) | undefined
+): ActionMenuGroups => {
+  const isPublished = work.status === BaseContentStatuses.Published;
+
+  return [
+    {
+      items: [{ id: 'edit', text: { name: RESEARCH_MENU_ACTIONS.edit }, onClick: () => onEditWork(work) }]
+    },
+    {
+      items: [
+        {
+          id: isPublished ? 'hide' : 'publish',
+          text: { name: isPublished ? RESEARCH_MENU_ACTIONS.hide : RESEARCH_MENU_ACTIONS.publish },
+          onClick: () => onToggleStatus?.(work)
+        },
+        { id: 'delete', text: { name: RESEARCH_MENU_ACTIONS.delete }, onClick: () => onDeleteWork?.(work) }
+      ]
+    }
+  ];
+};
+
 export function ResearchTable({
   works,
   onEditWork,
-  onDeleteWork
+  onDeleteWork,
+  onToggleStatus
 }: Readonly<{
   works: readonly ResearchWork[];
   onEditWork: (work: ResearchWork) => void;
   onDeleteWork?: (work: ResearchWork) => void;
+  onToggleStatus?: (work: ResearchWork) => void;
 }>) {
   const rows: BaseRowData<unknown, unknown, PlainWork>[] = works.map((work) => ({
     type: 'individual',
@@ -87,17 +116,7 @@ export function ResearchTable({
         onEditClick: () => onEditWork(work)
       },
       menuActions: {
-        menuItems: [
-          {
-            items: [
-              { id: 'edit', text: { name: 'Редагувати' }, onClick: () => onEditWork(work) },
-              { id: 'share', text: { name: 'Поширити' } }
-            ]
-          },
-          {
-            items: [{ id: 'delete', text: { name: 'Видалити' }, onClick: () => onDeleteWork?.(work) }]
-          }
-        ],
+        menuItems: buildMenuItems(work, onEditWork, onDeleteWork, onToggleStatus),
         menuTriggerLabel: `Дії для роботи ${work.author}`
       }
     }

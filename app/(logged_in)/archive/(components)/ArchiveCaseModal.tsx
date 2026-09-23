@@ -7,8 +7,10 @@ import {
   ARCHIVE_CASE_MODAL_LABELS,
   PDF_FILE_ACCEPT,
 } from '~/constants/archive';
+import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
-import type { MediaModalResult, UploadResult } from '~/shared/components/media-modal/MediaModal.types';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { resolvePdfAttachmentFromMediaModal } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
 import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
 import {
   ArchiveCaseInitialData,
@@ -17,7 +19,6 @@ import {
 } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCreateCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import {
-  AssetType,
   CaseStatus,
   useCreateAssetMutation
 } from '~/types/graphql/generated/graphql';
@@ -99,43 +100,24 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
   });
 
   const handleApplyPdf = async (result: MediaModalResult) => {
-    if (result.selected.kind === 'upload' && result.uploadResult) {
-      const { url, filename, originalName, mimeType, size } = result.uploadResult as UploadResult;
+    try {
+      const resolved = await resolvePdfAttachmentFromMediaModal(
+        result,
+        createAsset,
+        'Не вдалося завантажити PDF файл'
+      );
 
-      try {
-        const response = await createAsset({
-          variables: {
-            input: {
-              filename: originalName || filename,
-              url,
-              mimeType,
-              sizeBytes: size,
-              type: AssetType.Pdf
-            }
-          }
-        });
-
-        const asset = response.data?.createAsset;
-        if (!asset) throw new Error('Не вдалося завантажити PDF файл');
-
-        applyPdfToForm({ uploadResult: asset });
-        toast.success('Файл успішно завантажено');
-        handleCloseUploadFlow();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося завантажити файл.');
+      if (!resolved) {
+        return;
       }
-      return;
-    }
 
-    if (result.selected.kind === 'gallery' || result.selected.kind === 'used') {
-      applyPdfToForm({
-        uploadResult: {
-          filename: result.selected.fileName,
-          url: result.selected.src,
-          mimeType: 'application/pdf'
-        }
-      });
+      applyPdfToForm({ uploadResult: resolved.pdf });
+      if (resolved.source === 'upload') {
+        toast.success('Файл успішно завантажено');
+      }
       handleCloseUploadFlow();
+    } catch (error) {
+      toast.error(resolveErrorMessage(error, 'Не вдалося завантажити файл.'));
     }
   };
 
