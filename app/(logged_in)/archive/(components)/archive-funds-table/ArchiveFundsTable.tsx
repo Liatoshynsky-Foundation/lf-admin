@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import toast from 'react-hot-toast';
 
-import { ArchiveCaseModal } from '../ArchiveCaseModal';
+import { ArchiveCasesTable } from '../archive-cases-table/ArchiveCasesTable';
 import {
   ARCHIVE_BASE_PATH,
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
@@ -22,15 +21,14 @@ import { RowActions } from '~/shared/components/table-layout/components/RowActio
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
 import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
-import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
-import { useDeleteCase, useDeleteFund, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
+import { useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 export type ArchiveCase = {
   id: string;
   name: string;
   fundId: string;
+  cipher: string;
   caseNumber: number;
   descriptionNumber: number;
   sheetsNumber: number;
@@ -73,12 +71,9 @@ export const FundsTable = ({
   onUnpublish
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
-  const [deleteCase] = useDeleteCase();
-  const [updateCase] = useUpdateCase();
-  const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string; isCase?: boolean }>({
+  const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({
     open: false
   });
-  const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
 
   const fundRows = funds.map((fund) => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
@@ -121,72 +116,6 @@ export const FundsTable = ({
       }
     };
   });
-
-  const caseRows = cases.map((item) => {
-    const editData: ArchiveCaseInitialData = {
-      descriptionNumber: String(item.descriptionNumber),
-      caseNumber: String(item.caseNumber),
-      sheetsNumber: String(item.sheetsNumber),
-      caseDate: item.editCaseDate,
-      caseName: item.name,
-      caseDescriptions: item.editCaseDescriptions,
-      detailedCaseDescription: item.detailedCaseDescription,
-      currentPdfFile: item.pdfFile
-    };
-    const toggleStatus = async () => {
-      const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Hidden : CaseStatus.Published;
-      try {
-        await updateCase({ id: item.id, input: { status: nextStatus } });
-        toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
-        await onCaseChanged?.();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
-      }
-    };
-
-    return {
-      type: 'individual' as const,
-      id: item.id,
-      plainData: {
-        ...item,
-        fundNumber: '',
-        descriptions: '',
-        cases: '',
-        dates: '',
-        editAction: {
-          editLabel: `Редагувати справу ${item.name}`,
-          onEditClick: () => setEditCase({ item, data: editData })
-        },
-        menuActions: {
-          menuTriggerLabel: `Дії для справи ${item.name}`,
-          menuItems: [
-            {
-              items: [
-                { id: 'edit', text: { name: 'Редагувати' }, onClick: () => setEditCase({ item, data: editData }) },
-                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/case/${item.id}/share` }
-              ]
-            },
-            {
-              items: [
-                {
-                  id: 'toggle-status',
-                  text: { name: item.status === BaseContentStatuses.Published ? 'Сховати' : 'Опублікувати' },
-                  onClick: toggleStatus
-                },
-                {
-                  id: 'delete',
-                  text: { name: 'Видалити' },
-                  onClick: () => setDeleteState({ open: true, id: item.id, name: item.name, isCase: true })
-                }
-              ]
-            }
-          ]
-        }
-      }
-    };
-  });
-
-  const rows = [...fundRows, ...caseRows];
 
   const columns: readonly ColumnDef<never, never, FundRow>[] = [
     {
@@ -247,7 +176,7 @@ export const FundsTable = ({
     }
   ];
 
-  if (rows.length === 0) {
+  if (funds.length === 0 && cases.length === 0) {
     const hasActiveCriteria = hasActiveSearch || hasActiveStatusFilter;
 
     if (!hasActiveCriteria) {
@@ -268,39 +197,24 @@ export const FundsTable = ({
 
   return (
     <>
-      <TableLayout data={rows} columns={columns} />
-      <DeleteCompositionModal
-        open={deleteState.open}
-        onClose={() => setDeleteState({ open: false })}
-        title="Підтвердити видалення"
-        description={`Ви впевнені, що хочете видалити ${deleteState.isCase ? 'справу' : 'фонд'} «${deleteState.name ?? ''}»?`}
-        onConfirm={async () => {
-          if (!deleteState.id) return;
-          if (deleteState.isCase) {
-            await deleteCase({ id: deleteState.id });
-          } else {
-            await deleteFund({ id: deleteState.id });
-          }
-          setDeleteState({ open: false });
-          await (deleteState.isCase ? onCaseChanged?.() : onDeleted?.());
-        }}
-      />
-      {editCase && (
-        <ArchiveCaseModal
-          isOpen
-          setIsOpen={(open) => {
-            if (!open) setEditCase(undefined);
-          }}
-          mode="edit"
-          initialData={editCase.data}
-          fundId={editCase.item.fundId}
-          caseId={editCase.item.id}
-          onSaved={async () => {
-            setEditCase(undefined);
-            await onCaseChanged?.();
-          }}
-        />
+      {fundRows.length > 0 && (
+        <>
+          <TableLayout data={fundRows} columns={columns} />
+          <DeleteCompositionModal
+            open={deleteState.open}
+            onClose={() => setDeleteState({ open: false })}
+            title="Підтвердити видалення"
+            description={`Ви впевнені, що хочете видалити фонд «${deleteState.name ?? ''}»?`}
+            onConfirm={async () => {
+              if (!deleteState.id) return;
+              await deleteFund({ id: deleteState.id });
+              setDeleteState({ open: false });
+              await onDeleted?.();
+            }}
+          />
+        </>
       )}
+      {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} />}
     </>
   );
 };

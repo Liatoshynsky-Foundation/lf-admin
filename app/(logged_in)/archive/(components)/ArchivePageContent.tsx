@@ -123,6 +123,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const [page, setPage] = useState(1);
   const [knownFundPageCount, setKnownFundPageCount] = useState(0);
   const [knownFundTotal, setKnownFundTotal] = useState(0);
+  const [knownCasesLength, setKnownCasesLength] = useState(0);
   const [publishCandidate, setPublishCandidate] = useState<Fund | null>(null);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, { status: BaseContentStatuses; updatedAt: string }>>({});
   const [updateFund] = useUpdateFund();
@@ -167,12 +168,19 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     setPage(1);
     setKnownFundPageCount(0);
     setKnownFundTotal(0);
+    setKnownCasesLength(0);
   }, [appliedSearch, filterValues]);
 
   useEffect(() => {
     setKnownFundPageCount(totalPages);
     setKnownFundTotal(total);
   }, [total, totalPages]);
+
+  useEffect(() => {
+    if (!casesLoading && cases.length > 0) {
+      setKnownCasesLength((prev) => Math.max(prev, cases.length));
+    }
+  }, [cases.length, casesLoading]);
 
   const handlePageChange = (_: ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -189,6 +197,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
+  const effectiveCasesLength = Math.max(sortedCases.length, casesLoading ? knownCasesLength : 0);
 
   const paginationData = getPaginationData({
     page,
@@ -198,7 +207,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     totalPages,
     knownFundPageCount,
     knownFundTotal,
-    sortedCasesLength: sortedCases.length
+    sortedCasesLength: effectiveCasesLength
   });
 
   const visibleFunds = paginationData.isCasePage ? [] : sortedFunds;
@@ -208,10 +217,14 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const totalArchivePages = paginationData.totalArchivePages;
 
   useEffect(() => {
+    if (fundsLoading || casesLoading) {
+      return;
+    }
+
     if (totalArchivePages > 0 && page > totalArchivePages) {
       setPage(totalArchivePages);
     }
-  }, [page, totalArchivePages]);
+  }, [page, totalArchivePages, fundsLoading, casesLoading]);
 
   const hasActiveSearch = Boolean(appliedSearch);
   const hasActiveStatusFilter = !isAllStatus;
