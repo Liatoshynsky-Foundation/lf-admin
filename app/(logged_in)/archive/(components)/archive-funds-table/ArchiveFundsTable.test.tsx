@@ -25,6 +25,9 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
 };
 
+const COPY_LINK_SUCCESS_MESSAGE = 'Посилання скопійовано в буфер обміну.';
+const COPY_LINK_ERROR_MESSAGE = 'Не вдалося скопіювати посилання. Спробуйте ще раз.';
+
 const mockDeleteFund = jest.fn();
 const mockDeleteCase = jest.fn();
 const mockUpdateCase = jest.fn();
@@ -196,22 +199,6 @@ const defaultProps: FundsTableProps = {
 
 const renderComponent = (overrides?: Partial<FundsTableProps>) => {
   return render(<FundsTable {...defaultProps} {...overrides} />);
-};
-
-const expectNoSearchResultsFallback = () => {
-  expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-  expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-  expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
-    ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
-  );
-};
-
-const expectCopyLinkSuccessToast = () => {
-  expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
-};
-
-const expectCopyLinkErrorToast = () => {
-  expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
 };
 
 const fund = defaultProps.funds[0];
@@ -394,16 +381,17 @@ describe('ArchiveFundsTable', () => {
       expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_DESCRIPTION);
     });
 
-    it('should render the no search results fallback when search is active (with or without status filter)', () => {
-      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: false });
+    it.each([
+      { hasActiveStatusFilter: false, scenario: 'search is active without a status filter' },
+      { hasActiveStatusFilter: true, scenario: 'both search and status filter are active' }
+    ])('should render the no search results fallback when $scenario', ({ hasActiveStatusFilter }) => {
+      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter });
 
-      expectNoSearchResultsFallback();
-    });
-
-    it('should render the no search results fallback when both search and status filter are active', () => {
-      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: true });
-
-      expectNoSearchResultsFallback();
+      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
+        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+      );
     });
 
     it('should render the status-only fallback when only the status filter is active', () => {
@@ -420,54 +408,46 @@ describe('ArchiveFundsTable', () => {
       Reflect.deleteProperty(document, 'execCommand');
     });
 
-    it('should copy fund link via the Clipboard API and show a success toast', async () => {
-      const writeText = setClipboardWriteText(() => Promise.resolve());
+    it.each([
+      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
+      { scenario: 'rejects', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const }
+    ])('should show a $expectToast toast when the Clipboard API $scenario', async ({ impl, expectToast }) => {
+      const writeText = setClipboardWriteText(impl);
       const user = userEvent.setup();
       renderComponent();
 
       await user.click(screen.getByTestId('action-share'));
 
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/fund/${fund.id}/edit`));
-      expectCopyLinkSuccessToast();
+      if (expectToast === 'success') {
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/fund/${fund.id}/edit`));
+        expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+      } else {
+        expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+      }
     });
 
-    it('should show an error toast when the Clipboard API rejects', async () => {
-      setClipboardWriteText(() => Promise.reject(new Error('denied')));
-      const user = userEvent.setup();
-      renderComponent();
+    it.each([
+      { execCommandResult: true, expectToast: 'success' as const },
+      { execCommandResult: false, expectToast: 'error' as const }
+    ])(
+      'should fall back to execCommand copy and show a $expectToast toast when the Clipboard API is unavailable',
+      async ({ execCommandResult, expectToast }) => {
+        clearClipboardWriteText();
+        const execCommand = jest.fn().mockReturnValue(execCommandResult);
+        Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true, writable: true });
+        const user = userEvent.setup();
+        renderComponent();
 
-      await user.click(screen.getByTestId('action-share'));
+        await user.click(screen.getByTestId('action-share'));
 
-      expectCopyLinkErrorToast();
-    });
-
-    it('should fall back to execCommand copy and show a success toast when the Clipboard API is unavailable', async () => {
-      clearClipboardWriteText();
-      const execCommand = jest.fn().mockReturnValue(true);
-      Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true, writable: true });
-      const user = userEvent.setup();
-      renderComponent();
-
-      await user.click(screen.getByTestId('action-share'));
-
-      expect(execCommand).toHaveBeenCalledWith('copy');
-      expectCopyLinkSuccessToast();
-    });
-
-    it('should show an error toast when the fallback execCommand copy fails', async () => {
-      clearClipboardWriteText();
-      Object.defineProperty(document, 'execCommand', {
-        value: jest.fn().mockReturnValue(false),
-        configurable: true,
-        writable: true
-      });
-      const user = userEvent.setup();
-      renderComponent();
-
-      await user.click(screen.getByTestId('action-share'));
-
-      expectCopyLinkErrorToast();
-    });
+        expect(execCommand).toHaveBeenCalledWith('copy');
+        if (expectToast === 'success') {
+          expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+        } else {
+          expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+        }
+      }
+    );
   });
 
   describe('Case rows', () => {
@@ -494,20 +474,6 @@ describe('ArchiveFundsTable', () => {
       });
     };
 
-    const setupCase = (overrides?: Partial<FundsTableProps> & { caseOverrides?: Partial<ArchiveCase> }) => {
-      const user = userEvent.setup();
-      renderWithCase(overrides);
-      return user;
-    };
-
-    const expectCaseModalOpen = () => {
-      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
-    };
-
-    const expectCaseModalClosed = () => {
-      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
-    };
-
     it('should render a case row with its edit, share, toggle-status and delete actions', () => {
       renderWithCase();
 
@@ -519,95 +485,99 @@ describe('ArchiveFundsTable', () => {
       expect(screen.getByTestId('action-delete')).toBeInTheDocument();
     });
 
-    it('should label the toggle action "Сховати" for a published case', () => {
-      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Published } });
+    it.each([
+      { status: BaseContentStatuses.Published, expectedLabel: 'Сховати' },
+      { status: BaseContentStatuses.Hidden, expectedLabel: 'Опублікувати' }
+    ])('should label the toggle action "$expectedLabel" for a $status case', ({ status, expectedLabel }) => {
+      renderWithCase({ caseOverrides: { status } });
 
       expect(screen.getByTestId('action-toggle-status')).toHaveTextContent('toggle-status');
-      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent('Сховати');
-    });
-
-    it('should label the toggle action "Опублікувати" for a hidden case', () => {
-      renderWithCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
-
-      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent('Опублікувати');
+      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent(expectedLabel);
     });
 
     it('should open the edit modal for a case, and close it', async () => {
-      const user = setupCase();
+      const user = userEvent.setup();
+      renderWithCase();
 
       await user.click(screen.getByTestId('action-edit'));
 
-      expectCaseModalOpen();
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
       expect(screen.getByTestId('mock-case-modal-caseId')).toHaveTextContent(caseItem.id);
       expect(screen.getByTestId('mock-case-modal-fundId')).toHaveTextContent(caseItem.fundId);
 
       await user.click(screen.getByTestId('mock-case-modal-close'));
 
-      expectCaseModalClosed();
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
     });
 
     it('should also open the edit modal via the row\'s dedicated edit action', async () => {
-      const user = setupCase();
+      const user = userEvent.setup();
+      renderWithCase();
 
       await user.click(screen.getByTestId('edit-action-direct'));
 
-      expectCaseModalOpen();
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
     });
 
     it('should call onCaseChanged and close the modal when a case edit is saved', async () => {
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = setupCase({ onCaseChanged: onCaseChangedMock });
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
 
       await user.click(screen.getByTestId('action-edit'));
       await user.click(screen.getByTestId('mock-case-modal-save'));
 
       expect(onCaseChangedMock).toHaveBeenCalled();
-      expectCaseModalClosed();
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
     });
 
-    it('should toggle a published case to hidden and show the corresponding toast', async () => {
-      mockUpdateCase.mockResolvedValueOnce(undefined);
-      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = setupCase({ caseOverrides: { status: BaseContentStatuses.Published }, onCaseChanged: onCaseChangedMock });
+    it.each([
+      {
+        fromStatus: BaseContentStatuses.Published,
+        expectedInput: CaseStatus.Hidden,
+        toastMessage: 'Справу успішно сховано'
+      },
+      {
+        fromStatus: BaseContentStatuses.Hidden,
+        expectedInput: CaseStatus.Published,
+        toastMessage: 'Справу успішно опубліковано'
+      }
+    ])(
+      'should toggle a $fromStatus case and show the corresponding success toast',
+      async ({ fromStatus, expectedInput, toastMessage }) => {
+        mockUpdateCase.mockResolvedValueOnce(undefined);
+        const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+        const user = userEvent.setup();
+        renderWithCase({ caseOverrides: { status: fromStatus }, onCaseChanged: onCaseChangedMock });
 
-      await user.click(screen.getByTestId('action-toggle-status'));
+        await user.click(screen.getByTestId('action-toggle-status'));
 
-      expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: CaseStatus.Hidden } });
-      expect(toast.success).toHaveBeenCalledWith('Справу успішно сховано');
-      expect(onCaseChangedMock).toHaveBeenCalled();
-    });
+        expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: expectedInput } });
+        expect(toast.success).toHaveBeenCalledWith(toastMessage);
+        expect(onCaseChangedMock).toHaveBeenCalled();
+      }
+    );
 
-    it('should toggle a hidden case to published and show the corresponding toast', async () => {
-      mockUpdateCase.mockResolvedValueOnce(undefined);
-      const user = setupCase({ caseOverrides: { status: BaseContentStatuses.Hidden } });
+    it.each([
+      { rejection: new Error('Не вдалося змінити'), expectedMessage: 'Не вдалося змінити' },
+      { rejection: 'boom', expectedMessage: 'Не вдалося змінити статус справи' }
+    ])(
+      'should show an error toast ($expectedMessage) when toggling status rejects',
+      async ({ rejection, expectedMessage }) => {
+        mockUpdateCase.mockRejectedValueOnce(rejection);
+        const user = userEvent.setup();
+        renderWithCase();
 
-      await user.click(screen.getByTestId('action-toggle-status'));
+        await user.click(screen.getByTestId('action-toggle-status'));
 
-      expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: CaseStatus.Published } });
-      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
-    });
-
-    it('should show the error message when toggling status rejects with an Error', async () => {
-      mockUpdateCase.mockRejectedValueOnce(new Error('Не вдалося змінити'));
-      const user = setupCase();
-
-      await user.click(screen.getByTestId('action-toggle-status'));
-
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити');
-    });
-
-    it('should show a fallback error message when toggling status rejects with a non-Error', async () => {
-      mockUpdateCase.mockRejectedValueOnce('boom');
-      const user = setupCase();
-
-      await user.click(screen.getByTestId('action-toggle-status'));
-
-      expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити статус справи');
-    });
+        expect(toast.error).toHaveBeenCalledWith(expectedMessage);
+      }
+    );
 
     it('should delete a case, calling onCaseChanged, when confirmed', async () => {
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
-      const user = setupCase({ onCaseChanged: onCaseChangedMock });
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
 
       await user.click(screen.getByTestId('action-delete'));
       expect(
@@ -621,7 +591,8 @@ describe('ArchiveFundsTable', () => {
     });
 
     it('should not call onCaseChanged when deleting a case if it is not provided', async () => {
-      const user = setupCase();
+      const user = userEvent.setup();
+      renderWithCase();
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
@@ -629,25 +600,22 @@ describe('ArchiveFundsTable', () => {
       expect(mockDeleteCase).toHaveBeenCalledWith({ id: caseItem.id });
     });
 
-    it('should copy the case link and show a success toast', async () => {
-      const writeText = setClipboardWriteText(() => Promise.resolve());
-      const user = setupCase();
+    it.each([
+      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
+      { scenario: 'fails', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const }
+    ])('should show a $expectToast toast when copying the case link $scenario', async ({ impl, expectToast }) => {
+      const writeText = setClipboardWriteText(impl);
+      const user = userEvent.setup();
+      renderWithCase();
 
       await user.click(screen.getByTestId('action-share'));
 
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/cases?caseId=${caseItem.id}`));
-      expectCopyLinkSuccessToast();
-
-      clearClipboardWriteText();
-    });
-
-    it('should show an error toast when copying the case link fails', async () => {
-      setClipboardWriteText(() => Promise.reject(new Error('denied')));
-      const user = setupCase();
-
-      await user.click(screen.getByTestId('action-share'));
-
-      expectCopyLinkErrorToast();
+      if (expectToast === 'success') {
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/cases?caseId=${caseItem.id}`));
+        expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+      } else {
+        expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+      }
 
       clearClipboardWriteText();
     });
