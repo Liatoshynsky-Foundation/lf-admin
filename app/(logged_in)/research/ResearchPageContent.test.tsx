@@ -163,7 +163,6 @@ describe('ResearchPageContent', () => {
     requestFilters: {
       sort: [
         { field: 'author', order: 'asc' },
-        { field: 'year', order: 'desc' },
         { field: 'bibliographicDescription', order: 'asc' }
       ]
     },

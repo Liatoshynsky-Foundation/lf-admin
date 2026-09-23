@@ -22,7 +22,6 @@ const isResearchStatusValue = (value: string): value is ResearchWorkStatus =>
 
 export const RESEARCH_WORKS_DEFAULT_SORT: ResearchWorksSortOptions[] = [
   { field: ResearchWorksSortBy.Author, order: SortOrder.Asc },
-  { field: ResearchWorksSortBy.Year, order: SortOrder.Desc },
   { field: ResearchWorksSortBy.BibliographicDescription, order: SortOrder.Asc }
 ];
 

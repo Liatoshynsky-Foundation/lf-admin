@@ -83,7 +83,7 @@ const secondWork: ResearchWork = {
 };
 
 describe('ResearchTable', () => {
-  it('renders one row per work with author, description and year', () => {
+  it('renders one row per work with author, description and dates', () => {
     render(<ResearchTable works={[work, secondWork]} onEditWork={jest.fn()} />);
 
     const firstRow = screen.getByTestId('research-row-work-1');
@@ -92,6 +92,20 @@ describe('ResearchTable', () => {
     expect(within(firstRow).getByText(work.year)).toBeInTheDocument();
 
     expect(screen.getByTestId('research-row-work-2')).toBeInTheDocument();
+  });
+
+  it('wraps long free-text dates onto the next line', () => {
+    const longDatesWork: ResearchWork = {
+      ...work,
+      id: 'work-dates',
+      year: '1941–1945, бл. 1950, післявоєнний період'
+    };
+
+    render(<ResearchTable works={[longDatesWork]} onEditWork={jest.fn()} />);
+
+    expect(
+      within(screen.getByTestId('research-row-work-dates')).getByText(longDatesWork.year)
+    ).toBeInTheDocument();
   });
 
   it('renders an empty table when no works are provided', () => {
