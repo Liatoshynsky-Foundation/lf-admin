@@ -13,11 +13,11 @@ type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
 
 export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
+  const includeExpandGutter = data.some((item) => item.type === 'group');
 
   return (
     <Box>
-      <HeaderRow columns={columns} gridTemplate={gridTemplate} />
-
+      <HeaderRow columns={columns} gridTemplate={gridTemplate} includeExpandGutter={includeExpandGutter} />
       {data.map((item) => {
         if (item.type === 'group') {
           return (
