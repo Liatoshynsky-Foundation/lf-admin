@@ -161,6 +161,14 @@ const getVisibleOrphanCaseLimit = ({
   return Math.max(0, ARCHIVE_ITEMS_PER_PAGE - visibleFundCount);
 };
 
+const getPageCount = (showItems: boolean, itemCount: number): number => {
+  if (!showItems) {
+    return 0;
+  }
+
+  return Math.ceil(itemCount / ARCHIVE_ITEMS_PER_PAGE);
+};
+
 const getPaginationData = ({
   page,
   showFunds,
@@ -185,12 +193,10 @@ const getPaginationData = ({
   const isAllTabWithFunds = Boolean(isAllTab && fundPageCount > 0);
   const isGroupedAllTab = isAllTabWithFunds && showFunds;
   const casesToPaginate = isAllTabWithFunds ? remainingCasesAfterFunds : sortedCasesLength;
-  const casePageCount = showCases ? Math.ceil(casesToPaginate / ARCHIVE_ITEMS_PER_PAGE) : 0;
+  const casePageCount = getPageCount(showCases, casesToPaginate);
   const lastFundPageCapacity = firstCasePageCapacity;
   const orphanCasesAfterLastFundPage = Math.max(0, orphanCasesLength - lastFundPageCapacity);
-  const orphanCasePagesAfterLastFundPage = showCases
-    ? Math.ceil(orphanCasesAfterLastFundPage / ARCHIVE_ITEMS_PER_PAGE)
-    : 0;
+  const orphanCasePagesAfterLastFundPage = getPageCount(showCases, orphanCasesAfterLastFundPage);
 
   const combinedPageCount = fundPageCount > 0 ? fundPageCount + orphanCasePagesAfterLastFundPage : casePageCount;
   const totalArchivePages = isAllTab ? combinedPageCount : casePageCount || fundPageCount;
