@@ -1,3 +1,4 @@
+import { ApolloError } from '@apollo/client';
 import { act, renderHook } from '@testing-library/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
@@ -85,7 +86,7 @@ describe('useResearchUrlState', () => {
   });
 
   it('exposes query error from useResearchWorkById', () => {
-    const queryError = new Error('network down');
+    const queryError = new ApolloError({ errorMessage: 'network down' });
     mockUseSearchParams.mockReturnValue(
       new URLSearchParams(`${RESEARCH_WORK_ID_PARAM}=work-1`) as never
     );

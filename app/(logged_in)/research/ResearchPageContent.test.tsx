@@ -1,3 +1,4 @@
+import { ApolloError } from '@apollo/client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
@@ -404,7 +405,7 @@ describe('ResearchPageContent', () => {
       workIdFromUrl: sampleWork.id,
       workFromUrl: null,
       isLoadingFromUrl: false,
-      urlWorkError: new Error('network down'),
+      urlWorkError: new ApolloError({ errorMessage: 'network down' }),
       setWorkIdInUrl
     });
 
