@@ -58,7 +58,7 @@ function mockFund(
   };
 }
 
-function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: string }> = {}) {
+function mockCase(overrides: Partial<{ id: string; caseNumber: number; name: string; fundId: string }> = {}) {
   return {
     id: '1',
     caseNumber: 1,
@@ -770,6 +770,28 @@ describe('ArchivePageContent', () => {
 
       expect(screen.queryByTestId('empty-state')).not.toBeInTheDocument();
       expect(screen.getByTestId('cases-list')).toHaveTextContent('Звичайна назва справи');
+    });
+
+    it('should show a case when its parent fund is excluded by the active filter', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        ...defaultMockReturnValue,
+        appliedSearch: 'справа'
+      });
+      mockUsePaginatedFunds.mockReturnValue({ funds: [], totalPages: 0, loading: false, error: undefined });
+      mockUseAllFunds.mockReturnValue({
+        funds: [mockFund({ id: 'parent-fund' })],
+        loading: false,
+        error: undefined
+      });
+      mockUseAllCases.mockReturnValue({
+        cases: [mockCase({ id: 'case-1', fundId: 'parent-fund', name: 'Відфільтрована справа' })],
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(screen.getByTestId('cases-list')).toHaveTextContent('Відфільтрована справа');
     });
 
     it('should not show the cases no-results empty state when only funds match the search', () => {

@@ -294,7 +294,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     },
     { skip: !showFunds }
   );
-  const { funds: allFunds, loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
+  const { loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
     skip: !isAllTab
   });
 
@@ -338,8 +338,8 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
-  const allFundIds = new Set(allFunds.map((fund) => fund.id));
-  const orphanCases = sortedCases.filter((caseItem) => !allFundIds.has(caseItem.fundId));
+  const filteredFundIds = new Set(sortedFunds.map((fund) => fund.id));
+  const orphanCases = sortedCases.filter((caseItem) => !filteredFundIds.has(caseItem.fundId));
   const effectiveCasesLength = Math.max(sortedCases.length, casesLoading ? knownCasesLength : 0);
 
   const paginationData = getPaginationData({
