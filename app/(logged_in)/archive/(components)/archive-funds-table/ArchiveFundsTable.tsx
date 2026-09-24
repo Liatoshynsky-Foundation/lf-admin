@@ -62,6 +62,33 @@ export interface FundsTableProps {
   onUnpublish?: (fund: Fund) => void;
 }
 
+async function copyToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textArea = document.createElement('textarea');
+  textArea.value = value;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const execCommand = Reflect.get(document, 'execCommand') as
+      | ((commandId: string, showUI?: boolean, value?: string) => boolean)
+      | undefined;
+
+    if (!execCommand?.call(document, 'copy')) {
+      throw new Error('Clipboard copy failed');
+    }
+  } finally {
+    textArea.remove();
+  }
+}
+
 export const FundsTable = ({
   funds,
   cases = [],
@@ -79,6 +106,25 @@ export const FundsTable = ({
     open: false
   });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
+
+  const shareFund = async (id: string) => {
+    try {
+      await copyToClipboard(`${window.location.origin}${ARCHIVE_BASE_PATH}/fund/${encodeURIComponent(id)}/edit`);
+      toast.success('Посилання скопійовано в буфер обміну.');
+    } catch {
+      toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    }
+  };
+
+  const shareCase = async (id: string) => {
+    try {
+      const searchParams = new URLSearchParams({ caseId: id });
+      await copyToClipboard(`${window.location.origin}${ARCHIVE_BASE_PATH}/cases?${searchParams.toString()}`);
+      toast.success('Посилання скопійовано в буфер обміну.');
+    } catch {
+      toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    }
+  };
 
   const fundRows = funds.map((fund) => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
@@ -109,7 +155,7 @@ export const FundsTable = ({
             {
               items: [
                 { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
-                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
+                { id: 'share', text: { name: 'Поширити' }, onClick: () => shareFund(fund.id) }
               ]
             },
             {
@@ -163,7 +209,7 @@ export const FundsTable = ({
             {
               items: [
                 { id: 'edit', text: { name: 'Редагувати' }, onClick: () => setEditCase({ item, data: editData }) },
-                { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/case/${item.id}/share` }
+                { id: 'share', text: { name: 'Поширити' }, onClick: () => shareCase(item.id) }
               ]
             },
             {
