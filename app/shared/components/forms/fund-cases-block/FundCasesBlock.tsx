@@ -6,14 +6,10 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
+import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
-import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
-import { RowActions } from '~/shared/components/table-layout/components/RowActions';
-import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
-import { twoLineEllipsis } from '~/shared/components/table-layout/TableLayout.styles';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCasesByFundId, useDeleteCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -21,78 +17,7 @@ import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 const FUND_CASES_LABEL = 'Справи в фонді';
 
-type CaseRow = {
-  id: string;
-  cipher: string;
-  caseName: string;
-  sheetsNumber: number;
-  caseDate: string;
-  caseDescription: string;
-  updatedAt: string;
-  status: BaseContentStatuses;
-  editAction: { editHref?: string; editLabel: string; onEditClick?: () => void };
-  menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
-};
-
-const columns: readonly ColumnDef<never, never, CaseRow>[] = [
-  {
-    id: 'cipher',
-    headerLabel: 'Шифр',
-    width: '120px',
-    align: 'left',
-    renderPlain: (row) => (
-      <Typography component="span" sx={styles.cipherText}>
-        {row.cipher}
-      </Typography>
-    )
-  },
-  {
-    id: 'caseName',
-    headerLabel: 'Назва справи',
-    width: 'minmax(260px, 1fr)',
-    align: 'left',
-    renderPlain: (row) => row.caseName
-  },
-  {
-    id: 'sheetsNumber',
-    headerLabel: 'Аркуші',
-    width: '84px',
-    align: 'left',
-    renderPlain: (row) => row.sheetsNumber
-  },
-  {
-    id: 'caseDate',
-    headerLabel: 'Дати',
-    width: '110px',
-    align: 'left',
-    renderPlain: (row) => row.caseDate
-  },
-  {
-    id: 'caseDescription',
-    headerLabel: 'Склад і зміст документів',
-    width: 'minmax(240px, 1fr)',
-    align: 'left',
-    renderPlain: (row) => <Typography sx={twoLineEllipsis}>{row.caseDescription}</Typography>
-  },
-  {
-    id: 'publishedAt',
-    headerLabel: 'Статус',
-    width: '60px',
-    align: 'center',
-    hasLeftDivider: true,
-    hasRightDivider: true,
-    renderPlain: (row) => (
-      <StatusBadge status={row.status} updatedAt={row.updatedAt} />
-    )
-  },
-  {
-    id: 'actions',
-    headerLabel: '',
-    width: '96px',
-    align: 'right',
-    renderPlain: (row) => <RowActions editAction={row.editAction} menuActions={row.menuActions} />
-  }
-];
+const columns = createCaseTableColumns(styles.cipherText);
 
 export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
@@ -125,56 +50,69 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
       caseDate: caseItem.caseDate.uk,
       caseDescription: caseItem.caseDescriptions.uk,
       updatedAt: caseItem.updatedAt,
-      status: caseItem.status === CaseStatus.Published
-        ? BaseContentStatuses.Published
-        : BaseContentStatuses.Hidden,
+      status: caseItem.status === CaseStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Hidden,
       editAction: {
         editHref: undefined,
-        onEditClick: () => setModalState({
-          open: true,
-          caseId: caseItem.id,
-          initialData: {
-            descriptionNumber: String(caseItem.descriptionNumber),
-            caseNumber: String(caseItem.caseNumber),
-            sheetsNumber: String(caseItem.sheetsNumber),
-            caseDate: caseItem.caseDate.uk,
-            caseName: caseItem.caseName.uk,
-            caseDescriptions: caseItem.caseDescriptions.uk,
-            detailedCaseDescription: caseItem.detailedCaseDescription?.uk ?? '',
-            currentPdfFile: caseItem.pdfFile
-              ? { name: caseItem.pdfFile.filename, fileName: caseItem.pdfFile.filename, url: caseItem.pdfFile.url, mimeType: caseItem.pdfFile.mimeType }
-              : undefined
-          }
-        }),
+        onEditClick: () =>
+          setModalState({
+            open: true,
+            caseId: caseItem.id,
+            initialData: {
+              descriptionNumber: String(caseItem.descriptionNumber),
+              caseNumber: String(caseItem.caseNumber),
+              sheetsNumber: String(caseItem.sheetsNumber),
+              caseDate: caseItem.caseDate.uk,
+              caseName: caseItem.caseName.uk,
+              caseDescriptions: caseItem.caseDescriptions.uk,
+              detailedCaseDescription: caseItem.detailedCaseDescription?.uk ?? '',
+              currentPdfFile: caseItem.pdfFile
+                ? {
+                  name: caseItem.pdfFile.filename,
+                  fileName: caseItem.pdfFile.filename,
+                  url: caseItem.pdfFile.url,
+                  mimeType: caseItem.pdfFile.mimeType
+                }
+                : undefined
+            }
+          }),
         editLabel: `Редагувати справу ${caseItem.caseName.uk}`
       },
       menuActions: {
         menuTriggerLabel: `Дії для справи ${caseItem.caseName.uk}`,
-        menuItems: [{
-          items: [
-            ...(caseItem.status === CaseStatus.Draft || caseItem.status === CaseStatus.Published
-              ? [{
-                id: 'toggle-status',
-                text: { name: caseItem.status === CaseStatus.Published ? 'Сховати' : 'Опублікувати' },
-                onClick: async () => {
-                  const nextStatus = caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
-                  try {
-                    await updateCase({ id: caseItem.id, input: { status: nextStatus } });
-                    toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
-                    await refetch();
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+        menuItems: [
+          {
+            items: [
+              ...(caseItem.status === CaseStatus.Draft || caseItem.status === CaseStatus.Published
+                ? [
+                  {
+                    id: 'toggle-status',
+                    text: { name: caseItem.status === CaseStatus.Published ? 'Сховати' : 'Опублікувати' },
+                    onClick: async () => {
+                      const nextStatus =
+                          caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
+                      try {
+                        await updateCase({ id: caseItem.id, input: { status: nextStatus } });
+                        toast.success(
+                          nextStatus === CaseStatus.Published
+                            ? 'Справу успішно опубліковано'
+                            : 'Справу успішно сховано'
+                        );
+                        await refetch();
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+                      }
+                    }
                   }
-                }
-              }]
-              : []),
-            {
-              id: 'delete',
-              text: { name: 'Видалити' },
-              onClick: () => setDeleteModalState({ open: true, caseId: caseItem.id, caseName: caseItem.caseName.uk })
-            }
-          ]
-        }]
+                ]
+                : []),
+              {
+                id: 'delete',
+                text: { name: 'Видалити' },
+                onClick: () => setDeleteModalState({ open: true, caseId: caseItem.id, caseName: caseItem.caseName.uk })
+              }
+            ]
+          }
+        ]
       }
     }
   }));
