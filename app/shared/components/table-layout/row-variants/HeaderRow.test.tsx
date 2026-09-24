@@ -19,7 +19,7 @@ describe('HeaderRow Component', () => {
     expect(screen.getByText('Status')).toBeInTheDocument();
   });
 
-  it('should apply the provided grid template and column configurations to the root box', () => {
+  it('should apply the provided grid template without expand gutter by default', () => {
     render(<HeaderRow columns={mockColumns} gridTemplate={mockGridTemplate} />);
 
     const headerRoot = screen.getByText('First Name').parentElement;
@@ -29,10 +29,24 @@ describe('HeaderRow Component', () => {
       const computedStyle = globalThis.getComputedStyle(headerRoot);
 
       expect(computedStyle.display).toBe('grid');
-
       expect(computedStyle.gridTemplateColumns).toContain(mockColumns[0].width);
       expect(computedStyle.gridTemplateColumns).toContain(mockColumns[1].width);
       expect(computedStyle.gridTemplateColumns).toContain(mockColumns[2].width);
+      expect(computedStyle.gridTemplateColumns).not.toContain('26px');
+    }
+  });
+
+  it('should widen the first column when includeExpandGutter is true', () => {
+    render(<HeaderRow columns={mockColumns} gridTemplate={mockGridTemplate} includeExpandGutter />);
+
+    const headerRoot = screen.getByText('First Name').parentElement;
+    expect(headerRoot).toBeInTheDocument();
+
+    if (headerRoot) {
+      const computedStyle = globalThis.getComputedStyle(headerRoot);
+
+      expect(computedStyle.gridTemplateColumns).toContain('26px');
+      expect(computedStyle.gridTemplateColumns).toContain(mockColumns[0].width);
     }
   });
 
