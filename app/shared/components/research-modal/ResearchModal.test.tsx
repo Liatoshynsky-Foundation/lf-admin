@@ -247,6 +247,77 @@ describe('ResearchModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('omits pdfFile on update when the existing PDF was not changed', async () => {
+    const existingPdfFile = {
+      filename: 'existing.pdf',
+      url: 'https://cdn/existing.pdf',
+      mimeType: 'application/pdf'
+    };
+
+    render(
+      <ResearchModal
+        isOpen
+        mode="edit"
+        workId="work-1"
+        existingPdfFile={existingPdfFile}
+        onClose={onClose}
+        initialData={{
+          bibliographicDescription: 'Опис',
+          author: 'Автор',
+          caseDates: '1970',
+          keywords: 'слово',
+          isVisibleOnSite: true
+        }}
+      />
+    );
+
+    expect(screen.getByText('existing.pdf')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() =>
+      expect(updateResearchWork).toHaveBeenCalledWith(
+        'work-1',
+        expect.not.objectContaining({ pdfFile: expect.anything() })
+      )
+    );
+    expect(updateResearchWork.mock.calls[0][1]).not.toHaveProperty('pdfFile');
+  });
+
+  it('sends pdfFile null on update when the existing PDF is removed', async () => {
+    const existingPdfFile = {
+      filename: 'existing.pdf',
+      url: 'https://cdn/existing.pdf',
+      mimeType: 'application/pdf'
+    };
+
+    render(
+      <ResearchModal
+        isOpen
+        mode="edit"
+        workId="work-1"
+        existingPdfFile={existingPdfFile}
+        onClose={onClose}
+        initialData={{
+          bibliographicDescription: 'Опис',
+          author: 'Автор',
+          caseDates: '1970',
+          keywords: 'слово',
+          isVisibleOnSite: true
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'delete file' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    await waitFor(() =>
+      expect(updateResearchWork).toHaveBeenCalledWith(
+        'work-1',
+        expect.objectContaining({ pdfFile: null })
+      )
+    );
+  });
+
   it('shows an error toast and keeps the modal open when create fails', async () => {
     createResearchWork.mockRejectedValue(new Error('Автор є обов’язковим.'));
 

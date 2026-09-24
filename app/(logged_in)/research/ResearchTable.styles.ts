@@ -9,6 +9,8 @@ export const styles = {
     fontWeight: 600,
     whiteSpace: 'normal',
     overflowWrap: 'anywhere',
-    minWidth: 0
+    minWidth: 0,
+    px: '10px',
+    textAlign: 'center'
   }
 } satisfies Record<string, SxProps<Theme>>;

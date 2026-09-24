@@ -42,6 +42,7 @@ const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
     id: 'year',
     headerLabel: 'Дати',
     width: 'minmax(96px, 120px)',
+    align: 'center',
     renderPlain: (work) => <Typography sx={styles.datesCell}>{work.year}</Typography>
   },
   {

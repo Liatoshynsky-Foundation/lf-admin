@@ -70,6 +70,15 @@ const ResearchModal = ({
 
   const resolvePdfFile = (): ResearchWorkPdfFileInput | null | undefined => {
     if (attachedPdf) {
+      const isUnchangedExistingPdf =
+        mode === 'edit' &&
+        attachedPdf.url === existingPdfFile?.url &&
+        attachedPdf.filename === existingPdfFile?.filename;
+
+      if (isUnchangedExistingPdf) {
+        return undefined;
+      }
+
       return attachedPdf;
     }
 
