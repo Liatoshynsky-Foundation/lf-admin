@@ -648,7 +648,6 @@ export default function StyleGuide() {
             src="https://shorturl.at/xkStA"
             fileName="File"
             isStarred
-            usageLocations={['Main page', 'Files page']}
             onClick={() => {}}
           />
         </Box>

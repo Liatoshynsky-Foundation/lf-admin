@@ -78,16 +78,6 @@ const favoritesFilterOptions = [
   { value: 'starred', label: 'Із зірочкою' },
   { value: 'not-starred', label: 'Без зірочки' }
 ];
-
-const usageFilterOptions = [
-  { value: 'page', label: 'Основні сторінки' },
-  { value: 'news', label: 'Новини' },
-  { value: 'events', label: 'Події' },
-  { value: 'opus', label: 'Опуси' },
-  { value: 'archive', label: 'Архів' },
-  { value: 'unused', label: 'Не використані' }
-];
-
 const getUsageLabel = (
   ref: GalleryItem['usageRefs'][number],
   pageNameMap: Record<string, string>
@@ -113,13 +103,6 @@ const matchesFavoritesFilter = (item: GalleryItem, filter: string): boolean => {
   if (filter === 'not-starred') return !item.isStarred;
   return true;
 };
-
-const matchesUsageFilter = (item: GalleryItem, filter: string): boolean => {
-  if (!filter) return true;
-  if (filter === 'unused') return item.usageRefs.length === 0;
-  return item.usageRefs.some((ref) => ref.pageId === filter);
-};
-
 export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaKind = 'image' }: Props) {
   const config = MEDIA_KIND_CONFIG[mediaKind];
   const { files: r2Files, isLoading: r2Loading } = useGalleryFiles(config.folder);
@@ -173,7 +156,7 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
             url: file.url,
             isStarred: asset?.isStarred ?? false,
             tags: asset?.tags ?? [],
-            usageRefs: asset?.usageRefs ?? [],
+            usageRefs: [],
             createdAt: file.createdAt
           }
         ];
@@ -185,12 +168,10 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
       sortByDateAndName(
         galleryItems.filter(
           (item) =>
-            matchesSearch(item, debouncedSearchValue, ['filename']) &&
-            matchesFavoritesFilter(item, filters.favorites) &&
-            matchesUsageFilter(item, filters.usage)
+            matchesSearch(item, debouncedSearchValue, ['filename']) && matchesFavoritesFilter(item, filters.favorites)
         )
       ),
-    [galleryItems, debouncedSearchValue, filters.favorites, filters.usage]
+    [galleryItems, debouncedSearchValue, filters.favorites]
   );
 
   const handleCardClick = (item: GalleryItem) => {
@@ -262,13 +243,6 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
             options={favoritesFilterOptions}
             onChange={(favorites) => onFiltersChange({ favorites })}
             testId="GalleryView-favoritesFilter"
-          />
-          <FilterDropdown
-            label="Використання"
-            value={filters.usage}
-            options={usageFilterOptions}
-            onChange={(usage) => onFiltersChange({ usage })}
-            testId="GalleryView-usageFilter"
           />
         </Box>
       </Box>

@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { FORMAT_FILTER_OPTIONS } from '~/constants/file-formats';
 import {
-  type FilesTabValue,
-  USAGE_FILTER_OPTIONS
+  type FilesTabValue
 } from '~/constants/files';
 import {
   type FilesSortValue,
@@ -81,46 +80,6 @@ const normalizeFormatFilterValue = (value: string): string => {
 
 const DOCS_FORMAT_VALUES = new Set<string>(['pdf', 'zip', 'doc', 'docx', 'xls', 'xlsx']);
 
-const getUsageFilterValues = (usageLinks: ReadonlyArray<FilesFilteringUsageLink>): string[] => {
-  if (!usageLinks.length) {
-    return ['unused'];
-  }
-
-  const categories = new Set<string>();
-
-  usageLinks.forEach((usageLink) => {
-    const normalizedLabel = normalizeSearch(usageLink.label);
-
-    if (/новин|медіа|news|media/.test(normalizedLabel)) {
-      categories.add('news_media');
-      return;
-    }
-
-    if (/поді|event/.test(normalizedLabel)) {
-      categories.add('events');
-      return;
-    }
-
-    if (/творч|creative/.test(normalizedLabel)) {
-      categories.add('creativity');
-      return;
-    }
-
-    if (/файл|files/.test(normalizedLabel)) {
-      categories.add('files');
-      return;
-    }
-
-    if (/науков|scientific|research/.test(normalizedLabel)) {
-      categories.add('research');
-      return;
-    }
-
-    categories.add('main_pages');
-  });
-
-  return Array.from(categories);
-};
 
 export function useFilesFiltering<Item extends UseFilesFilteringItem>(
   allFiles: Item[],
@@ -129,7 +88,6 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [formatFilters, setFormatFilters] = useState<string[]>([]);
-  const [usageFilters, setUsageFilters] = useState<string[]>([]);
   const [sortValue, setSortValue] = useState<FilesSortValue>(() => {
     if (globalThis.window === undefined) {
       return 'date_desc';
@@ -152,11 +110,7 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
       const matchesFormat =
         !formatFilters.length ||
         formatFilters.some((formatFilter) => normalizeFormatFilterValue(formatFilter) === normalizedFileFormat);
-      const fileUsageFilterValues = getUsageFilterValues(file.usage);
-      const matchesUsage =
-        !usageFilters.length || usageFilters.some((usageFilter) => fileUsageFilterValues.includes(usageFilter));
-
-      return matchesSearch && matchesFormat && matchesUsage;
+      return matchesSearch && matchesFormat;
     });
 
     return [...filtered].sort((left, right) => {
@@ -177,7 +131,7 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
 
       return rightDate - leftDate;
     });
-  }, [allFiles, formatFilters, search, sortValue, usageFilters]);
+  }, [allFiles, formatFilters, search, sortValue]);
 
   const filteredFiles = useMemo(() => {
     if (activeTab === 'all') {
@@ -197,7 +151,7 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
     return filesAfterBaseFiltering.filter((file) => file.type === activeTab);
   }, [activeTab, filesAfterBaseFiltering]);
 
-  const activeFiltersCount = formatFilters.length + usageFilters.length;
+  const activeFiltersCount = formatFilters.length;
   const currentSortOption = SORT_OPTIONS.find((option) => option.value === sortValue) ?? SORT_OPTIONS[0];
   const currentSortField: SortFieldValue = sortValue.startsWith('date') ? 'date' : 'name';
 
@@ -207,7 +161,6 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
 
   const clearFilters = useCallback(() => {
     setFormatFilters([]);
-    setUsageFilters([]);
   }, []);
 
   const handleSortFieldChange = useCallback((field: SortFieldValue) => {
@@ -242,18 +195,9 @@ export function useFilesFiltering<Item extends UseFilesFilteringItem>(
         hideClearAction: true,
         menuMinWidth: 116,
         onChange: setFormatFilters
-      },
-      {
-        id: 'usage',
-        label: 'Використання',
-        options: USAGE_FILTER_OPTIONS,
-        value: usageFilters,
-        hideClearAction: true,
-        menuMinWidth: 190,
-        onChange: setUsageFilters
       }
     ],
-    [formatFilters, usageFilters]
+    [formatFilters]
   );
 
   const toolbarProps = useMemo<FilesFilteringToolbarProps>(

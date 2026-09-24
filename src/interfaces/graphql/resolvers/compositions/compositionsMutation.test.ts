@@ -129,8 +129,6 @@ describe('CompositionsMutation', () => {
         urls.map((url) => ({ url, filename: url.split('/').pop() ?? '', usageRefs: [] }))
       ),
       createAsset: jest.fn(),
-      addUsageRef: jest.fn().mockResolvedValue(undefined),
-      removeUsageRef: jest.fn().mockResolvedValue(undefined)
     };
 
     return {

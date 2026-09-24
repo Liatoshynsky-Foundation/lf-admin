@@ -204,30 +204,6 @@ describe('EventsMutation Resolvers', () => {
       expect(mockRepo.findBySlug).toHaveBeenCalled();
     });
 
-    it('should call addUsageRef for http coverImage src and http content src', async () => {
-      const mockAddUsageRef = jest.fn().mockResolvedValue(undefined);
-      const ctxWithAssets = {
-        admin: true,
-        requestContainer: {
-          cradle: { eventsRepository: mockRepo, assetsRepository: { addUsageRef: mockAddUsageRef } }
-        }
-      } as never;
-
-      const input = createMockInput({
-        coverImage: { src: 'https://cdn.example.com/photo.jpg', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } },
-        content: {
-          uk: { blocks: [{ src: 'https://cdn.example.com/uk-img.jpg', type: 'image' }] },
-          en: { blocks: [] }
-        }
-      });
-      (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'evt-http' }));
-
-      await EventsMutation.createEvent({}, { input }, ctxWithAssets);
-
-      expect(mockAddUsageRef).toHaveBeenCalledWith('https://cdn.example.com/photo.jpg', expect.objectContaining({ locale: 'uk' }));
-      expect(mockAddUsageRef).toHaveBeenCalledWith('https://cdn.example.com/photo.jpg', expect.objectContaining({ locale: 'en' }));
-      expect(mockAddUsageRef).toHaveBeenCalledWith('https://cdn.example.com/uk-img.jpg', expect.objectContaining({ locale: 'uk' }));
-    });
 
     it('should not call syncImagesCrops for content when content is absent in createEvent', async () => {
       const input = { ...createMockInput(), content: undefined } as never;
