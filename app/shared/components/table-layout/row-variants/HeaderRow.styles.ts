@@ -11,9 +11,10 @@ export const styles = {
     withoutFirstColOffset = false,
   ): SxProps<Theme> => {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
+    const firstColumn = withoutFirstColOffset ? firstColWidth : `calc(${firstColWidth} + 26px)`;
     return {
       display: 'grid',
-      gridTemplateColumns: `${withoutFirstColOffset ? firstColWidth : `calc(${firstColWidth} + 26px)`} ${restTemplates}`,
+      gridTemplateColumns: `${firstColumn} ${restTemplates}`,
       columnGap: tableGap,
       alignItems: 'center',
       py: '16px',
