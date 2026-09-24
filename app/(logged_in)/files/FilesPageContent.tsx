@@ -54,7 +54,6 @@ import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
 import { toCreateAssetInput, useHybridFiles, useR2Files } from '~/shared/hooks/use-files/useHybridFiles';
 import {
-  type AllAssetsQuery,
   AssetType,
   useCreateAssetMutation,
   useDeleteAssetMutation,
@@ -154,7 +153,6 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     open: false,
     fileId: null
   });
-  const [latestAssetsForDelete, setLatestAssetsForDelete] = useState<AllAssetsQuery['allAssets'] | null>(null);
   const [uploadModalInitial, setUploadModalInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [renameModalState, setRenameModalState] = useState<{ open: boolean; fileId: string; currentFilename: string }>({
     open: false,
@@ -300,26 +298,12 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
 
   const handleCloseDeleteModal = () => {
     setDeleteModalState({ open: false, fileId: null });
-    setLatestAssetsForDelete(null);
   };
 
-  const handleItemAction = async (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
+  const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
     if (action === 'rename') {
       setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
     } else if (action === 'delete') {
-      const file = allFiles.find((f) => f.id === item.id);
-
-      if (file && !file.isOrphan) {
-        try {
-          const latestAssets = await refetch();
-          setLatestAssetsForDelete(latestAssets?.data?.allAssets ?? data?.allAssets ?? null);
-        } catch {
-          setLatestAssetsForDelete(data?.allAssets ?? null);
-        }
-      } else {
-        setLatestAssetsForDelete(null);
-      }
-
       setDeleteModalState({ open: true, fileId: item.id });
     } else if (action === 'download') {
       const file = allFiles.find((f) => f.id === item.id);
@@ -374,20 +358,13 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     if (!deleteModalState.fileId) return null;
     const file = allFiles.find((f) => f.id === deleteModalState.fileId);
     if (!file) return null;
-    const latestAsset =
-      latestAssetsForDelete?.find((asset) => asset.id === file.id) ?? data?.allAssets?.find((asset) => asset.id === file.id);
-    const usageRefs =
-      latestAsset?.usageRefs.map((usageRef) => ({
-        pageId: usageRef.pageId ?? undefined,
-        blockId: usageRef.blockId ?? undefined
-      })) ?? file.usage.map((u) => ({ pageId: u.label, blockId: '' }));
 
     return {
       id: file.id,
       filename: file.name,
-      usageRefs
+      usageRefs: []
     };
-  }, [deleteModalState.fileId, allFiles, latestAssetsForDelete, data?.allAssets]);
+  }, [deleteModalState.fileId, allFiles]);
 
   const { filteredFiles, toolbarProps, sortProps } = useFilesFiltering(allFiles, activeTab);
 

@@ -34,7 +34,6 @@ jest.mock('../helpers', () => ({
     updateData.slug = 'slug-оновлено';
     return Promise.resolve();
   }),
-  markImagesAsUsed: jest.fn()
 }));
 
 describe('NewsMutation Resolvers', () => {

@@ -51,7 +51,7 @@ const mockItems: UseFilesFilteringItem[] = [
     dateAdded: '05.01.2024',
     format: 'vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     isStarred: false,
-    usage: [{ label: 'Other page' }]
+    usage: [{ label: 'Files' }]
   }
 ];
 
@@ -136,43 +136,6 @@ describe('useFilesFiltering', () => {
     });
   });
 
-  describe('Usage Filtering', () => {
-    it.each([
-      ['news_media', '1'],
-      ['events', '2'],
-      ['creativity', '3'],
-      ['research', '4'],
-      ['main_pages', '5']
-    ])('should filter by usage category: %s', (usageCategory, expectedId) => {
-      const { result } = renderHook(() => useFilesFiltering(mockItems));
-      act(() => {
-        result.current.toolbarProps.filters?.[1]?.onChange?.([usageCategory]);
-      });
-      expect(result.current.filteredFiles[0]?.id).toBe(expectedId);
-    });
-
-    it('should categorize as "files" if label matches files regex', () => {
-      const fileItem: UseFilesFilteringItem = {
-        ...mockItems[0],
-        usage: [{ label: 'Архівні файли' }]
-      };
-      const { result } = renderHook(() => useFilesFiltering([fileItem]));
-      act(() => {
-        result.current.toolbarProps.filters?.[1]?.onChange?.(['files']);
-      });
-      expect(result.current.filteredFiles).toHaveLength(1);
-    });
-
-    it('should return "unused" for items without usage links', () => {
-      const unusedItem: UseFilesFilteringItem = { ...mockItems[0], usage: [] };
-      const { result } = renderHook(() => useFilesFiltering([unusedItem]));
-      act(() => {
-        result.current.toolbarProps.filters?.[1]?.onChange?.(['unused']);
-      });
-      expect(result.current.filteredFiles).toHaveLength(1);
-    });
-  });
-
   describe('Sorting Logic', () => {
     it('should sort by name_asc and name_desc', () => {
       const { result } = renderHook(() => useFilesFiltering(mockItems));
@@ -254,9 +217,8 @@ describe('useFilesFiltering', () => {
       const { result } = renderHook(() => useFilesFiltering(mockItems));
       act(() => {
         result.current.toolbarProps.filters?.[0]?.onChange?.(['jpg']);
-        result.current.toolbarProps.filters?.[1]?.onChange?.(['news_media']);
       });
-      expect(result.current.toolbarProps.activeFiltersCount).toBe(2);
+      expect(result.current.toolbarProps.activeFiltersCount).toBe(1);
 
       act(() => {
         result.current.toolbarProps.onClearFilters?.();

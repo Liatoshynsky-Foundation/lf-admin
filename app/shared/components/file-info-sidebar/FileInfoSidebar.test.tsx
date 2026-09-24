@@ -119,12 +119,12 @@ describe('FileInfoSidebar', () => {
     addedAt: '2025-01-01',
     format: 'png',
     size: '123kb',
-    usageLinks: [{ id: 'u1', label: 'Page 1', href: '/p1' }],
+    usageLinks: [],
     description: 'server desc',
     isStarred: false
   };
 
-  it('should render filename, meta, links, and description field', () => {
+  it('should render filename, metadata, and description field', () => {
     render(
       <FileInfoSidebar file={baseFile} onClose={jest.fn()} onDescriptionSave={jest.fn()} onRequestAction={jest.fn()} />
     );
@@ -135,7 +135,7 @@ describe('FileInfoSidebar', () => {
     expect(screen.getByText('Формат: png')).toBeInTheDocument();
     expect(screen.getByText('Розмір: 123kb')).toBeInTheDocument();
 
-    expect(screen.getByText('Page 1')).toBeInTheDocument();
+    expect(screen.queryByText('Page 1')).not.toBeInTheDocument();
 
     const desc = screen.getByTestId('desc') as HTMLTextAreaElement;
     expect(desc.value).toBe('initial desc');
@@ -370,7 +370,7 @@ describe('FileInfoSidebar', () => {
     });
 
     fireEvent.click(screen.getByLabelText('Видалити'));
-    expect(screen.getByText('Видалення неможливе')).toBeInTheDocument();
+    expect(screen.getByText('Підтвердити видалення')).toBeInTheDocument();
 
     expect(onRequestAction).toHaveBeenCalledTimes(2);
   });
@@ -385,7 +385,7 @@ describe('FileInfoSidebar', () => {
     expect(document.querySelector('.previewOverlay')).toBeTruthy();
   });
 
-  it('should render usage text when usage link has no href', () => {
+  it('should not render legacy usage text', () => {
     const fileWithPlainUsage: FileDetailsSidebarFile = {
       ...baseFile,
       usageLinks: [{ id: 'u1', label: 'Plain usage' }]
@@ -393,7 +393,7 @@ describe('FileInfoSidebar', () => {
 
     render(<FileInfoSidebar file={fileWithPlainUsage} onClose={jest.fn()} />);
 
-    expect(screen.getByText('Plain usage')).toBeInTheDocument();
+    expect(screen.queryByText('Plain usage')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Plain usage' })).not.toBeInTheDocument();
   });
 

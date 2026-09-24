@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { toCreateAssetInput, useHybridFiles, useR2Files } from './useHybridFiles';
-import { COMPOSITION_MODAL_PARAM, WORKS_BASE_PATH } from '~/constants/creativity';
 import { type AllAssetsQuery, AssetType } from '~/types/graphql/generated/graphql';
 
 type AssetItem = AllAssetsQuery['allAssets'][number];
@@ -55,7 +54,7 @@ describe('useHybridFiles', () => {
       originalname: 'original-photo.jpg',
       description: 'Mongo description',
       isStarred: true,
-      usageLinks: 1,
+      usageLinks: 0,
       isOrphan: false
     });
   });
@@ -106,7 +105,7 @@ describe('useHybridFiles', () => {
     expect(result.current).toEqual([]);
   });
 
-  it('formats invalid dates, byte and megabyte file sizes, and missing usage links', () => {
+  it('formats invalid dates, byte and megabyte file sizes while ignoring legacy usage refs', () => {
     const assets: AssetItem[] = [
       {
         ...mongoAsset,
@@ -137,7 +136,7 @@ describe('useHybridFiles', () => {
       dateAdded: 'not-a-date',
       format: 'jpg',
       size: '500 B',
-      usage: [{ href: undefined }]
+      usage: []
     });
     expect(result.current[1]).toMatchObject({
       name: 'large-file.bin',
@@ -146,7 +145,7 @@ describe('useHybridFiles', () => {
     });
   });
 
-  it('keeps absolute usage links and handles non-image Mongo assets', () => {
+  it('ignores legacy usage refs and handles non-image Mongo assets', () => {
     const pdfAsset: AssetItem = {
       ...mongoAsset,
       id: 'asset-pdf',
@@ -168,11 +167,11 @@ describe('useHybridFiles', () => {
       previewUrl: undefined,
       addedBy: undefined,
       description: undefined,
-      usage: [{ href: '/already-absolute' }]
+      usage: []
     });
   });
 
-  it('uses a composition name and links directly to the referenced composition', () => {
+  it('treats composition usage refs as empty', () => {
     const compositionAsset: AssetItem = {
       ...mongoAsset,
       usageRefs: [{
@@ -187,9 +186,7 @@ describe('useHybridFiles', () => {
 
     const { result } = renderHook(() => useHybridFiles([compositionAsset], []));
 
-    expect(result.current[0].usage).toEqual([
-      expect.objectContaining({ label: compositionAsset.usageRefs[0].compositionName, href: `${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${encodeURIComponent(`${compositionAsset.usageRefs[0].compositionId}`)}` })
-    ]);
+    expect(result.current[0].usage).toEqual([]);
   });
 
   it.each([

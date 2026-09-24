@@ -493,26 +493,20 @@ describe('FilesPageContent', () => {
     });
   });
 
-  it('refreshes asset usage before opening delete modal', async () => {
+  it('opens delete modal without refreshing usage references', async () => {
     const staleAsset = { ...baseAsset, usageRefs: [] };
-    const refreshedAsset = {
-      ...baseAsset,
-      usageRefs: [{ __typename: 'AssetUsageRef' as const, pageId: 'about-us', blockId: 'hero', locale: 'uk' }]
-    };
-    const refetch = jest.fn().mockResolvedValue({ data: { allAssets: [refreshedAsset] } });
+    const refetch = jest.fn();
 
     setupHooks({ assets: [staleAsset], refetch });
     render(<FilesPageContent activeTab="all" />);
 
     fireEvent.click(screen.getByText('delete-1'));
 
-    await waitFor(() => {
-      expect(refetch).toHaveBeenCalled();
-      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
 
-    expect(screen.getByTestId('delete-modal-usage-count')).toHaveTextContent('1');
-    expect(capturedDeleteModalFile?.usageRefs).toEqual([{ pageId: 'about-us', blockId: 'hero' }]);
+    expect(refetch).not.toHaveBeenCalled();
+    expect(screen.getByTestId('delete-modal-usage-count')).toHaveTextContent('0');
+    expect(capturedDeleteModalFile?.usageRefs).toEqual([]);
   });
 
   it('renders correct empty state scenarios (coverage for 447-476)', () => {
@@ -903,10 +897,7 @@ describe('FilesPageContent', () => {
     fireEvent.click(screen.getByText('download-1'));
 
     await waitFor(() => {
-      expect(downloadFile).toHaveBeenCalledWith(
-        '/api/uploads/Test_image_1.jpeg?folder=photos',
-        'Test_image_1.jpeg'
-      );
+      expect(downloadFile).toHaveBeenCalledWith('/api/uploads/Test_image_1.jpeg?folder=photos', 'Test_image_1.jpeg');
     });
   });
 

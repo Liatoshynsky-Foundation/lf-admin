@@ -69,6 +69,7 @@ describe('SeoCanonicalUrlField', () => {
   test.each([
     ['порожнє значення після blur — показує помилку обовʼязкового поля', '', true, false, 'Обовʼязкове поле'],
     ['некоректний URL після blur — показує помилку формату', 'not-a-url', true, false, 'Некоректний URL'],
+    ['URL з непідтримуваним протоколом після blur — показує помилку формату', 'test:', true, false, 'Некоректний URL'],
     ['валідний URL після blur — помилки немає', 'https://example.com', true, false, null],
     ['порожнє значення без blur — помилки немає', '', false, false, null]
   ] as const)('%s', (_desc, value, doBlur, _unused, expectedHelperText) => {
