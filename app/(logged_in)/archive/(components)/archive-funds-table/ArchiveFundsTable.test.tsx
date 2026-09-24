@@ -455,6 +455,7 @@ describe('ArchiveFundsTable', () => {
       id: 'c1',
       name: 'Справа 1',
       fundId: 'f1',
+      cipher: '1-1-1',
       caseNumber: 5,
       descriptionNumber: 2,
       sheetsNumber: 100,

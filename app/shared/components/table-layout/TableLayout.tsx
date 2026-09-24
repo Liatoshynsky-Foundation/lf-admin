@@ -9,15 +9,27 @@ import { BaseRowData, ColumnDef } from './row-variants/Row.types';
 type TableLayoutProps<TGroup, TSub, TPlain> = Readonly<{
   data: readonly BaseRowData<TGroup, TSub, TPlain>[];
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
+  withoutFirstColOffset?: boolean;
+  offsetPlainRows?: boolean;
 }>;
 
-export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) {
+export function TableLayout<TGroup, TSub, TPlain>({
+  data,
+  columns,
+  withoutFirstColOffset,
+  offsetPlainRows = false
+}: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
   const includeExpandGutter = data.some((item) => item.type === 'group');
 
   return (
     <Box>
-      <HeaderRow columns={columns} gridTemplate={gridTemplate} includeExpandGutter={includeExpandGutter} />
+      <HeaderRow
+        columns={columns}
+        gridTemplate={gridTemplate}
+        includeExpandGutter={includeExpandGutter}
+        withoutFirstColOffset={withoutFirstColOffset}
+      />
       {data.map((item) => {
         if (item.type === 'group') {
           return (
@@ -33,7 +45,16 @@ export function TableLayout<TGroup, TSub, TPlain>({ data, columns }: TableLayout
         }
 
         if (item.type === 'individual') {
-          return <PlainRow key={item.id} plainData={item.plainData} columns={columns} gridTemplate={gridTemplate} />;
+          return (
+            <PlainRow
+              key={item.id}
+              plainData={item.plainData}
+              columns={columns}
+              gridTemplate={gridTemplate}
+              firstColWidth={columns[0]?.width}
+              offsetFirstCol={offsetPlainRows}
+            />
+          );
         }
 
         return null;

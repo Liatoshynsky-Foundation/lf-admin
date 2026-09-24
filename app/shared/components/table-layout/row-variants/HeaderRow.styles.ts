@@ -8,13 +8,13 @@ export const styles = {
   tableHeader: (
     gridTemplate: string,
     firstColWidth: string,
-    includeExpandGutter = false
+    includeExpandGutter = false,
+    withoutFirstColOffset = false
   ): SxProps<Theme> => {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
-    const firstColumn = includeExpandGutter
+    const firstColumn = includeExpandGutter && !withoutFirstColOffset
       ? `calc(${firstColWidth} + ${EXPAND_ICON_GUTTER})`
       : firstColWidth;
-
     return {
       display: 'grid',
       gridTemplateColumns: `${firstColumn} ${restTemplates}`,

@@ -20,9 +20,13 @@ import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
-import { ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
+import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
+import {
+  CaseRowFields,
+  useArchiveCaseRowActions
+} from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
 import { useDeleteCase, useDeleteFund, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
@@ -31,6 +35,7 @@ export type ArchiveCase = {
   id: string;
   name: string;
   fundId: string;
+  cipher: string;
   caseNumber: number;
   descriptionNumber: number;
   sheetsNumber: number;
@@ -60,6 +65,7 @@ export interface FundsTableProps {
   onCaseChanged?: () => Promise<unknown>;
   onPublish?: (fund: Fund) => void;
   onUnpublish?: (fund: Fund) => void;
+  groupCasesByFund?: boolean;
 }
 
 async function copyToClipboard(value: string) {
@@ -97,7 +103,8 @@ export const FundsTable = ({
   onDeleted,
   onCaseChanged,
   onPublish,
-  onUnpublish
+  onUnpublish,
+  groupCasesByFund = false
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
   const [deleteCase] = useDeleteCase();
@@ -106,6 +113,7 @@ export const FundsTable = ({
     open: false
   });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
+  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
 
   const shareFund = async (id: string) => {
     try {
@@ -232,39 +240,96 @@ export const FundsTable = ({
     };
   });
 
-  const rows = [...fundRows, ...caseRows];
+  const buildOrphanCaseRowData = (caseRow: CaseRowFields): FundRow => ({
+    id: caseRow.id,
+    fundNumber: caseRow.cipher,
+    name: caseRow.name,
+    descriptions: caseRow.descriptionLabel,
+    cases: caseRow.caseLabel,
+    dates: caseRow.caseDate,
+    status: caseRow.status,
+    updatedAt: caseRow.updatedAt,
+    editAction: caseRow.editAction,
+    menuActions: caseRow.menuActions
+  });
 
-  const columns: readonly ColumnDef<never, never, FundRow>[] = [
+  const rows: BaseRowData<FundRow, CaseRowFields, FundRow>[] = groupCasesByFund
+    ? (() => {
+      const fundIds = new Set(funds.map((fund) => fund.id));
+      const casesByFund = new Map<string, ArchiveCase[]>();
+      const orphanCases: ArchiveCase[] = [];
+
+      cases.forEach((caseItem) => {
+        if (!fundIds.has(caseItem.fundId)) {
+          orphanCases.push(caseItem);
+          return;
+        }
+
+        const existingCases = casesByFund.get(caseItem.fundId) ?? [];
+        existingCases.push(caseItem);
+        casesByFund.set(caseItem.fundId, existingCases);
+      });
+
+      const groupedRows: BaseRowData<FundRow, CaseRowFields, FundRow>[] = funds.map((fund, index) => ({
+        type: 'group' as const,
+        id: fund.id,
+        groupData: fundRows[index].plainData,
+        subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem))
+      }));
+
+      orphanCases.forEach((caseItem) => {
+        groupedRows.push({
+          type: 'individual' as const,
+          id: caseItem.id,
+          plainData: buildOrphanCaseRowData(getCaseRow(caseItem))
+        });
+      });
+
+      return groupedRows;
+    })()
+    : [...fundRows, ...caseRows];
+
+  const columns: readonly ColumnDef<FundRow, CaseRowFields, FundRow>[] = [
     {
       id: 'fundNumber',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.fund,
       align: 'center',
       width: '46px',
       hasRightDivider: true,
+      renderGroup: (fund) => fund.fundNumber,
+      renderSub: (caseRow) => caseRow.cipher,
       renderPlain: (fund) => fund.fundNumber
     },
     {
       id: 'name',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.name,
       width: 'minmax(300px, 1fr)',
+      renderGroup: (fund) => fund.name,
+      renderSub: (caseRow) => caseRow.name,
       renderPlain: (fund) => fund.name
     },
     {
       id: 'descriptionsCount',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.descr,
       width: '96px',
+      renderGroup: (fund) => String(fund.descriptions),
+      renderSub: (caseRow) => caseRow.descriptionLabel,
       renderPlain: (fund) => String(fund.descriptions)
     },
     {
       id: 'casesCount',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.cases,
       width: '96px',
+      renderGroup: (fund) => String(fund.cases),
+      renderSub: (caseRow) => caseRow.caseLabel,
       renderPlain: (fund) => String(fund.cases)
     },
     {
       id: 'dates',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.dates,
       width: '160px',
+      renderGroup: (fund) => fund.dates,
+      renderSub: (caseRow) => caseRow.caseDate,
       renderPlain: (fund) => fund.dates
     },
     {
@@ -274,12 +339,21 @@ export const FundsTable = ({
       align: 'center',
       hasLeftDivider: true,
       hasRightDivider: true,
+      renderGroup: (fund) => <StatusBadge status={fund.status} updatedAt={fund.updatedAt} />,
+      renderSub: (caseRow) => <StatusBadge status={caseRow.status} updatedAt={caseRow.updatedAt} />,
       renderPlain: (fund) => <StatusBadge status={fund.status} updatedAt={fund.updatedAt} />
     },
     {
       id: 'actions',
       width: '96px',
       align: 'right',
+      renderGroup: (fund) => (
+        <RowActions
+          editAction={fund.editAction}
+          menuActions={fund.menuActions}
+        />
+      ),
+      renderSub: (caseRow) => <RowActions editAction={caseRow.editAction} menuActions={caseRow.menuActions} />,
       renderPlain: (fund) => (
         <RowActions
           editAction={{
@@ -347,6 +421,7 @@ export const FundsTable = ({
           }}
         />
       )}
+      {groupCasesByFund && cases.length > 0 && caseRowModals}
     </>
   );
 };

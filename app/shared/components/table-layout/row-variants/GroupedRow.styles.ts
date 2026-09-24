@@ -70,6 +70,7 @@ export const styles = {
     ...tableText,
     ...twoLineEllipsis,
     width: '100%',
+    ...(colId === 'fundNumber' ? { fontSize: '16px', fontWeight: 400 } : {}),
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
 
