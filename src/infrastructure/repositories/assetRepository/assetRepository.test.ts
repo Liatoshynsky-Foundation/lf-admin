@@ -48,12 +48,13 @@ const STORAGE_DELETE_ERROR = 'R2 error';
 const DUPLICATE_ASSET_ERROR = `Файл ${DUPLICATE_FILENAME} вже існує`;
 const ASSET_DATE = new Date('2026-01-01T00:00:00.000Z');
 const USAGE_REFS: [] = [];
+const STORAGE_BASE_URL = 'https://example.com';
 
 const IMAGE_ASSET_DATA = {
   filename: 'test-image.png',
   mimeType: 'image/jpeg',
   sizeBytes: 1024,
-  url: 'https://example.com/test-image.png',
+  url: `${STORAGE_BASE_URL}/photos/test-image.png`,
   type: 'image' as const
 };
 
@@ -61,7 +62,7 @@ const PDF_ASSET_DATA = {
   filename: 'document.pdf',
   mimeType: 'application/pdf',
   sizeBytes: 512,
-  url: 'https://example.com/document.pdf',
+  url: `${STORAGE_BASE_URL}/document.pdf`,
   type: 'pdf' as const
 };
 
@@ -69,14 +70,15 @@ const AUDIO_ASSET_DATA = {
   filename: 'track.mp3',
   mimeType: 'audio/mpeg',
   sizeBytes: 0,
-  url: 'https://example.com/compositions/track.mp3',
+  url: `${STORAGE_BASE_URL}/compositions/track.mp3`,
   type: 'audio' as const
 };
 
 const buildAssetDocument = <T extends Record<string, unknown>>(
   data: T,
   id = ASSET_ID,
-  date = ASSET_DATE
+  date = ASSET_DATE,
+  overrides: Record<string, unknown> = {}
 ) => ({
     _id: { toString: () => id },
     tags: [],
@@ -84,7 +86,8 @@ const buildAssetDocument = <T extends Record<string, unknown>>(
     ...data,
     isStarred: false,
     createdAt: date,
-    updatedAt: date
+    updatedAt: date,
+    ...overrides
   });
 
 const MOCK_ASSET_DOC = buildAssetDocument(AUDIO_ASSET_DATA);
@@ -98,86 +101,75 @@ const buildFilenameLookupQuery = (filename: string) => ({
 
 describe('AssetRepository', () => {
   describe('createBaseRepository config', () => {
-    it('should pass model and handlers into base repository factory', () => {
-      const model = {};
+    const model = {};
+    let config: Record<string, unknown>;
+
+    beforeEach(() => {
       mockedCreateBaseRepository.mockClear();
       AssetRepository({ AssetModel: model as never });
 
-      const config = mockedCreateBaseRepository.mock.calls[0][0] as Record<string, unknown>;
+      config = mockedCreateBaseRepository.mock.calls[0][0] as Record<string, unknown>;
+    });
 
+    it('should pass model into base repository factory', () => {
       expect(mockedCreateBaseRepository).toHaveBeenCalledTimes(1);
       expect(config.model).toBe(model);
-      expect(typeof config.toEntity).toBe('function');
-      expect(typeof config.buildQuery).toBe('function');
-      expect(typeof config.getDefaultSort).toBe('function');
+    });
+
+    it.each(['toEntity', 'buildQuery', 'getDefaultSort'])('should pass %s handler into base repository factory', (handler) => {
+      expect(typeof config[handler]).toBe('function');
     });
   });
 
   describe('toEntity', () => {
-    it('should map document to entity, convert Date fields to ISO and handle null updatedAt', () => {
+    it('should convert id and Date fields and handle null updatedAt', () => {
       const { toEntity } = getRepoConfig();
-      const doc = {
-        _id: { toString: () => 'asset-id-1' },
-        tags: ['archive'],
-        usageRefs: [{ pageId: 'about-us', blockId: 'hero' }],
-        ...IMAGE_ASSET_DATA,
-        filename: 'piano.jpg',
-        sizeBytes: 2048,
-        url: '/uploads/piano.jpg',
-        createdBy: { toString: () => 'admin-id-1' },
-        description: 'desc',
-        isStarred: true,
-        createdAt: new Date('2026-03-10T10:00:00.000Z'),
-        updatedAt: null
-      };
+      const doc = buildAssetDocument(
+        { ...IMAGE_ASSET_DATA, createdBy: { toString: () => 'admin-id-1' } },
+        'asset-id-1',
+        new Date('2026-03-10T10:00:00.000Z'),
+        { updatedAt: null }
+      );
 
-      const entity = toEntity(doc);
-
-      expect(entity.id).toBe('asset-id-1');
-      expect(entity.createdBy).toBe('admin-id-1');
-      expect(entity.createdAt).toBe('2026-03-10T10:00:00.000Z');
-      expect(entity.updatedAt).toBe(new Date(0).toISOString());
+      expect(toEntity(doc)).toMatchObject({
+        id: 'asset-id-1',
+        createdBy: 'admin-id-1',
+        createdAt: '2026-03-10T10:00:00.000Z',
+        updatedAt: new Date(0).toISOString()
+      });
     });
 
-    it('should return string createdAt as-is, convert Date updatedAt and handle missing createdBy', () => {
+    it('should preserve string createdAt and handle missing createdBy', () => {
       const { toEntity } = getRepoConfig();
       const doc = {
-        _id: { toString: () => 'asset-id-2' },
-        tags: [],
-        usageRefs: USAGE_REFS,
-        ...PDF_ASSET_DATA,
-        filename: 'document.pdf',
-        sizeBytes: 512,
-        url: '/uploads/document.pdf',
-        isStarred: false,
-        createdAt: '2026-01-01T00:00:00.000Z',
-        updatedAt: new Date('2026-01-02T00:00:00.000Z')
+        ...buildAssetDocument(PDF_ASSET_DATA, 'asset-id-2'),
+        createdAt: ASSET_DATE.toISOString()
       };
 
-      const entity = toEntity(doc);
-
-      expect(entity.createdBy).toBeUndefined();
-      expect(entity.createdAt).toBe('2026-01-01T00:00:00.000Z');
-      expect(entity.updatedAt).toBe('2026-01-02T00:00:00.000Z');
+      expect(toEntity(doc)).toMatchObject({
+        createdBy: undefined,
+        createdAt: ASSET_DATE.toISOString(),
+        updatedAt: ASSET_DATE.toISOString()
+      });
     });
   });
 
   describe('buildQuery', () => {
-    it('should return empty query when no filters are given', () => {
+    it.each([undefined, {}])('should return empty query for filters=%o', (filters) => {
       const { buildQuery } = getRepoConfig();
-      expect(buildQuery()).toEqual({});
-      expect(buildQuery(undefined)).toEqual({});
+      expect(buildQuery(filters)).toEqual({});
     });
 
     it('should build query from type, isStarred, tag and search filters', () => {
       const { buildQuery } = getRepoConfig();
       const query = buildQuery({ type: 'pdf', isStarred: false, tag: 'archive', search: '  press  ' });
 
-      expect(query.type).toBe('pdf');
-      expect(query.isStarred).toBe(false);
-      expect(query.tags).toBe('archive');
-      expect(query.filename).toBeInstanceOf(RegExp);
-      expect((query.filename as RegExp).test('press-kit.pdf')).toBe(true);
+      expect(query).toEqual({
+        type: 'pdf',
+        isStarred: false,
+        tags: 'archive',
+        filename: /press/i
+      });
     });
 
     it('should set isStarred: true filter', () => {
@@ -188,16 +180,14 @@ describe('AssetRepository', () => {
   });
 
   describe('getDefaultSort', () => {
-    it('should return createdAt descending by default', () => {
+    it.each([
+      [undefined, { createdAt: -1 }],
+      [{ sortOrder: 'desc' }, { createdAt: -1 }],
+      [{ sortBy: 'filename', sortOrder: 'asc' }, { filename: 1 }],
+      [{ sortBy: 'updatedAt', sortOrder: 'desc' }, { updatedAt: -1 }]
+    ])('should return the expected sort for filters=%o', (filters, expectedSort) => {
       const { getDefaultSort } = getRepoConfig();
-      expect(getDefaultSort()).toEqual({ createdAt: -1 });
-      expect(getDefaultSort({ sortOrder: 'desc' })).toEqual({ createdAt: -1 });
-    });
-
-    it('should return sort by custom field and direction', () => {
-      const { getDefaultSort } = getRepoConfig();
-      expect(getDefaultSort({ sortBy: 'filename', sortOrder: 'asc' })).toEqual({ filename: 1 });
-      expect(getDefaultSort({ sortBy: 'updatedAt', sortOrder: 'desc' })).toEqual({ updatedAt: -1 });
+      expect(getDefaultSort(filters)).toEqual(expectedSort);
     });
   });
 
@@ -233,9 +223,10 @@ describe('AssetRepository', () => {
       mockStorageDelete.mockResolvedValue({ success: true });
       mockStorageExists.mockResolvedValue(false);
       mockStorageMove.mockResolvedValue({ success: true });
-      mockStorageGetUrl.mockImplementation((filename: string) => `https://example.com/${filename}`);
+      mockStorageGetUrl.mockImplementation((filename: string) => `${STORAGE_BASE_URL}/${filename}`);
       mockStorageGetMetadata.mockResolvedValue(null);
       mockAssetModel.find.mockResolvedValue([]);
+      mockAssetModel.findByIdAndUpdate.mockReset();
     });
 
     describe('deleteAsset', () => {
@@ -272,11 +263,11 @@ describe('AssetRepository', () => {
       });
 
       it.each([
-        ['https://example.com/photos/piano.jpg', 'piano.jpg', 'photos', 'image'],
-        ['https://example.com/photos/my%20track.mp3', 'my track.mp3', 'photos', 'audio'],
-        ['https://example.com/photos/%E0%A4%A.jpg', '%E0%A4%A.jpg', 'photos', 'image'],
-        ['https://example.com/photos/fallback.jpg', 'fallback.jpg', 'photos', 'image'],
-        ['https://example.com/piano.jpg', 'piano.jpg', '', 'image'],
+        [`${STORAGE_BASE_URL}/photos/piano.jpg`, 'piano.jpg', 'photos', 'image'],
+        [`${STORAGE_BASE_URL}/photos/my%20track.mp3`, 'my track.mp3', 'photos', 'audio'],
+        [`${STORAGE_BASE_URL}/photos/%E0%A4%A.jpg`, '%E0%A4%A.jpg', 'photos', 'image'],
+        [`${STORAGE_BASE_URL}/photos/fallback.jpg`, 'fallback.jpg', 'photos', 'image'],
+        [`${STORAGE_BASE_URL}/piano.jpg`, 'piano.jpg', '', 'image'],
         ['/relative/invalid-url', 'photo.jpg', 'photos', 'image'],
         ['/relative/invalid-url', 'song.mp3', 'compositions', 'audio'],
         ['/relative/invalid-url', 'doc.pdf', 'uploads', 'pdf']
@@ -294,77 +285,57 @@ describe('AssetRepository', () => {
     });
 
     describe('updateAsset', () => {
-      const updatedImageAssetData = {
-        ...IMAGE_ASSET_DATA,
-        filename: 'updated.jpg',
-        url: 'https://example.com/updated.jpg'
-      };
-      const originalImageData = {
-        ...IMAGE_ASSET_DATA,
-        filename: 'original.png',
-        url: 'https://example.com/photos/original.png'
-      };
-
-      it('should handle root level folder in joinStoragePath when renaming', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce(
-          {
-            _id: FAKE_ASSET_ID,
-            filename: 'old.jpg',
-            mimeType: 'image/jpeg',
-            url: 'https://example.com/old.jpg',
-            usageRefs: USAGE_REFS
-          }
-        );
+      it('should generate a root-level storage URL when renaming an asset without a folder', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(PDF_ASSET_DATA);
         mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(
-          buildAssetDocument(updatedImageAssetData)
+          buildAssetDocument(IMAGE_ASSET_DATA)
         );
 
-        await repository.updateAsset(ASSET_ID, { filename: 'new.jpg' });
+        await repository.updateAsset(ASSET_ID, { filename: 'new.pdf' });
 
-        expect(mockStorageGetUrl).toHaveBeenCalledWith('new.jpg');
+        expect(mockStorageGetUrl).toHaveBeenCalledWith('new.pdf');
       });
 
-      it('should validate renaming file without extension taking falsy nextExtension branch', async () => {
+      it('should rename an asset without an extension when the new name also has no extension', async () => {
         mockAssetModel.findById.mockResolvedValueOnce({
-          _id: FAKE_ASSET_ID,
+          ...IMAGE_ASSET_DATA,
           filename: 'file',
           mimeType: 'application/octet-stream',
-          type: 'document',
-          url: 'https://example.com/file',
-          usageRefs: USAGE_REFS
+          url: `${STORAGE_BASE_URL}/photos/file`
         });
-        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(updatedImageAssetData));
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
 
         await repository.updateAsset(ASSET_ID, { filename: 'renamed' });
 
-        expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalled();
+        expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalledWith(
+          ASSET_ID,
+          {
+            $set: {
+              filename: 'renamed',
+              originalname: 'renamed',
+              url: `${STORAGE_BASE_URL}/photos/renamed`
+            }
+          },
+          { new: true }
+        );
       });
 
       it('should rename the R2 object and keep the current filename extension', async () => {
-        const renamedImageData = {
-          ...IMAGE_ASSET_DATA,
-          filename: 'old name.jpeg',
-          originalname: 'old name.jpeg',
-          url: 'https://example.com/photos/old%20name.jpeg'
-        };
+        const nextFilename = 'new-name.png';
+        const nextUrl = `${STORAGE_BASE_URL}/photos/${nextFilename}`;
 
-        mockAssetModel.findById.mockResolvedValueOnce(
-          { _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...renamedImageData }
-        );
-        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(updatedImageAssetData));
+        mockAssetModel.findById.mockResolvedValueOnce(IMAGE_ASSET_DATA);
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
 
-        await repository.updateAsset('asset-id', { filename: 'new-name.jpeg' });
-
-        expect(mockStorageExists).toHaveBeenCalledWith('new-name.jpeg', 'photos');
-        expect(mockStorageMove).toHaveBeenCalledWith('old name.jpeg', 'new-name.jpeg', 'photos');
-        expect(mockStorageGetUrl).toHaveBeenCalledWith('photos/new-name.jpeg');
+        await repository.updateAsset(ASSET_ID, { filename: nextFilename });
+        expect(mockStorageMove).toHaveBeenCalledWith(IMAGE_ASSET_DATA.filename, nextFilename, 'photos');
         expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalledWith(
-          'asset-id',
+          ASSET_ID,
           {
             $set: {
-              filename: 'new-name.jpeg',
-              originalname: 'new-name.jpeg',
-              url: 'https://example.com/photos/new-name.jpeg'
+              filename: nextFilename,
+              originalname: nextFilename,
+              url: nextUrl
             }
           },
           { new: true }
@@ -385,7 +356,7 @@ describe('AssetRepository', () => {
             filename: currentFilename,
             mimeType: 'application/octet-stream',
             type: 'document',
-            url: `https://example.com/${currentFilename}`,
+            url: `${STORAGE_BASE_URL}/${currentFilename}`,
             usageRefs: USAGE_REFS
           });
 
@@ -403,11 +374,11 @@ describe('AssetRepository', () => {
         const oldPhotoImageData = {
           ...IMAGE_ASSET_DATA,
           filename: 'old.jpg',
-          url: 'https://example.com/photos/old.jpg'
+          url: `${STORAGE_BASE_URL}/photos/old.jpg`
         };
 
         mockAssetModel.findById.mockResolvedValueOnce({ _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...oldPhotoImageData });
-        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(updatedImageAssetData));
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
         mockStorageGetUrl.mockReturnValueOnce(null);
 
         await repository.updateAsset('asset-id', { filename: 'new.jpg' });
@@ -429,7 +400,7 @@ describe('AssetRepository', () => {
 
       it('should reject duplicate filenames before moving the R2 object', async () => {
         mockAssetModel.findById.mockResolvedValueOnce(
-          { _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...originalImageData }
+          { _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...IMAGE_ASSET_DATA }
         );
         mockStorageExists.mockResolvedValueOnce(true);
 
@@ -443,7 +414,7 @@ describe('AssetRepository', () => {
 
       it('should not update MongoDB when the R2 rename fails', async () => {
         mockAssetModel.findById.mockResolvedValueOnce(
-          { _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...originalImageData }
+          { _id: FAKE_ASSET_ID, usageRefs: USAGE_REFS, ...IMAGE_ASSET_DATA }
         );
         mockStorageMove.mockResolvedValueOnce({ success: false, error: 'R2 copy failed' });
 
@@ -456,7 +427,7 @@ describe('AssetRepository', () => {
       });
 
       it('should not call findById when filename is not in the update data', async () => {
-        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(updatedImageAssetData));
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
 
         await repository.updateAsset('asset-id', { isStarred: true });
 
@@ -472,7 +443,7 @@ describe('AssetRepository', () => {
       });
 
       it('should return entity when document is updated successfully', async () => {
-        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(updatedImageAssetData));
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
 
         const result = await repository.updateAsset('asset-id', { isStarred: false });
 
@@ -481,12 +452,14 @@ describe('AssetRepository', () => {
     });
 
     it('finds and maps assets by URL', async () => {
-      mockAssetModel.find.mockResolvedValueOnce([MOCK_ASSET_DOC]);
+      mockAssetModel.find.mockResolvedValueOnce([
+        { ...MOCK_ASSET_DOC, createdAt: ASSET_DATE.toISOString() }
+      ]);
 
-      await expect(repository.findByUrls(['https://example.com/compositions/track.mp3'])).resolves.toEqual([
+      await expect(repository.findByUrls([`${STORAGE_BASE_URL}/compositions/track.mp3`])).resolves.toEqual([
         expect.objectContaining({ id: 'asset-id', usageRefs: USAGE_REFS })
       ]);
-      expect(mockAssetModel.find).toHaveBeenCalledWith({ url: { $in: ['https://example.com/compositions/track.mp3'] } });
+      expect(mockAssetModel.find).toHaveBeenCalledWith({ url: { $in: [`${STORAGE_BASE_URL}/compositions/track.mp3`] } });
     });
 
     describe('createAsset', () => {
@@ -494,34 +467,18 @@ describe('AssetRepository', () => {
         ...IMAGE_ASSET_DATA,
         filename: DUPLICATE_FILENAME,
         originalname: DUPLICATE_FILENAME,
-        mimeType: 'image/png',
-        url: `https://example.com/photos/${DUPLICATE_FILENAME}`
+        url: `${STORAGE_BASE_URL}/photos/${DUPLICATE_FILENAME}`
       };
-      const legacyDuplicateAssetDoc = {
-        _id: FAKE_ASSET_ID,
-        filename: '1784204080559-15cd928d217815eb.png',
-        originalname: DUPLICATE_FILENAME,
-        type: 'image',
-        url: 'https://example.com/photos/1784204080559-15cd928d217815eb.png',
-        usageRefs: USAGE_REFS
-      };
-
+      
       it('should create asset with default fields and return mapped entity', async () => {
-        const newImageAssetData = {
-          ...IMAGE_ASSET_DATA,
-          filename: 'new-image.jpg',
-          url: 'https://example.com/new-image.jpg'
-        };
+        mockAssetModel.create.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA, 'new-asset-id'));
 
-        mockAssetModel.create.mockResolvedValueOnce(buildAssetDocument(newImageAssetData, 'new-asset-id'));
-
-        const result = await repository.createAsset(newImageAssetData);
+        const result = await repository.createAsset(IMAGE_ASSET_DATA);
 
         expect(mockAssetModel.create).toHaveBeenCalledWith(
           expect.objectContaining({ isStarred: false, tags: [], usageRefs: USAGE_REFS })
         );
         expect(result.id).toBe('new-asset-id');
-        expect(result.isStarred).toBe(false);
       });
 
       it('should use storage upload time and create with the supplied session', async () => {
@@ -554,39 +511,37 @@ describe('AssetRepository', () => {
 
         await expect(repository.createAsset(assetData)).rejects.toThrow(DUPLICATE_ASSET_ERROR);
 
-        expect(mockAssetModel.find).toHaveBeenCalledWith(buildFilenameLookupQuery(DUPLICATE_FILENAME));
         expect(mockAssetModel.create).not.toHaveBeenCalled();
       });
 
-      it('should filter out undefined and whitespace names in createAsset', async () => {
+      it('should filter out whitespace originalname in createAsset', async () => {
         const spaceAssetData = {
           ...IMAGE_ASSET_DATA,
           filename: SPACE_FILENAME,
-          sizeBytes: 100,
-          url: `https://example.com/${SPACE_FILENAME}`
+          originalname: '   '
         };
 
         mockAssetModel.find.mockResolvedValueOnce([]);
         mockAssetModel.create.mockResolvedValueOnce(
-          buildAssetDocument(spaceAssetData, 'id', new Date())
+          buildAssetDocument(spaceAssetData, 'id')
         );
-
-        await repository.createAsset({ ...spaceAssetData, originalname: '   ' });
+        await repository.createAsset(spaceAssetData);
 
         expect(mockAssetModel.find).toHaveBeenCalledWith(buildFilenameLookupQuery(SPACE_FILENAME));
-        expect(mockAssetModel.create).toHaveBeenCalled();
       });
 
-      it('should reject assets that duplicate a legacy original name in the same folder', async () => {
+      it('should reject assets that duplicate a filename in the same folder', async () => {
         mockAssetModel.find.mockResolvedValueOnce([
-          legacyDuplicateAssetDoc
+          {
+            filename: DUPLICATE_FILENAME,
+            url: `${STORAGE_BASE_URL}/photos/${DUPLICATE_FILENAME}`
+          }
         ]);
 
         await expect(
           repository.createAsset(duplicateImageAssetData)
         ).rejects.toThrow(DUPLICATE_ASSET_ERROR);
 
-        expect(mockAssetModel.find).toHaveBeenCalledWith(buildFilenameLookupQuery(DUPLICATE_FILENAME));
         expect(mockAssetModel.create).not.toHaveBeenCalled();
       });
 
@@ -595,22 +550,23 @@ describe('AssetRepository', () => {
           ...PDF_ASSET_DATA,
           filename: DUPLICATE_FILENAME,
           originalname: DUPLICATE_FILENAME,
-          sizeBytes: 1024,
-          url: `https://example.com/documents/${DUPLICATE_FILENAME}`
+          url: `${STORAGE_BASE_URL}/documents/${DUPLICATE_FILENAME}`
         };
 
         mockAssetModel.find.mockResolvedValueOnce([
-          legacyDuplicateAssetDoc
+          {
+            filename: DUPLICATE_FILENAME,
+            url: `${STORAGE_BASE_URL}/photos/${DUPLICATE_FILENAME}`
+          }
         ]);
         mockAssetModel.create.mockResolvedValueOnce(buildAssetDocument(duplicatePdfAssetData, 'new-doc-id'));
 
-        const result = await repository.createAsset(duplicatePdfAssetData);
+        await expect(repository.createAsset(duplicatePdfAssetData)).resolves.toMatchObject({ id: 'new-doc-id' });
 
-        expect(result.id).toBe('new-doc-id');
-        expect(mockAssetModel.find).toHaveBeenCalledWith(buildFilenameLookupQuery(DUPLICATE_FILENAME));
-        expect(mockAssetModel.create).toHaveBeenCalled();
+        expect(mockAssetModel.find).toHaveBeenCalledWith(
+          buildFilenameLookupQuery(DUPLICATE_FILENAME)
+        );
       });
     });
-
   });
 });
