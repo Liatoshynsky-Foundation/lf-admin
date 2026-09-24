@@ -421,7 +421,7 @@ export const FundsTable = ({
           }}
         />
       )}
-      {caseRowModals}
+      {groupCasesByFund && cases.length > 0 && caseRowModals}
     </>
   );
 };
