@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 
 import { ResearchTable } from './ResearchTable';
 import { RESEARCH_MENU_ACTIONS } from '~/constants/research';
@@ -8,14 +9,12 @@ import type { ResearchWork } from '~/types/researchWork';
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   TableLayout: ({
-    data
+    data,
+    columns
   }: {
     data: Array<{
       id: string;
-      plainData: {
-        author: string;
-        bibliographicDescription: string;
-        year: string;
+      plainData: Record<string, unknown> & {
         editAction?: { editLabel: string; onEditClick?: () => void };
         menuActions?: {
           menuItems: Array<{ items: Array<{ id: string; text: { name: string }; onClick: () => void }> }>;
@@ -23,15 +22,27 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
         };
       };
     }>;
+    columns: Array<{
+      id: string;
+      renderPlain?: (plain: Record<string, unknown>) => ReactNode;
+    }>;
   }) => (
     <div data-testid="research-table">
       {data.map((row) => (
         <div key={row.id} data-testid={`research-row-${row.id}`}>
-          <span>{row.plainData.author}</span>
-          <span>{row.plainData.bibliographicDescription}</span>
-          <span>{row.plainData.year}</span>
+          {columns
+            .filter((col) => col.id !== 'actions' && col.id !== 'status')
+            .map((col) => (
+              <div key={col.id} data-testid={`cell-${col.id}`}>
+                {col.renderPlain?.(row.plainData)}
+              </div>
+            ))}
           {row.plainData.editAction?.onEditClick && (
-            <button type="button" aria-label={row.plainData.editAction.editLabel} onClick={row.plainData.editAction.onEditClick}>
+            <button
+              type="button"
+              aria-label={row.plainData.editAction.editLabel}
+              onClick={row.plainData.editAction.onEditClick}
+            >
               edit
             </button>
           )}
@@ -168,5 +179,16 @@ describe('ResearchTable', () => {
     await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.share }));
 
     expect(onShareWork).toHaveBeenCalledWith(work);
+  });
+
+  it('calls onEditWork from the row menu edit action', async () => {
+    const user = userEvent.setup();
+    const onEditWork = jest.fn();
+
+    render(<ResearchTable works={[work]} onEditWork={onEditWork} />);
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.edit }));
+
+    expect(onEditWork).toHaveBeenCalledWith(work);
   });
 });

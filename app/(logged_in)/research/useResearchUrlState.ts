@@ -12,7 +12,11 @@ export function useResearchUrlState() {
   const searchParams = useSearchParams();
 
   const workIdFromUrl = searchParams.get(RESEARCH_WORK_ID_PARAM);
-  const { work: workFromUrl, loading: isLoadingFromUrl } = useResearchWorkById(workIdFromUrl);
+  const {
+    work: workFromUrl,
+    loading: isLoadingFromUrl,
+    error: urlWorkError
+  } = useResearchWorkById(workIdFromUrl);
 
   const setWorkIdInUrl = useCallback(
     (id: string | null) => {
@@ -28,5 +32,5 @@ export function useResearchUrlState() {
     [pathname, router, searchParams]
   );
 
-  return { workIdFromUrl, workFromUrl, isLoadingFromUrl, setWorkIdInUrl };
+  return { workIdFromUrl, workFromUrl, isLoadingFromUrl, urlWorkError, setWorkIdInUrl };
 }

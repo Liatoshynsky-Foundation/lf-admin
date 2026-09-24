@@ -62,6 +62,7 @@ describe('useResearchUrlState', () => {
     expect(result.current.workIdFromUrl).toBeNull();
     expect(result.current.workFromUrl).toBeNull();
     expect(result.current.isLoadingFromUrl).toBe(false);
+    expect(result.current.urlWorkError).toBeUndefined();
     expect(mockUseResearchWorkById).toHaveBeenCalledWith(null);
   });
 
@@ -79,7 +80,25 @@ describe('useResearchUrlState', () => {
 
     expect(result.current.workIdFromUrl).toBe('work-1');
     expect(result.current.workFromUrl).toEqual(sampleWork);
+    expect(result.current.urlWorkError).toBeUndefined();
     expect(mockUseResearchWorkById).toHaveBeenCalledWith('work-1');
+  });
+
+  it('exposes query error from useResearchWorkById', () => {
+    const queryError = new Error('network down');
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams(`${RESEARCH_WORK_ID_PARAM}=work-1`) as never
+    );
+    mockUseResearchWorkById.mockReturnValue({
+      work: null,
+      loading: false,
+      error: queryError
+    });
+
+    const { result } = renderHook(() => useResearchUrlState());
+
+    expect(result.current.workFromUrl).toBeNull();
+    expect(result.current.urlWorkError).toBe(queryError);
   });
 
   it('writes research-work-id into the url', () => {

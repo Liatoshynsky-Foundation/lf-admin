@@ -20,6 +20,7 @@ import {
   RESEARCH_MUTATION_RESULTS,
   RESEARCH_PAGE_TITLE,
   RESEARCH_WORK_ID_PARAM,
+  RESEARCH_WORK_LOAD_FAILED,
   RESEARCH_WORK_NOT_FOUND
 } from '~/constants/research';
 import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
@@ -43,7 +44,7 @@ import type { ResearchWork } from '~/types/researchWork';
 export function ResearchPageContent() {
   const { requestFilters, searchValue, selectedFilters, toolbarProps, statusFilterProps, activeFiltersCount } =
     useResearchWorksFiltering();
-  const { workIdFromUrl, workFromUrl, isLoadingFromUrl, setWorkIdInUrl } = useResearchUrlState();
+  const { workIdFromUrl, workFromUrl, isLoadingFromUrl, urlWorkError, setWorkIdInUrl } = useResearchUrlState();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -168,9 +169,14 @@ export function ResearchPageContent() {
       return;
     }
 
+    if (urlWorkError) {
+      toast.error(resolveErrorMessage(urlWorkError, RESEARCH_WORK_LOAD_FAILED));
+      return;
+    }
+
     toast.error(RESEARCH_WORK_NOT_FOUND);
     setWorkIdInUrl(null);
-  }, [workIdFromUrl, workFromUrl, isLoadingFromUrl, setWorkIdInUrl]);
+  }, [workIdFromUrl, workFromUrl, isLoadingFromUrl, urlWorkError, setWorkIdInUrl]);
 
   let listContent = (
     <ResearchContent

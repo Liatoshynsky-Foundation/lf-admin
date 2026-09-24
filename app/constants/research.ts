@@ -74,6 +74,8 @@ export const RESEARCH_MENU_ACTIONS = {
 } as const;
 
 export const RESEARCH_WORK_NOT_FOUND = 'Роботу не знайдено';
+export const RESEARCH_WORK_LOAD_FAILED =
+  'Не вдалося завантажити роботу. Оновіть сторінку або спробуйте ще раз.';
 
 export const RESEARCH_WORK_ID_PARAM = 'research-work-id';
 export const RESEARCH_BASE_PATH = '/research';

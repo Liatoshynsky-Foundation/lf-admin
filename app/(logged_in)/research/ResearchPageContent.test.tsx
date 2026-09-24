@@ -225,6 +225,7 @@ describe('ResearchPageContent', () => {
       workIdFromUrl: null,
       workFromUrl: null,
       isLoadingFromUrl: false,
+      urlWorkError: undefined,
       setWorkIdInUrl
     });
     mockedUseResearchWorksFiltering.mockReturnValue(
@@ -333,6 +334,7 @@ describe('ResearchPageContent', () => {
       workIdFromUrl: sampleWork.id,
       workFromUrl: sampleWork,
       isLoadingFromUrl: false,
+      urlWorkError: undefined,
       setWorkIdInUrl
     });
 
@@ -372,6 +374,7 @@ describe('ResearchPageContent', () => {
       workIdFromUrl: sampleWork.id,
       workFromUrl: sampleWork,
       isLoadingFromUrl: false,
+      urlWorkError: undefined,
       setWorkIdInUrl
     });
 
@@ -385,6 +388,7 @@ describe('ResearchPageContent', () => {
       workIdFromUrl: 'missing-id',
       workFromUrl: null,
       isLoadingFromUrl: false,
+      urlWorkError: undefined,
       setWorkIdInUrl
     });
 
@@ -395,11 +399,28 @@ describe('ResearchPageContent', () => {
     expect(screen.queryByTestId('mock-research-modal')).not.toBeInTheDocument();
   });
 
+  it('shows a load error toast and keeps url when deep-link request fails', () => {
+    mockedUseResearchUrlState.mockReturnValue({
+      workIdFromUrl: sampleWork.id,
+      workFromUrl: null,
+      isLoadingFromUrl: false,
+      urlWorkError: new Error('network down'),
+      setWorkIdInUrl
+    });
+
+    render(<ResearchPageContent />);
+
+    expect(toast.error).toHaveBeenCalledWith('network down');
+    expect(setWorkIdInUrl).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('mock-research-modal')).not.toBeInTheDocument();
+  });
+
   it('closes deep-link modal on the first close click even if url is still present', () => {
     mockedUseResearchUrlState.mockReturnValue({
       workIdFromUrl: sampleWork.id,
       workFromUrl: sampleWork,
       isLoadingFromUrl: false,
+      urlWorkError: undefined,
       setWorkIdInUrl
     });
 
