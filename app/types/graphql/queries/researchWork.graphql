@@ -1,0 +1,40 @@
+fragment ResearchWorkFields on ResearchWork {
+  id
+  bibliographicDescription
+  author
+  year
+  keywords
+  pdfFile {
+    filename
+    url
+    mimeType
+  }
+  url
+  status
+  publishedAt
+  createdAt
+  updatedAt
+}
+
+query ResearchWorkAuthors {
+  allResearchWorks {
+    author
+  }
+}
+
+query PaginatedResearchWorks($page: Int = 1, $limit: Int = 10, $filters: ResearchWorkFiltersInput) {
+  paginatedResearchWorks(page: $page, limit: $limit, filters: $filters) {
+    items {
+      ...ResearchWorkFields
+    }
+    total
+    page
+    totalPages
+  }
+}
+
+query ResearchWorkById($id: ID!) {
+  researchWorkById(id: $id) {
+    ...ResearchWorkFields
+  }
+}

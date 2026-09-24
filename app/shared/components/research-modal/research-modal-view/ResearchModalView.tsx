@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -15,21 +16,40 @@ import {
   Theme,
   Typography
 } from '@mui/material';
-import React, { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import FileItem from '../../composition-modal/file-item/FileItem';
 import { styles } from './ResearchModalView.styles';
+import {
+  RESEARCH_FIELD_LIMITS,
+  RESEARCH_MODAL_TITLE,
+  RESEARCH_URL_PLACEHOLDER,
+  RESEARCH_VALIDATION_MESSAGES
+} from '~/constants/research';
+import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
-const KEYWORDS_MAX_LENGTH = 250;
+const clampLength = (value: string, maxLength: number) => value.slice(0, maxLength);
+
+type TouchedFields = Readonly<{
+  bibliographicDescription: boolean;
+  author: boolean;
+  caseDates: boolean;
+  url: boolean;
+}>;
+
+const DEFAULT_TOUCHED: TouchedFields = {
+  bibliographicDescription: false,
+  author: false,
+  caseDates: false,
+  url: false
+};
 
 export interface ResearchWorkFormData {
   bibliographicDescription: string;
   author: string;
   caseDates: string;
   keywords: string;
-  file: File | null;
-  fileName: string | null;
   url: string;
   isVisibleOnSite: boolean;
 }
@@ -38,6 +58,10 @@ export interface ResearchModalViewProps {
   dialogTitle?: string;
   isOpen: boolean;
   initialData?: Partial<ResearchWorkFormData>;
+  authorOptions?: string[];
+  attachedFileName?: string | null;
+  onAddFile: () => void;
+  onDeleteFile: () => void;
   onClose: () => void;
   onSave: (data: ResearchWorkFormData) => Promise<void>;
   sx?: SxProps<Theme>;
@@ -48,16 +72,21 @@ const DEFAULT_DATA: ResearchWorkFormData = {
   author: '',
   caseDates: '',
   keywords: '',
-  file: null,
-  fileName: null,
   url: '',
   isVisibleOnSite: true
 };
 
+const requiredError = (value: string, touched: boolean, message: string): string | undefined =>
+  touched && !value.trim() ? message : undefined;
+
 export const ResearchModalView = ({
-  dialogTitle = 'Нова робота',
+  dialogTitle = RESEARCH_MODAL_TITLE,
   isOpen,
   initialData,
+  authorOptions = [],
+  attachedFileName = null,
+  onAddFile,
+  onDeleteFile,
   onClose,
   onSave,
   sx
@@ -68,24 +97,24 @@ export const ResearchModalView = ({
   const [author, setAuthor] = useState(initialData?.author ?? DEFAULT_DATA.author);
   const [caseDates, setCaseDates] = useState(initialData?.caseDates ?? DEFAULT_DATA.caseDates);
   const [keywords, setKeywords] = useState(initialData?.keywords ?? DEFAULT_DATA.keywords);
-  const [file, setFile] = useState<File | null>(initialData?.file ?? DEFAULT_DATA.file);
-  const [fileName, setFileName] = useState<string | null>(initialData?.fileName ?? DEFAULT_DATA.fileName);
   const [url, setUrl] = useState(initialData?.url ?? DEFAULT_DATA.url);
   const [isVisibleOnSite, setIsVisibleOnSite] = useState(initialData?.isVisibleOnSite ?? DEFAULT_DATA.isVisibleOnSite);
   const [isSaving, setIsSaving] = useState(false);
+  const [touched, setTouched] = useState<TouchedFields>(DEFAULT_TOUCHED);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const markTouched = (field: keyof TouchedFields) => {
+    setTouched((previous) => ({ ...previous, [field]: true }));
+  };
 
   const resetForm = () => {
     setBibliographicDescription(DEFAULT_DATA.bibliographicDescription);
     setAuthor(DEFAULT_DATA.author);
     setCaseDates(DEFAULT_DATA.caseDates);
     setKeywords(DEFAULT_DATA.keywords);
-    setFile(DEFAULT_DATA.file);
-    setFileName(DEFAULT_DATA.fileName);
     setUrl(DEFAULT_DATA.url);
     setIsVisibleOnSite(DEFAULT_DATA.isVisibleOnSite);
     setIsSaving(false);
+    setTouched(DEFAULT_TOUCHED);
   };
 
   const handleCancel = () => {
@@ -96,33 +125,30 @@ export const ResearchModalView = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave({ bibliographicDescription, author, caseDates, keywords, file, fileName, url, isVisibleOnSite });
+      await onSave({ bibliographicDescription, author, caseDates, keywords, url, isVisibleOnSite });
       resetForm();
+    } catch {
+      return;
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleFileButtonClick = () => fileInputRef.current?.click();
+  const isUrlValid = !url.trim() || isValidHttpUrl(url.trim());
+  const bibliographicDescriptionError = requiredError(
+    bibliographicDescription,
+    touched.bibliographicDescription,
+    RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
+  );
+  const authorError = requiredError(author, touched.author, RESEARCH_VALIDATION_MESSAGES.authorRequired);
+  const caseDatesError = requiredError(caseDates, touched.caseDates, RESEARCH_VALIDATION_MESSAGES.yearRequired);
+  const urlError = touched.url && !isUrlValid ? RESEARCH_VALIDATION_MESSAGES.urlInvalid : undefined;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setFileName(selected.name);
-    }
-    event.target.value = '';
-  };
-
-  const handleFileDelete = () => {
-    setFile(null);
-    setFileName(null);
-  };
-
-  const isFormValid = Boolean(bibliographicDescription.trim() && author.trim() && caseDates.trim() && keywords.trim());
+  const isFormValid = Boolean(bibliographicDescription.trim() && author.trim() && caseDates.trim() && isUrlValid);
+  const hasAttachedFile = Boolean(attachedFileName);
 
   return (
-    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog, ...sxToArray(sx) }} onClose={onClose} fullWidth>
+    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog, ...sxToArray(sx) }} onClose={handleCancel} fullWidth>
       <DialogTitle sx={styles.dialogTitle}>{dialogTitle}</DialogTitle>
 
       <DialogContent sx={styles.dialogContent}>
@@ -130,23 +156,51 @@ export const ResearchModalView = ({
           <TextField
             label="Бібліографічний опис"
             value={bibliographicDescription}
-            onChange={(e) => setBibliographicDescription(e.target.value)}
+            onChange={(e) =>
+              setBibliographicDescription(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.bibliographicDescription))
+            }
+            onBlur={() => markTouched('bibliographicDescription')}
+            error={Boolean(bibliographicDescriptionError)}
+            helperText={bibliographicDescriptionError}
             required
             fullWidth
             multiline
             minRows={1}
             maxRows={2}
+            inputProps={{ maxLength: RESEARCH_FIELD_LIMITS.bibliographicDescription }}
             sx={styles.multilineField}
           />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField label="Автор" value={author} onChange={(e) => setAuthor(e.target.value)} required fullWidth />
+            <Autocomplete
+              freeSolo
+              fullWidth
+              options={authorOptions}
+              inputValue={author}
+              onInputChange={(_, value) => setAuthor(clampLength(value, RESEARCH_FIELD_LIMITS.author))}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Автор"
+                  required
+                  fullWidth
+                  error={Boolean(authorError)}
+                  helperText={authorError}
+                  onBlur={() => markTouched('author')}
+                  inputProps={{ ...params.inputProps, maxLength: RESEARCH_FIELD_LIMITS.author }}
+                />
+              )}
+            />
             <TextField
               label="Дати справи"
               value={caseDates}
-              onChange={(e) => setCaseDates(e.target.value)}
+              onChange={(e) => setCaseDates(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.year))}
+              onBlur={() => markTouched('caseDates')}
+              error={Boolean(caseDatesError)}
+              helperText={caseDatesError}
               required
               fullWidth
+              inputProps={{ maxLength: RESEARCH_FIELD_LIMITS.year }}
             />
           </Stack>
 
@@ -154,16 +208,16 @@ export const ResearchModalView = ({
             <TextField
               label="Ключові слова"
               value={keywords}
-              onChange={(e) => e.target.value.length <= KEYWORDS_MAX_LENGTH && setKeywords(e.target.value)}
-              required
+              onChange={(e) => setKeywords(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.keywords))}
               fullWidth
               multiline
               minRows={1}
               maxRows={2}
+              inputProps={{ maxLength: RESEARCH_FIELD_LIMITS.keywords }}
               sx={styles.multilineField}
             />
             <Typography variant="caption" sx={styles.charCounter}>
-              {keywords.length}/{KEYWORDS_MAX_LENGTH}
+              {keywords.length}/{RESEARCH_FIELD_LIMITS.keywords}
             </Typography>
           </Box>
 
@@ -177,22 +231,30 @@ export const ResearchModalView = ({
                 Файл
               </Typography>
               <Box sx={styles.fileRowDivider} />
-              <Button variant="text" onClick={handleFileButtonClick} disabled={!!file} sx={styles.addFileButton}>
+              <Button
+                variant="text"
+                onClick={onAddFile}
+                disabled={hasAttachedFile}
+                sx={styles.addFileButton}
+              >
                 Додати файл
               </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept="application/pdf,.pdf"
-                onChange={handleFileChange}
-                data-testid="file-input"
-              />
             </Stack>
 
-            {fileName && <FileItem fileName={fileName} fileType="pdf" onDelete={handleFileDelete} />}
+            {attachedFileName && (
+              <FileItem fileName={attachedFileName} fileType="pdf" onDelete={onDeleteFile} />
+            )}
 
-            <TextField label="URL" value={url} onChange={(e) => setUrl(e.target.value)} fullWidth disabled={!!file} />
+            <TextField
+              label="URL"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onBlur={() => markTouched('url')}
+              placeholder={RESEARCH_URL_PLACEHOLDER}
+              fullWidth
+              error={Boolean(urlError)}
+              helperText={urlError}
+            />
           </Stack>
 
           <FormControlLabel

@@ -1,13 +1,11 @@
-import { Box } from '@mui/material';
-import { Plus } from 'lucide-react';
-
 import { styles } from './ResearchCreateAction.styles';
+import PlusIcon from '~/public/icons/plus.svg';
+import Button from '~/shared/components/design-system/button/Button';
 
 export function ResearchCreateAction({ onClick }: Readonly<{ onClick: () => void }>) {
   return (
-    <Box component="button" type="button" onClick={onClick} sx={styles.createButton}>
-      <Box component={Plus} sx={styles.icon} />
+    <Button variant="filled" color="primary" onClick={onClick} sx={styles} startIcon={<PlusIcon />}>
       Додати роботу
-    </Box>
+    </Button>
   );
 }

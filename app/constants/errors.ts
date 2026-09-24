@@ -144,11 +144,27 @@ export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
 };
 
 export const ResearchWorkErrors = {
-  RESEARCH_WORK_NOT_FOUND: (id: string) => `Research work with id "${id}" not found`
+  RESEARCH_WORK_NOT_FOUND: (id: string) => `Research work with id "${id}" not found`,
+  NETWORK_ERROR_CREATE: 'Помилка мережі під час створення наукової роботи',
+  FAILED_TO_CREATE: 'Не вдалося створити наукову роботу',
+  NETWORK_ERROR_UPDATE: 'Помилка мережі під час оновлення наукової роботи',
+  FAILED_TO_UPDATE: 'Не вдалося оновити наукову роботу',
+  NETWORK_ERROR_DELETE: 'Помилка мережі під час видалення наукової роботи',
+  FAILED_TO_DELETE: 'Не вдалося видалити наукову роботу',
+  NETWORK_ERROR_STATUS: 'Помилка мережі під час зміни статусу наукової роботи',
+  FAILED_TO_UPDATE_STATUS: 'Не вдалося змінити статус наукової роботи'
 };
 
 export const ResearchWorkErrorCodes: Record<keyof typeof ResearchWorkErrors, string> = {
-  RESEARCH_WORK_NOT_FOUND: 'RESEARCH_WORK_NOT_FOUND'
+  RESEARCH_WORK_NOT_FOUND: 'RESEARCH_WORK_NOT_FOUND',
+  NETWORK_ERROR_CREATE: 'NETWORK_ERROR_CREATE',
+  FAILED_TO_CREATE: 'FAILED_TO_CREATE',
+  NETWORK_ERROR_UPDATE: 'NETWORK_ERROR_UPDATE',
+  FAILED_TO_UPDATE: 'FAILED_TO_UPDATE',
+  NETWORK_ERROR_DELETE: 'NETWORK_ERROR_DELETE',
+  FAILED_TO_DELETE: 'FAILED_TO_DELETE',
+  NETWORK_ERROR_STATUS: 'NETWORK_ERROR_STATUS',
+  FAILED_TO_UPDATE_STATUS: 'FAILED_TO_UPDATE_STATUS'
 };
 
 export const galleryErrors = {
