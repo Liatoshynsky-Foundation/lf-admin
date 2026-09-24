@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FundsTable, FundsTableProps } from './ArchiveFundsTable';
+import { ArchiveCase, FundsTable, FundsTableProps } from './ArchiveFundsTable';
 import {
   ARCHIVE_EMPTY_STATE_DESCRIPTION,
   ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION,
@@ -30,6 +30,26 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
   useDeleteCase: () => [mockDeleteCase],
   useUpdateCase: () => [mockUpdateCase],
+}));
+
+const mockGetCaseRow = jest.fn((caseItem: ArchiveCase) => ({
+  id: caseItem.id,
+  cipher: caseItem.cipher,
+  name: caseItem.name,
+  descriptionLabel: String(caseItem.descriptionNumber),
+  caseLabel: String(caseItem.sheetsNumber),
+  caseDate: caseItem.editCaseDate,
+  status: caseItem.status,
+  updatedAt: caseItem.updatedAt,
+  editAction: { editLabel: `Редагувати справу ${caseItem.name}` },
+  menuActions: { menuItems: [], menuTriggerLabel: `Дії для справи ${caseItem.name}` },
+}));
+
+jest.mock('~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions', () => ({
+  useArchiveCaseRowActions: (_onCaseChanged?: () => Promise<unknown>) => ({
+    getCaseRow: mockGetCaseRow,
+    caseRowModals: <div data-testid="mock-case-row-modals" />,
+  }),
 }));
 
 jest.mock('~/shared/components/empty-state', () => ({
@@ -76,20 +96,47 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
         ))}
       </div>
       <div data-testid="mock-table-layout-data">
-        {data
-          .filter((item) => item.type === 'individual')
-          .map((item) => (
-            <div key={item.id} data-testid={`mock-table-layout-row-${item.id}`}>
-              <span data-testid="row-json">{JSON.stringify(item)}</span>
+        {data.map((item) => {
+          if (item.type === 'individual') {
+            return (
+              <div key={item.id} data-testid={`mock-table-layout-row-${item.id}`}>
+                <span data-testid="row-json">{JSON.stringify(item)}</span>
+                {columns.map((col) => (
+                  <span key={col.id} data-testid={`mock-cell-${col.id}`}>
+                    {col.renderPlain ? col.renderPlain(item.plainData) : null}
+                  </span>
+                ))}
+              </div>
+            );
+          }
+
+          return (
+            <div key={item.id} data-testid={`mock-table-layout-group-${item.id}`}>
               {columns.map((col) => (
-                <span key={col.id} data-testid={`mock-cell-${col.id}`}>
-                  {col.renderPlain ? col.renderPlain(item.plainData) : null}
+                <span key={col.id} data-testid={`mock-group-cell-${col.id}-${item.id}`}>
+                  {col.renderGroup ? col.renderGroup(item.groupData) : null}
                 </span>
               ))}
+              {item.subRows.map((sub) => (
+                <div key={sub.id} data-testid={`mock-table-layout-subrow-${sub.id}`}>
+                  {columns.map((col) => (
+                    <span key={col.id} data-testid={`mock-sub-cell-${col.id}-${sub.id}`}>
+                      {col.renderSub ? col.renderSub(sub, item.groupData) : null}
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
-          ))}
+          );
+        })}
       </div>
     </div>
+  ),
+}));
+
+jest.mock('../archive-cases-table/ArchiveCasesTable', () => ({
+  ArchiveCasesTable: ({ cases }: { cases: ArchiveCase[] }) => (
+    <div data-testid="mock-archive-cases-table">{cases.length}</div>
   ),
 }));
 
@@ -126,6 +173,22 @@ const rowWithActions = {
     }
   },
 };
+
+const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
+  id: 'case-1',
+  name: 'Справа 1',
+  fundId: fund.id,
+  cipher: '1-1-1',
+  caseNumber: 1,
+  descriptionNumber: 1,
+  sheetsNumber: 5,
+  editCaseDate: '1995',
+  editCaseDescriptions: 'desc',
+  detailedCaseDescription: 'detailed',
+  status: BaseContentStatuses.Published,
+  updatedAt: '2023-01-01',
+  ...overrides,
+});
 
 describe('ArchiveFundsTable', () => {
   beforeEach(() => {
@@ -203,14 +266,17 @@ describe('ArchiveFundsTable', () => {
     });
   });
 
-  it('should add the publish action for hidden funds when publish handler is provided', () => {
-    renderComponent({
-      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
-      onPublish: jest.fn()
-    });
+  it('should add the publish action for hidden funds and call onPublish when clicked', async () => {
+    const user = userEvent.setup();
+    const onPublishMock = jest.fn();
+    const hiddenFund = { ...fund, status: BaseContentStatuses.Hidden };
+    renderComponent({ funds: [hiddenFund], onPublish: onPublishMock });
 
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('Опублікувати');
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"publish"');
+
+    await user.click(screen.getByTestId('action-publish'));
+    expect(onPublishMock).toHaveBeenCalledWith(hiddenFund);
   });
 
   it('should not add the publish action for non-hidden funds', () => {
@@ -220,13 +286,16 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"publish"');
   });
 
-  it('should add the unpublish action for published funds when unpublish handler is provided', () => {
-    renderComponent({
-      funds: [{ ...fund, status: BaseContentStatuses.Published }],
-      onUnpublish: jest.fn()
-    });
+  it('should add the unpublish action for published funds and call onUnpublish when clicked', async () => {
+    const user = userEvent.setup();
+    const onUnpublishMock = jest.fn();
+    const publishedFund = { ...fund, status: BaseContentStatuses.Published };
+    renderComponent({ funds: [publishedFund], onUnpublish: onUnpublishMock });
 
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"unpublish"');
+
+    await user.click(screen.getByTestId('action-unpublish'));
+    expect(onUnpublishMock).toHaveBeenCalledWith(publishedFund);
   });
 
   it('should not add the unpublish action for non-published funds', () => {
@@ -274,6 +343,50 @@ describe('ArchiveFundsTable', () => {
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE);
+    });
+  });
+
+  describe('non-grouped mode with cases', () => {
+    it('should render only the cases table when there are no funds but cases exist', () => {
+      renderComponent({ funds: [], cases: [buildCase()] });
+
+      expect(screen.queryByTestId('mock-table-layout')).not.toBeInTheDocument();
+      expect(screen.getByTestId('mock-archive-cases-table')).toBeInTheDocument();
+    });
+
+    it('should render both the funds table and the cases table when both are provided', () => {
+      renderComponent({ cases: [buildCase()] });
+
+      expect(screen.getByTestId('mock-table-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-archive-cases-table')).toBeInTheDocument();
+    });
+  });
+
+  describe('grouped mode (groupCasesByFund)', () => {
+    it('should render a fund as a group row with its matching case as a sub-row', () => {
+      const matchingCase = buildCase({ fundId: fund.id });
+      renderComponent({ groupCasesByFund: true, cases: [matchingCase] });
+
+      expect(screen.getByTestId(`mock-table-layout-group-${fund.id}`)).toBeInTheDocument();
+      expect(screen.getByTestId(`mock-table-layout-subrow-${matchingCase.id}`)).toBeInTheDocument();
+      expect(screen.getByTestId(`mock-group-cell-name-${fund.id}`)).toHaveTextContent(fund.name);
+      expect(screen.getByTestId(`mock-sub-cell-name-${matchingCase.id}`)).toHaveTextContent(matchingCase.name);
+    });
+
+    it('should render a case with no matching fund as an orphan individual row', () => {
+      const orphanCase = buildCase({ id: 'case-orphan', fundId: 'missing-fund' });
+      renderComponent({ groupCasesByFund: true, cases: [orphanCase] });
+
+      expect(screen.getByTestId(`mock-table-layout-row-${orphanCase.id}`)).toBeInTheDocument();
+      expect(screen.getByTestId('mock-cell-name')).toHaveTextContent(orphanCase.name);
+      expect(screen.getByTestId('mock-cell-fundNumber')).toHaveTextContent(orphanCase.cipher);
+    });
+
+    it('should render the delete-fund modal and the case row modals', () => {
+      renderComponent({ groupCasesByFund: true, cases: [buildCase()] });
+
+      expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-case-row-modals')).toBeInTheDocument();
     });
   });
 });
