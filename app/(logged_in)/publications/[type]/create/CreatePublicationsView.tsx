@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { PublishMenuItems } from './CreatePublicationsMenuItems';
 import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
+import { publicationErrors } from '~/constants/errors';
 import {   ADMIN_TITLE_LABELS,
   ADMIN_TITLE_LENGTH ,
   MENU_ACTION_CONFIGS,
@@ -70,6 +71,8 @@ export default function CreatePublicationsView({
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [startDateTouched, setStartDateTouched] = useState(false);
+
+  const isPublishDateInvalid = Boolean(publishDate && !publishDate?.isValid());
 
   const showStartDateErrors =
     forceShowErrors || startDateTouched || Boolean(seoErrors?.meta?.uk?.startDateTime);
@@ -231,13 +234,14 @@ export default function CreatePublicationsView({
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
             <DatePicker
               label="Дата публікації"
-              value={publishDate?.isValid() ? publishDate : null}
-              onChange={(newVal) => setPublishDate(newVal?.isValid() ? newVal : null)}
+              value={publishDate}
+              onChange={(newVal) => setPublishDate(newVal)}
               slotProps={{
                 textField: {
                   sx: styles.datePickerTextField,
                   InputProps: { sx: styles.datePickerInput },
-                  error: false
+                  error: isPublishDateInvalid,
+                  helperText: isPublishDateInvalid ? publicationErrors.invalidPublicationDate : null
                 }
               }}
             />

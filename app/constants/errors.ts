@@ -228,6 +228,7 @@ export const compositionMediaErrors = {
 };
 
 export const publicationErrors = {
+  invalidPublicationDate: 'Введіть коректну календарну дату у форматі ДД.ММ.РРРР',
   uk: {
     previewPreparationFailed: 'Виникла помилка під час підготовки попереднього перегляду',
     previewSlugFailed: 'Виникла помилка при отриманні даних для попереднього перегляду',

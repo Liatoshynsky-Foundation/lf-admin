@@ -43,6 +43,10 @@ export const seoValidationErrors = {
   ALT_TEXT_LENGTH_INVALID: 'Alt text must contain from 2 to 250 characters'
 };
 
+export const newsValidationErrors = {
+  PUBLICATION_DATA_INVALID: 'Invalid data for publication'
+};
+
 export const opusServiceErrors = {
   OPUS_ALREADY_EXISTS: 'Опус із таким номером та приміткою вже існує',
   NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
