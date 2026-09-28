@@ -330,4 +330,30 @@ describe('EventsMutation Resolvers', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('Event start date validation', () => {
+    it('should reject createEvent when event start date is empty', async () => {
+      const input = createMockInput({ eventDateTimeStart: '' });
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields: ['eventDateTimeStart']
+        }
+      });
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it('should reject updateEvent when event start date is empty', async () => {
+      const input: UpdateEventInput = { eventDateTimeStart: '' };
+
+      await expect(EventsMutation.updateEvent({}, { id: '1', input }, adminContext)).rejects.toMatchObject({
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields: ['eventDateTimeStart']
+        }
+      });
+      expect(mockRepo.update).not.toHaveBeenCalled();
+    });
+  });
 });
