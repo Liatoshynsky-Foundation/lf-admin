@@ -71,6 +71,8 @@ export default function CreatePublicationsView({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [startDateTouched, setStartDateTouched] = useState(false);
 
+  const isPublishDateInvalid = Boolean(publishDate && !publishDate?.isValid());
+
   const showStartDateErrors =
     forceShowErrors || startDateTouched || Boolean(seoErrors?.meta?.uk?.startDateTime);
 
@@ -231,13 +233,14 @@ export default function CreatePublicationsView({
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
             <DatePicker
               label="Дата публікації"
-              value={publishDate?.isValid() ? publishDate : null}
-              onChange={(newVal) => setPublishDate(newVal?.isValid() ? newVal : null)}
+              value={publishDate}
+              onChange={(newVal) => setPublishDate(newVal)}
               slotProps={{
                 textField: {
                   sx: styles.datePickerTextField,
                   InputProps: { sx: styles.datePickerInput },
-                  error: false
+                  error: isPublishDateInvalid,
+                  helperText: isPublishDateInvalid ? 'Введіть коректну дату' : null
                 }
               }}
             />

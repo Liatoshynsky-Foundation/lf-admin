@@ -6,6 +6,7 @@ import {
   processSlugUpdate,
   syncImagesCrops
 } from '../helpers';
+import { validateNewsDate } from '../newsValidation';
 import { validateSeoLengths } from '../seoValidation';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
@@ -106,6 +107,7 @@ export const NewsMutation = {
     const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
     validateSeoLengths(trimmedInput);
+    validateNewsDate(trimmedInput.newsDate);
 
     const slug = input.slug || await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -167,6 +169,7 @@ export const NewsMutation = {
     };
 
     validateSeoLengths(trimmedInput);
+    validateNewsDate(trimmedInput.newsDate);
 
     if (input.content || input.description || input.coverImage) {
       await processContentFields(trimmedInput, updateData);

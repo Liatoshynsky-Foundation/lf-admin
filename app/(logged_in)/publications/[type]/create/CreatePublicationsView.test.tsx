@@ -73,15 +73,35 @@ jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightAc
 });
 
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: ({ label, value, onChange }: { label: string; value: any; onChange: (val: any) => void }) => (
+  DatePicker: ({ 
+    label, 
+    value, 
+    onChange, 
+    slotProps 
+  }: { 
+    label: string; 
+    value: any; 
+    onChange: (val: any) => void;
+    slotProps?: {
+      textField?: {
+        error?: boolean;
+        helperText?: string;
+      };
+    };
+  }) => (
     <div data-testid="mock-date-picker">
       <label>{label}</label>
       <input
         type="text"
         data-testid="date-picker-input"
-        value={value ? value.toISOString() : ''}
+        value={value?.isValid() ? value.toISOString() : ''}
         onChange={(e) => onChange(dayjs(e.target.value))}
       />
+      {slotProps?.textField?.error && (
+        <span data-testid="date-picker-error">
+          {slotProps?.textField?.helperText}
+        </span>
+      )}
     </div>
   )
 }));
@@ -592,20 +612,27 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-  it('should pass null to the date picker when publishDate is set but invalid', () => {
-    const mockData = createMockData({ publicationType: 'news', publishDate: dayjs('not-a-date') });
-    render(<CreatePublicationsView data={mockData} />);
-
-    expect(screen.getByTestId('date-picker-input')).toHaveValue('');
-  });
-
-  it('should call setPublishDate with null when the date picker returns an invalid date', () => {
+  it('should keep invalid publish date instead of converting it to null', () => {
     const mockSetPublishDate = jest.fn();
     const mockData = createMockData({ publicationType: 'news', setPublishDate: mockSetPublishDate });
+
+    render(<CreatePublicationsView data={mockData} />);
+    
+    fireEvent.change(screen.getByTestId('date-picker-input'), {
+      target: { value: 'not-a-valid-date' }
+    });
+
+    const passedDate = mockSetPublishDate.mock.calls[0][0] as dayjs.Dayjs;
+
+    expect(dayjs.isDayjs(passedDate)).toBe(true);
+    expect(passedDate.isValid()).toBe(false);
+  });
+
+  it('should show an error when publish date is invalid', () => {
+    const mockData = createMockData({ publicationType: 'news', publishDate: dayjs('not-a-valid-date') });
+
     render(<CreatePublicationsView data={mockData} />);
 
-    fireEvent.change(screen.getByTestId('date-picker-input'), { target: { value: 'not-a-valid-date' } });
-
-    expect(mockSetPublishDate).toHaveBeenCalledWith(null);
+    expect(screen.getByTestId('date-picker-error')).toHaveTextContent('Введіть коректну дату');
   });
 });
