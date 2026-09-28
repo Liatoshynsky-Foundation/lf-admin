@@ -59,7 +59,7 @@ describe('NewsMutation Resolvers', () => {
     content: { uk: { blocks: [] }, en: { blocks: [] } } as News['content'],
     coverImage: {
       src: 'test.jpg',
-      alt: { uk: '', en: '' },
+      alt: { uk: 'Альт зображення', en: 'Cover alt' },
       caption: { uk: '', en: '' },
       crop: { x: 0, y: 0, width: 100, height: 100 }
     },
@@ -140,7 +140,7 @@ describe('NewsMutation Resolvers', () => {
         overrides: {
           coverImage: {
             src: 'test.jpg',
-            alt: { uk: 'a'.repeat(251), en: '' },
+            alt: { uk: 'a'.repeat(251), en: 'Cover alt' },
             caption: { uk: '', en: '' }
           }
         },
@@ -568,11 +568,33 @@ describe('NewsMutation Resolvers', () => {
       expect(result!.meta.views).toBe(5);
     });
   });
-  it('should allow createNews when coverImage.alt is empty (alt text is optional)', async () => {
+  it('should reject createNews when coverImage.src is present and alt is empty', async () => {
+    const invalidInput = {
+      ...baseInput,
+      coverImage: { ...baseInput.coverImage, alt: { uk: '', en: '' } }
+    };
+
+    await expect(NewsMutation.createNews({}, { input: invalidInput }, adminContext)).rejects.toMatchObject({
+      message: seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        fields: ['altText.uk', 'altText.en']
+      }
+    });
+
+    expect(mockRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('should allow createNews when coverImage.src is empty and alt is empty', async () => {
     mockAction('findBySlug', null);
     mockAction('create', createMockNews({ id: 'new-id' }));
- 
-    await expect(NewsMutation.createNews({}, { input: baseInput }, adminContext)).resolves.toBeDefined();
+
+    const validInput = {
+      ...baseInput,
+      coverImage: { ...baseInput.coverImage, src: '', alt: { uk: '', en: '' } }
+    };
+
+    await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
     expect(mockRepo.create).toHaveBeenCalled();
   });
  
@@ -586,7 +608,7 @@ describe('NewsMutation Resolvers', () => {
         ...baseInput,
         coverImage: {
           ...baseInput.coverImage,
-          alt: { [lang]: 'T', [otherLang]: '' } as LocalizedString
+          alt: { [lang]: 'T', [otherLang]: 'Valid alt' } as LocalizedString
         }
       };
 
@@ -636,7 +658,7 @@ describe('NewsMutation Resolvers', () => {
     await expect(
       NewsMutation.updateNews(
         {},
-        { id, input: { coverImage: { ...baseInput.coverImage, alt: { uk: 'T', en: '' } } } },
+        { id, input: { coverImage: { ...baseInput.coverImage, alt: { uk: 'T', en: 'Valid alt' } } } },
         adminContext
       )
     ).rejects.toMatchObject({

@@ -181,7 +181,7 @@ export const usePublicationForm = () => {
       allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
       publishedAt: getDateIsoString(publishDate),
       coverImage: {
-        src: seoValue.ogImage || adminTitle,
+        src: seoValue.ogImage || '',
         alt: {
           uk: ukMeta.altText?.uk?.trim() || '',
           en: enMeta.altText?.en?.trim() || ''

@@ -11,27 +11,57 @@ import {
 } from './usePublicationForm';
 import { ImageCropData, initialSeoValue } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+
+const DEFAULT_ALT_TEXT = { uk: 'Альт зображення', en: 'Image alt' };
+const EMPTY_LOCALIZED = { uk: '', en: '' };
+
+type LocalizedField = { uk: string; en: string };
+
+type BilingualMetaFields = {
+  title?: LocalizedField;
+  description?: LocalizedField;
+  keywords?: LocalizedField;
+  altText?: LocalizedField;
+  canonicalUrl?: LocalizedField;
+};
+
+const createBilingualMeta = ({
+  title = { uk: 'Заголовок укр', en: 'Title en' },
+  description = { uk: 'Опис укр', en: 'Description en' },
+  keywords = { uk: 'новини', en: 'news' },
+  altText = DEFAULT_ALT_TEXT,
+  canonicalUrl
+}: BilingualMetaFields = {}): SeoBlockValue['meta'] => {
+  const createLocaleMeta = (locale: 'uk' | 'en'): LocalizedMeta => ({
+    title: title[locale],
+    description: description[locale],
+    keywords: keywords[locale],
+    altText,
+    ...(canonicalUrl ? { canonicalUrl: canonicalUrl[locale] } : {})
+  });
+
+  return {
+    uk: createLocaleMeta('uk'),
+    en: createLocaleMeta('en')
+  };
+};
 
 const createMockSeoValue = (overrides?: Partial<SeoBlockValue>): SeoBlockValue => ({
   ...initialSeoValue,
-  meta: {
-    uk: {
-      title: 'Заголовок укр',
-      description: 'Опис укр',
-      keywords: 'новини',
-      altText: { uk: 'Альт зображення', en: 'Image alt' }
-    },
-    en: {
-      title: 'Title en',
-      description: 'Description en',
-      keywords: 'news',
-      altText: { uk: 'Альт зображення', en: 'Image alt' }
-    }
-  },
+  meta: createBilingualMeta(),
   ogImage: 'https://liatoshynsky.org/cover.jpg',
   allowIndexing: { uk: true, en: true },
   ...overrides
 });
+
+const createSimpleMetaWithAlt = (altText: LocalizedField = EMPTY_LOCALIZED) =>
+  createBilingualMeta({
+    title: { uk: 'Заголовок', en: 'Title' },
+    description: { uk: 'Опис', en: 'Desc' },
+    keywords: EMPTY_LOCALIZED,
+    altText
+  });
 
 const createMockFormState = (overrides?: Partial<PublicationFormState>): PublicationFormState => ({
   adminTitle: 'Тестовий заголовок',
@@ -98,10 +128,12 @@ describe('usePublicationForm', () => {
 
     it('should return meta errors when required UK title is missing', () => {
       const seoValue = createMockSeoValue({
-        meta: {
-          uk: { title: '', description: 'Опис', keywords: '', altText: { uk: 'Альт', en: 'Alt' } },
-          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: 'Альт', en: 'Alt' } }
-        }
+        meta: createBilingualMeta({
+          title: { uk: '', en: 'Title' },
+          description: { uk: 'Опис', en: 'Desc' },
+          keywords: EMPTY_LOCALIZED,
+          altText: { uk: 'Альт', en: 'Alt' }
+        })
       });
       const result = validatePublicationSeo(seoValue, 'news');
       expect(result.hasMetaErrors).toBe(true);
@@ -109,27 +141,20 @@ describe('usePublicationForm', () => {
     });
 
     it('should return altText errors when cover image exists and alt is empty', () => {
-      const seoValue = createMockSeoValue({
-        meta: {
-          uk: { title: 'Заголовок', description: 'Опис', keywords: '', altText: { uk: '', en: '' } },
-          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: '', en: '' } }
-        }
-      });
-      const result = validatePublicationSeo(seoValue, 'news');
+      const result = validatePublicationSeo(
+        createMockSeoValue({ meta: createSimpleMetaWithAlt() }),
+        'news'
+      );
       expect(result.hasMetaErrors).toBe(true);
       expect(result.seoErrors.meta.uk.altText).not.toBe('');
       expect(result.seoErrors.meta.en.altText).not.toBe('');
     });
 
     it('should not require altText when cover image is missing', () => {
-      const seoValue = createMockSeoValue({
-        ogImage: null,
-        meta: {
-          uk: { title: 'Заголовок', description: 'Опис', keywords: '', altText: { uk: '', en: '' } },
-          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: '', en: '' } }
-        }
-      });
-      const result = validatePublicationSeo(seoValue, 'news');
+      const result = validatePublicationSeo(
+        createMockSeoValue({ ogImage: null, meta: createSimpleMetaWithAlt() }),
+        'news'
+      );
       expect(result.hasMetaErrors).toBe(false);
       expect(result.seoErrors.meta.uk.altText).toBe('');
     });
@@ -137,7 +162,18 @@ describe('usePublicationForm', () => {
     it.each([
       [{ ticketUrl: { uk: 'https://tickets.com', en: 'https://tickets.com/en' } }, 'events', false],
       [{ ticketUrl: { uk: 'invalid-url', en: 'https://tickets.com' } }, 'events', true],
-      [{ meta: { uk: { title: 'T', description: 'D', keywords: '', canonicalUrl: 'invalid' }, en: { title: 'T', description: 'D', keywords: '', canonicalUrl: 'https://url.com' } } }, 'media', true]
+      [
+        {
+          meta: createBilingualMeta({
+            title: { uk: 'T', en: 'T' },
+            description: { uk: 'D', en: 'D' },
+            keywords: EMPTY_LOCALIZED,
+            canonicalUrl: { uk: 'invalid', en: 'https://url.com' }
+          })
+        },
+        'media',
+        true
+      ]
     ])('should validate url fields for %s', (overrides, type, expectedHasUrlErrors) => {
       const seoValue = createMockSeoValue(overrides as Partial<SeoBlockValue>);
       const result = validatePublicationSeo(seoValue, type as 'events' | 'media');
@@ -242,10 +278,7 @@ describe('usePublicationForm', () => {
       const altText = { uk: 'Alt UK', en: 'Alt EN' };
       const seoValue = createMockSeoValue({
         ogImage: 'https://liatoshynsky.org/og.png',
-        meta: {
-          uk: { title: 'Заголовок укр', description: 'Опис укр', keywords: 'новини', altText },
-          en: { title: 'Title en', description: 'Description en', keywords: 'news', altText }
-        }
+        meta: createBilingualMeta({ altText })
       });
 
       act(() => {
@@ -281,8 +314,8 @@ describe('usePublicationForm', () => {
       const payload = result.current.buildCommonInput();
 
       expect(payload.title).toEqual({ uk: 'Фолбек Заголовок', en: 'Фолбек Заголовок' });
-      expect(payload.coverImage.src).toBe('Фолбек Заголовок');
-      expect(payload.coverImage.alt).toEqual({ uk: '', en: '' });
+      expect(payload.coverImage.src).toBe('');
+      expect(payload.coverImage.alt).toEqual(EMPTY_LOCALIZED);
     });
   });
 });
