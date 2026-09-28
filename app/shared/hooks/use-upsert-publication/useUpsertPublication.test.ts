@@ -236,6 +236,17 @@ describe('useUpsertPublication', () => {
     });
 
     it('should return undefined and not save when event start date is empty', async () => {
+      (validatePublicationSeo as jest.Mock).mockReturnValue({
+        seoErrors: {
+          meta: {
+            uk: {},
+            en: {}
+          }
+        },
+        hasMetaErrors: false,
+        hasUrlErrors: false
+      });
+
       const seoValue = createMockSeoValue({
         meta: {
           ...initialSeoValue.meta,

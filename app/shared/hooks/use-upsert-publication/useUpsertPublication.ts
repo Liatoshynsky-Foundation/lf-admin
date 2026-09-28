@@ -108,11 +108,10 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       hasUrlErrors
     } = validatePublicationSeo(seoValue, publicationType);
 
-    const eventSeoErrors = applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation);
-
     if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || eventDatesValidation.isInvalid) {
       if (isTitleInvalid) form.setAdminTitleError('Обов\'язкове поле');
       if (hasMetaErrors || hasUrlErrors || eventDatesValidation.isInvalid) {
+        const eventSeoErrors = applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation);
         form.setSeoErrors(eventSeoErrors);
         form.setForceShowErrors(true);
       }
