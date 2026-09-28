@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 
 import { getDateIsoString, parseDate, usePublicationForm, validatePublicationSeo } from './usePublicationForm';
 import { usePublicationStrategy } from './usePublicationStrategy';
+import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
 import { publicationErrors } from '~/constants/errors';
 import { PAGE_TITLES, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
@@ -99,7 +100,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     const isTitleInvalid = !adminTitle.trim();
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
-    const isStartDateTimeInvalid = !seoValue.meta.uk.startDateTime;
+    const eventDatesValidation = validateEventDates(publicationType, seoValue.meta.uk.startDateTime, seoValue.meta.uk.endDateTime);
 
     const {
       seoErrors: nextSeoErrors,
@@ -107,10 +108,12 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       hasUrlErrors
     } = validatePublicationSeo(seoValue, publicationType);
 
-    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || isStartDateTimeInvalid) {
+    const eventSeoErrors = applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation);
+
+    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || eventDatesValidation.isInvalid) {
       if (isTitleInvalid) form.setAdminTitleError('Обов\'язкове поле');
-      if (hasMetaErrors || hasUrlErrors) {
-        form.setSeoErrors(nextSeoErrors);
+      if (hasMetaErrors || hasUrlErrors || eventDatesValidation.isInvalid) {
+        form.setSeoErrors(eventSeoErrors);
         form.setForceShowErrors(true);
       }
       return;
