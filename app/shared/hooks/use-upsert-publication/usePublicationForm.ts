@@ -10,6 +10,7 @@ import {
 } from '~/constants/publications';
 import { checkIsSeoInvalid } from '~/lib/utils/checkIsSeoInvalid';
 import { buildCoverImageCropPayload } from '~/lib/utils/CropperHelper';
+import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 import type {
   SeoBlockErrors,
   SeoBlockValue
@@ -36,6 +37,7 @@ export const getDateIsoString = (date: Dayjs | null | undefined) => (isValidDate
 
 const getPublicationSeoMetaErrors = (
   meta: LocalizedMeta,
+  hasCoverImage: boolean,
   locale: 'uk' | 'en',
   requiredFields: Readonly<{ title: boolean; description: boolean }>
 ): Partial<Record<keyof LocalizedMeta, string>> => {
@@ -51,7 +53,7 @@ const getPublicationSeoMetaErrors = (
     title: getError('title', meta.title, isRequired('title', meta.title)),
     description: getError('description', meta.description, isRequired('description', meta.description)),
     keywords: getError('keywords', meta.keywords),
-    altText: getError('altText', meta.altText?.[locale] ?? '')
+    altText: getError('altText', meta.altText?.[locale] ?? '', hasCoverImage)
   };
 };
 
@@ -71,11 +73,12 @@ export const validatePublicationSeo = (
 ): { seoErrors: SeoBlockErrors; hasMetaErrors: boolean; hasUrlErrors: boolean } => {
   const { uk: ukMeta, en: enMeta } = seoValue.meta;
   const hasUrlErrors = checkIsSeoInvalid(ukMeta, enMeta, publicationType, seoValue.ticketUrl);
+  const hasCoverImage = isValidHttpUrl(seoValue.ogImage);
 
   const seoErrors: SeoBlockErrors = {
     meta: {
-      uk: getPublicationSeoMetaErrors(ukMeta, 'uk', PUBLICATION_SEO_REQUIRED.uk),
-      en: getPublicationSeoMetaErrors(enMeta, 'en', PUBLICATION_SEO_REQUIRED.en)
+      uk: getPublicationSeoMetaErrors(ukMeta, hasCoverImage, 'uk', PUBLICATION_SEO_REQUIRED.uk),
+      en: getPublicationSeoMetaErrors(enMeta, hasCoverImage, 'en', PUBLICATION_SEO_REQUIRED.en)
     },
     ...(publicationType === 'events' && hasUrlErrors
       ? {
@@ -180,8 +183,8 @@ export const usePublicationForm = () => {
       coverImage: {
         src: seoValue.ogImage || adminTitle,
         alt: {
-          uk: ukMeta.altText?.uk?.trim() || adminTitle,
-          en: enMeta.altText?.en?.trim() || adminTitle
+          uk: ukMeta.altText?.uk?.trim() || '',
+          en: enMeta.altText?.en?.trim() || ''
         },
         caption: { uk: adminTitle, en: adminTitle },
         ...buildCoverImageCropPayload(crop)

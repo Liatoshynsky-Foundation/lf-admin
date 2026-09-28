@@ -15,8 +15,18 @@ import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/
 const createMockSeoValue = (overrides?: Partial<SeoBlockValue>): SeoBlockValue => ({
   ...initialSeoValue,
   meta: {
-    uk: { title: 'Заголовок укр', description: 'Опис укр', keywords: 'новини' },
-    en: { title: 'Title en', description: 'Description en', keywords: 'news' }
+    uk: {
+      title: 'Заголовок укр',
+      description: 'Опис укр',
+      keywords: 'новини',
+      altText: { uk: 'Альт зображення', en: 'Image alt' }
+    },
+    en: {
+      title: 'Title en',
+      description: 'Description en',
+      keywords: 'news',
+      altText: { uk: 'Альт зображення', en: 'Image alt' }
+    }
   },
   ogImage: 'https://liatoshynsky.org/cover.jpg',
   allowIndexing: { uk: true, en: true },
@@ -89,13 +99,39 @@ describe('usePublicationForm', () => {
     it('should return meta errors when required UK title is missing', () => {
       const seoValue = createMockSeoValue({
         meta: {
-          uk: { title: '', description: 'Опис', keywords: '' },
-          en: { title: 'Title', description: 'Desc', keywords: '' }
+          uk: { title: '', description: 'Опис', keywords: '', altText: { uk: 'Альт', en: 'Alt' } },
+          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: 'Альт', en: 'Alt' } }
         }
       });
       const result = validatePublicationSeo(seoValue, 'news');
       expect(result.hasMetaErrors).toBe(true);
       expect(result.seoErrors.meta.uk.title).not.toBe('');
+    });
+
+    it('should return altText errors when cover image exists and alt is empty', () => {
+      const seoValue = createMockSeoValue({
+        meta: {
+          uk: { title: 'Заголовок', description: 'Опис', keywords: '', altText: { uk: '', en: '' } },
+          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: '', en: '' } }
+        }
+      });
+      const result = validatePublicationSeo(seoValue, 'news');
+      expect(result.hasMetaErrors).toBe(true);
+      expect(result.seoErrors.meta.uk.altText).not.toBe('');
+      expect(result.seoErrors.meta.en.altText).not.toBe('');
+    });
+
+    it('should not require altText when cover image is missing', () => {
+      const seoValue = createMockSeoValue({
+        ogImage: null,
+        meta: {
+          uk: { title: 'Заголовок', description: 'Опис', keywords: '', altText: { uk: '', en: '' } },
+          en: { title: 'Title', description: 'Desc', keywords: '', altText: { uk: '', en: '' } }
+        }
+      });
+      const result = validatePublicationSeo(seoValue, 'news');
+      expect(result.hasMetaErrors).toBe(false);
+      expect(result.seoErrors.meta.uk.altText).toBe('');
     });
 
     it.each([
@@ -246,7 +282,7 @@ describe('usePublicationForm', () => {
 
       expect(payload.title).toEqual({ uk: 'Фолбек Заголовок', en: 'Фолбек Заголовок' });
       expect(payload.coverImage.src).toBe('Фолбек Заголовок');
-      expect(payload.coverImage.alt).toEqual({ uk: 'Фолбек Заголовок', en: 'Фолбек Заголовок' });
+      expect(payload.coverImage.alt).toEqual({ uk: '', en: '' });
     });
   });
 });
