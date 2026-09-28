@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { PublishMenuItems } from './CreatePublicationsMenuItems';
 import { styles } from './CreatePublicationsView.styles';
 import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
+import { publicationErrors } from '~/constants/errors';
 import {   ADMIN_TITLE_LABELS,
   ADMIN_TITLE_LENGTH ,
   MENU_ACTION_CONFIGS,
@@ -240,7 +241,7 @@ export default function CreatePublicationsView({
                   sx: styles.datePickerTextField,
                   InputProps: { sx: styles.datePickerInput },
                   error: isPublishDateInvalid,
-                  helperText: isPublishDateInvalid ? 'Введіть коректну дату' : null
+                  helperText: isPublishDateInvalid ? publicationErrors.invalidPublicationDate : null
                 }
               }}
             />

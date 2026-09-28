@@ -4,6 +4,7 @@ import React, { MouseEvent, ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import CreatePublicationsView from './CreatePublicationsView';
+import { publicationErrors } from '~/constants/errors';
 import {
   CONTENT_MUTATION_RESULTS,
   initialSeoValue,
@@ -633,6 +634,6 @@ describe('CreatePublicationsView Component', () => {
 
     render(<CreatePublicationsView data={mockData} />);
 
-    expect(screen.getByTestId('date-picker-error')).toHaveTextContent('Введіть коректну дату');
+    expect(screen.getByTestId('date-picker-error')).toHaveTextContent(publicationErrors.invalidPublicationDate);
   });
 });
