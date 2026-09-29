@@ -35,7 +35,7 @@ export type MediaModalFlowProps = {
   onTabChange?: (tab: MediaModalTab) => void;
 };
 
-const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Використані', audio: 'Аудіо', pdf: 'Файли' };
+const GALLERY_LABELS: Record<MediaKind, string> = { image: 'Галерея', audio: 'Аудіо', pdf: 'Файли' };
 
 const isNonImageUploadSelection = (selected: SelectedMedia | null): boolean => {
   if (selected?.kind !== 'upload') {
