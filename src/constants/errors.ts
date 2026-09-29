@@ -47,6 +47,10 @@ export const newsValidationErrors = {
   PUBLICATION_DATA_INVALID: 'Invalid data for publication'
 };
 
+export const eventValidationErrors = {
+  START_DATE_REQUIRED: 'Event start date is required'
+};
+
 export const opusServiceErrors = {
   OPUS_ALREADY_EXISTS: 'Опус із таким номером та приміткою вже існує',
   NUMBER_GENERATION_FAILED: 'Failed to generate a unique opus number',
