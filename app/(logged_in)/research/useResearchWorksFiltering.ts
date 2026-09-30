@@ -1,81 +1,93 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import type { ResearchWorkStatus } from './research.mock';
-import { RESEARCH_STATUS_OPTIONS, SORT_STORAGE_KEY } from '~/constants/research';
-import { type FilesSortValue, SORT_FIELD_OPTIONS, SORT_ORDER_OPTIONS, type SortFieldValue } from '~/constants/sort';
-import type { FilteringToolbarProps, SortSelectProps } from '~/shared/components/filtering-toolbar';
-import type { FilterOption } from '~/shared/components/selector/FilterSelect';
-import { useSortValue } from '~/shared/hooks/use-sort-value/useSortValue';
+import { RESEARCH_STATUS_OPTIONS } from '~/constants/research';
+import type { FilteringToolbarProps } from '~/shared/components/filtering-toolbar';
+import type { FilterSelectProps } from '~/shared/components/selector/FilterSelect';
+import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
+import { toGqlResearchWorkStatus } from '~/shared/hooks/use-research-works/researchWorkMappers';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import {
+  type ResearchWorkFiltersInput,
+  ResearchWorksSortBy,
+  type ResearchWorksSortOptions,
+  type ResearchWorkStatus as GqlResearchWorkStatus,
+  SortOrder
+} from '~/types/graphql/generated/graphql';
+import type { ResearchWorkStatus } from '~/types/researchWork';
 
 const isResearchStatusValue = (value: string): value is ResearchWorkStatus =>
   Object.values(BaseContentStatuses).includes(value as BaseContentStatuses);
 
+export const RESEARCH_WORKS_DEFAULT_SORT: ResearchWorksSortOptions[] = [
+  { field: ResearchWorksSortBy.Author, order: SortOrder.Asc },
+  { field: ResearchWorksSortBy.BibliographicDescription, order: SortOrder.Asc }
+];
+
 export type ResearchWorksFilteringToolbarProps = Pick<FilteringToolbarProps, 'search'>;
 
-export type ResearchWorksFilteringSortProps = Omit <
-  SortSelectProps<SortFieldValue, FilesSortValue>,
-  'minWidth' | 'dataTestId'
->;
-
-export type ResearchStatusFilterProps = Readonly<{
-  label: string;
-  options: readonly FilterOption[];
-  value: string[];
-  hideClearAction: boolean;
-  onChange: (value: string[]) => void;
-}>;
+export type ResearchWorksStatusFilterProps = Omit<FilterSelectProps, 'value'> & {
+  value: ResearchWorkStatus[];
+};
 
 export function useResearchWorksFiltering(): Readonly<{
-  sortValue: FilesSortValue;
+  requestFilters: ResearchWorkFiltersInput;
+  searchValue: string;
   selectedFilters: Readonly<{ status: readonly ResearchWorkStatus[] }>;
   toolbarProps: ResearchWorksFilteringToolbarProps;
-  sortProps: ResearchWorksFilteringSortProps;
-  statusFilterProps: ResearchStatusFilterProps;
+  statusFilterProps: ResearchWorksStatusFilterProps;
   activeFiltersCount: number;
 }> {
   const [search, setSearch] = useState('');
   const [statusFilters, setStatusFilters] = useState<ResearchWorkStatus[]>([]);
-
-  const { sortValue, currentSortField, currentSortOption, handleSortFieldChange, handleSortValueChange } =
-    useSortValue(SORT_STORAGE_KEY);
+  const debouncedSearch = useDebounce(search.trim(), 300);
 
   const activeFiltersCount = statusFilters.length;
 
-  const toolbarProps: ResearchWorksFilteringToolbarProps = {
-    search: {
-      search,
-      setSearch,
-      options: [],
-      placeholder: 'Пошук'
-    }
-  };
+  const requestFilters = useMemo<ResearchWorkFiltersInput>(() => {
+    const statuses = statusFilters
+      .map(toGqlResearchWorkStatus)
+      .filter((status): status is GqlResearchWorkStatus => status !== null);
 
-  const statusFilterProps: ResearchStatusFilterProps = {
-    label: 'Статус',
-    options: RESEARCH_STATUS_OPTIONS,
-    value: statusFilters,
-    hideClearAction: true,
-    onChange: (value: string[]) => setStatusFilters(value.filter(isResearchStatusValue))
-  };
+    return {
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(statuses.length > 0 ? { statuses } : {}),
+      sort: RESEARCH_WORKS_DEFAULT_SORT
+    };
+  }, [debouncedSearch, statusFilters]);
 
-  const sortProps: ResearchWorksFilteringSortProps = {
-    fieldOptions: SORT_FIELD_OPTIONS,
-    orderOptions: SORT_ORDER_OPTIONS,
-    fieldValue: currentSortField,
-    value: sortValue,
-    triggerLabel: currentSortOption.label,
-    onFieldChange: handleSortFieldChange,
-    onValueChange: handleSortValueChange
-  };
+  const toolbarProps = useMemo<ResearchWorksFilteringToolbarProps>(
+    () => ({
+      search: {
+        search,
+        setSearch,
+        options: [],
+        placeholder: 'Пошук'
+      }
+    }),
+    [search]
+  );
+
+  const statusFilterProps = useMemo<ResearchWorksStatusFilterProps>(
+    () => ({
+      label: 'Статус',
+      options: RESEARCH_STATUS_OPTIONS,
+      value: statusFilters,
+      maxSelections: 1,
+      hideClearAction: true,
+      persistLabel: true,
+      menuAlign: 'right',
+      onChange: (value) => setStatusFilters(value.filter(isResearchStatusValue))
+    }),
+    [statusFilters]
+  );
 
   return {
-    sortValue,
+    requestFilters,
+    searchValue: debouncedSearch,
     selectedFilters: { status: statusFilters },
     toolbarProps,
-    sortProps,
     statusFilterProps,
     activeFiltersCount
   };

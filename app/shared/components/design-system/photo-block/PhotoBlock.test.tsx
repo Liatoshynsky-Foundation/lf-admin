@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event';
 import toast from 'react-hot-toast';
 
 import { ImagePreviewBlock } from './PhotoBlock';
-import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
+import type {
+  MediaModalOpenState,
+  MediaModalResult,
+  MediaModalTab
+} from '~/shared/components/media-modal/MediaModal.types';
 
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
@@ -156,7 +160,7 @@ describe('ImagePreviewBlock', () => {
     expect(screen.getByTestId('initial-step')).toHaveTextContent('CROP');
   });
 
-  it('should open MediaModal in UPLOAD tab on "Змінити зображення" click', async () => {
+  it('should open MediaModal in GALLERY tab on "Змінити зображення" click', async () => {
     const user = userEvent.setup();
 
     renderComponent();
@@ -164,7 +168,7 @@ describe('ImagePreviewBlock', () => {
     await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
 
     expect(screen.getByTestId('media-modal')).toBeInTheDocument();
-    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('GALLERY');
   });
 
   it('should restore the last selected MediaModal tab when changing image again', async () => {
@@ -173,19 +177,21 @@ describe('ImagePreviewBlock', () => {
     renderComponent();
 
     await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
-    expect(screen.getByTestId('initial-tab')).toHaveTextContent('UPLOAD');
-
-    await user.click(screen.getByTestId('select-gallery-tab'));
-    await user.click(screen.getByTestId('close'));
-    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
     expect(screen.getByTestId('initial-tab')).toHaveTextContent('GALLERY');
 
     await user.click(screen.getByTestId('select-used-tab'));
     await user.click(screen.getByTestId('close'));
+
     await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
     expect(screen.getByTestId('initial-tab')).toHaveTextContent('USED');
-  });
 
+    await user.click(screen.getByTestId('select-gallery-tab'));
+    await user.click(screen.getByTestId('close'));
+
+    await user.click(screen.getByRole('button', { name: /змінити зображення/i }));
+    expect(screen.getByTestId('initial-tab')).toHaveTextContent('GALLERY');
+  });
+  
   it('closes media modal on close click', async () => {
     const user = userEvent.setup();
 

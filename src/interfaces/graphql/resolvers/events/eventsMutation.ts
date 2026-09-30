@@ -1,10 +1,7 @@
 import { GraphQLError } from 'graphql';
 
-import {
-  endpointRepositoryHandler,
-  markImagesAsUsed,
-  syncImagesCrops
-} from '../helpers';
+import { validateEventStartDate } from '../eventValidation';
+import { endpointRepositoryHandler, syncImagesCrops } from '../helpers';
 import { validateSeoLengths } from '../seoValidation';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -39,6 +36,7 @@ export const EventsMutation = {
 
     if (!titleUk) throw new Error('TITLE_REQUIRED_FOR_SLUG');
 
+    validateEventStartDate(input.eventDateTimeStart);
     validateSeoLengths(input);
 
     const slug = input.slug || await generateUniqueSlug(titleUk, {
@@ -61,9 +59,6 @@ export const EventsMutation = {
       await syncImagesCrops(res.id, input.content);
     }
 
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
-
     return res;
   },
 
@@ -76,6 +71,10 @@ export const EventsMutation = {
 
     const repo = context.requestContainer.cradle.eventsRepository;
 
+    if (input.eventDateTimeStart !== undefined) {
+      validateEventStartDate(input.eventDateTimeStart);
+    }
+    
     validateSeoLengths(input);
 
     const updateData = { ...input };
@@ -103,9 +102,6 @@ export const EventsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
-
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, input.content, input.coverImage, 'events', res.id);
 
     return res;
   },

@@ -9,10 +9,7 @@ import type {
   UploadRendererProps,
   UsedRendererProps
 } from '../MediaModal.renderers';
-import type {
-  MediaModalOpenState,
-  MediaModalTab,
-} from '../MediaModal.types';
+import type { MediaModalOpenState, MediaModalTab } from '../MediaModal.types';
 import { MockDsButton } from '../test-utils/mockDsButton';
 import { MediaModalFlow } from './MediaModalFlow';
 import type { CropResult } from '~/types/common';
@@ -153,7 +150,11 @@ function CropRenderer({ selected, crop, resetSeq, onBaseline, onChange }: Readon
 
 function GalleryRenderer({ filters, selected, onFiltersChange, onPick }: Readonly<GalleryRendererProps>) {
   return (
-    <div data-filters={JSON.stringify(filters)} data-testid="GalleryView" data-selected={selected ? selected.id : 'none'}>
+    <div
+      data-filters={JSON.stringify(filters)}
+      data-testid="GalleryView"
+      data-selected={selected ? selected.id : 'none'}
+    >
       <button
         type="button"
         data-testid="GalleryView-pick"
@@ -219,11 +220,7 @@ function UsedRenderer({ filters, selected, onFiltersChange, onPick }: Readonly<U
       >
         pick
       </button>
-      <button
-        type="button"
-        data-testid="UsedView-filter"
-        onClick={() => onFiltersChange({ language: 'en' })}
-      >
+      <button type="button" data-testid="UsedView-filter" onClick={() => onFiltersChange({ language: 'en' })}>
         filter
       </button>
     </div>
@@ -292,7 +289,7 @@ describe('MediaModalFlow', () => {
     expect(screen.queryByTestId('CropView')).not.toBeInTheDocument();
   });
 
-  it('should derive tab from initial selected (upload -> UPLOAD tab)', () => {
+  it('should open GALLERY tab by default even if upload item is selected', () => {
     renderOpen({
       selected: {
         kind: 'upload',
@@ -302,12 +299,10 @@ describe('MediaModalFlow', () => {
       }
     });
 
-    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'UPLOAD');
-    expect(screen.getByTestId('UploadView')).toBeInTheDocument();
-    expect(screen.getByTestId('UploadView')).toHaveAttribute('data-selected', 'a.png');
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'GALLERY');
   });
 
-  it('should derive tab from initial selected used item', () => {
+  it('should open GALLERY tab by default when used item is selected without explicit tab', () => {
     renderOpen({
       selected: {
         kind: 'used',
@@ -318,8 +313,7 @@ describe('MediaModalFlow', () => {
       }
     });
 
-    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'USED');
-    expect(screen.getByTestId('UsedView')).toHaveAttribute('data-selected', 'used-1-en');
+    expect(screen.getByTestId('MediaModalSwitcher')).toHaveAttribute('data-value', 'GALLERY');
   });
 
   it('should switch tabs in select step', async () => {
@@ -355,10 +349,12 @@ describe('MediaModalFlow', () => {
     await user.click(screen.getByTestId('MediaModal-applyButton'));
 
     await waitFor(() => {
-      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
-        selected: expect.objectContaining({ id: 'gallery-1-uk' }),
-        crop: null
-      }));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selected: expect.objectContaining({ id: 'gallery-1-uk' }),
+          crop: null
+        })
+      );
     });
   });
 
@@ -373,7 +369,10 @@ describe('MediaModalFlow', () => {
 
     await user.click(screen.getByTestId('MediaModalSwitcher-usedTab'));
     await user.click(screen.getByTestId('UsedView-filter'));
-    expect(screen.getByTestId('UsedView')).toHaveAttribute('data-filters', JSON.stringify({ search: '', language: 'en' }));
+    expect(screen.getByTestId('UsedView')).toHaveAttribute(
+      'data-filters',
+      JSON.stringify({ search: '', language: 'en' })
+    );
   });
 
   it('should cancel in-flight apply state when modal closes', () => {
@@ -440,14 +439,16 @@ describe('MediaModalFlow', () => {
     await user.click(applyButton);
 
     await waitFor(() => {
-      expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
-        selected: expect.objectContaining({
-          kind: 'upload',
-          id: 'upload-pdf-1',
-          fileName: 'doc.pdf'
-        }),
-        crop: null
-      }));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selected: expect.objectContaining({
+            kind: 'upload',
+            id: 'upload-pdf-1',
+            fileName: 'doc.pdf'
+          }),
+          crop: null
+        })
+      );
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));

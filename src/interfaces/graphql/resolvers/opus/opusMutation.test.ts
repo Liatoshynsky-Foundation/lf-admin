@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
+import { processSlugUpdate, syncImagesCrops } from '../helpers';
 import { type CreateOpusGQLInput, OpusMutation, type UpdateOpusGQLInput } from './opusMutation';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
 import { opusServiceErrors } from '~/back-constants/errors';
@@ -22,7 +22,6 @@ jest.mock('~/src/infrastructure/repositories/helpers', () => ({
 }));
 
 const mockedSyncImagesCrops = syncImagesCrops as jest.MockedFunction<typeof syncImagesCrops>;
-const mockedMarkImagesAsUsed = markImagesAsUsed as jest.MockedFunction<typeof markImagesAsUsed>;
 const mockedProcessSlugUpdate = processSlugUpdate as jest.MockedFunction<typeof processSlugUpdate>;
 const mockedOrderCompositionsByIds = orderCompositionsByIds as jest.MockedFunction<typeof orderCompositionsByIds>;
 const mockedGenerateUniqueSlug = generateUniqueSlug as jest.MockedFunction<typeof generateUniqueSlug>;
@@ -121,8 +120,6 @@ describe('OpusMutation Resolvers', () => {
     const assetsRepo = {
       findByUrls: jest.fn().mockResolvedValue([]),
       createAsset: jest.fn(),
-      addUsageRef: jest.fn().mockResolvedValue(undefined),
-      removeUsageRef: jest.fn().mockResolvedValue(undefined)
     } as jest.Mocked<IAssetRepository>;
 
     const context = {
@@ -309,13 +306,6 @@ describe('OpusMutation Resolvers', () => {
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {
         isCoverImage: true
       });
-      expect(mockedMarkImagesAsUsed).toHaveBeenCalledWith(
-        adminContext.requestContainer.cradle.assetsRepository,
-        null,
-        coverImage,
-        'opus',
-        OPUS_ID
-      );
       expect(result).toEqual({ ...MOCK_OPUS_ENTITY, compositions: [MOCK_COMPOSITION_1] });
     });
 
@@ -401,7 +391,6 @@ describe('OpusMutation Resolvers', () => {
         expect.anything()
       );
       expect(mockedSyncImagesCrops).not.toHaveBeenCalled();
-      expect(mockedMarkImagesAsUsed).not.toHaveBeenCalled();
     });
 
     describe('Field Validations (createOpus)', () => {
@@ -908,13 +897,6 @@ describe('OpusMutation Resolvers', () => {
       expect(mockedSyncImagesCrops).toHaveBeenCalledWith(OPUS_ID, coverImage, {
         isCoverImage: true
       });
-      expect(mockedMarkImagesAsUsed).toHaveBeenCalledWith(
-        adminContext.requestContainer.cradle.assetsRepository,
-        null,
-        coverImage,
-        'opus',
-        OPUS_ID
-      );
     });
 
     it('should explicitly validate and update performances', async () => {

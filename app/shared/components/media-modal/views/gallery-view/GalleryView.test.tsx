@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import type { GalleryFilters } from '../../flow/MediaModalFlowState';
-import { MockMediaGrid, MockSearchButton } from '../../test-utils/sharedMocks';
+import { MockSearchButton } from '../../test-utils/sharedMocks';
 import { GalleryView } from './GalleryView';
 import { useGalleryFiles } from '~/shared/hooks/use-galllery-photo/useGallery';
 import { useAllAssetsQuery } from '~/types/graphql/generated/graphql';
@@ -23,13 +23,52 @@ jest.mock('../../components/filter-dropdown/FilterDropdown', () => ({
 }));
 
 jest.mock('../../components/media-grid/MediaGrid', () => ({
-  MediaGrid: MockMediaGrid
+  MediaGrid: ({
+    items,
+    renderCard
+  }: {
+    items: Array<Record<string, unknown>>;
+    renderCard: (item: Record<string, unknown>, index?: number) => React.ReactNode;
+  }) => (
+    <div data-testid="mocked-media-grid" role="grid">
+      {items.map((item, index) => (
+        <div key={String(item.id)}>
+          {renderCard(
+            {
+              ...item,
+              usageRefs: [
+                { compositionName: 'Composition title', pageId: null, compositionId: null },
+                { pageId: 'about', compositionId: null },
+                { pageId: 'unknown-page', compositionId: null },
+                { pageId: null, compositionId: 'composition-id' },
+                { pageId: null, compositionId: null }
+              ]
+            },
+            index
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }));
 
 jest.mock('../../components/gallery-card/GalleryCard', () => ({
-  GalleryCard: ({ fileName, onClick, testId }: { fileName: string; onClick: () => void; testId: string }) => (
+  GalleryCard: ({
+    fileName,
+    onClick,
+    testId,
+    usageLocations
+  }: {
+    fileName: string;
+    onClick: () => void;
+    testId: string;
+    usageLocations: string[];
+  }) => (
     <button data-testid={testId} onClick={onClick}>
       {fileName}
+      {usageLocations.map((location) => (
+        <span key={location}>{location}</span>
+      ))}
     </button>
   )
 }));
@@ -119,20 +158,13 @@ describe('GalleryView', () => {
     expect(screen.getByText('Усі зображення')).toBeInTheDocument();
   });
 
-  it('should render search button', () => {
+  it.each([
+    ['search button', 'GalleryView-search'],
+    ['favorites filter dropdown', 'GalleryView-favoritesFilter'],
+    ['media grid with mock assets', 'mocked-media-grid']
+  ])('should render the %s', (_element, testId) => {
     renderGalleryView();
-    expect(screen.getByTestId('GalleryView-search')).toBeInTheDocument();
-  });
-
-  it('should render filter dropdowns', () => {
-    renderGalleryView();
-    expect(screen.getByTestId('GalleryView-favoritesFilter')).toBeInTheDocument();
-    expect(screen.getByTestId('GalleryView-usageFilter')).toBeInTheDocument();
-  });
-
-  it('should render media grid with mock assets', () => {
-    renderGalleryView();
-    expect(screen.getByTestId('mocked-media-grid')).toBeInTheDocument();
+    expect(screen.getByTestId(testId)).toBeInTheDocument();
   });
 
   it('should render multiple gallery cards', () => {
@@ -140,6 +172,15 @@ describe('GalleryView', () => {
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
     expect(screen.getByText('composer-portrait.jpg')).toBeInTheDocument();
     expect(screen.getByText('archive-documents.jpg')).toBeInTheDocument();
+  });
+
+  it('should render usage labels from composition and page references', () => {
+    renderGalleryView();
+
+    expect(screen.getAllByText('Composition title')).toHaveLength(3);
+    expect(screen.getAllByText(/Фундацію/)).toHaveLength(3);
+    expect(screen.getAllByText('unknown-page')).toHaveLength(3);
+    expect(screen.getAllByText('composition-id')).toHaveLength(3);
   });
 
   it('should call onPick when card is clicked', async () => {
@@ -266,18 +307,6 @@ describe('GalleryView', () => {
   it('should show all items when favorites filter is an unknown value', () => {
     renderGalleryView({ favorites: 'unknown-filter-value' });
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
-  });
-
-  it('should show all items when usage filter is unused', () => {
-    renderGalleryView({ usage: 'unused' });
-    expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
-    expect(screen.getByText('composer-portrait.jpg')).toBeInTheDocument();
-    expect(screen.getByText('archive-documents.jpg')).toBeInTheDocument();
-  });
-
-  it('should filter out items not matching usage page', () => {
-    renderGalleryView({ usage: 'news' });
-    expect(screen.queryByText('piano-studio.jpg')).not.toBeInTheDocument();
   });
 
   it('should show starred items and compute usage locations from asset data', () => {
@@ -444,29 +473,6 @@ describe('GalleryView', () => {
     expect(screen.getByText(filename)).toBeInTheDocument();
   });
 
-  it('should match items by usage page from asset usageRefs', () => {
-    (useAllAssetsQuery as jest.Mock).mockReturnValue({
-      data: {
-        allAssets: [
-          {
-            id: 'asset-1',
-            url: 'https://example.com/piano-studio.jpg',
-            filename: 'piano-studio.jpg',
-            isStarred: false,
-            tags: [],
-            usageRefs: [{ pageId: 'news', blockId: null }]
-          }
-        ]
-      },
-      loading: false
-    });
-
-    renderGalleryView({ usage: 'news' });
-
-    expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
-    expect(screen.queryByText('composer-portrait.jpg')).not.toBeInTheDocument();
-  });
-
   it('should display originalname instead of filename when available', () => {
     (useAllAssetsQuery as jest.Mock).mockReturnValue({
       data: {
@@ -513,17 +519,13 @@ describe('GalleryView', () => {
     expect(screen.getByText('piano-studio.jpg')).toBeInTheDocument();
   });
 
-  it('should call onFiltersChange when favorites or usage dropdown value changes', () => {
+  it('should call onFiltersChange when the favorites dropdown value changes', () => {
     renderGalleryView();
 
     const favoritesFilter = screen.getByTestId('GalleryView-favoritesFilter');
-    const usageFilter = screen.getByTestId('GalleryView-usageFilter');
 
     fireEvent.change(favoritesFilter, { target: { value: 'starred' } });
     expect(mockOnFiltersChange).toHaveBeenCalledWith({ favorites: 'starred' });
-
-    fireEvent.change(usageFilter, { target: { value: 'news' } });
-    expect(mockOnFiltersChange).toHaveBeenCalledWith({ usage: 'news' });
   });
 
   it('should handle files with undefined mimeType and filename when matching audio mediaKind', () => {

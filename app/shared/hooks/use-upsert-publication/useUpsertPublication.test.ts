@@ -38,8 +38,8 @@ const MOCK_PUBLICATION = {
 const createMockSeoValue = (overrides?: Partial<typeof initialSeoValue>) => ({
   ...initialSeoValue,
   meta: {
-    uk: { ...initialSeoValue.meta.uk, title: MOCK_PUBLICATION.adminTitle, description: 'Опис публікації' },
-    en: { ...initialSeoValue.meta.en, title: 'Publication title', description: 'Publication description' }
+    uk: { ...initialSeoValue.meta.uk, title: MOCK_PUBLICATION.adminTitle, description: 'Опис публікації', startDateTime: '2025-01-01T10:00:00.000Z' },
+    en: { ...initialSeoValue.meta.en, title: 'Publication title', description: 'Publication description', startDateTime: '2025-01-01T10:00:00.000Z' }
   },
   ...overrides
 });
@@ -60,10 +60,10 @@ describe('useUpsertPublication', () => {
   const mockSetForceShowErrors = jest.fn();
   const mockSetCanonicalUrlError = jest.fn();
 
-  const setupFormMockState = (customTitle: string = MOCK_PUBLICATION.adminTitle, customPublishDate: Dayjs | null = null) => {
+  const setupFormMockState = (customTitle: string = MOCK_PUBLICATION.adminTitle, customPublishDate: Dayjs | null = null, customSeoValue = createMockSeoValue()) => {
     (usePublicationForm as jest.Mock).mockReturnValue({
       adminTitle: customTitle,
-      seoValue: createMockSeoValue(),
+      seoValue: customSeoValue,
       publishDate: customPublishDate,
       crop: null,
       buildCommonInput: mockBuildCommonInput,
@@ -80,7 +80,7 @@ describe('useUpsertPublication', () => {
         current: {
           adminTitle: customTitle,
           publishDate: customPublishDate,
-          seoValue: createMockSeoValue(),
+          seoValue: customSeoValue,
           crop: null
         }
       }
@@ -233,6 +233,49 @@ describe('useUpsertPublication', () => {
 
       assert();
       consoleErrorSpy.mockRestore();
+    });
+
+    it('should return undefined and not save when event start date is empty', async () => {
+      (validatePublicationSeo as jest.Mock).mockReturnValue({
+        seoErrors: {
+          meta: {
+            uk: {},
+            en: {}
+          }
+        },
+        hasMetaErrors: false,
+        hasUrlErrors: false
+      });
+
+      const seoValue = createMockSeoValue({
+        meta: {
+          ...initialSeoValue.meta,
+          uk: {
+            ...initialSeoValue.meta.uk,
+            title: MOCK_PUBLICATION.adminTitle,
+            description: 'Опис публікації',
+            startDateTime: undefined
+          },
+          en: {
+            ...initialSeoValue.meta.en,
+            title: 'Publication title',
+            description: 'Publication description',
+            startDateTime: undefined
+          }
+        }
+      });
+
+      setupFormMockState(MOCK_PUBLICATION.adminTitle, null, seoValue);
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'events' }));
+
+      let res;
+      await act(async () => {
+        res = await result.current.handleSave(BaseContentStatuses.Published);
+      });
+
+      expect(res).toBeUndefined();
+      expect(mockSaveDocument).not.toHaveBeenCalled();
     });
   });
 

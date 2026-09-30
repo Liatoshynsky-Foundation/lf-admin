@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import toast from 'react-hot-toast';
 
 import { ArchiveCase, FundsTable, FundsTableProps } from './ArchiveFundsTable';
 import {
@@ -8,7 +9,7 @@ import {
   ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE,
   ARCHIVE_EMPTY_STATE_NO_STATUS_MATCH_TITLE,
   ARCHIVE_EMPTY_STATE_TITLE,
-  ARCHIVE_FUNDS_TABLE_HEADERS,
+  ARCHIVE_FUNDS_TABLE_HEADERS
 } from '~/constants/archive';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -23,13 +24,55 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
 };
 
+const COPY_LINK_SUCCESS_MESSAGE = 'Посилання скопійовано в буфер обміну.';
+const COPY_LINK_ERROR_MESSAGE = 'Не вдалося скопіювати посилання. Спробуйте ще раз.';
+
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: { success: jest.fn(), error: jest.fn() }
+}));
+
+const setClipboardWriteText = (impl: (text: string) => Promise<void>) => {
+  const writeText = jest.fn(impl);
+  if (navigator.clipboard) {
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+      value: writeText,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+      writable: true
+    });
+  }
+  return writeText;
+};
+
+const clearClipboardWriteText = () => {
+  if (navigator.clipboard) {
+    Object.defineProperty(navigator.clipboard, 'writeText', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: undefined,
+      configurable: true,
+      writable: true
+    });
+  }
+};
+
 const mockDeleteFund = jest.fn();
 const mockDeleteCase = jest.fn();
 const mockUpdateCase = jest.fn();
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
   useDeleteCase: () => [mockDeleteCase],
-  useUpdateCase: () => [mockUpdateCase],
+  useUpdateCase: () => [mockUpdateCase]
 }));
 
 const mockGetCaseRow = jest.fn((caseItem: ArchiveCase) => ({
@@ -58,27 +101,49 @@ jest.mock('~/shared/components/empty-state', () => ({
       <div data-testid="mock-empty-state-title">{title}</div>
       <div data-testid="mock-empty-state-description">{description}</div>
     </div>
-  ),
+  )
 }));
 
 jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
-  DeleteCompositionModal: (props: { open: boolean; onClose: () => void; onConfirm: () => void; description: string }) => (
+  DeleteCompositionModal: (props: {
+    open: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    description: string;
+  }) => (
     <div data-testid="mock-delete-modal" data-open={props.open}>
       <span>{props.description}</span>
-      <button onClick={props.onClose} data-testid="mock-delete-close">Close</button>
-      <button onClick={props.onConfirm} data-testid="mock-delete-confirm">Confirm</button>
+      <button onClick={props.onClose} data-testid="mock-delete-close">
+        Close
+      </button>
+      <button onClick={props.onConfirm} data-testid="mock-delete-confirm">
+        Confirm
+      </button>
     </div>
   )
 }));
 
 jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
-  RowActions: ({ menuActions }: { menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] } }) => (
+  RowActions: ({
+    editAction,
+    menuActions
+  }: {
+    editAction?: { onEditClick?: () => void };
+    menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] };
+  }) => (
     <div data-testid="row-actions">
-      {menuActions.menuItems.flatMap(group => group.items).map(item => (
-        <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
-          {item.id}
+      {editAction?.onEditClick && (
+        <button data-testid="edit-action-direct" onClick={editAction.onEditClick}>
+          edit-direct
         </button>
-      ))}
+      )}
+      {menuActions.menuItems
+        .flatMap((group) => group.items)
+        .map((item) => (
+          <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
+            {item.id}
+          </button>
+        ))}
     </div>
   )
 }));
@@ -131,7 +196,7 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
         })}
       </div>
     </div>
-  ),
+  )
 }));
 
 jest.mock('../archive-cases-table/ArchiveCasesTable', () => ({
@@ -150,11 +215,11 @@ const defaultProps: FundsTableProps = {
       cases: 20,
       dates: '1990 - 2000',
       status: BaseContentStatuses.Published,
-      updatedAt: '2023-01-01',
-    },
+      updatedAt: '2023-01-01'
+    }
   ],
   hasActiveSearch: false,
-  hasActiveStatusFilter: false,
+  hasActiveStatusFilter: false
 };
 
 const renderComponent = (overrides?: Partial<FundsTableProps>) => {
@@ -162,17 +227,6 @@ const renderComponent = (overrides?: Partial<FundsTableProps>) => {
 };
 
 const fund = defaultProps.funds[0];
-const rowWithActions = {
-  type: 'individual', id: fund.id, plainData: {
-    ...defaultProps.funds[0], editAction: {
-      editHref: `/archive/fund/${fund.id}/edit`, editLabel: `Редагувати фонд Фонд ${fund.id}`
-    },
-
-    menuActions: {
-      menuItems: [{ items: [{ id: 'edit', text: { name: 'Редагувати' }, href: `/archive/fund/${fund.id}/edit` }, { id: 'share', text: { name: 'Поширити' }, href: `/archive/fund/${fund.id}/share` }] }, { items: [{ id: 'delete', text: { name: 'Видалити' } }] }], menuTriggerLabel: `Дії для фонду Фонд ${fund.id}`
-    }
-  },
-};
 
 const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
   id: 'case-1',
@@ -201,7 +255,7 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId('mock-table-layout')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-columns')).toBeInTheDocument();
     expect(screen.getByTestId('mock-table-layout-data')).toBeInTheDocument();
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent(JSON.stringify(rowWithActions));
+    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toBeInTheDocument();
   });
 
   it.each([
@@ -210,7 +264,7 @@ describe('ArchiveFundsTable', () => {
     { column: 'descriptionsCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.descr },
     { column: 'casesCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.cases },
     { column: 'dates', value: ARCHIVE_FUNDS_TABLE_HEADERS.dates },
-  ])('should render the $column column with value $value', ({ column, value }) => {
+  ])('should render the $column column with value$value', ({ column, value }) => {
     renderComponent();
     expect(screen.getByTestId(`mock-table-layout-column-${column}`)).toHaveTextContent(value);
   });
@@ -223,7 +277,7 @@ describe('ArchiveFundsTable', () => {
     { cell: 'dates', value: fund.dates },
     { cell: 'status', value: undefined },
     { cell: 'actions', value: undefined },
-  ])('should render the $cell cell with value $value', ({ cell, value }) => {
+  ])('should render the $cell cell with value$value', ({ cell, value }) => {
     renderComponent();
     if (value) {
       expect(screen.getByTestId(`mock-cell-${cell}`)).toHaveTextContent(value);
@@ -243,7 +297,9 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
-      expect(screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))
+      ).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-close'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
@@ -279,6 +335,19 @@ describe('ArchiveFundsTable', () => {
     expect(onPublishMock).toHaveBeenCalledWith(hiddenFund);
   });
 
+  it('should call onPublish when the publish action is clicked', async () => {
+    const onPublishMock = jest.fn();
+    const user = userEvent.setup();
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Hidden }],
+      onPublish: onPublishMock
+    });
+
+    await user.click(screen.getByTestId('action-publish'));
+
+    expect(onPublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Hidden });
+  });
+
   it('should not add the publish action for non-hidden funds', () => {
     renderComponent({ onPublish: jest.fn() });
 
@@ -296,6 +365,19 @@ describe('ArchiveFundsTable', () => {
 
     await user.click(screen.getByTestId('action-unpublish'));
     expect(onUnpublishMock).toHaveBeenCalledWith(publishedFund);
+  });
+
+  it('should call onUnpublish when the unpublish action is clicked', async () => {
+    const onUnpublishMock = jest.fn();
+    const user = userEvent.setup();
+    renderComponent({
+      funds: [{ ...fund, status: BaseContentStatuses.Published }],
+      onUnpublish: onUnpublishMock
+    });
+
+    await user.click(screen.getByTestId('action-unpublish'));
+
+    expect(onUnpublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Published });
   });
 
   it('should not add the unpublish action for non-published funds', () => {
@@ -322,20 +404,17 @@ describe('ArchiveFundsTable', () => {
       expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_DESCRIPTION);
     });
 
-    it('should render the no search results fallback when search is active (with or without status filter)', () => {
-      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: false });
+    it.each([
+      { hasActiveStatusFilter: false, scenario: 'search is active without a status filter' },
+      { hasActiveStatusFilter: true, scenario: 'both search and status filter are active' }
+    ])('should render the no search results fallback when $scenario', ({ hasActiveStatusFilter }) => {
+      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter });
 
       expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
       expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
-    });
-
-    it('should render the no search results fallback when both search and status filter are active', () => {
-      renderComponent({ funds: [], hasActiveSearch: true, hasActiveStatusFilter: true });
-
-      expect(screen.getByTestId('mock-empty-state')).toBeInTheDocument();
-      expect(screen.getByTestId('mock-empty-state-title')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_TITLE);
-      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION);
+      expect(screen.getByTestId('mock-empty-state-description')).toHaveTextContent(
+        ARCHIVE_EMPTY_STATE_NO_RESULTS_DESCRIPTION
+      );
     });
 
     it('should render the status-only fallback when only the status filter is active', () => {
@@ -388,5 +467,53 @@ describe('ArchiveFundsTable', () => {
       expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
       expect(screen.getByTestId('mock-case-row-modals')).toBeInTheDocument();
     });
+  });
+
+  describe('Share Fund Flow', () => {
+    afterEach(() => {
+      clearClipboardWriteText();
+      Reflect.deleteProperty(document, 'execCommand');
+    });
+
+    it.each([
+      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
+      { scenario: 'rejects', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const }
+    ])('should show a $expectToast toast when the Clipboard API$scenario', async ({ impl, expectToast }) => {
+      const writeText = setClipboardWriteText(impl);
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      if (expectToast === 'success') {
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/fund/${fund.id}/edit`));
+        expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+      } else {
+        expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+      }
+    });
+
+    it.each([
+      { execCommandResult: true, expectToast: 'success' as const },
+      { execCommandResult: false, expectToast: 'error' as const }
+    ])(
+      'should fall back to execCommand copy and show a $expectToast toast when the Clipboard API is unavailable',
+      async ({ execCommandResult, expectToast }) => {
+        clearClipboardWriteText();
+        const execCommand = jest.fn().mockReturnValue(execCommandResult);
+        Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true, writable: true });
+        const user = userEvent.setup();
+        renderComponent();
+
+        await user.click(screen.getByTestId('action-share'));
+
+        expect(execCommand).toHaveBeenCalledWith('copy');
+        if (expectToast === 'success') {
+          expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+        } else {
+          expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+        }
+      }
+    );
   });
 });

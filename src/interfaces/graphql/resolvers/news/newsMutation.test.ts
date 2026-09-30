@@ -4,7 +4,7 @@ import { CreateNewsGQLInput, NewsMutation, UpdateNewsGQLInput } from './newsMuta
 import type { LocalizedString } from '~/domain/entities/BaseContent';
 import type { News } from '~/domain/entities/News';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
-import { newsServiceErrors, seoValidationErrors } from '~/src/constants/errors';
+import { newsServiceErrors, newsValidationErrors,seoValidationErrors } from '~/src/constants/errors';
 import { INewsRepository } from '~/src/domain/repositories/newsRepository';
 import { NewsStatus } from '~/types/enums/common.enums';
 
@@ -34,7 +34,6 @@ jest.mock('../helpers', () => ({
     updateData.slug = 'slug-оновлено';
     return Promise.resolve();
   }),
-  markImagesAsUsed: jest.fn()
 }));
 
 describe('NewsMutation Resolvers', () => {
@@ -334,6 +333,46 @@ describe('NewsMutation Resolvers', () => {
       const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
 
       expect(createCallArg.newsDate).toBe(currentDate);
+    });
+
+    it.each([
+      '2026-02-29',
+      '2026-02-31',
+      '2026-04-31',
+      '2026-13-01',
+      '2026-00-19',
+    ])('should reject invalid newsDate format: %s', async (newsDate) => {
+      const input = {
+        ...baseInput,
+        newsDate
+      };
+
+      await expect(NewsMutation.createNews({}, { input }, adminContext)).rejects.toMatchObject({
+        message: newsValidationErrors.PUBLICATION_DATA_INVALID,
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          fields: ['newsDate']
+        }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      '2026-08-29',
+      '2026-09-17'
+    ])('should accept valid newsDate %s', async (newsDate) => {
+      const input = {
+        ...baseInput,
+        newsDate
+      };
+
+      mockAction('findBySlug', null);
+      mockAction('create', createMockNews({ id: 'new-id' }));
+
+      await NewsMutation.createNews({}, { input }, adminContext);
+
+      expect(mockRepo.create).toHaveBeenCalled();
     });
   });
 

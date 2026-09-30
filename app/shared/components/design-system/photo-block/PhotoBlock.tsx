@@ -11,7 +11,11 @@ import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
-import type { MediaModalOpenState, MediaModalResult, MediaModalTab } from '~/shared/components/media-modal/MediaModal.types';
+import type {
+  MediaModalOpenState,
+  MediaModalResult,
+  MediaModalTab
+} from '~/shared/components/media-modal/MediaModal.types';
 import { useDebounce } from '~/shared/hooks/use-debounce/useDebounce';
 import { useImageMetadata } from '~/shared/hooks/use-image-metadata/useImageMetadata';
 
@@ -81,7 +85,7 @@ export const ImagePreviewBlock = ({
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaInitial, setMediaInitial] = useState<MediaModalOpenState | undefined>(undefined);
   const [savedCrop, setSavedCrop] = useState<MediaModalResult['crop']>(initialCrop ?? null);
-  const [lastChangeImageTab, setLastChangeImageTab] = useState<MediaModalTab>('UPLOAD');
+  const [lastChangeImageTab, setLastChangeImageTab] = useState<MediaModalTab>('GALLERY');
 
   const [localAltText, setLocalAltText] = useState(altText || '');
   const debouncedAltText = useDebounce(localAltText, 500);
@@ -162,7 +166,7 @@ export const ImagePreviewBlock = ({
   };
 
   const openChangeImage = () => {
-    setMediaInitial({ tab: lastChangeImageTab });
+    setMediaInitial({ tab: lastChangeImageTab ?? 'GALLERY' });
     setIsMediaModalOpen(true);
   };
 
@@ -199,11 +203,11 @@ export const ImagePreviewBlock = ({
 
     if (elipse) {
       return (
-        <Box 
-          component="img" 
-          src={previewImage} 
-          alt={title || 'Selected'} 
-          sx={[styles.imageElipsePreview, { objectFit: imageFit }]} 
+        <Box
+          component="img"
+          src={previewImage}
+          alt={title || 'Selected'}
+          sx={[styles.imageElipsePreview, { objectFit: imageFit }]}
         />
       );
     }

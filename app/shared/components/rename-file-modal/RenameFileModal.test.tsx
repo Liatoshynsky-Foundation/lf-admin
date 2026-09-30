@@ -289,6 +289,23 @@ describe('RenameFileModal', () => {
     });
   });
 
+  it('shows the fallback error toast when the API rejects with a non-Error value', async () => {
+    const user = userEvent.setup();
+    mockUpdateAsset.mockRejectedValueOnce('request failed');
+
+    render(<RenameFileModal {...defaultProps} />);
+
+    const input = screen.getByDisplayValue('old_name');
+    await user.clear(input);
+    await user.type(input, 'new_name');
+    await user.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка при перейменуванні файлу');
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
+  });
+
   it('disables input and buttons while loading', () => {
     (useUpdateAssetMutation as jest.Mock).mockReturnValue([mockUpdateAsset, { loading: true }]);
     render(<RenameFileModal {...defaultProps} />);

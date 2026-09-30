@@ -3,6 +3,7 @@ import { TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 import { styles } from '../SeoMetadataForm.styles';
+import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 
 interface SeoCanonicalUrlFieldProps {
   readonly value: string;
@@ -15,12 +16,8 @@ interface SeoCanonicalUrlFieldProps {
 
 const validateCanonicalUrl = (val: string): string => {
   if (!val.trim()) return 'Обовʼязкове поле';
-  try {
-    new URL(val);
-    return '';
-  } catch {
-    return 'Некоректний URL';
-  }
+
+  return isValidHttpUrl(val) ? '' : 'Некоректний URL';
 };
 
 export function SeoCanonicalUrlField({ value, externalError, onChange, onBlur, label, forceShowErrors = false }: SeoCanonicalUrlFieldProps) {

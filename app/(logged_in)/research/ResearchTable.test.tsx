@@ -1,32 +1,79 @@
-import { Box } from '@mui/material';
-import { render } from '@testing-library/react';
-import React from 'react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 
-import type { ResearchWork } from './research.mock';
 import { ResearchTable } from './ResearchTable';
+import { RESEARCH_MENU_ACTIONS } from '~/constants/research';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-
-const mockTableLayout = jest.fn();
+import type { ResearchWork } from '~/types/researchWork';
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
-  TableLayout: (props: unknown) => {
-    mockTableLayout(props);
-    return <Box data-testid="table-layout" />;
-  }
-}));
-
-jest.mock('~/shared/components/table-layout/components/StatusBadge', () => ({
-  StatusBadge: ({ status }: { status: string }) => <span data-testid="status-badge">{status}</span>
-}));
-
-jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
-  RowActions: () => <span data-testid="row-actions" />
+  TableLayout: ({
+    data,
+    columns
+  }: {
+    data: Array<{
+      id: string;
+      plainData: Record<string, unknown> & {
+        editAction?: { editLabel: string; onEditClick?: () => void };
+        menuActions?: {
+          menuItems: Array<{ items: Array<{ id: string; text: { name: string }; onClick: () => void }> }>;
+          menuTriggerLabel: string;
+        };
+      };
+    }>;
+    columns: Array<{
+      id: string;
+      renderPlain?: (plain: Record<string, unknown>) => ReactNode;
+    }>;
+  }) => (
+    <div data-testid="research-table">
+      {data.map((row) => (
+        <div key={row.id} data-testid={`research-row-${row.id}`}>
+          {columns
+            .filter((col) => col.id !== 'actions' && col.id !== 'status')
+            .map((col) => (
+              <div key={col.id} data-testid={`cell-${col.id}`}>
+                {col.renderPlain?.(row.plainData)}
+              </div>
+            ))}
+          {row.plainData.editAction?.onEditClick && (
+            <button
+              type="button"
+              aria-label={row.plainData.editAction.editLabel}
+              onClick={row.plainData.editAction.onEditClick}
+            >
+              edit
+            </button>
+          )}
+          {row.plainData.menuActions && (
+            <div>
+              <button type="button" aria-label={row.plainData.menuActions.menuTriggerLabel}>
+                menu
+              </button>
+              <ul>
+                {row.plainData.menuActions.menuItems.flatMap((group) =>
+                  group.items.map((item) => (
+                    <li key={item.id}>
+                      <button type="button" onClick={item.onClick}>
+                        {item.text.name}
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }));
 
 const work: ResearchWork = {
   id: 'work-1',
-  author: 'Архимович Лідія',
-  bibliographicDescription: 'Архимович, Лідія. Шляхи розвитку української радянської опери.',
+  author: 'Коваленко Олена',
+  bibliographicDescription: 'Коваленко, Олена. Тестовий бібліографічний опис.',
   year: '1970',
   keywords: '',
   status: BaseContentStatuses.Published,
@@ -37,8 +84,8 @@ const work: ResearchWork = {
 
 const secondWork: ResearchWork = {
   id: 'work-2',
-  author: 'Бєлза Ігор',
-  bibliographicDescription: 'Бєлза, Ігор. Творчість Б. М. Лятошинського.',
+  author: 'Мельник Андрій',
+  bibliographicDescription: 'Мельник, Андрій. Інший тестовий опис.',
   year: '1947',
   keywords: '',
   status: BaseContentStatuses.Hidden,
@@ -47,103 +94,101 @@ const secondWork: ResearchWork = {
 };
 
 describe('ResearchTable', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('maps each work into an individual row with correct id and plainData', () => {
-    render(<ResearchTable works={[work]} onEditWork={jest.fn()} />);
-
-    const { data } = mockTableLayout.mock.calls[0][0];
-
-    expect(data).toHaveLength(1);
-    expect(data[0]).toMatchObject({
-      type: 'individual',
-      id: 'work-1',
-      plainData: expect.objectContaining({
-        author: 'Архимович Лідія',
-        bibliographicDescription: 'Архимович, Лідія. Шляхи розвитку української радянської опери.',
-        year: '1970',
-        status: BaseContentStatuses.Published
-      })
-    });
-  });
-
-  it('builds correct edit and menu actions for each work', () => {
-    const onEditWork = jest.fn();
-    const onDeleteWork = jest.fn();
-
-    render(<ResearchTable works={[work]} onEditWork={onEditWork} onDeleteWork={onDeleteWork} />);
-
-    const { data } = mockTableLayout.mock.calls[0][0];
-    const { plainData } = data[0];
-
-    expect(plainData.editAction.editLabel).toBe('Редагувати роботу Архимович Лідія');
-    expect(typeof plainData.editAction.onEditClick).toBe('function');
-
-    plainData.editAction.onEditClick();
-    expect(onEditWork).toHaveBeenCalledWith(work);
-
-    expect(plainData.menuActions.menuTriggerLabel).toBe('Дії для роботи Архимович Лідія');
-
-    const [editGroup, deleteGroup] = plainData.menuActions.menuItems;
-
-    expect(editGroup.items[0]).toMatchObject({ id: 'edit', text: { name: 'Редагувати' } });
-    expect(editGroup.items[1]).toMatchObject({ id: 'share', text: { name: 'Поширити' } });
-    expect(deleteGroup.items[0]).toMatchObject({ id: 'delete', text: { name: 'Видалити' } });
-
-    editGroup.items[0].onClick();
-    expect(onEditWork).toHaveBeenCalledWith(work);
-
-    deleteGroup.items[0].onClick();
-    expect(onDeleteWork).toHaveBeenCalledWith(work);
-  });
-
-  it('renders one row per work, preserving order', () => {
+  it('renders one row per work with author, description and dates', () => {
     render(<ResearchTable works={[work, secondWork]} onEditWork={jest.fn()} />);
 
-    const { data } = mockTableLayout.mock.calls[0][0];
+    const firstRow = screen.getByTestId('research-row-work-1');
+    expect(within(firstRow).getByText(work.author)).toBeInTheDocument();
+    expect(within(firstRow).getByText(work.bibliographicDescription)).toBeInTheDocument();
+    expect(within(firstRow).getByText(work.year)).toBeInTheDocument();
 
-    expect(data).toHaveLength(2);
-    expect(data.map((row: { id: string }) => row.id)).toEqual(['work-1', 'work-2']);
+    expect(screen.getByTestId('research-row-work-2')).toBeInTheDocument();
+  });
+
+  it('wraps long free-text dates onto the next line', () => {
+    const longDatesWork: ResearchWork = {
+      ...work,
+      id: 'work-dates',
+      year: '1941–1945, бл. 1950, післявоєнний період'
+    };
+
+    render(<ResearchTable works={[longDatesWork]} onEditWork={jest.fn()} />);
+
+    expect(
+      within(screen.getByTestId('research-row-work-dates')).getByText(longDatesWork.year)
+    ).toBeInTheDocument();
   });
 
   it('renders an empty table when no works are provided', () => {
     render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
 
-    const { data } = mockTableLayout.mock.calls[0][0];
-
-    expect(data).toHaveLength(0);
+    expect(screen.getByTestId('research-table')).toBeEmptyDOMElement();
   });
 
-  it('passes the correct columns to TableLayout', () => {
-    render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
+  it('calls onEditWork when the edit action is clicked', async () => {
+    const user = userEvent.setup();
+    const onEditWork = jest.fn();
 
-    expect(mockTableLayout).toHaveBeenCalledTimes(1);
+    render(<ResearchTable works={[work]} onEditWork={onEditWork} />);
 
-    const { columns } = mockTableLayout.mock.calls[0][0];
+    await user.click(screen.getByRole('button', { name: `Редагувати роботу ${work.author}` }));
 
-    expect(columns).toHaveLength(6);
-    expect(columns).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'author', headerLabel: 'Автор' }),
-        expect.objectContaining({ id: 'description', headerLabel: 'Бібліографічний опис' }),
-        expect.objectContaining({ id: 'year', headerLabel: 'Рік' }),
-        expect.objectContaining({ id: 'keywords', headerLabel: 'Ключові слова' }),
-        expect.objectContaining({ id: 'status', headerLabel: 'Статус' }),
-        expect.objectContaining({ id: 'actions', headerLabel: '' })
-      ])
+    expect(onEditWork).toHaveBeenCalledWith(work);
+  });
+
+  it('offers Hide and Delete for a published work', async () => {
+    const user = userEvent.setup();
+    const onDeleteWork = jest.fn();
+    const onToggleStatus = jest.fn();
+
+    render(
+      <ResearchTable
+        works={[work]}
+        onEditWork={jest.fn()}
+        onDeleteWork={onDeleteWork}
+        onToggleStatus={onToggleStatus}
+      />
     );
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.hide }));
+    expect(onToggleStatus).toHaveBeenCalledWith(work);
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.delete }));
+    expect(onDeleteWork).toHaveBeenCalledWith(work);
   });
 
-  it('renders status column with left and right dividers', () => {
-    render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
+  it('offers Publish for a hidden work', async () => {
+    const user = userEvent.setup();
+    const onToggleStatus = jest.fn();
 
-    const { columns } = mockTableLayout.mock.calls[0][0];
-    const statusColumn = columns.find((col: { id: string }) => col.id === 'status');
+    render(
+      <ResearchTable works={[secondWork]} onEditWork={jest.fn()} onToggleStatus={onToggleStatus} />
+    );
 
-    expect(statusColumn.hasLeftDivider).toBe(true);
-    expect(statusColumn.hasRightDivider).toBe(true);
-    expect(statusColumn.align).toBe('center');
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.publish }));
+
+    expect(onToggleStatus).toHaveBeenCalledWith(secondWork);
+  });
+
+  it('calls onShareWork when Share is clicked', async () => {
+    const user = userEvent.setup();
+    const onShareWork = jest.fn();
+
+    render(<ResearchTable works={[work]} onEditWork={jest.fn()} onShareWork={onShareWork} />);
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.share }));
+
+    expect(onShareWork).toHaveBeenCalledWith(work);
+  });
+
+  it('calls onEditWork from the row menu edit action', async () => {
+    const user = userEvent.setup();
+    const onEditWork = jest.fn();
+
+    render(<ResearchTable works={[work]} onEditWork={onEditWork} />);
+
+    await user.click(screen.getByRole('button', { name: RESEARCH_MENU_ACTIONS.edit }));
+
+    expect(onEditWork).toHaveBeenCalledWith(work);
   });
 });

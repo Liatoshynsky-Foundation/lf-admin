@@ -42,6 +42,17 @@ describe('checkIsSeoInvalid', () => {
       const result = checkIsSeoInvalid(validUkMeta, validEnMeta, 'events', { uk: 'not-a-url', en: 'not-a-url' });
       expect(result).toBe(true);
     });
+
+    it.each(['uk', 'en'])('if type is "media" and %s canonicalUrl has unsupported protocol', (locale) => {
+      const result = checkIsSeoInvalid(
+        locale === 'uk' ? { ...validUkMeta, canonicalUrl: 'test:' } : validUkMeta,
+        locale === 'en' ? { ...validEnMeta, canonicalUrl: 'test:' } : validEnMeta,
+        'media',
+        validTicketUrl
+      );
+
+      expect(result).toBe(true);
+    });
   });
 
   describe('it successes (return false)', () => {

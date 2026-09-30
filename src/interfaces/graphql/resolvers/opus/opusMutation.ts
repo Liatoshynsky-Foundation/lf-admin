@@ -8,12 +8,9 @@ import {
   compositionNameTakenError,
   throwIfCompositionNameDuplicateKey
 } from '../compositions/compositionNameValidation';
-import { markImagesAsUsed, processSlugUpdate, syncImagesCrops } from '../helpers';
+import { processSlugUpdate, syncImagesCrops } from '../helpers';
 import { orderCompositionsByIds } from './tab-handlers/tabHandlersHelpers';
-import {
-  prepareCompositionMedia,
-  syncCompositionMediaUsage
-} from '~/application/use-cases/compositionMedia/compositionMedia';
+import { prepareCompositionMedia } from '~/application/use-cases/compositionMedia/compositionMedia';
 import { opusServiceErrors } from '~/back-constants/errors';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -507,20 +504,11 @@ export const OpusMutation = {
         throw error;
       }
       await repo.removeCompositionsFromCompositionsOpus(compositionIds, session);
-      await Promise.all(
-        syncedCompositions.map((composition) =>
-          syncCompositionMediaUsage(composition.id, null, composition, assetsRepo, session)
-        )
-      );
-
       return { opus: newOpus, compositions: syncedCompositions };
     });
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
-    }
-    if (input.coverImage) {
-      await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
     return { ...opus, compositions };
   },
@@ -588,9 +576,6 @@ export const OpusMutation = {
       await assertCompositionsNamesNotTaken(compositionsRepo, input.compositions);
     }
 
-    const previousCompositions = input.compositions === undefined
-      ? []
-      : await compositionsRepo.findByIds((existingOpus.compositions ?? []).map((compositionId) => compositionId.toString()));
 
     const { opus, compositions } = await withTransaction(async (session) => {
       const syncedCompositions = await handleCompositionsSync(
@@ -611,24 +596,6 @@ export const OpusMutation = {
 
       const opus = await updateAndVerifyOpus(repo, id, updateData, session);
 
-      if (input.compositions !== undefined) {
-        const previousCompositionById = new Map(previousCompositions.map((composition) => [composition.id, composition]));
-        const updatedCompositionIds = new Set(syncedCompositions.map((composition) => composition.id));
-        await Promise.all([
-          ...syncedCompositions.map((composition) =>
-            syncCompositionMediaUsage(
-              composition.id,
-              previousCompositionById.get(composition.id),
-              composition,
-              assetsRepo,
-              session
-            )
-          ),
-          ...previousCompositions
-            .filter((composition) => !updatedCompositionIds.has(composition.id))
-            .map((composition) => syncCompositionMediaUsage(composition.id, composition, null, assetsRepo, session))
-        ]);
-      }
 
 
       return { opus, compositions: syncedCompositions };
@@ -636,9 +603,6 @@ export const OpusMutation = {
 
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
-    }
-    if (input.coverImage) {
-      await markImagesAsUsed(assetsRepo, null, input.coverImage, 'opus', opus.id);
     }
     return { ...opus, compositions };
   },

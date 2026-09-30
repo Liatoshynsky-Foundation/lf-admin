@@ -1,17 +1,20 @@
 import { SxProps, Theme } from '@mui/material';
 
-import {  singleLineEllipsis, tableBorderWidth, tableDividerColor, tableGap } from '../TableLayout.styles';
+import { singleLineEllipsis, tableBorderWidth, tableDividerColor, tableGap } from '../TableLayout.styles';
+
+const EXPAND_ICON_GUTTER = '26px';
 
 export const styles = {
-
-
   tableHeader: (
     gridTemplate: string,
     firstColWidth: string,
-    withoutFirstColOffset = false,
+    includeExpandGutter = false,
+    withoutFirstColOffset = false
   ): SxProps<Theme> => {
     const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
-    const firstColumn = withoutFirstColOffset ? firstColWidth : `calc(${firstColWidth} + 26px)`;
+    const firstColumn = includeExpandGutter && !withoutFirstColOffset
+      ? `calc(${firstColWidth} + ${EXPAND_ICON_GUTTER})`
+      : firstColWidth;
     return {
       display: 'grid',
       gridTemplateColumns: `${firstColumn} ${restTemplates}`,
@@ -20,7 +23,7 @@ export const styles = {
       py: '16px',
       borderBottom: `${tableBorderWidth} solid`,
       borderBottomColor: tableDividerColor,
-      minWidth: 0,
+      minWidth: 0
     };
   },
 
@@ -30,12 +33,12 @@ export const styles = {
     fontWeight: 700,
     color: 'blue.700',
     fontStyle: 'normal',
-    ...singleLineEllipsis,
+    ...singleLineEllipsis
   },
 
   headerTextCell: (): SxProps<Theme> => ({
     ...styles.tableHeaderText,
     textAlign: 'left',
-    width: '100%',
-  }),
+    width: '100%'
+  })
 };

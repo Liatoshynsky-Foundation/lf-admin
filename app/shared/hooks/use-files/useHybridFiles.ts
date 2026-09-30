@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { COMPOSITION_MODAL_PARAM, WORKS_BASE_PATH } from '~/constants/creativity';
-import { FILES_UNKNOWN_SECTION_LABEL } from '~/constants/files';
 import type { FileUsageLink } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import type { FilesCardsLayoutItem } from '~/shared/components/files-cards-layout';
 import type { GalleryFile } from '~/shared/hooks/use-galllery-photo/useGallery';
@@ -82,22 +80,6 @@ const formatFromMimeType = (mimeType: string, filename: string) => {
   return byMime;
 };
 
-const usageToLink = (pageId?: string | null) => {
-  if (!pageId) {
-    return undefined;
-  }
-
-  return pageId.startsWith('/') ? pageId : `/${pageId}`;
-};
-
-const usageRefToLink = (usageRef: AssetItem['usageRefs'][number]): string | undefined => {
-  if (usageRef.compositionId) {
-    return `${WORKS_BASE_PATH}?${COMPOSITION_MODAL_PARAM}=${encodeURIComponent(usageRef.compositionId)}`;
-  }
-
-  return usageToLink(usageRef.pageId);
-};
-
 const getAssetTypeFromFile = (mimeType: string, filename: string): AssetType => {
   const type = mimeType.toLowerCase();
   const name = filename.toLowerCase();
@@ -119,7 +101,7 @@ const toFileItemFromAsset = (asset: AssetItem): FilesPageFileItem => ({
   dateAdded: formatDateAdded(asset.createdAt),
   createdAtRaw: asset.createdAt,
   isStarred: asset.isStarred,
-  usageLinks: asset.usageRefs.length,
+  usageLinks: 0,
   downloadUrl: asset.url,
   imageSrc: asset.type === AssetType.Image ? asset.url : undefined,
   previewUrl: asset.type === AssetType.Image ? asset.url : undefined,
@@ -130,11 +112,7 @@ const toFileItemFromAsset = (asset: AssetItem): FilesPageFileItem => ({
   filename: asset.filename,
   originalname: asset.originalname ?? undefined,
   addedBy: asset.createdBy ? { name: asset.createdBy } : undefined,
-  usage: asset.usageRefs.map((usageRef, index) => ({
-    id: `${asset.id}-${index}`,
-    label: usageRef.compositionName ?? usageRef.pageId ?? usageRef.compositionId ?? FILES_UNKNOWN_SECTION_LABEL,
-    href: usageRefToLink(usageRef)
-  })),
+  usage: [],
   description: asset.description ?? undefined,
   assetType: asset.type,
   isOrphan: false

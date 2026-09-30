@@ -20,11 +20,16 @@ export function TableLayout<TGroup, TSub, TPlain>({
   offsetPlainRows = false
 }: TableLayoutProps<TGroup, TSub, TPlain>) {
   const gridTemplate = columns.map((c) => c.width).join(' ');
+  const includeExpandGutter = data.some((item) => item.type === 'group');
 
   return (
     <Box>
-      <HeaderRow columns={columns} gridTemplate={gridTemplate} withoutFirstColOffset={withoutFirstColOffset} />
-
+      <HeaderRow
+        columns={columns}
+        gridTemplate={gridTemplate}
+        includeExpandGutter={includeExpandGutter}
+        withoutFirstColOffset={withoutFirstColOffset}
+      />
       {data.map((item) => {
         if (item.type === 'group') {
           return (

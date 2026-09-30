@@ -1,0 +1,21 @@
+mutation CreateResearchWork($input: CreateResearchWorkInput!) {
+  createResearchWork(input: $input) {
+    ...ResearchWorkFields
+  }
+}
+
+mutation UpdateResearchWork($id: ID!, $input: UpdateResearchWorkInput!) {
+  updateResearchWork(id: $id, input: $input) {
+    ...ResearchWorkFields
+  }
+}
+
+mutation UpdateResearchWorkStatus($id: ID!, $input: UpdateResearchWorkStatusInput!) {
+  updateResearchWorkStatus(id: $id, input: $input) {
+    ...ResearchWorkFields
+  }
+}
+
+mutation DeleteResearchWork($id: ID!) {
+  deleteResearchWork(id: $id)
+}

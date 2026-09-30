@@ -1,6 +1,5 @@
 import {
   prepareCompositionMedia,
-  syncCompositionMediaUsage,
   withCompositionMediaDisplayNames
 } from './compositionMedia';
 import type { Composition } from '~/domain/entities/Composition';
@@ -27,8 +26,6 @@ const createAsset = (overrides: Partial<Asset> = {}): Asset => ({
 const createAssetsRepository = (): jest.Mocked<IAssetRepository> => ({
   findByUrls: jest.fn().mockResolvedValue([]),
   createAsset: jest.fn().mockResolvedValue(createAsset()),
-  addUsageRef: jest.fn().mockResolvedValue(undefined),
-  removeUsageRef: jest.fn().mockResolvedValue(undefined)
 });
 
 describe('composition media use cases', () => {
@@ -209,44 +206,4 @@ describe('composition media use cases', () => {
     });
   });
 
-  describe('syncCompositionMediaUsage', () => {
-    it('adds current usage and removes stale usage references', async () => {
-      const assetsRepository = createAssetsRepository();
-
-      await syncCompositionMediaUsage(
-        'composition-id',
-        {
-          audios: [{ url: AUDIO_URL, name: null }],
-          sheetMusic: [{ url: 'https://cdn.example.com/old.pdf', name: 'Old', isFree: true }]
-        },
-        { audios: [{ url: AUDIO_URL, name: null }], sheetMusic: [{ url: PDF_URL, name: 'Score', isFree: true }] },
-        assetsRepository
-      );
-
-      expect(assetsRepository.addUsageRef).toHaveBeenCalledWith(
-        AUDIO_URL,
-        { compositionId: 'composition-id' },
-        undefined
-      );
-      expect(assetsRepository.addUsageRef).toHaveBeenCalledWith(
-        PDF_URL,
-        { compositionId: 'composition-id' },
-        undefined
-      );
-      expect(assetsRepository.removeUsageRef).toHaveBeenCalledWith(
-        'https://cdn.example.com/old.pdf',
-        { compositionId: 'composition-id' },
-        undefined
-      );
-    });
-
-    it('handles missing previous and current media collections', async () => {
-      const assetsRepository = createAssetsRepository();
-
-      await syncCompositionMediaUsage('composition-id', undefined, undefined, assetsRepository);
-
-      expect(assetsRepository.addUsageRef).not.toHaveBeenCalled();
-      expect(assetsRepository.removeUsageRef).not.toHaveBeenCalled();
-    });
-  });
 });

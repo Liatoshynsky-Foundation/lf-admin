@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { ArchiveCasesTable } from '../archive-cases-table/ArchiveCasesTable';
 import {
@@ -25,7 +26,7 @@ import {
   CaseRowFields,
   useArchiveCaseRowActions
 } from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
-import { useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
+import { useDeleteCase, useDeleteFund } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 export type ArchiveCase = {
@@ -65,6 +66,33 @@ export interface FundsTableProps {
   groupCasesByFund?: boolean;
 }
 
+async function copyToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textArea = document.createElement('textarea');
+  textArea.value = value;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const execCommand = Reflect.get(document, 'execCommand') as
+      | ((commandId: string, showUI?: boolean, value?: string) => boolean)
+      | undefined;
+
+    if (!execCommand?.call(document, 'copy')) {
+      throw new Error('Clipboard copy failed');
+    }
+  } finally {
+    textArea.remove();
+  }
+}
+
 export const FundsTable = ({
   funds,
   cases = [],
@@ -77,10 +105,22 @@ export const FundsTable = ({
   groupCasesByFund = false
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
-  const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({
+  const [deleteCase] = useDeleteCase();
+  const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string; isCase?: boolean }>({
     open: false
   });
+
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
+
+  const shareFund = async (id: string) => {
+    try {
+      await copyToClipboard(`${window.location.origin}${ARCHIVE_BASE_PATH}/fund/${encodeURIComponent(id)}/edit`);
+      toast.success('Посилання скопійовано в буфер обміну.');
+    } catch {
+      toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    }
+  };
+
 
   const buildFundRowData = (fund: Fund): FundRow => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
@@ -106,7 +146,7 @@ export const FundsTable = ({
           {
             items: [
               { id: 'edit', text: { name: 'Редагувати' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/edit` },
-              { id: 'share', text: { name: 'Поширити' }, href: `${ARCHIVE_BASE_PATH}/fund/${fund.id}/share` }
+              { id: 'share', text: { name: 'Поширити' }, onClick: () => shareFund(fund.id) }
             ]
           },
           {
@@ -139,6 +179,7 @@ export const FundsTable = ({
       width: '96px',
       hasRightDivider: true,
       renderGroup: (fund) => fund.fundNumber,
+      renderSub: (caseRow) => caseRow.cipher,
       renderPlain: (fund) => fund.fundNumber
     },
     {
@@ -231,15 +272,19 @@ export const FundsTable = ({
     );
   }
 
-  const deleteFundModal = (
+  const deleteFundOrCaseModal = (
     <DeleteCompositionModal
       open={deleteState.open}
       onClose={() => setDeleteState({ open: false })}
       title="Підтвердити видалення"
-      description={`Ви впевнені, що хочете видалити фонд «${deleteState.name ?? ''}»?`}
+      description={`Ви впевнені, що хочете видалити ${deleteState.isCase ? 'справу' : 'фонд'} «${deleteState.name ?? ''}»?`}
       onConfirm={async () => {
         if (!deleteState.id) return;
-        await deleteFund({ id: deleteState.id });
+        if (deleteState.isCase) {
+          await deleteCase({ id: deleteState.id });
+        } else {
+          await deleteFund({ id: deleteState.id });
+        }
         setDeleteState({ open: false });
         await onDeleted?.();
       }}
@@ -283,7 +328,7 @@ export const FundsTable = ({
     return (
       <>
         <TableLayout data={rows} columns={columns} offsetPlainRows />
-        {deleteFundModal}
+        {deleteFundOrCaseModal}
         {caseRowModals}
       </>
     );
@@ -300,7 +345,7 @@ export const FundsTable = ({
       {fundRows.length > 0 && (
         <>
           <TableLayout data={fundRows} columns={columns} withoutFirstColOffset />
-          {deleteFundModal}
+          {deleteFundOrCaseModal}
         </>
       )}
       {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} />}

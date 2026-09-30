@@ -3,10 +3,10 @@ import { GraphQLError } from 'graphql';
 import {
   endpointRepositoryHandler,
   extractTitleForSlug,
-  markImagesAsUsed,
   processSlugUpdate,
   syncImagesCrops
 } from '../helpers';
+import { validateNewsDate } from '../newsValidation';
 import { validateSeoLengths } from '../seoValidation';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
@@ -107,6 +107,7 @@ export const NewsMutation = {
     const titleForSlug = extractTitleForSlug(trimmedInput.title);
 
     validateSeoLengths(trimmedInput);
+    validateNewsDate(trimmedInput.newsDate);
 
     const slug = input.slug || await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -136,9 +137,6 @@ export const NewsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
-
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, processedInput.content, processedInput.coverImage, 'news', res.id);
 
     return res;
   },
@@ -171,6 +169,7 @@ export const NewsMutation = {
     };
 
     validateSeoLengths(trimmedInput);
+    validateNewsDate(trimmedInput.newsDate);
 
     if (input.content || input.description || input.coverImage) {
       await processContentFields(trimmedInput, updateData);
@@ -197,9 +196,6 @@ export const NewsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
-
-    const assetsRepo = context.requestContainer.cradle.assetsRepository;
-    await markImagesAsUsed(assetsRepo, updateData.content, updateData.coverImage, 'news', res.id);
 
     return res;
   },

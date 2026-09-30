@@ -1,4 +1,4 @@
-import { isValidUrl } from './isValidUrl';
+import { isValidHttpUrl,isValidUrl} from './isValidUrl';
 import { PublicationsItemType } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 
@@ -11,7 +11,7 @@ export const checkIsSeoInvalid = (
   if (publicationType === 'media') {
     const ukUrl = ukMeta.canonicalUrl ?? '';
     const enUrl = enMeta.canonicalUrl ?? '';
-    return !ukUrl.trim() || !enUrl.trim() || !isValidUrl(ukUrl) || !isValidUrl(enUrl);
+    return !ukUrl.trim() || !enUrl.trim() || !isValidHttpUrl(ukUrl) || !isValidHttpUrl(enUrl);
   }
   if (publicationType === 'events') {
     const ukUrl = ticketUrl?.uk ?? '';

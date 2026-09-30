@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import type { ComponentProps } from 'react';
 
 import { ResearchModalView } from './ResearchModalView';
+import { RESEARCH_FIELD_LIMITS, RESEARCH_VALIDATION_MESSAGES } from '~/constants/research';
 
 jest.mock('../../composition-modal/file-item/FileItem', () => ({
   __esModule: true,
@@ -19,60 +20,50 @@ jest.mock('../../composition-modal/file-item/FileItem', () => ({
 describe('ResearchModalView', () => {
   const onClose = jest.fn();
   const onSave = jest.fn().mockResolvedValue(undefined);
+  const onAddFile = jest.fn();
+  const onDeleteFile = jest.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders all required form fields', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    expect(screen.getByLabelText(/бібліографічний опис/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/автор/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/дати справи/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/ключові слова/i)).toBeInTheDocument();
-    expect(screen.getByText('Додайте файл або URL')).toBeInTheDocument();
-    expect(screen.getByLabelText(/показувати на сайті/i)).toBeInTheDocument();
-  });
-
-  it('renders Cancel and Save actions', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    expect(screen.getByRole('button', { name: 'Скасувати' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
-  });
-
-  it('disables the Save button when required fields are empty', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
-  });
-
-  it('enables the Save button once all required fields are filled', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
-    fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
-
-    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeEnabled();
-  });
-
-  it('pre-populates fields from initialData', () => {
+  const renderView = (props: Partial<ComponentProps<typeof ResearchModalView>> = {}) =>
     render(
       <ResearchModalView
         isOpen
         onClose={onClose}
         onSave={onSave}
-        initialData={{
-          bibliographicDescription: 'Існуючий опис',
-          author: 'Існуючий автор',
-          caseDates: '1980',
-          keywords: 'існуючі слова'
-        }}
+        onAddFile={onAddFile}
+        onDeleteFile={onDeleteFile}
+        {...props}
       />
     );
+
+  const fillRequiredFields = () => {
+    fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
+    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
+    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('keeps Save disabled until required fields are filled, including without keywords', () => {
+    renderView();
+
+    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+
+    fillRequiredFields();
+
+    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeEnabled();
+  });
+
+  it('pre-populates fields from initialData', () => {
+    renderView({
+      initialData: {
+        bibliographicDescription: 'Існуючий опис',
+        author: 'Існуючий автор',
+        caseDates: '1980',
+        keywords: 'існуючі слова'
+      }
+    });
 
     expect(screen.getByDisplayValue('Існуючий опис')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Існуючий автор')).toBeInTheDocument();
@@ -81,7 +72,7 @@ describe('ResearchModalView', () => {
   });
 
   it('calls onClose when Cancel is clicked', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
+    renderView();
 
     fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
 
@@ -89,13 +80,10 @@ describe('ResearchModalView', () => {
   });
 
   it('calls onSave with form data when Save is clicked', async () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
+    renderView();
 
-    fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
+    fillRequiredFields();
     fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
-
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
     await waitFor(() => {
@@ -110,99 +98,101 @@ describe('ResearchModalView', () => {
     });
   });
 
-  it('enforces the keywords character limit', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
+  it.each([
+    {
+      label: /ключові слова/i,
+      maxLength: RESEARCH_FIELD_LIMITS.keywords,
+      name: 'keywords'
+    },
+    {
+      label: /автор/i,
+      maxLength: RESEARCH_FIELD_LIMITS.author,
+      name: 'author'
+    }
+  ])('clamps $name input to $maxLength characters', ({ label, maxLength }) => {
+    renderView();
 
-    const longText = 'a'.repeat(300);
-    fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: longText } });
+    fireEvent.change(screen.getByLabelText(label), { target: { value: 'a'.repeat(maxLength + 50) } });
 
-    expect(screen.getByLabelText(/ключові слова/i)).not.toHaveValue(longText);
+    expect(screen.getByLabelText(label)).toHaveValue('a'.repeat(maxLength));
   });
 
   it('does not render the dialog content when isOpen is false', () => {
-    render(<ResearchModalView isOpen={false} onClose={onClose} onSave={onSave} />);
+    renderView({ isOpen: false });
 
     expect(screen.queryByLabelText(/бібліографічний опис/i)).not.toBeInTheDocument();
   });
 
-  it('uploads a file via the file input and displays it', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const file = new File(['dummy content'], 'document.pdf', { type: 'application/pdf' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(screen.getByTestId('mock-file-item')).toHaveTextContent('document.pdf');
-  });
-
-  it('disables the "Add file" button once a file is uploaded', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const file = new File(['dummy content'], 'document.pdf', { type: 'application/pdf' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(screen.getByRole('button', { name: 'Додати файл' })).toBeDisabled();
-  });
-
-  it('disables the URL field once a file is uploaded', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const file = new File(['dummy content'], 'document.pdf', { type: 'application/pdf' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(screen.getByLabelText(/url/i)).toBeDisabled();
-  });
-
-  it('removes the uploaded file when delete is triggered', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const file = new File(['dummy content'], 'document.pdf', { type: 'application/pdf' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByTestId('mock-file-item')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('delete-file'));
-
-    expect(screen.queryByTestId('mock-file-item')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Додати файл' })).toBeEnabled();
-  });
-
-  it('updates the URL field value', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const urlInput = screen.getByLabelText(/url/i);
-    fireEvent.change(urlInput, { target: { value: 'https://example.com/doc.pdf' } });
-
-    expect(urlInput).toHaveValue('https://example.com/doc.pdf');
-  });
-
-  it('resets the form after a successful save', async () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
-    fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
-
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-  });
-
-  it('triggers the hidden file input when "Add file" is clicked', () => {
-    render(<ResearchModalView isOpen onClose={onClose} onSave={onSave} />);
-
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    const clickSpy = jest.spyOn(fileInput, 'click');
+  it('opens media picker via onAddFile', () => {
+    renderView();
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати файл' }));
 
-    expect(clickSpy).toHaveBeenCalled();
+    expect(onAddFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows attached file, disables Add file, and still allows URL', () => {
+    renderView({ attachedFileName: 'document.pdf' });
+
+    expect(screen.getByTestId('mock-file-item')).toHaveTextContent('document.pdf');
+    expect(screen.getByRole('button', { name: 'Додати файл' })).toBeDisabled();
+    expect(screen.getByLabelText(/^url$/i)).toBeEnabled();
+  });
+
+  it('calls onDeleteFile when file delete is clicked', () => {
+    renderView({ attachedFileName: 'document.pdf' });
+
+    fireEvent.click(screen.getByText('delete-file'));
+
+    expect(onDeleteFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables Save and shows helper text for an invalid URL after blur', () => {
+    renderView();
+
+    fillRequiredFields();
+    fireEvent.change(screen.getByLabelText(/^url$/i), { target: { value: 'not-a-url' } });
+    fireEvent.blur(screen.getByLabelText(/^url$/i));
+
+    expect(screen.getByText(RESEARCH_VALIDATION_MESSAGES.urlInvalid)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+  });
+
+  it.each([
+    {
+      label: /бібліографічний опис/i,
+      message: RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
+    },
+    {
+      label: /автор/i,
+      message: RESEARCH_VALIDATION_MESSAGES.authorRequired
+    },
+    {
+      label: /дати справи/i,
+      message: RESEARCH_VALIDATION_MESSAGES.yearRequired
+    }
+  ])('shows required error for $message after blur', ({ label, message }) => {
+    renderView();
+
+    fireEvent.blur(screen.getByLabelText(label));
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it('shows author suggestions from authorOptions', async () => {
+    renderView({ authorOptions: ['Коваленко Олена', 'Мельник Андрій'] });
+
+    const authorInput = screen.getByLabelText(/автор/i);
+    fireEvent.focus(authorInput);
+    fireEvent.change(authorInput, { target: { value: 'Ков' } });
+    fireEvent.keyDown(authorInput, { key: 'ArrowDown' });
+
+    expect(await screen.findByText('Коваленко Олена')).toBeInTheDocument();
+  });
+
+  it('uses example.com placeholder for the URL field', () => {
+    renderView();
+
+    expect(screen.getByLabelText(/^url$/i)).toHaveAttribute('placeholder', 'https://example.com');
   });
 });

@@ -32,8 +32,6 @@ export type CreateAssetData = Pick<Asset, 'filename' | 'mimeType' | 'sizeBytes' 
 export interface IAssetRepository {
   findByUrls(urls: string[]): Promise<Asset[]>;
   createAsset(data: CreateAssetData, session?: ClientSession): Promise<Asset>;
-  addUsageRef(url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void>;
-  removeUsageRef(url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void>;
 }
 
 export class AssetAlreadyExistsError extends Error {

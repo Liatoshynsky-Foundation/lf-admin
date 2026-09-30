@@ -7,10 +7,7 @@ import {
   normalizeCompositionName,
   throwIfCompositionNameDuplicateKey
 } from './compositionNameValidation';
-import {
-  prepareCompositionMedia,
-  syncCompositionMediaUsage
-} from '~/application/use-cases/compositionMedia/compositionMedia';
+import { prepareCompositionMedia } from '~/application/use-cases/compositionMedia/compositionMedia';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import type { Composition } from '~/domain/entities/Composition';
@@ -86,8 +83,6 @@ export const CompositionsMutation = {
 
 
       await opusRepo.moveCompositionsToCompositionsOpus([composition.id], session);
-      await syncCompositionMediaUsage(composition.id, null, composition, assetsRepository, session);
-
       return composition;
     });
 
@@ -98,7 +93,7 @@ export const CompositionsMutation = {
     assertAuthenticated(context);
     const { compositionsRepository: repo, assetsRepository } = context.requestContainer.cradle;
 
-    const existingComposition = await findExistingComposition(repo, id);
+    await findExistingComposition(repo, id);
     if (input.name != null) {
       await assertCompositionNameNotTaken(repo, input.name.uk, id);
     }
@@ -128,9 +123,6 @@ export const CompositionsMutation = {
       } catch (error) {
         throwIfCompositionNameDuplicateKey(error, input.name?.uk ?? '');
         throw error;
-      }
-      if (updated && (input.sheetMusic !== undefined || input.audios !== undefined)) {
-        await syncCompositionMediaUsage(updated.id, existingComposition, updated, assetsRepository, session);
       }
       return updated;
     });

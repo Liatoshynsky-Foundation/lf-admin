@@ -1,5 +1,4 @@
-import { GraphQLError } from 'graphql';
-
+import { throwBadUserInput } from './validationHelpers';
 import { LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
 import { seoValidationErrors } from '~/src/constants/errors';
 
@@ -19,17 +18,6 @@ export type SeoLengthValidationInput = {
   description?: LocalizedString;
   keywords?: LocalizedString;
   coverImage?: LocalizedImage;
-};
-
-const throwBadUserInput = (message: string, fields: string[]): void => {
-  if (fields.length === 0) return;
-
-  throw new GraphQLError(message, {
-    extensions: {
-      code: 'BAD_USER_INPUT',
-      fields
-    }
-  });
 };
 
 type Locale = (typeof LOCALES)[number];
