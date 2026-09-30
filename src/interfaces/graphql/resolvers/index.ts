@@ -20,6 +20,8 @@ import { OpusMutation } from './opus/opusMutation';
 import { OpusQuery } from './opus/opusQuery';
 import { PageMutation } from './page/PageMutation';
 import { Query as AdminQuery } from './page/Query';
+import { ResearchWorkMutation } from './research-work/researchWorkMutation';
+import { ResearchWorkQuery } from './research-work/researchWorkQuery';
 
 export const resolvers = {
   Mutation: {
@@ -33,7 +35,8 @@ export const resolvers = {
     ...CompositionsMutation,
     ...CaseMutation,
     ...FundMutation,
-    ...ContactsMutation
+    ...ContactsMutation,
+    ...ResearchWorkMutation
   },
   Query: {
     ...AdminQuery,
@@ -46,7 +49,8 @@ export const resolvers = {
     ...CompositionsQuery,
     ...CaseQuery,
     ...FundQuery,
-    ...ContactsQuery
+    ...ContactsQuery,
+    ...ResearchWorkQuery,
   },
   Case: {
     ...CaseType

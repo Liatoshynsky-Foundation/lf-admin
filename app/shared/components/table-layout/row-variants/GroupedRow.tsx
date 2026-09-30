@@ -29,7 +29,7 @@ export function GroupedRow<TGroup, TSub, TPlain>({
 
             return (
               <Box key={col.id} sx={styles.groupCell(col.hasRightDivider, col.hasLeftDivider, col.align)}>
-                {typeof content === 'string' ? (
+                {typeof content === 'string' || typeof content === 'number' ? (
                   <Typography sx={styles.groupCellText(col.id)}>{content}</Typography>
                 ) : (
                   content

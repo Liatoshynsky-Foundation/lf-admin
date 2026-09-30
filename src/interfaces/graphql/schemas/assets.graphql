@@ -42,7 +42,6 @@ type Asset {
 input AssetsFiltersInput {
   type: AssetType
   isStarred: Boolean
-  isUsed: Boolean
   tag: String
   search: String
   sortBy: AssetSortBy

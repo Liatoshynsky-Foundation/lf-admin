@@ -29,6 +29,7 @@ export function useAllCases(filters?: CaseFiltersInput | null, options: QueryHoo
       id: c.id,
       name: c.caseName.uk,
       fundId: c.fundId,
+      cipher: c.cipher,
       descriptionNumber: c.descriptionNumber,
       caseNumber: c.caseNumber,
       sheetsNumber: c.sheetsNumber,

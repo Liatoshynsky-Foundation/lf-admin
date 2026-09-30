@@ -34,7 +34,6 @@ export type AssetEntity = {
 export type AssetFilters = {
   type?: AssetType;
   isStarred?: boolean;
-  isUsed?: boolean;
   tag?: string;
   search?: string;
   sortBy?: 'createdAt' | 'updatedAt' | 'filename';
@@ -78,7 +77,7 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   id: doc._id.toString(),
   type: doc.type,
   tags: doc.tags,
-  usageRefs: doc.usageRefs,
+  usageRefs: [],
   filename: doc.filename,
   originalname: doc.originalname,
   mimeType: doc.mimeType,
@@ -116,9 +115,6 @@ const buildAssetQuery = (
     query.isStarred = filters.isStarred;
   }
 
-  if (typeof filters.isUsed === 'boolean') {
-    (query as Record<string, unknown>)['usageRefs.0'] = { $exists: filters.isUsed };
-  }
 
   if (filters.tag) {
     query.tags = filters.tag;
@@ -193,10 +189,6 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
 
       if (!existingDoc) {
         return null;
-      }
-
-      if (existingDoc.usageRefs && existingDoc.usageRefs.length > 0) {
-        throw new Error('Cannot rename: file is in use on the site.');
       }
 
       const nextFilename = preserveOriginalFilenameSafely(data.filename, existingDoc.mimeType);
@@ -302,9 +294,6 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
       throw new Error('Файл не знайдено');
     }
 
-    if (asset.usageRefs && asset.usageRefs.length > 0) {
-      throw new Error('Cannot delete: file is in use on the site.');
-    }
 
     const { filename, folder } = getCloudStoragePath(asset);
 
@@ -320,21 +309,11 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return true;
   };
 
-  const addUsageRef = async (url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void> => {
-    await AssetModel.findOneAndUpdate({ url }, { $addToSet: { usageRefs: ref } }, { session });
-  };
-
-  const removeUsageRef = async (url: string, ref: AssetUsageRef, session?: ClientSession): Promise<void> => {
-    await AssetModel.findOneAndUpdate({ url }, { $pull: { usageRefs: ref } }, { session });
-  };
-
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
     findByUrls,
-    deleteAsset,
-    addUsageRef,
-    removeUsageRef
+    deleteAsset
   };
 };

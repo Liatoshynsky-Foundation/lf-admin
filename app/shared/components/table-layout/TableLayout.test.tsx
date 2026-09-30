@@ -4,8 +4,14 @@ import React from 'react';
 import { TableLayout } from './TableLayout';
 
 jest.mock('./row-variants/HeaderRow', () => ({
-  HeaderRow: ({ gridTemplate }: { gridTemplate: string }) => (
-    <div data-testid="header-row" data-grid={gridTemplate}>
+  HeaderRow: ({
+    gridTemplate,
+    includeExpandGutter
+  }: {
+    gridTemplate: string;
+    includeExpandGutter?: boolean;
+  }) => (
+    <div data-testid="header-row" data-grid={gridTemplate} data-expand={String(Boolean(includeExpandGutter))}>
       Header
     </div>
   )
@@ -58,6 +64,13 @@ describe('TableLayout Component', () => {
     const header = screen.getByTestId('header-row');
     expect(header).toBeInTheDocument();
     expect(header).toHaveAttribute('data-grid', '100px 1fr');
+    expect(header).toHaveAttribute('data-expand', 'false');
+  });
+
+  it('should enable expand gutter on the header when data includes group rows', () => {
+    render(<TableLayout data={dataWithGroup} columns={mockColumns} />);
+
+    expect(screen.getByTestId('header-row')).toHaveAttribute('data-expand', 'true');
   });
 
   it('should render GroupedRow if item type is "group"', () => {

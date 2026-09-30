@@ -9,7 +9,6 @@ export const renameFileModalStyles: Record<string, SxProps<Theme>> = {
     backgroundColor: 'white',
     display: 'flex',
     flexDirection: 'column',
-    gap: '40px',
     boxSizing: 'border-box'
   },
 
@@ -17,17 +16,20 @@ export const renameFileModalStyles: Record<string, SxProps<Theme>> = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingBottom: '40px',
     width: '100%'
   },
 
   inputContainer: {
     width: '452px',
-    maxWidth: '100%'
+    maxWidth: '100%',
+    paddingTop: '24px',
   },
 
   actions: {
     display: 'flex',
-    gap: '16px'
+    gap: '16px',
+    paddingTop: '40px',
   },
 
   saveButton: {

@@ -102,22 +102,3 @@ export const withCompositionMediaDisplayNames = async (
   }));
 };
 
-export const syncCompositionMediaUsage = async (
-  compositionId: string,
-  previous: CompositionMedia | null | undefined,
-  current: CompositionMedia | null | undefined,
-  assetsRepository: IAssetRepository,
-  session?: ClientSession
-): Promise<void> => {
-  const oldUrls = getUrls([...(previous?.audios ?? []).map((audio) => audio.url), ...(previous?.sheetMusic ?? []).map((sheet) => sheet.url)]);
-  const nextUrls = getUrls([...(current?.audios ?? []).map((audio) => audio.url), ...(current?.sheetMusic ?? []).map((sheet) => sheet.url)]);
-  const usageRef = { compositionId };
-  const staleUsageRefs = [
-    { pageId: compositionId }, { pageId: compositionId, blockId: 'audio' }, { pageId: compositionId, blockId: 'sheetMusic' },
-    { compositionId, blockId: 'audio' }, { compositionId, blockId: 'sheetMusic' }
-  ];
-  await Promise.all([
-    ...nextUrls.flatMap((url) => [assetsRepository.addUsageRef(url, usageRef, session), ...staleUsageRefs.map((ref) => assetsRepository.removeUsageRef(url, ref, session))]),
-    ...oldUrls.filter((url) => !nextUrls.includes(url)).flatMap((url) => [assetsRepository.removeUsageRef(url, usageRef, session), ...staleUsageRefs.map((ref) => assetsRepository.removeUsageRef(url, ref, session))])
-  ]);
-};

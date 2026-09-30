@@ -106,7 +106,7 @@ describe('AssetsQuery', () => {
     expect(mockRepo.findAll).toHaveBeenCalledWith(filters);
   });
 
-  it('should enrich composition usage references with composition names', async () => {
+  it('should return empty usage refs without loading compositions', async () => {
     const compositionsRepository = {
       findByIds: jest.fn().mockResolvedValue([MOCK_COMPOSITION])
     };
@@ -117,14 +117,12 @@ describe('AssetsQuery', () => {
     } as unknown as GraphQLContext;
 
     await expect(AssetsQuery.allAssets({}, { filters: {} }, context)).resolves.toEqual([
-      expect.objectContaining({
-        usageRefs: [{ compositionId: MOCK_COMPOSITION_ID, compositionName: MOCK_COMPOSITION_NAME_UK }]
-      })
+      expect.objectContaining({ usageRefs: [] })
     ]);
-    expect(compositionsRepository.findByIds).toHaveBeenCalledWith([MOCK_COMPOSITION_ID]);
+    expect(compositionsRepository.findByIds).not.toHaveBeenCalled();
   });
 
-  it('should resolve legacy composition references and fall back to English names or IDs', async () => {
+  it('should hide legacy usage refs without loading compositions', async () => {
     const compositionsRepository = {
       findByIds: jest.fn().mockResolvedValue([MOCK_LEGACY_COMPOSITION, MOCK_NAMELESS_COMPOSITION])
     };
@@ -135,18 +133,9 @@ describe('AssetsQuery', () => {
     } as unknown as GraphQLContext;
 
     await expect(AssetsQuery.allAssets({}, { filters: {} }, context)).resolves.toEqual([
-      expect.objectContaining({
-        usageRefs: [
-          { pageId: MOCK_LEGACY_COMPOSITION_ID, compositionName: MOCK_LEGACY_COMPOSITION_NAME_EN },
-          { pageId: MOCK_NAMELESS_COMPOSITION_ID, compositionName: MOCK_NAMELESS_COMPOSITION_ID },
-          { pageId: MOCK_PAGE_ID }
-        ]
-      })
+      expect.objectContaining({ usageRefs: [] })
     ]);
-    expect(compositionsRepository.findByIds).toHaveBeenCalledWith([
-      MOCK_LEGACY_COMPOSITION_ID,
-      MOCK_NAMELESS_COMPOSITION_ID
-    ]);
+    expect(compositionsRepository.findByIds).not.toHaveBeenCalled();
   });
 
   it('should not load compositions when asset usage has no composition references', async () => {
@@ -158,7 +147,9 @@ describe('AssetsQuery', () => {
       requestContainer: { cradle: { assetsRepository: mockRepo, compositionsRepository } }
     } as unknown as GraphQLContext;
 
-    await expect(AssetsQuery.allAssets({}, { filters: {} }, context)).resolves.toEqual(assets);
+    await expect(AssetsQuery.allAssets({}, { filters: {} }, context)).resolves.toEqual([
+      { ...MOCK_PAGE_ASSET, usageRefs: [] }
+    ]);
     expect(compositionsRepository.findByIds).not.toHaveBeenCalled();
   });
 

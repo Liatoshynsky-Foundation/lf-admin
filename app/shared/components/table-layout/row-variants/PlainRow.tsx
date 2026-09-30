@@ -8,17 +8,21 @@ type PlainRowProps<TGroup, TSub, TPlain> = Readonly<{
   plainData: TPlain;
   columns: readonly ColumnDef<TGroup, TSub, TPlain>[];
   gridTemplate: string;
+  firstColWidth?: string;
+  offsetFirstCol?: boolean;
 }>;
 
 export function PlainRow<TGroup, TSub, TPlain>({
   plainData,
   columns,
-  gridTemplate
+  gridTemplate,
+  firstColWidth = 'auto',
+  offsetFirstCol = false
 }: PlainRowProps<TGroup, TSub, TPlain>) {
   const withGroups = columns.some((col) => col.renderGroup || col.renderSub);
 
   return (
-    <Box sx={styles.individualWorkRow(gridTemplate)}>
+    <Box sx={styles.individualWorkRow(gridTemplate, firstColWidth, offsetFirstCol)}>
       {columns.map((col) => {
         if (!col.renderPlain) return null;
 

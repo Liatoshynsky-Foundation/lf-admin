@@ -1,0 +1,102 @@
+enum ResearchWorkStatus {
+  published
+  hidden
+}
+
+type ResearchWorkPdfFile {
+  filename: String!
+  url: String!
+  mimeType: String!
+}
+
+input ResearchWorkPdfFileInput {
+  filename: String!
+  url: String!
+  mimeType: String!
+}
+
+type ResearchWork {
+  id: ID!
+  bibliographicDescription: String!
+  author: String!
+  year: String!
+  keywords: String
+  pdfFile: ResearchWorkPdfFile
+  url: String
+  status: ResearchWorkStatus!
+  publishedAt: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreateResearchWorkInput {
+  bibliographicDescription: String!
+  author: String!
+  year: String!
+  keywords: String
+  pdfFile: ResearchWorkPdfFileInput
+  url: String
+  status: ResearchWorkStatus
+  publishedAt: String
+}
+
+input UpdateResearchWorkInput {
+  bibliographicDescription: String
+  author: String
+  year: String
+  keywords: String
+  pdfFile: ResearchWorkPdfFileInput
+  url: String
+  status: ResearchWorkStatus
+  publishedAt: String
+}
+
+input UpdateResearchWorkStatusInput {
+  status: ResearchWorkStatus!
+}
+
+type PaginatedResearchWorks {
+  items: [ResearchWork!]!
+  total: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+enum ResearchWorksSortBy {
+  author
+  bibliographicDescription
+  year
+  createdAt
+  updatedAt
+  publishedAt
+}
+
+input ResearchWorksSortOptions {
+  field: ResearchWorksSortBy!
+  order: SortOrder!
+}
+
+input ResearchWorkFiltersInput {
+  statuses: [ResearchWorkStatus!]
+  limit: Int
+  skip: Int
+  search: String
+  sort: [ResearchWorksSortOptions!]
+}
+
+extend type Query {
+  researchWorkById(id: ID!): ResearchWork
+  allResearchWorks(filters: ResearchWorkFiltersInput): [ResearchWork!]!
+  paginatedResearchWorks(
+    page: Int!
+    limit: Int!
+    filters: ResearchWorkFiltersInput
+  ): PaginatedResearchWorks!
+}
+
+extend type Mutation {
+  createResearchWork(input: CreateResearchWorkInput!): ResearchWork!
+  updateResearchWork(id: ID!, input: UpdateResearchWorkInput!): ResearchWork!
+  updateResearchWorkStatus(id: ID!, input: UpdateResearchWorkStatusInput!): ResearchWork!
+  deleteResearchWork(id: ID!): Boolean!
+}

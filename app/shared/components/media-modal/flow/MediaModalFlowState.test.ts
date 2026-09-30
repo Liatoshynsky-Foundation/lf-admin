@@ -6,7 +6,7 @@ const initialCrop: CropResult = { rect: { x: 0, y: 0, width: 200, height: 200 } 
 const resizedCrop: CropResult = { rect: { x: 10, y: 12, width: 180, height: 160 } };
 
 describe('MediaModalFlowState', () => {
-  it('should derive tab from initial selected (upload -> UPLOAD)', () => {
+  it('should fallback to GALLERY tab by default when tab is not provided', () => {
     const initial: MediaModalOpenState = {
       selected: {
         kind: 'upload',
@@ -18,7 +18,7 @@ describe('MediaModalFlowState', () => {
 
     const state = buildInitialState(initial);
 
-    expect(state.tab).toBe('UPLOAD');
+    expect(state.tab).toBe('GALLERY');
     expect(state.step).toBe('SELECT');
     expect(state.selected?.kind).toBe('upload');
   });
@@ -114,7 +114,7 @@ describe('MediaModalFlowState', () => {
     expect(state3.resetSeq).toBe(state2.resetSeq + 1);
   });
 
-  it('should derive tab from initial selected (used -> USED)', () => {
+  it('should default to GALLERY tab even when used item is selected without explicit tab', () => {
     const initial: MediaModalOpenState = {
       selected: {
         kind: 'used',
@@ -125,7 +125,7 @@ describe('MediaModalFlowState', () => {
       }
     };
     const state = buildInitialState(initial);
-    expect(state.tab).toBe('USED');
+    expect(state.tab).toBe('GALLERY');
   });
 
   it('should derive tab from initial selected (gallery -> GALLERY)', () => {

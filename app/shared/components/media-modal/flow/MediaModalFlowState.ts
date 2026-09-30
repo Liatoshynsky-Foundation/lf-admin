@@ -58,7 +58,7 @@ export const isSameCrop = (a: CropResult | null, b: CropResult | null): boolean 
 
 export const buildInitialState = (initial?: MediaModalOpenState): State => {
   const initialSelected = initial?.selected ?? null;
-  const tab: MediaModalTab = tabFromSelected(initialSelected) ?? initial?.tab ?? 'GALLERY';
+  const tab: MediaModalTab = initial?.tab ?? 'GALLERY';
 
   const requestedStep: MediaModalStep = initial?.step ?? 'SELECT';
   const step: MediaModalStep = requestedStep === 'CROP' && !initialSelected ? 'SELECT' : requestedStep;

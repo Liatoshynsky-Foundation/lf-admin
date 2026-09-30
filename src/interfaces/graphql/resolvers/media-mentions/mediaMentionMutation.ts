@@ -18,6 +18,7 @@ import {
 } from '~/domain/repositories/mediaMentionsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { MediaStatus } from '~/types/enums/common.enums';
+import { mediaMentionUrlSchema } from '~/validators/mediaMention.schema';
 
 export type CreateMediaMentionGQLInput = {
   url: string;
@@ -62,6 +63,8 @@ export const MediaMentionsMutation = {
     }
 
     validateSeoLengths(input);
+    
+    mediaMentionUrlSchema.parse(input.url);
 
     const slug = await generateUniqueSlug(titleForSlug, {
       checkExists: async (slug: string) => {
@@ -100,6 +103,8 @@ export const MediaMentionsMutation = {
     const repo = context.requestContainer.cradle.mediaMentionsRepository;
 
     validateSeoLengths(input);
+
+    if (input.url) mediaMentionUrlSchema.parse(input.url);
 
     const updateData: UpdateMediaMentionInput = { ...input };
 
