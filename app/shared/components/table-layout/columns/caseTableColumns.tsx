@@ -38,18 +38,18 @@ export const createCaseTableColumns = (): readonly ColumnDef<never, never, CaseT
     renderPlain: (row) => row.caseName
   },
   {
-    id: 'sheetsNumber',
-    headerLabel: 'Аркуші',
-    width: '84px',
-    align: 'left',
-    renderPlain: (row) => row.sheetsNumber
-  },
-  {
     id: 'caseDate',
     headerLabel: 'Дати',
     width: '110px',
     align: 'left',
     renderPlain: (row) => row.caseDate
+  },
+  {
+    id: 'sheetsNumber',
+    headerLabel: 'Аркуші',
+    width: '84px',
+    align: 'left',
+    renderPlain: (row) => row.sheetsNumber
   },
   {
     id: 'caseDescription',
