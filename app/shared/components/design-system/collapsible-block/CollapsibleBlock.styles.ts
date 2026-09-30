@@ -41,6 +41,7 @@ export const getStyles = (hasGrip: boolean, isHidden: boolean = false, isSaving:
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
+      width: '100%',
       minWidth: 0,
       overflow: 'visible'
     },
@@ -48,6 +49,27 @@ export const getStyles = (hasGrip: boolean, isHidden: boolean = false, isSaving:
       minWidth: 0,
       overflow: 'visible',
       whiteSpace: 'normal'
+    },
+    deleteButton: {
+      marginLeft: 'auto',
+      marginRight: '8px',
+      flexShrink: 0,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '24px',
+      height: '24px',
+      padding: 0,
+      borderRadius: '50%',
+      cursor: 'pointer',
+      color: 'inherit',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+      },
+      '&:focus-visible': {
+        outline: '2px solid currentColor',
+        outlineOffset: '1px'
+      }
     },
     visibilityToggle: {
       flexShrink: 0,

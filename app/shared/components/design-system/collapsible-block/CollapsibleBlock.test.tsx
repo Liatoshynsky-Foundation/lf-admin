@@ -22,6 +22,12 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
   return EyeClosed;
 });
 
+jest.mock('~/public/icons/trash.svg', () => {
+  const Trash = () => <span>trash</span>;
+  Trash.displayName = 'Trash';
+  return Trash;
+});
+
 jest.mock('../../grip/Grip');
 
 describe('CollapsibleBlock', () => {
@@ -131,6 +137,43 @@ describe('CollapsibleBlock', () => {
 
     fireEvent.keyDown(toggle, { key: ' ' });
     expect(onToggleVisibility).toHaveBeenCalledTimes(2);
+  });
+
+  it('should call onDelete without expanding the accordion', () => {
+    const onDelete = jest.fn();
+    render(
+      <CollapsibleBlock title={titleText} onDelete={onDelete}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const cont = screen.getByTestId('inserted-container');
+    expect(cont).toHaveStyle('visibility: hidden');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити секцію' }));
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(cont).toHaveStyle('visibility: hidden');
+  });
+
+  it('should call onDelete on Enter and Space, and ignore other keys', () => {
+    const onDelete = jest.fn();
+    render(
+      <CollapsibleBlock title={titleText} onDelete={onDelete}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const deleteButton = screen.getByRole('button', { name: 'Видалити секцію' });
+
+    fireEvent.keyDown(deleteButton, { key: 'a' });
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(deleteButton, { key: 'Enter' });
+    expect(onDelete).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(deleteButton, { key: ' ' });
+    expect(onDelete).toHaveBeenCalledTimes(2);
   });
 
   it('should lock its own pointer events and dim itself when a save is in progress', () => {
