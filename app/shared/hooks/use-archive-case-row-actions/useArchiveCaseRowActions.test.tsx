@@ -70,7 +70,6 @@ const TestHarness = ({
 }) => {
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
   const row = getCaseRow(caseItem);
-  const shareItem = row.menuActions.menuItems[0].items.find((item) => item.id === 'share');
 
   return (
     <div>
@@ -88,7 +87,6 @@ const TestHarness = ({
           menuTriggerLabel: row.menuActions.menuTriggerLabel,
         })}
       </div>
-      <span data-testid="share-href">{shareItem?.href}</span>
       <button data-testid="edit-action" onClick={row.editAction.onEditClick}>edit-action</button>
       {row.menuActions.menuItems.flatMap((group) => group.items).map((item) => (
         <button key={item.id} data-testid={`menu-${item.id}`} onClick={item.onClick}>
@@ -121,7 +119,6 @@ describe('useArchiveCaseRowActions', () => {
       editLabel: `Редагувати справу ${caseItem.name}`,
       menuTriggerLabel: `Дії для справи ${caseItem.name}`,
     }));
-    expect(screen.getByTestId('share-href')).toHaveTextContent(`/archive/case/${caseItem.id}/share`);
   });
 
   describe('Edit Case Flow', () => {
@@ -210,6 +207,27 @@ describe('useArchiveCaseRowActions', () => {
 
       expect(mockDeleteCase).toHaveBeenCalledWith({ id: 'case-1' });
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+    });
+  });
+
+  describe('Share Case Flow', () => {
+    it.each([
+      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
+      { scenario: 'rejects', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const },
+    ])('should show a $expectToast toast when the Clipboard API $scenario', async ({ impl, expectToast }) => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockImplementation(impl);
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      if (expectToast === 'success') {
+        expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+      } else {
+        expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+      }
     });
   });
 

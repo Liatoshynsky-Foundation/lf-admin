@@ -1,5 +1,6 @@
 'use client';
 
+import { Typography } from '@mui/material';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -15,6 +16,7 @@ import {
   type PdfEntry
 } from '~/constants/archive';
 import { Fund } from '~/constants/fund';
+import TitleWithTooltip from '~/shared/components/card-layout/TitleWithTooltip';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -64,6 +66,7 @@ export interface FundsTableProps {
   onPublish?: (fund: Fund) => void;
   onUnpublish?: (fund: Fund) => void;
   groupCasesByFund?: boolean;
+  caseToEdit?: ArchiveCase;
 }
 
 async function copyToClipboard(value: string) {
@@ -102,7 +105,8 @@ export const FundsTable = ({
   onCaseChanged,
   onPublish,
   onUnpublish,
-  groupCasesByFund = false
+  groupCasesByFund = false,
+  caseToEdit
 }: FundsTableProps) => {
   const [deleteFund] = useDeleteFund();
   const [deleteCase] = useDeleteCase();
@@ -110,7 +114,7 @@ export const FundsTable = ({
     open: false
   });
 
-  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
+  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged, caseToEdit);
 
   const shareFund = async (id: string) => {
     try {
@@ -160,7 +164,7 @@ export const FundsTable = ({
 
   const buildOrphanCaseRowData = (caseRow: CaseRowFields): FundRow => ({
     id: caseRow.id,
-    fundNumber: caseRow.cipher,
+    fundNumber: caseRow.cipher.replace(/^Ф\.\s*0\s*,\s*/i, ''),
     name: caseRow.name,
     descriptions: caseRow.descriptionLabel,
     cases: caseRow.caseLabel,
@@ -171,6 +175,16 @@ export const FundsTable = ({
     menuActions: caseRow.menuActions
   });
 
+  const renderDate = (date: string) => (
+    <TitleWithTooltip text={date} lineClamp={2} fontWeight={600} fontSize={16} />
+  );
+
+  const renderFundNumber = (fundNumber: number | string) => {
+    const text = typeof fundNumber === 'number' || /^\d+$/.test(fundNumber) ? `ф. ${fundNumber}` : fundNumber;
+
+    return <Typography sx={{ fontSize: '16px', fontWeight: 700 }}>{text}</Typography>;
+  };
+
   const columns: readonly ColumnDef<FundRow, CaseRowFields, FundRow>[] = [
     {
       id: 'fundNumber',
@@ -178,17 +192,27 @@ export const FundsTable = ({
       align: 'center',
       width: '96px',
       hasRightDivider: true,
-      renderGroup: (fund) => fund.fundNumber,
+      hideSub: groupCasesByFund,
+      renderGroup: (fund) => renderFundNumber(fund.fundNumber),
       renderSub: (caseRow) => caseRow.cipher,
-      renderPlain: (fund) => fund.fundNumber
+      renderPlain: (fund) => renderFundNumber(fund.fundNumber)
     },
     {
       id: 'name',
       headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.name,
       width: 'minmax(300px, 1fr)',
+      subGridColumn: groupCasesByFund ? '1 / span 2' : undefined,
       renderGroup: (fund) => fund.name,
       renderSub: (caseRow) => caseRow.name,
       renderPlain: (fund) => fund.name
+    },
+    {
+      id: 'dates',
+      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.dates,
+      width: '160px',
+      renderGroup: (fund) => renderDate(fund.dates),
+      renderSub: (caseRow) => renderDate(caseRow.caseDate),
+      renderPlain: (fund) => renderDate(fund.dates)
     },
     {
       id: 'descriptionsCount',
@@ -205,14 +229,6 @@ export const FundsTable = ({
       renderGroup: (fund) => String(fund.cases),
       renderSub: (caseRow) => caseRow.caseLabel,
       renderPlain: (fund) => String(fund.cases)
-    },
-    {
-      id: 'dates',
-      headerLabel: ARCHIVE_FUNDS_TABLE_HEADERS.dates,
-      width: '160px',
-      renderGroup: (fund) => fund.dates,
-      renderSub: (caseRow) => caseRow.caseDate,
-      renderPlain: (fund) => fund.dates
     },
     {
       id: 'status',

@@ -1,6 +1,7 @@
 'use client';
 
 import { Box } from '@mui/material';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -263,9 +264,14 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const [knownFundTotal, setKnownFundTotal] = useState(0);
   const [knownCasesLength, setKnownCasesLength] = useState(0);
   const [publishCandidate, setPublishCandidate] = useState<Fund | null>(null);
+  const [caseToEdit, setCaseToEdit] = useState<ArchiveCase>();
   const [statusOverrides, setStatusOverrides] = useState<Record<string, { status: BaseContentStatuses; updatedAt: string }>>({});
   const [updateFund] = useUpdateFund();
   const checkFundPublishWarning = useFundPublishWarning();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const sharedCaseId = searchParams.get('caseId');
 
   const filterValues = statusFilterProps.value;
   const isAllStatus = filterValues.length === 0;
@@ -294,7 +300,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     },
     { skip: !showFunds }
   );
-  const { loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
+  const { funds: allFunds, loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
     skip: !isAllTab
   });
 
@@ -338,8 +344,29 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
 
   const sortedFunds = [...fundsWithOverrides].sort((a, b) => Number(a.fundNumber) - Number(b.fundNumber));
   const sortedCases = [...cases].sort((a, b) => Number(a.caseNumber) - Number(b.caseNumber));
-  const filteredFundIds = new Set(sortedFunds.map((fund) => fund.id));
-  const orphanCases = sortedCases.filter((caseItem) => !filteredFundIds.has(caseItem.fundId));
+
+  useEffect(() => {
+    if (!sharedCaseId || casesLoading) {
+      return;
+    }
+
+    const sharedCase = cases.find((item) => item.id === sharedCaseId);
+    if (sharedCase && caseToEdit?.id !== sharedCase.id) {
+      setCaseToEdit(sharedCase);
+    } else if (!sharedCase) {
+      toast.error('Справу не знайдено');
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete('caseId');
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }, [caseToEdit?.id, cases, casesLoading, pathname, router, searchParams, sharedCaseId]);
+  const shouldUseAllFundsForGrouping = isAllTab && !appliedSearch && isAllStatus;
+  const fundIdsForCaseGrouping = new Set(
+    (shouldUseAllFundsForGrouping ? allFunds : sortedFunds).map((fund) => fund.id)
+  );
+  const orphanCases = sortedCases.filter((caseItem) => !fundIdsForCaseGrouping.has(caseItem.fundId));
   const effectiveCasesLength = Math.max(sortedCases.length, casesLoading ? knownCasesLength : 0);
 
   const paginationData = getPaginationData({
@@ -494,6 +521,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
           onPublish={handlePublishRequest}
           onUnpublish={handleUnpublishRequest}
           groupCasesByFund={isAllTab}
+          caseToEdit={caseToEdit}
         />
       );
     }

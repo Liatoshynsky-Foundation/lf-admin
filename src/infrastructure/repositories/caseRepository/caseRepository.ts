@@ -113,7 +113,10 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
     countDistinctDescriptionNumbers: async (fundId: Case['fundId']): Promise<number> => {
       await dbConnect();
 
-      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', { fundId });
+      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', {
+        fundId,
+        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+      });
       return distinctDescriptionNumbers.length;
     }
   };

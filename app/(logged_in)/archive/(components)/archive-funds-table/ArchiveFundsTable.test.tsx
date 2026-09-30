@@ -150,6 +150,11 @@ jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
 
 jest.mock('~/shared/components/table-layout/components/StatusBadge');
 
+jest.mock('~/shared/components/card-layout/TitleWithTooltip', () => ({
+  __esModule: true,
+  default: ({ text }: { text: string }) => <span>{text}</span>
+}));
+
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   TableLayout: <TGroup, TSub, TPlain>({ data, columns }: TableLayoutProps<TGroup, TSub, TPlain>) => (
     <div data-testid="mock-table-layout">

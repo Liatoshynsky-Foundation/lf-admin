@@ -11,6 +11,7 @@ export interface ArchiveCaseModalViewProps {
   isOpen: boolean;
   onClose: () => void;
   mode?: 'create' | 'edit';
+  cipher?: string;
   descriptionNumber: string;
   setDescriptionNumber: (value: string) => void;
   caseNumber: string;
@@ -39,6 +40,7 @@ export const ArchiveCaseModalView = ({
   isOpen,
   onClose,
   mode = 'create',
+  cipher,
   descriptionNumber,
   setDescriptionNumber,
   caseNumber,
@@ -66,7 +68,9 @@ export const ArchiveCaseModalView = ({
     <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
       <DialogTitle sx={styles.dialogHeaderBox}>
         <Typography sx={styles.dialogTitle}>
-          {mode === 'edit' ? ARCHIVE_CASE_MODAL_LABELS.title_edit : ARCHIVE_CASE_MODAL_LABELS.title}
+          {mode === 'edit'
+            ? `${ARCHIVE_CASE_MODAL_LABELS.title_edit}${cipher ? ` - ${cipher}` : ''}`
+            : ARCHIVE_CASE_MODAL_LABELS.title}
         </Typography>
         <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />

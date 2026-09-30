@@ -144,7 +144,7 @@ describe('useFunds', () => {
   });
 
   describe('useAllFunds', () => {
-    it('should map findAllFunds entries, preferring chronologicalBoundaries over documentCreationDate', () => {
+    it('should map findAllFunds entries using documentCreationDate for dates', () => {
       mockUseAllFundsQuery.mockReturnValue({
         data: {
           findAllFunds: [
@@ -174,7 +174,7 @@ describe('useFunds', () => {
           name: 'Архів',
           descriptions: 2,
           cases: 3,
-          dates: '1900-1920',
+          dates: '1901',
           status: BaseContentStatuses.Published,
           updatedAt: '2023-01-01'
         }
@@ -183,7 +183,7 @@ describe('useFunds', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('should fall back to documentCreationDate when chronologicalBoundaries is missing', () => {
+    it('should use documentCreationDate when chronologicalBoundaries is present', () => {
       mockUseAllFundsQuery.mockReturnValue({
         data: {
           findAllFunds: [
@@ -305,7 +305,7 @@ describe('useFunds', () => {
           name: 'Архів',
           descriptions: 2,
           cases: 3,
-          dates: '1900-1920',
+          dates: '1901',
           status: BaseContentStatuses.Published,
           updatedAt: '2023-01-01'
         }

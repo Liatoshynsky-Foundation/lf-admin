@@ -48,13 +48,23 @@ export function GroupedRow<TGroup, TSub, TPlain>({
             return (
               <Box key={subItem.id} sx={styles.groupedSubRow(gridTemplate, isLast)}>
                 {columns.map((col) => {
+                  if (col.hideSub) {
+                    return null;
+                  }
+
                   const content = col.renderSub ? col.renderSub(subItem, groupData) : null;
                   const hasContent = content !== null && content !== '';
 
                   return (
                     <Box
                       key={col.id}
-                      sx={styles.subCell(col.hasRightDivider, col.hasLeftDivider, hasContent, col.align)}
+                      sx={styles.subCell(
+                        col.hasRightDivider,
+                        col.hasLeftDivider,
+                        hasContent,
+                        col.align,
+                        col.subGridColumn
+                      )}
                     >
                       {typeof content === 'string' ? (
                         <Typography sx={styles.subCellText(col.id)}>{content}</Typography>
