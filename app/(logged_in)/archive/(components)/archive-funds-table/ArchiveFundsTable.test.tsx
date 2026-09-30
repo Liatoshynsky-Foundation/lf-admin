@@ -281,7 +281,7 @@ describe('ArchiveFundsTable', () => {
       await user.click(screen.getByTestId('action-delete'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
       expect(
-        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))
+        screen.getByText(`Видалити фонд «${fund.name}»? Усі справи цього фонду також будуть видалені. Цю дію неможливо скасувати.`)
       ).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-close'));
@@ -582,7 +582,7 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       expect(
-        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити справу «${caseItem.name}»\\?`))
+        screen.getByText(`Ви впевнені, що хочете видалити 'справу' «${caseItem.name}»?`)
       ).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-confirm'));

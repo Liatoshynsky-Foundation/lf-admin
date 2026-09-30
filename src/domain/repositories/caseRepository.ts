@@ -1,3 +1,5 @@
+import { ClientSession } from 'mongoose';
+
 import { Case } from '../entities/Case';
 import { FiltersInput, IBaseRepository } from './baseRepository';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -23,4 +25,5 @@ export type ICaseRepository = IBaseRepository<Case, CaseFilters> & {
     caseNumber: Case['caseNumber']
   ): Promise<Case | null>;
   countDistinctDescriptionNumbers(fundId: Case['fundId']): Promise<number>;
+  deleteByFundId(fundId: Case['fundId'], session?: ClientSession): Promise<void>;
 };
