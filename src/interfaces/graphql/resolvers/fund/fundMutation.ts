@@ -3,6 +3,7 @@ import { GraphQLError } from 'graphql';
 import { FundErrorCodes, FundErrors, graphqlErrors } from '~/constants/errors';
 import { Fund } from '~/src/domain/entities/Fund';
 import { CreateFundInput, UpdateFundInput } from '~/src/domain/repositories/fundRepository';
+import { withTransaction } from '~/src/infrastructure/repositories/helpers';
 import { GraphQLContext } from '~/src/shared/types/container/types';
 import { zFundSchema, zFundUpdateSchema } from '~/src/validators/fund.schema';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
@@ -152,8 +153,11 @@ export const FundMutation = {
 
   deleteFund: async (_: unknown, { id }: DeleteFundArgs, context: GraphQLContext): Promise<boolean> => {
     assertAuthenticated(context);
-    const repo = context.requestContainer.cradle.fundRepository;
-
-    return await repo.delete(id);
+    const { fundRepository, caseRepository } = context.requestContainer.cradle;
+    
+    return await withTransaction(async (session) => {
+      await caseRepository.deleteByFundId(id, session);
+      return await fundRepository.delete(id, session);
+    });
   }
 };

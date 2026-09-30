@@ -13,6 +13,7 @@ import {
 } from '~/constants/archive';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 type EmptyStateProps = {
   title: string;
@@ -92,6 +93,7 @@ jest.mock('~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions'
   useArchiveCaseRowActions: (_onCaseChanged?: () => Promise<unknown>) => ({
     getCaseRow: mockGetCaseRow,
     caseRowModals: <div data-testid="mock-case-row-modals" />,
+    openEditModal: jest.fn(),
   }),
 }));
 
@@ -263,13 +265,13 @@ describe('ArchiveFundsTable', () => {
     expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toBeInTheDocument();
   });
 
- it.each([
+  it.each([
     { column: 'fundNumber', value: ARCHIVE_FUNDS_TABLE_HEADERS.fund },
     { column: 'name', value: ARCHIVE_FUNDS_TABLE_HEADERS.name },
     { column: 'descriptionsCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.descr },
     { column: 'casesCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.cases },
     { column: 'dates', value: ARCHIVE_FUNDS_TABLE_HEADERS.dates }
-  ])('should render the $column column with value $value', ({ column, value }) => {
+  ])('should render the $column column with value$value', ({ column, value }) => {
     renderComponent();
     expect(screen.getByTestId(`mock-table-layout-column-${column}`)).toHaveTextContent(value);
   });
@@ -282,7 +284,7 @@ describe('ArchiveFundsTable', () => {
     { cell: 'dates', value: fund.dates },
     { cell: 'status', value: undefined },
     { cell: 'actions', value: undefined }
-  ])('should render the $cell cell with value $value', ({ cell, value }) => {
+  ])('should render the $cell cell with value$value', ({ cell, value }) => {
     renderComponent();
     if (value) {
       expect(screen.getByTestId(`mock-cell-${cell}`)).toHaveTextContent(value);
@@ -305,7 +307,7 @@ describe('ArchiveFundsTable', () => {
       await user.click(screen.getByTestId('action-delete'));
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'true');
       expect(
-        screen.getByText(new RegExp(`Ви впевнені, що хочете видалити фонд «${fund.name}»\\?`))
+        screen.getByText(`Видалити фонд «${fund.name}»? Усі справи цього фонду також будуть видалені. Цю дію неможливо скасувати.`)
       ).toBeInTheDocument();
 
       await user.click(screen.getByTestId('mock-delete-close'));
@@ -543,5 +545,177 @@ describe('ArchiveFundsTable', () => {
         }
       }
     );
+  });
+
+  describe('Case rows', () => {
+    const caseItem: ArchiveCase = {
+      id: 'c1',
+      name: 'Справа 1',
+      fundId: 'f1',
+      cipher: '1-1-1',
+      caseNumber: 5,
+      descriptionNumber: 2,
+      sheetsNumber: 100,
+      editCaseDate: '2020-01-01',
+      editCaseDescriptions: 'опис',
+      detailedCaseDescription: 'детальний опис',
+      status: BaseContentStatuses.Published,
+      updatedAt: '2023-05-01'
+    };
+
+    const renderWithCase = (overrides?: Partial<FundsTableProps> & { caseOverrides?: Partial<ArchiveCase> }) => {
+      const { caseOverrides, ...rest } = overrides ?? {};
+      return renderComponent({
+        funds: [],
+        cases: [{ ...caseItem, ...caseOverrides }],
+        ...rest
+      });
+    };
+
+    it('should render a case row with its edit, share, toggle-status and delete actions', () => {
+      renderWithCase();
+
+      const row = screen.getByTestId(`mock-table-layout-row-${caseItem.id}`);
+      expect(row).toBeInTheDocument();
+      expect(screen.getByTestId('action-edit')).toBeInTheDocument();
+      expect(screen.getByTestId('action-share')).toBeInTheDocument();
+      expect(screen.getByTestId('action-toggle-status')).toBeInTheDocument();
+      expect(screen.getByTestId('action-delete')).toBeInTheDocument();
+    });
+
+    it.each([
+      { status: BaseContentStatuses.Published, expectedLabel: 'Сховати' },
+      { status: BaseContentStatuses.Hidden, expectedLabel: 'Опублікувати' }
+    ])('should label the toggle action "$expectedLabel" for a $status case', ({ status, expectedLabel }) => {
+      renderWithCase({ caseOverrides: { status } });
+
+      expect(screen.getByTestId('action-toggle-status')).toHaveTextContent('toggle-status');
+      expect(screen.getByTestId(`mock-table-layout-row-${caseItem.id}`)).toHaveTextContent(expectedLabel);
+    });
+
+    it('should open the edit modal for a case, and close it', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-edit'));
+
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-case-modal-caseId')).toHaveTextContent(caseItem.id);
+      expect(screen.getByTestId('mock-case-modal-fundId')).toHaveTextContent(caseItem.fundId);
+
+      await user.click(screen.getByTestId('mock-case-modal-close'));
+
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+    });
+
+    it('should also open the edit modal via the row\'s dedicated edit action', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('edit-action-direct'));
+
+      expect(screen.getByTestId('mock-case-modal')).toBeInTheDocument();
+    });
+
+    it('should call onCaseChanged and close the modal when a case edit is saved', async () => {
+      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
+
+      await user.click(screen.getByTestId('action-edit'));
+      await user.click(screen.getByTestId('mock-case-modal-save'));
+
+      expect(onCaseChangedMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('mock-case-modal')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      {
+        fromStatus: BaseContentStatuses.Published,
+        expectedInput: CaseStatus.Draft,
+        toastMessage: 'Справу успішно сховано'
+      },
+      {
+        fromStatus: BaseContentStatuses.Hidden,
+        expectedInput: CaseStatus.Published,
+        toastMessage: 'Справу успішно опубліковано'
+      }
+    ])(
+      'should toggle a $fromStatus case and show the corresponding success toast',
+      async ({ fromStatus, expectedInput, toastMessage }) => {
+        mockUpdateCase.mockResolvedValueOnce(undefined);
+        const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+        const user = userEvent.setup();
+        renderWithCase({ caseOverrides: { status: fromStatus }, onCaseChanged: onCaseChangedMock });
+
+        await user.click(screen.getByTestId('action-toggle-status'));
+
+        expect(mockUpdateCase).toHaveBeenCalledWith({ id: caseItem.id, input: { status: expectedInput } });
+        expect(toast.success).toHaveBeenCalledWith(toastMessage);
+        expect(onCaseChangedMock).toHaveBeenCalled();
+      }
+    );
+
+    it.each([
+      { rejection: new Error('Не вдалося змінити'), expectedMessage: 'Не вдалося змінити' },
+      { rejection: 'boom', expectedMessage: 'Не вдалося змінити статус справи' }
+    ])(
+      'should show an error toast ($expectedMessage) when toggling status rejects',
+      async ({ rejection, expectedMessage }) => {
+        mockUpdateCase.mockRejectedValueOnce(rejection);
+        const user = userEvent.setup();
+        renderWithCase();
+
+        await user.click(screen.getByTestId('action-toggle-status'));
+
+        expect(toast.error).toHaveBeenCalledWith(expectedMessage);
+      }
+    );
+
+    it('should delete a case, calling onCaseChanged, when confirmed', async () => {
+      const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithCase({ onCaseChanged: onCaseChangedMock });
+
+      await user.click(screen.getByTestId('action-delete'));
+      expect(
+        screen.getByText(`Ви впевнені, що хочете видалити 'справу' «${caseItem.name}»?`)
+      ).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+
+      expect(mockDeleteCase).toHaveBeenCalledWith({ id: caseItem.id });
+      expect(onCaseChangedMock).toHaveBeenCalled();
+    });
+
+    it('should not call onCaseChanged when deleting a case if it is not provided', async () => {
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-delete'));
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+
+      expect(mockDeleteCase).toHaveBeenCalledWith({ id: caseItem.id });
+    });
+
+    it.each([
+      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
+      { scenario: 'fails', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const }
+    ])('should show a $expectToast toast when copying the case link$scenario', async ({ impl, expectToast }) => {
+      const writeText = setClipboardWriteText(impl);
+      const user = userEvent.setup();
+      renderWithCase();
+
+      await user.click(screen.getByTestId('action-share'));
+
+      if (expectToast === 'success') {
+        expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`/archive/cases?caseId=${caseItem.id}`));
+        expect(toast.success).toHaveBeenCalledWith(COPY_LINK_SUCCESS_MESSAGE);
+      } else {
+        expect(toast.error).toHaveBeenCalledWith(COPY_LINK_ERROR_MESSAGE);
+      }
+
+      clearClipboardWriteText();
+    });
   });
 });

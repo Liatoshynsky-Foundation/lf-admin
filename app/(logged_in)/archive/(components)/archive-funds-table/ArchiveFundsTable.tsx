@@ -284,7 +284,11 @@ export const FundsTable = ({
       open={deleteState.open}
       onClose={() => setDeleteState({ open: false })}
       title="Підтвердити видалення"
-      description={`Ви впевнені, що хочете видалити ${deleteState.isCase ? 'справу' : 'фонд'} «${deleteState.name ?? ''}»?`}
+      description={
+        deleteState.isCase 
+          ? `Ви впевнені, що хочете видалити справу «${deleteState.name ?? ''}»?` 
+          : `Видалити фонд «${deleteState.name ?? ''}»? Усі справи цього фонду також будуть видалені. Цю дію неможливо скасувати.`
+      }
       onConfirm={async () => {
         if (!deleteState.id) return;
         if (deleteState.isCase) {
@@ -365,6 +369,7 @@ export const FundsTable = ({
         </>
       )}
       {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} />}
+      {caseRowModals}
     </>
   );
 };
