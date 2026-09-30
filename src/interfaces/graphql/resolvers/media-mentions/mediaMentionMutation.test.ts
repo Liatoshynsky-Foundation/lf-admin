@@ -67,7 +67,7 @@ describe('media-mentions Mutation', () => {
       allowIndexation: { uk: true, en: true },
       coverImage: {
         src: 'img.jpg',
-        alt: { uk: '', en: '' },
+        alt: { uk: 'Альт зображення', en: 'Cover alt' },
         caption: { uk: '', en: '' },
         crop: { x: 0, y: 0, width: 100, height: 100 }
       },
@@ -128,7 +128,7 @@ describe('media-mentions Mutation', () => {
         overrides: {
           coverImage: {
             src: 'img.jpg',
-            alt: { uk: 'a'.repeat(251), en: '' },
+            alt: { uk: 'a'.repeat(251), en: 'Cover alt' },
             caption: { uk: '', en: '' }
           }
         },
@@ -177,7 +177,7 @@ describe('media-mentions Mutation', () => {
       title: { uk: 'Оновлений заголовок', en: 'Updated Title' },
       coverImage: {
         src: 'updated.jpg',
-        alt: { uk: '', en: '' },
+        alt: { uk: 'Оновлений альт', en: 'Updated alt' },
         caption: { uk: '', en: '' },
         crop: { x: 5, y: 5, width: 90, height: 90 }
       }
