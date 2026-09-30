@@ -1,7 +1,7 @@
 'use client';
 
 import { DragEndEvent } from '@dnd-kit/core';
-import { Box, IconButton, TextField } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,9 +9,10 @@ import { type PageSection, type SectionItemType } from './pageSection.types';
 import { createPageSection, createSectionItem, SECTION_ITEM_LABEL, sectionOrdinalTitle } from './pageSection.utils';
 import { styles } from './PageSectionsEditor.styles';
 import { PAGE_SECTION_ADD_ACTIONS } from '~/constants/pageSections';
-import { proseToText, textToProse } from '~/lib/utils/prose';
+import { proseToHeaderText } from '~/lib/utils/prose';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import TrashIcon from '~/public/icons/trash.svg';
+import { HeaderContent } from '~/shared/components/block/content-types/header-content/HeaderContent';
 import { ParagraphContent } from '~/shared/components/block/content-types/paragraph-content/ParagraphContent';
 import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
@@ -19,6 +20,7 @@ import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/S
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 import { useStore } from '~/store';
 import { CONTENT_TYPE } from '~/types/blocks/contentTypes';
+import type { ProseDoc } from '~/types/common';
 
 interface PageSectionCardProps {
   section: PageSection;
@@ -73,18 +75,19 @@ const PageSectionCard = ({ section, index, locale, onChange, onDelete }: PageSec
   ));
 
   return (
-    <CollapsibleBlock title={sectionOrdinalTitle(index)} grip defaultExpanded onDelete={onDelete}>
+    <CollapsibleBlock
+      title={proseToHeaderText(section.title[locale] as ProseDoc, sectionOrdinalTitle(index))}
+      grip
+      defaultExpanded
+      onDelete={onDelete}
+    >
       <Box sx={styles.cardBody}>
-        <TextField
-          fullWidth
-          placeholder="Додайте заголовок"
-          value={proseToText(section.title[locale])}
-          onChange={(event) =>
-            onChange({
-              ...section,
-              title: { ...section.title, [locale]: textToProse(event.target.value) }
-            })
-          }
+        <HeaderContent
+          item={{ id: `${section.id}-title`, type: CONTENT_TYPE.HEADER, title: section.title }}
+          locale={locale}
+          pageId="page-sections"
+          blockId={section.id}
+          onChange={(next) => onChange({ ...section, title: next.title })}
         />
 
         {section.items.length > 0 && (

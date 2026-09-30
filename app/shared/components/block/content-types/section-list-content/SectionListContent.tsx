@@ -19,7 +19,7 @@ export const SectionListContent = ({ item, locale, onChange }: ContentTypeProps<
       <Typography variant="subtitle1" component="h4">
         {item.label ?? 'Пункти секції:'}
       </Typography>
-      <SortableList id={`section-list-${item.id}`} items={item.items.map((entry) => entry.id)} onDragEnd={dragEnd}>
+      <SortableList id={`section-list-${item.id}`} items={uiItems.map((entry) => entry.id)} onDragEnd={dragEnd}>
         <ConfigurableList
           items={uiItems}
           addBtnLabel="Додати пункт"

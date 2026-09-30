@@ -60,13 +60,14 @@ describe('PageSectionsEditor', () => {
     expect(sectionHeadings()).toEqual(['Перша секція', 'Друга секція']);
   });
 
-  it('should keep a typed title on the current locale', () => {
+  it('should edit the section title with the same field as other sections', () => {
     render(<PageSectionsEditor />);
     addSection();
 
-    fireEvent.change(screen.getByPlaceholderText('Додайте заголовок'), { target: { value: 'Історія фонду' } });
+    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
 
-    expect(screen.getByPlaceholderText('Додайте заголовок')).toHaveValue('Історія фонду');
+    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent('Updated Заголовок секції');
+    expect(sectionHeadings()).toEqual(['Updated Заголовок секції']);
   });
 
   it('should add a subtitle, a paragraph and a bullet, then remove the paragraph', () => {
@@ -104,26 +105,23 @@ describe('PageSectionsEditor', () => {
     render(<PageSectionsEditor />);
     addSection();
 
-    fireEvent.change(screen.getByPlaceholderText('Додайте заголовок'), { target: { value: 'Перша' } });
     addSection();
 
-    const titles = screen.getAllByPlaceholderText('Додайте заголовок');
-    fireEvent.change(titles[1], { target: { value: 'Друга' } });
+    fireEvent.click(screen.getAllByTestId('trigger-change-Заголовок секції')[1]);
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Видалити секцію' })[0]);
 
-    expect(screen.getAllByPlaceholderText('Додайте заголовок')).toHaveLength(1);
-    expect(screen.getByPlaceholderText('Додайте заголовок')).toHaveValue('Друга');
-    expect(sectionHeadings()).toEqual(['Перша секція']);
+    expect(screen.getAllByTestId('textfield-json-Заголовок секції')).toHaveLength(1);
+    expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent('Updated Заголовок секції');
+    expect(sectionHeadings()).toEqual(['Updated Заголовок секції']);
 
     addSection();
-    fireEvent.change(screen.getAllByPlaceholderText('Додайте заголовок')[1], { target: { value: 'Третя' } });
 
     fireEvent.click(screen.getAllByTestId('trigger-drag')[0]);
 
-    const reordered = screen.getAllByPlaceholderText('Додайте заголовок');
-    expect(reordered[0]).toHaveValue('Третя');
-    expect(reordered[1]).toHaveValue('Друга');
+    const reordered = screen.getAllByTestId('textfield-json-Заголовок секції');
+    expect(reordered[0]).not.toHaveTextContent('Updated Заголовок секції');
+    expect(reordered[1]).toHaveTextContent('Updated Заголовок секції');
   });
 
   it('should show only the add button after the last section is removed', () => {
@@ -145,7 +143,7 @@ describe('PageSectionsEditor', () => {
 
     fireEvent.click(screen.getAllByTestId('trigger-drag')[0]);
 
-    const fields = screen.getAllByTestId(/textfield-wrapper-/);
+    const fields = screen.getAllByTestId(/textfield-wrapper-/).filter((field) => field.getAttribute('data-testid') !== 'textfield-wrapper-Заголовок секції');
     expect(fields[0]).toHaveAttribute('data-testid', 'textfield-wrapper-Абзац');
     expect(fields[1]).toHaveAttribute('data-testid', 'textfield-wrapper-Підзаголовок');
   });

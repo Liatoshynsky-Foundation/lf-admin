@@ -30,6 +30,22 @@ describe('useSectionListContent', () => {
     jest.clearAllMocks();
   });
 
+  it('should assign an id when a section entry does not have one', () => {
+    const onItemsChange = jest.fn();
+    const itemsWithoutId = [
+      {
+        title: { uk: titleDoc, en: emptyDoc },
+        description: { uk: descriptionDoc, en: emptyDoc }
+      }
+    ] as SectionListEntry[];
+
+    const { result } = renderHook(() =>
+      useSectionListContent({ items: itemsWithoutId, locale: 'uk', onItemsChange })
+    );
+
+    expect(result.current.uiItems).toEqual([{ id: 'generated-id', title: titleDoc, description: descriptionDoc }]);
+  });
+
   it('should map items to locale-specific ui items', () => {
     const onItemsChange = jest.fn();
     const { result } = renderHook(() => useSectionListContent({ items: initialItems, locale: 'uk', onItemsChange }));
