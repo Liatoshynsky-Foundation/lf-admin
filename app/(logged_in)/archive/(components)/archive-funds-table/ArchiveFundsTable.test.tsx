@@ -246,7 +246,7 @@ describe('ArchiveFundsTable', () => {
     { column: 'name', value: ARCHIVE_FUNDS_TABLE_HEADERS.name },
     { column: 'descriptionsCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.descr },
     { column: 'casesCount', value: ARCHIVE_FUNDS_TABLE_HEADERS.cases },
-    { column: 'dates', value: ARCHIVE_FUNDS_TABLE_HEADERS.dates },
+    { column: 'dates', value: ARCHIVE_FUNDS_TABLE_HEADERS.dates }
   ])('should render the $column column with value $value', ({ column, value }) => {
     renderComponent();
     expect(screen.getByTestId(`mock-table-layout-column-${column}`)).toHaveTextContent(value);
@@ -259,7 +259,7 @@ describe('ArchiveFundsTable', () => {
     { cell: 'casesCount', value: String(fund.cases) },
     { cell: 'dates', value: fund.dates },
     { cell: 'status', value: undefined },
-    { cell: 'actions', value: undefined },
+    { cell: 'actions', value: undefined }
   ])('should render the $cell cell with value $value', ({ cell, value }) => {
     renderComponent();
     if (value) {
@@ -273,6 +273,8 @@ describe('ArchiveFundsTable', () => {
     it('should handle opening the delete modal, closing it, and confirming deletion', async () => {
       const user = userEvent.setup();
       const onDeletedMock = jest.fn();
+      mockDeleteFund.mockResolvedValueOnce({});
+
       renderComponent({ onDeleted: onDeletedMock });
 
       await user.click(screen.getByTestId('mock-delete-confirm'));
@@ -289,19 +291,40 @@ describe('ArchiveFundsTable', () => {
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
+
       expect(mockDeleteFund).toHaveBeenCalledWith({ id: fund.id });
+      expect(toast.success).toHaveBeenCalledWith('Фонд видалено.');
       expect(onDeletedMock).toHaveBeenCalled();
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
     });
 
     it('should not call onDeleted if it is not provided', async () => {
       const user = userEvent.setup();
+      mockDeleteFund.mockResolvedValueOnce({});
+
       renderComponent({ onDeleted: undefined });
 
       await user.click(screen.getByTestId('action-delete'));
       await user.click(screen.getByTestId('mock-delete-confirm'));
+
       expect(mockDeleteFund).toHaveBeenCalledWith({ id: fund.id });
+      expect(toast.success).toHaveBeenCalledWith('Фонд видалено.');
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+    });
+
+    it('should show error toast when fund deletion fails', async () => {
+      const user = userEvent.setup();
+      const onDeletedMock = jest.fn();
+      mockDeleteFund.mockRejectedValueOnce(new Error('Network error'));
+
+      renderComponent({ onDeleted: onDeletedMock });
+
+      await user.click(screen.getByTestId('action-delete'));
+      await user.click(screen.getByTestId('mock-delete-confirm'));
+
+      expect(mockDeleteFund).toHaveBeenCalledWith({ id: fund.id });
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити фонд. Спробуйте ще раз.');
+      expect(onDeletedMock).not.toHaveBeenCalled();
     });
   });
 

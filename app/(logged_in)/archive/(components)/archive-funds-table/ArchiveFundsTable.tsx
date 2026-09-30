@@ -139,9 +139,7 @@ export const FundsTable = ({
     const canUnpublish = fund.status === BaseContentStatuses.Published && Boolean(onUnpublish);
     const statusActions = [
       ...(canPublish ? [{ id: 'publish', text: { name: 'Опублікувати' }, onClick: () => onPublish?.(fund) }] : []),
-      ...(canUnpublish
-        ? [{ id: 'unpublish', text: { name: 'Сховати' }, onClick: () => onUnpublish?.(fund) }]
-        : []),
+      ...(canUnpublish ? [{ id: 'unpublish', text: { name: 'Сховати' }, onClick: () => onUnpublish?.(fund) }] : []),
       {
         id: 'delete',
         text: { name: 'Видалити' },
@@ -347,12 +345,7 @@ export const FundsTable = ({
       id: 'actions',
       width: '96px',
       align: 'right',
-      renderGroup: (fund) => (
-        <RowActions
-          editAction={fund.editAction}
-          menuActions={fund.menuActions}
-        />
-      ),
+      renderGroup: (fund) => <RowActions editAction={fund.editAction} menuActions={fund.menuActions} />,
       renderSub: (caseRow) => <RowActions editAction={caseRow.editAction} menuActions={caseRow.menuActions} />,
       renderPlain: (fund) => (
         <RowActions
@@ -397,12 +390,21 @@ export const FundsTable = ({
         onConfirm={async () => {
           if (!deleteState.id) return;
           if (deleteState.isCase) {
-            await deleteCase({ id: deleteState.id });
+            try {
+              await deleteCase({ id: deleteState.id });
+              setDeleteState({ open: false });
+              await onCaseChanged?.();
+            } catch {}
           } else {
-            await deleteFund({ id: deleteState.id });
+            try {
+              await deleteFund({ id: deleteState.id });
+              toast.success('Фонд видалено.');
+              setDeleteState({ open: false });
+              await onDeleted?.();
+            } catch {
+              toast.error('Не вдалося видалити фонд. Спробуйте ще раз.');
+            }
           }
-          setDeleteState({ open: false });
-          await (deleteState.isCase ? onCaseChanged?.() : onDeleted?.());
         }}
       />
       {editCase && (
