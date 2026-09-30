@@ -1,4 +1,15 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Typography
+} from '@mui/material';
 import { X } from 'lucide-react';
 
 import { styles } from './ArchiveCaseModalView.styles';
@@ -64,14 +75,16 @@ export const ArchiveCaseModalView = ({
   isSubmitDisabled,
   isCancelDisabled
 }: ArchiveCaseModalViewProps) => {
+  const getDialogTitle = () => {
+    if (mode !== 'edit') return ARCHIVE_CASE_MODAL_LABELS.title;
+    if (cipher) return `${ARCHIVE_CASE_MODAL_LABELS.title_edit} - ${cipher}`;
+    return ARCHIVE_CASE_MODAL_LABELS.title_edit;
+  };
+
   return (
     <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
       <DialogTitle sx={styles.dialogHeaderBox}>
-        <Typography sx={styles.dialogTitle}>
-          {mode === 'edit'
-            ? `${ARCHIVE_CASE_MODAL_LABELS.title_edit}${cipher ? ` - ${cipher}` : ''}`
-            : ARCHIVE_CASE_MODAL_LABELS.title}
-        </Typography>
+        <Typography sx={styles.dialogTitle}>{getDialogTitle()}</Typography>
         <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>
@@ -151,11 +164,7 @@ export const ArchiveCaseModalView = ({
             <Stack sx={styles.sectionStack}>
               {currentPdfFile.fileName && (
                 <Box sx={styles.fileItemWrapper}>
-                  <FileItem
-                    fileName={currentPdfFile.fileName}
-                    fileType="pdf"
-                    onDelete={handleDeletePdf}
-                  />
+                  <FileItem fileName={currentPdfFile.fileName} fileType="pdf" onDelete={handleDeletePdf} />
                 </Box>
               )}
             </Stack>
