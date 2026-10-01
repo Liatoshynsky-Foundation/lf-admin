@@ -56,6 +56,8 @@ describe('useArchiveCaseModal', () => {
         isSubmitDisabled: true,
         isCancelDisabled: true,
 
+        handleCloseDiscardModal: expect.any(Function),
+        handleConfirmDiscardModal: expect.any(Function),
         clearInputs: expect.any(Function),
         handleApplyPdf: expect.any(Function),
         handleCancel: expect.any(Function),
@@ -363,6 +365,9 @@ describe('useArchiveCaseModal', () => {
 
       act(() => {
         result.current.setCaseNumber('123');
+      });
+
+      act(() => {
         result.current.handleCancel();
       });
 
