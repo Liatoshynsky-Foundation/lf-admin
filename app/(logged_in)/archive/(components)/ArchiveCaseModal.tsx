@@ -105,7 +105,6 @@ export const ArchiveCaseModal = ({
     handleConfirmDiscardModal,
     handleCloseDiscardModal,
     isSubmitDisabled,
-    isCancelDisabled,
     fieldErrors
   } = useArchiveCaseModal({
     setIsOpen,
@@ -182,7 +181,6 @@ export const ArchiveCaseModal = ({
         handleSave={handleSave}
         handleCancel={handleCancel}
         isSubmitDisabled={isSubmitDisabled}
-        isCancelDisabled={isCancelDisabled}
         fieldErrors={fieldErrors}
       />
 
