@@ -14,8 +14,8 @@ import {
   ARCHIVE_FUNDS_TABLE_HEADERS,
   type PdfEntry
 } from '~/constants/archive';
-import { casesStatusMessages } from '~/constants/errors';
 import { Fund } from '~/constants/fund';
+import { getCaseStatusErrorMessage, showCaseStatusSuccessToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -192,20 +192,10 @@ export const FundsTable = ({
       try {
         const fundStatus = nextStatus === CaseStatus.Published ? await getFundStatus(item.fundId) : undefined;
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
-
-        if (nextStatus === CaseStatus.Published && fundStatus === BaseContentStatuses.Hidden) {
-          toast(casesStatusMessages.publishHiddenFundWarning);
-        }
+        showCaseStatusSuccessToast(nextStatus, fundStatus);
         await onCaseChanged?.();
       } catch (error) {
-        toast.error(
-          error instanceof Error 
-            ? error.message 
-            : nextStatus === CaseStatus.Published
-              ? casesStatusMessages.publishError  
-              : casesStatusMessages.updateError  
-        );
+        toast.error(getCaseStatusErrorMessage(error, nextStatus));
       }
     };
 
