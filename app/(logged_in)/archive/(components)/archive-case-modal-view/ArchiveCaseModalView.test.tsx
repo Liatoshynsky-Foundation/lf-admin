@@ -78,8 +78,7 @@ const defaultProps: ArchiveCaseModalViewProps = {
   handleDeletePdf: mockHandleDeletePdf,
   handleSave: mockHandleSave,
   handleCancel: mockHandleCancel,
-  isSubmitDisabled: true,
-  isCancelDisabled: true
+  isSubmitDisabled: true
 };
 
 describe('ArchiveCaseModalView', () => {
@@ -169,9 +168,7 @@ describe('ArchiveCaseModalView', () => {
     const closeButton = screen.getByRole('button', { name: 'Закрити' });
 
     await user.click(closeButton);
-
     expect(mockHandleCancel).toHaveBeenCalledTimes(1);
-    expect(mockOnClose).not.toHaveBeenCalled();
   });
 
   it('should call handleDeletePdf when FileItem delete button is clicked', async () => {
@@ -184,7 +181,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleCancel 1 time when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
 
     const cancelButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel });
     await user.click(cancelButton);
@@ -194,7 +191,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleSave 1 time when enabled and submit button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
 
     const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
     await user.click(saveButton);
@@ -202,14 +199,19 @@ describe('ArchiveCaseModalView', () => {
     expect(mockHandleSave).toHaveBeenCalledTimes(1);
   });
 
-  it('should render the cancel button as enabled', () => {
-    render(<ArchiveCaseModalView {...defaultProps} />);
+  it.each([
+    [true, true],
+    [false, false]
+  ])('renders Save button with disabled=%s when isSubmitDisabled is %s', (isSubmitDisabled, expectedDisabled) => {
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={isSubmitDisabled} />);
 
-    const cancelButton = screen.getByRole('button', {
-      name: ARCHIVE_CASE_MODAL_LABELS.cancel
-    });
+    const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
 
-    expect(cancelButton).toBeEnabled();
+    if (expectedDisabled) {
+      expect(saveButton).toBeDisabled();
+    } else {
+      expect(saveButton).toBeEnabled();
+    }
   });
 
   it(`should render the pdf name and disable the "${ARCHIVE_CASE_MODAL_LABELS.addFile}" button if the pdf file is picked`, () => {

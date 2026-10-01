@@ -43,7 +43,6 @@ export interface ArchiveCaseModalViewProps {
   handleSave: () => void;
   handleCancel: () => void;
   isSubmitDisabled: boolean;
-  isCancelDisabled: boolean;
 }
 
 export const ArchiveCaseModalView = ({
