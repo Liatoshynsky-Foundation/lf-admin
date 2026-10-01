@@ -191,8 +191,6 @@ export const FundsTable = ({
       const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Hidden : CaseStatus.Published;
       try {
         const fundStatus = nextStatus === CaseStatus.Published ? await getFundStatus(item.fundId) : undefined;
-        console.log(fundStatus);
-
         await updateCase({ id: item.id, input: { status: nextStatus } });
         toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
 
