@@ -89,8 +89,7 @@ const validateCaseForm = (
   else if (caseDate.length > 150) errors.caseDate = CASE_VALIDATION_MESSAGES.caseDateMaxLength;
 
   if (!caseDescriptions.trim()) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
-  else if (caseDescriptions.length > 300)
-    errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
+  else if (caseDescriptions.length > 300) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
 
   if (detailedCaseDescription.length > 1000) {
     errors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
@@ -113,6 +112,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
 
   useEffect(() => {
     setDescriptionNumber(initialData?.descriptionNumber ?? '');
@@ -126,14 +126,15 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
   }, [initialData]);
 
   const isDirty = Boolean(
-    descriptionNumber.trim() ||
-      caseNumber.trim() ||
-      sheetsNumber.trim() ||
-      caseDate.trim() ||
-      currentPdfFile.fileName ||
-      detailedCaseDescription.trim() ||
-      caseName.trim() ||
-      caseDescriptions.trim()
+    descriptionNumber.trim() !== (initialData?.descriptionNumber ?? '').trim() ||
+      caseNumber.trim() !== (initialData?.caseNumber ?? '').trim() ||
+      sheetsNumber.trim() !== (initialData?.sheetsNumber ?? '').trim() ||
+      caseDate.trim() !== (initialData?.caseDate ?? '').trim() ||
+      detailedCaseDescription.trim() !== (initialData?.detailedCaseDescription ?? '').trim() ||
+      caseName.trim() !== (initialData?.caseName ?? '').trim() ||
+      caseDescriptions.trim() !== (initialData?.caseDescriptions ?? '').trim() ||
+      (currentPdfFile?.fileName ?? '') !== (initialData?.currentPdfFile?.fileName ?? '') ||
+      (currentPdfFile?.url ?? '') !== (initialData?.currentPdfFile?.url ?? '')
   );
 
   const isFormValid = Boolean(
@@ -157,9 +158,26 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     setFieldErrors({});
   };
 
-  const handleCancel = () => {
+  const closeModalVindow = () => {
     clearInputs();
     setIsOpen(false);
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      setIsDiscardModalOpen(true);
+      return;
+    }
+    closeModalVindow();
+  };
+
+  const handleConfirmDiscardModal = () => {
+    setIsDiscardModalOpen(false);
+    closeModalVindow();
+  };
+
+  const handleCloseDiscardModal = () => {
+    setIsDiscardModalOpen(false);
   };
 
   const handleSave = async () => {
@@ -264,9 +282,12 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     handleDeletePdf,
     isSubmitDisabled: !isFormValid,
     isCancelDisabled: !isDirty,
+    isDiscardModalOpen,
     handleSubmit,
     handleSave,
     handleCancel,
+    handleConfirmDiscardModal,
+    handleCloseDiscardModal,
     clearInputs
   };
 };

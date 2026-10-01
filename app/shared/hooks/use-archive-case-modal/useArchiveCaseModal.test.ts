@@ -8,8 +8,8 @@ import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: {
-    error: jest.fn(),
-  },
+    error: jest.fn()
+  }
 }));
 
 const createMockFile = (name: string, type: string): File => {
@@ -17,7 +17,7 @@ const createMockFile = (name: string, type: string): File => {
 };
 const mockSetIsOpen = jest.fn();
 const defaultProps: UseArchiveCaseModalProps = {
-  setIsOpen: mockSetIsOpen,
+  setIsOpen: mockSetIsOpen
 };
 
 describe('useArchiveCaseModal', () => {
@@ -49,12 +49,15 @@ describe('useArchiveCaseModal', () => {
         detailedCaseDescription: '',
         sheetsNumber: '',
         isUploadModalOpen: false,
+        isDiscardModalOpen: false,
         currentPdfFile: INITIAL_PDF_ENTRY,
         fieldErrors: {},
 
         isSubmitDisabled: true,
         isCancelDisabled: true,
 
+        handleCloseDiscardModal: expect.any(Function),
+        handleConfirmDiscardModal: expect.any(Function),
         clearInputs: expect.any(Function),
         handleApplyPdf: expect.any(Function),
         handleCancel: expect.any(Function),
@@ -73,7 +76,7 @@ describe('useArchiveCaseModal', () => {
         setDescriptionNumber: expect.any(Function),
         setDetailedCaseDescription: expect.any(Function),
         setIsUploadModalOpen: expect.any(Function),
-        setSheetsNumber: expect.any(Function),
+        setSheetsNumber: expect.any(Function)
       });
     });
 
@@ -86,7 +89,7 @@ describe('useArchiveCaseModal', () => {
         currentPdfFile: { fileName: 'file.pdf', name: 'file.pdf' },
         detailedCaseDescription: 'Detail',
         caseName: 'Test Case',
-        caseDescriptions: 'Descriptions',
+        caseDescriptions: 'Descriptions'
       };
       const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, initialData }));
 
@@ -128,8 +131,13 @@ describe('useArchiveCaseModal', () => {
   describe('isAllowedPdfFile', () => {
     it.each([
       { description: 'wrong mime type and extension', fileName: 'image.png', mimeType: 'image/png', expected: false },
-      { description: 'correct mime type, mismatched extension', fileName: 'image.png', mimeType: 'application/pdf', expected: true },
-      { description: 'correct extension, missing mime type', fileName: 'd.pdf', mimeType: '', expected: true },
+      {
+        description: 'correct mime type, mismatched extension',
+        fileName: 'image.png',
+        mimeType: 'application/pdf',
+        expected: true
+      },
+      { description: 'correct extension, missing mime type', fileName: 'd.pdf', mimeType: '', expected: true }
     ])('should return $expected when file has $description', ({ fileName, mimeType, expected }) => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
       const file = createMockFile(fileName, mimeType);
@@ -141,18 +149,18 @@ describe('useArchiveCaseModal', () => {
   });
 
   describe('handleApplyPdf', () => {
-    it.each([
-      { uploadResult: undefined },
-      { uploadResult: null },
-    ])('should not update currentPdfFile when uploadResult is $uploadResult', ({ uploadResult }) => {
-      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+    it.each([{ uploadResult: undefined }, { uploadResult: null }])(
+      'should not update currentPdfFile when uploadResult is $uploadResult',
+      ({ uploadResult }) => {
+        const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
-      act(() => {
-        result.current.handleApplyPdf({ uploadResult });
-      });
+        act(() => {
+          result.current.handleApplyPdf({ uploadResult });
+        });
 
-      expect(result.current.currentPdfFile).toBe(INITIAL_PDF_ENTRY);
-    });
+        expect(result.current.currentPdfFile).toBe(INITIAL_PDF_ENTRY);
+      }
+    );
 
     it('should set currentPdfFile.fileName to the given filename when uploadResult includes one', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
@@ -286,7 +294,7 @@ describe('useArchiveCaseModal', () => {
   });
 
   describe('handleCancel', () => {
-    it('should clear inputs and call setIsOpen with false', () => {
+    it('should open discard modal when form is dirty', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
 
       act(() => {
@@ -297,8 +305,79 @@ describe('useArchiveCaseModal', () => {
         result.current.handleCancel();
       });
 
+      expect(result.current.isDiscardModalOpen).toBe(true);
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+    });
+
+    it('should clear inputs and close modal when form is not dirty', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.handleCancel();
+      });
+
+      expect(result.current.isDiscardModalOpen).toBe(false);
+      expect(mockSetIsOpen).toHaveBeenCalledWith(false);
+    });
+
+    it('should open discard modal when current data differs from initialData', () => {
+      const initialData = {
+        caseNumber: '123'
+      };
+
+      const { result } = renderHook(() => useArchiveCaseModal({ ...defaultProps, initialData }));
+
+      act(() => {
+        result.current.setCaseNumber('456');
+      });
+
+      act(() => {
+        result.current.handleCancel();
+      });
+
+      expect(result.current.isDiscardModalOpen).toBe(true);
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleConfirmDiscardModal', () => {
+    it('should close discard modal and main modal', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.setCaseNumber('123');
+        result.current.handleCancel();
+      });
+
+      act(() => {
+        result.current.handleConfirmDiscardModal();
+      });
+
+      expect(result.current.isDiscardModalOpen).toBe(false);
       expect(result.current.caseNumber).toBe('');
       expect(mockSetIsOpen).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('handleCloseDiscardModal', () => {
+    it('should close discard modal without closing main modal', () => {
+      const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+
+      act(() => {
+        result.current.setCaseNumber('123');
+      });
+
+      act(() => {
+        result.current.handleCancel();
+      });
+
+      act(() => {
+        result.current.handleCloseDiscardModal();
+      });
+
+      expect(result.current.isDiscardModalOpen).toBe(false);
+      expect(mockSetIsOpen).not.toHaveBeenCalled();
+      expect(result.current.caseNumber).toBe('123');
     });
   });
 
