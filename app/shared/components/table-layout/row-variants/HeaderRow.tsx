@@ -10,6 +10,7 @@ type HeaderRowProps<TGroup, TSub, TPlain> = Readonly<{
   includeExpandGutter?: boolean;
   withoutFirstColOffset?: boolean;
 }>;
+
 export function HeaderRow<TGroup, TSub, TPlain>({
   columns,
   gridTemplate,

@@ -1,12 +1,11 @@
 'use client';
 
 import type { ArchiveCase } from '../archive-funds-table/ArchiveFundsTable';
-import { styles } from './ArchiveCasesTable.styles';
 import { createCaseTableColumns } from '~/shared/components/table-layout/columns/caseTableColumns';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { useArchiveCaseRowActions } from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
 
-const columns = createCaseTableColumns(styles.cipherText);
+const columns = createCaseTableColumns();
 
 export interface ArchiveCasesTableProps {
   cases: ArchiveCase[];

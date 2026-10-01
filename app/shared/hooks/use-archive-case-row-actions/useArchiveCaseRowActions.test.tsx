@@ -80,7 +80,6 @@ const TestHarness = ({
 }) => {
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
   const row = getCaseRow(caseItem, fundStatus);
-  const shareItem = row.menuActions.menuItems[0].items.find((item) => item.id === 'share');
 
   return (
     <div>
@@ -98,7 +97,6 @@ const TestHarness = ({
           menuTriggerLabel: row.menuActions.menuTriggerLabel,
         })}
       </div>
-      <span data-testid="share-href">{shareItem?.href}</span>
       <button data-testid="edit-action" onClick={row.editAction.onEditClick}>edit-action</button>
       {row.menuActions.menuItems.flatMap((group) => group.items).map((item) => (
         <button key={item.id} data-testid={`menu-${item.id}`} onClick={item.onClick}>
@@ -131,7 +129,6 @@ describe('useArchiveCaseRowActions', () => {
       editLabel: `Редагувати справу ${caseItem.name}`,
       menuTriggerLabel: `Дії для справи ${caseItem.name}`,
     }));
-    expect(screen.getByTestId('share-href')).toHaveTextContent(`/archive/case/${caseItem.id}/share`);
   });
 
   describe('Edit Case Flow', () => {
@@ -220,6 +217,36 @@ describe('useArchiveCaseRowActions', () => {
 
       expect(mockDeleteCase).toHaveBeenCalledWith({ id: 'case-1' });
       expect(screen.getByTestId('mock-delete-modal')).toHaveAttribute('data-open', 'false');
+    });
+  });
+
+  describe('Share Case Flow', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should copy the link and show a success toast when the Clipboard API succeeds', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
+    it('should show an error toast when the Clipboard API rejects', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
     });
   });
 

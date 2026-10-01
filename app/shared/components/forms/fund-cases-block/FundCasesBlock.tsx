@@ -18,7 +18,7 @@ import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 const FUND_CASES_LABEL = 'Справи в фонді';
 
-const columns = createCaseTableColumns(styles.cipherText);
+const columns = createCaseTableColumns();
 
 export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId?: string, fundStatus?: BaseContentStatuses }>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
@@ -27,6 +27,7 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
   const [modalState, setModalState] = useState<{
     open: boolean;
     caseId?: string;
+    cipher?: string;
     initialData?: ArchiveCaseInitialData;
   }>({ open: false });
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; caseId?: string; caseName?: string }>({
@@ -58,6 +59,7 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
           setModalState({
             open: true,
             caseId: caseItem.id,
+            cipher: caseItem.cipher,
             initialData: {
               descriptionNumber: String(caseItem.descriptionNumber),
               caseNumber: String(caseItem.caseNumber),
@@ -148,6 +150,7 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
           isOpen={modalState.open}
           setIsOpen={(open: boolean) => setModalState((state) => ({ ...state, open }))}
           mode={modalState.caseId ? 'edit' : 'create'}
+          cipher={modalState.cipher}
           initialData={modalState.initialData}
           fundId={fundId}
           caseId={modalState.caseId}

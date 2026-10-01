@@ -22,6 +22,7 @@ export interface ArchiveCaseModalViewProps {
   isOpen: boolean;
   onClose: () => void;
   mode?: 'create' | 'edit';
+  cipher?: string;
   descriptionNumber: string;
   setDescriptionNumber: (value: string) => void;
   caseNumber: string;
@@ -49,6 +50,7 @@ export const ArchiveCaseModalView = ({
   isOpen,
   onClose,
   mode = 'create',
+  cipher,
   descriptionNumber,
   setDescriptionNumber,
   caseNumber,
@@ -71,6 +73,12 @@ export const ArchiveCaseModalView = ({
   handleCancel,
   isSubmitDisabled,
 }: ArchiveCaseModalViewProps) => {
+  const getDialogTitle = () => {
+    if (mode !== 'edit') return ARCHIVE_CASE_MODAL_LABELS.title;
+    if (cipher) return `${ARCHIVE_CASE_MODAL_LABELS.title_edit} - ${cipher}`;
+    return ARCHIVE_CASE_MODAL_LABELS.title_edit;
+  };
+
   return (
     <Dialog
       disableScrollLock
@@ -83,9 +91,7 @@ export const ArchiveCaseModalView = ({
       fullWidth
     >
       <DialogTitle sx={styles.dialogHeaderBox}>
-        <Typography sx={styles.dialogTitle}>
-          {mode === 'edit' ? ARCHIVE_CASE_MODAL_LABELS.title_edit : ARCHIVE_CASE_MODAL_LABELS.title}
-        </Typography>
+        <Typography sx={styles.dialogTitle}>{getDialogTitle()}</Typography>
         <IconButton aria-label="Закрити" onClick={handleCancel} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>

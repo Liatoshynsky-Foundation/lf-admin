@@ -263,6 +263,13 @@ jest.mock('~/shared/components/search-status-toolbar/SearchStatusToolbar', () =>
   )
 }));
 
+const mockRouter = { replace: jest.fn() };
+jest.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/archive',
+  useSearchParams: () => new URLSearchParams()
+}));
+
 describe('ArchivePageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 
 import type { ArchiveCase } from '../archive-funds-table/ArchiveFundsTable';
 import { ArchiveCasesTable } from './ArchiveCasesTable';
-import { ARCHIVE_BASE_PATH } from '~/constants/archive';
 import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
@@ -202,7 +201,7 @@ describe('ArchiveCasesTable', () => {
 
     expect(screen.getByTestId('row-1')).toBeInTheDocument();
     expect(screen.getByTestId('row-2')).toBeInTheDocument();
-    expect(screen.getByTestId('cell-1-cipher')).toHaveTextContent('Ф. 1, оп. 1, спр. 1');
+    expect(screen.getByTestId('cell-1-cipher')).toHaveTextContent('ф. 1, оп. 1, спр. 1');
     expect(screen.getByTestId('cell-1-caseName')).toHaveTextContent('Перша справа');
     expect(screen.getByTestId('cell-1-sheetsNumber')).toHaveTextContent('12');
     expect(screen.getByTestId('cell-1-caseDate')).toHaveTextContent('1930-1935');
@@ -262,13 +261,15 @@ describe('ArchiveCasesTable', () => {
     expect(screen.getByTestId('modal-case-id')).toHaveTextContent('1');
   });
 
-  it('renders the share menu item pointing to the case share page', () => {
+  it('copies a link to the case and shows a success toast when the share menu item is clicked', async () => {
+    const user = userEvent.setup();
+    const writeText = jest.spyOn(navigator.clipboard, 'writeText');
     render(<ArchiveCasesTable cases={[mockCase({ id: '1' })]} />);
 
-    expect(screen.getByTestId('menu-item-share')).toHaveAttribute(
-      'data-href',
-      `${ARCHIVE_BASE_PATH}/case/1/share`
-    );
+    await user.click(screen.getByTestId('menu-item-share'));
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('caseId=1'));
+    expect(toast.success).toHaveBeenCalled();
   });
 
   it('keeps the edit modal open when setIsOpen is called with true, and closes it when called with false', async () => {

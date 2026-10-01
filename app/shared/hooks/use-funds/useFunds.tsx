@@ -113,7 +113,6 @@ type FundListItem = {
 };
 
 const mapFundListItem = (f: FundListItem) => {
-  const dates = f.chronologicalBoundaries?.uk ?? f.documentCreationDate.uk;
   const status = statusMap[f.status] ?? BaseContentStatuses.Hidden;
 
   return {
@@ -122,7 +121,7 @@ const mapFundListItem = (f: FundListItem) => {
     name: f.name.uk,
     descriptions: f.descriptionsCount,
     cases: f.casesCount,
-    dates,
+    dates: f.documentCreationDate.uk,
     status,
     updatedAt: f.updatedAt
   };

@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
 import { ArchivePageContent } from '../(components)/ArchivePageContent';
 import { styles } from '../page.styles';
@@ -20,7 +21,9 @@ export default async function ArchiveTabPage({ params }: Readonly<ArchiveTabPage
 
   return (
     <Box sx={styles.pageContainer}>
-      <ArchivePageContent activeTab={tab as ArchiveTabValue} />
+      <Suspense>
+        <ArchivePageContent activeTab={tab as ArchiveTabValue} />
+      </Suspense>
     </Box>
   );
 }

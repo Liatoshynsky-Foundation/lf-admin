@@ -1,8 +1,9 @@
 import { SxProps, Theme } from '@mui/material';
 
 const styles = {
-  title: (lineClamp: number = 2, fontWeight: number = 700): SxProps<Theme> => ({
+  title: (lineClamp: number = 2, fontWeight: number = 700, fontSize?: number): SxProps<Theme> => ({
     fontWeight: fontWeight,
+    ...(fontSize ? { fontSize: `${fontSize}px` } : {}),
     color: 'text.primary',
     flex: 1,
     minWidth: 0,

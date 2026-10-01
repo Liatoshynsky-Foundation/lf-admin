@@ -22,6 +22,7 @@ interface ArchiveCaseModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   mode?: 'create' | 'edit';
+  cipher?: string;
   initialData?: ArchiveCaseInitialData;
   fundId?: string;
   caseId?: string;
@@ -32,6 +33,7 @@ export const ArchiveCaseModal = ({
   isOpen,
   setIsOpen,
   mode = 'create',
+  cipher,
   initialData,
   fundId,
   caseId,
@@ -161,6 +163,7 @@ export const ArchiveCaseModal = ({
         isOpen={isOpen}
         onClose={handleCancel}
         mode={mode}
+        cipher={cipher}
         descriptionNumber={descriptionNumber}
         setDescriptionNumber={setDescriptionNumber}
         caseNumber={caseNumber}
