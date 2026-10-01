@@ -21,6 +21,12 @@ query AllFunds($filters: FundFiltersInput) {
   }
 }
 
+query FundStatus($id: ID!) {
+  findFundById(id: $id) {
+    status
+  }
+}
+
 query FundById($id: ID!) {
   findFundById(id: $id) {
     id

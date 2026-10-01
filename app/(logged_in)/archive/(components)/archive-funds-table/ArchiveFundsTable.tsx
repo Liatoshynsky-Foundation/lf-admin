@@ -15,6 +15,7 @@ import {
   type PdfEntry
 } from '~/constants/archive';
 import { Fund } from '~/constants/fund';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -27,7 +28,7 @@ import {
   CaseRowFields,
   useArchiveCaseRowActions
 } from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
-import { useDeleteCase, useDeleteFund, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
+import { useDeleteCase, useDeleteFund, useGetFundStatus,useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -109,6 +110,7 @@ export const FundsTable = ({
   const [deleteFund] = useDeleteFund();
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
+  const getFundStatus = useGetFundStatus();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string; isCase?: boolean }>({
     open: false
   });
@@ -188,11 +190,12 @@ export const FundsTable = ({
     const toggleStatus = async () => {
       const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Hidden : CaseStatus.Published;
       try {
+        const fundStatus = nextStatus === CaseStatus.Published ? await getFundStatus(item.fundId) : undefined;
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
+        showCaseStatusToast(nextStatus, fundStatus);
         await onCaseChanged?.();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+        toast.error(getCaseStatusErrorMessage(error, nextStatus));
       }
     };
 
@@ -272,7 +275,7 @@ export const FundsTable = ({
         type: 'group' as const,
         id: fund.id,
         groupData: fundRows[index].plainData,
-        subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem))
+        subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem, fund.status))
       }));
 
       orphanCases.forEach((caseItem) => {

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 import { useArchiveCaseRowActions } from './useArchiveCaseRowActions';
 import type { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -14,10 +15,17 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useUpdateCase: () => [mockUpdateCase],
 }));
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() },
-}));
+jest.mock('react-hot-toast', () => {
+  const toast = Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+  });
+
+  return {
+    __esModule: true,
+    default: toast
+  };
+});
 
 jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
   DeleteCompositionModal: (props: { open: boolean; onClose: () => void; onConfirm: () => void; description: string }) => (
@@ -64,12 +72,14 @@ const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
 const TestHarness = ({
   caseItem,
   onCaseChanged,
+  fundStatus,
 }: {
   caseItem: ArchiveCase;
   onCaseChanged?: () => Promise<unknown>;
+  fundStatus?: BaseContentStatuses;
 }) => {
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
-  const row = getCaseRow(caseItem);
+  const row = getCaseRow(caseItem, fundStatus);
   const shareItem = row.menuActions.menuItems[0].items.find((item) => item.id === 'share');
 
   return (
@@ -243,6 +253,31 @@ describe('useArchiveCaseRowActions', () => {
       expect(onCaseChangedMock).toHaveBeenCalled();
     });
 
+    it('should show success and warning toasts when publishing a case under a hidden fund', async () => {
+      const user = userEvent.setup();
+      const caseItem = buildCase({
+        status: BaseContentStatuses.Hidden
+      });
+
+      mockUpdateCase.mockResolvedValue(undefined);
+
+      render(
+        <TestHarness 
+          caseItem={caseItem} 
+          fundStatus={BaseContentStatuses.Hidden}
+        />
+      );
+
+      await user.click(screen.getByTestId('menu-toggle-status'));
+
+      expect(mockUpdateCase).toHaveBeenCalledWith({
+        id: caseItem.id,
+        input: { status: CaseStatus.Published }
+      });
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    });
+
     it('should not call onCaseChanged after a successful toggle when it is not provided', async () => {
       const user = userEvent.setup();
       mockUpdateCase.mockResolvedValueOnce(undefined);
@@ -255,13 +290,14 @@ describe('useArchiveCaseRowActions', () => {
     });
 
     it.each([
-      { rejection: new Error('Мережева помилка'), expectedMessage: 'Мережева помилка' },
-      { rejection: 'нетипова відмова', expectedMessage: 'Не вдалося змінити статус справи' },
-    ])('should show an error toast when the update fails ($expectedMessage)', async ({ rejection, expectedMessage }) => {
+      { status: BaseContentStatuses.Hidden, rejection: new Error('Мережева помилка'), expectedMessage: 'Мережева помилка' },
+      { status: BaseContentStatuses.Published, rejection: 'нетипова відмова', expectedMessage: casesStatusMessages.updateError },
+      { status: BaseContentStatuses.Hidden, rejection: 'нетипова відмова', expectedMessage: casesStatusMessages.publishError },
+    ])('should show an error toast when the update fails ($expectedMessage)', async ({ status, rejection, expectedMessage }) => {
       const user = userEvent.setup();
       const onCaseChangedMock = jest.fn();
       mockUpdateCase.mockRejectedValueOnce(rejection);
-      render(<TestHarness caseItem={buildCase()} onCaseChanged={onCaseChangedMock} />);
+      render(<TestHarness caseItem={buildCase({ status })} onCaseChanged={onCaseChangedMock} />);
 
       await user.click(screen.getByTestId('menu-toggle-status'));
 
