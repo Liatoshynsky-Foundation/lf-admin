@@ -211,23 +211,32 @@ describe('useArchiveCaseRowActions', () => {
   });
 
   describe('Share Case Flow', () => {
-    it.each([
-      { scenario: 'succeeds', impl: () => Promise.resolve(), expectToast: 'success' as const },
-      { scenario: 'rejects', impl: () => Promise.reject(new Error('denied')), expectToast: 'error' as const },
-    ])('should show a $expectToast toast when the Clipboard API $scenario', async ({ impl, expectToast }) => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should copy the link and show a success toast when the Clipboard API succeeds', async () => {
       const user = userEvent.setup();
-      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockImplementation(impl);
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
       const caseItem = buildCase();
       render(<TestHarness caseItem={caseItem} />);
 
       await user.click(screen.getByTestId('menu-share'));
 
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
-      if (expectToast === 'success') {
-        expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
-      } else {
-        expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
-      }
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
+    it('should show an error toast when the Clipboard API rejects', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
     });
   });
 

@@ -130,7 +130,7 @@ jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
     menuActions
   }: {
     editAction?: { onEditClick?: () => void };
-    menuActions: { menuItems: { items: { id: string; onClick?: () => void }[] }[] };
+    menuActions: { menuItems: { items: { id: string; text: { name: string }; onClick?: () => void }[] }[] };
   }) => (
     <div data-testid="row-actions">
       {editAction?.onEditClick && (
@@ -142,7 +142,7 @@ jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
         .flatMap((group) => group.items)
         .map((item) => (
           <button key={item.id} data-testid={`action-${item.id}`} onClick={item.onClick}>
-            {item.id}
+            {item.text.name}
           </button>
         ))}
     </div>
@@ -357,10 +357,9 @@ describe('ArchiveFundsTable', () => {
     const hiddenFund = { ...fund, status: BaseContentStatuses.Hidden };
     renderComponent({ funds: [hiddenFund], onPublish: onPublishMock });
 
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('Опублікувати');
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"publish"');
+    expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeInTheDocument();
 
-    await user.click(screen.getByTestId('action-publish'));
+    await user.click(screen.getByRole('button', { name: 'Опублікувати' }));
     expect(onPublishMock).toHaveBeenCalledWith(hiddenFund);
   });
 
@@ -372,7 +371,7 @@ describe('ArchiveFundsTable', () => {
       onPublish: onPublishMock
     });
 
-    await user.click(screen.getByTestId('action-publish'));
+    await user.click(screen.getByRole('button', { name: 'Опублікувати' }));
 
     expect(onPublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Hidden });
   });
@@ -380,8 +379,7 @@ describe('ArchiveFundsTable', () => {
   it('should not add the publish action for non-hidden funds', () => {
     renderComponent({ onPublish: jest.fn() });
 
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('Опублікувати');
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"publish"');
+    expect(screen.queryByRole('button', { name: 'Опублікувати' })).not.toBeInTheDocument();
   });
 
   it('should add the unpublish action for published funds and call onUnpublish when clicked', async () => {
@@ -390,9 +388,9 @@ describe('ArchiveFundsTable', () => {
     const publishedFund = { ...fund, status: BaseContentStatuses.Published };
     renderComponent({ funds: [publishedFund], onUnpublish: onUnpublishMock });
 
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).toHaveTextContent('"id":"unpublish"');
+    expect(screen.getByRole('button', { name: 'Сховати' })).toBeInTheDocument();
 
-    await user.click(screen.getByTestId('action-unpublish'));
+    await user.click(screen.getByRole('button', { name: 'Сховати' }));
     expect(onUnpublishMock).toHaveBeenCalledWith(publishedFund);
   });
 
@@ -404,7 +402,7 @@ describe('ArchiveFundsTable', () => {
       onUnpublish: onUnpublishMock
     });
 
-    await user.click(screen.getByTestId('action-unpublish'));
+    await user.click(screen.getByRole('button', { name: 'Сховати' }));
 
     expect(onUnpublishMock).toHaveBeenCalledWith({ ...fund, status: BaseContentStatuses.Published });
   });
@@ -415,13 +413,13 @@ describe('ArchiveFundsTable', () => {
       onUnpublish: jest.fn()
     });
 
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
+    expect(screen.queryByRole('button', { name: 'Сховати' })).not.toBeInTheDocument();
   });
 
   it('should not add the unpublish action when no unpublish handler is provided', () => {
     renderComponent({ funds: [{ ...fund, status: BaseContentStatuses.Published }] });
 
-    expect(screen.getByTestId(`mock-table-layout-row-${fund.id}`)).not.toHaveTextContent('"id":"unpublish"');
+    expect(screen.queryByRole('button', { name: 'Сховати' })).not.toBeInTheDocument();
   });
 
   describe('should render state UIs', () => {
@@ -477,8 +475,8 @@ describe('ArchiveFundsTable', () => {
 
       expect(screen.getByTestId(`mock-table-layout-group-${fund.id}`)).toBeInTheDocument();
       expect(screen.getByTestId(`mock-table-layout-subrow-${matchingCase.id}`)).toBeInTheDocument();
-      expect(screen.getByTestId(`mock-group-cell-name-${fund.id}`)).toHaveTextContent(fund.name);
-      expect(screen.getByTestId(`mock-sub-cell-name-${matchingCase.id}`)).toHaveTextContent(matchingCase.name);
+      expect(screen.getByText(fund.name)).toBeInTheDocument();
+      expect(screen.getByText(matchingCase.name)).toBeInTheDocument();
     });
 
     it('should render a case with no matching fund as an orphan individual row', () => {
@@ -486,8 +484,8 @@ describe('ArchiveFundsTable', () => {
       renderComponent({ groupCasesByFund: true, cases: [orphanCase] });
 
       expect(screen.getByTestId(`mock-table-layout-row-${orphanCase.id}`)).toBeInTheDocument();
-      expect(screen.getByTestId('mock-cell-name')).toHaveTextContent(orphanCase.name);
-      expect(screen.getByTestId('mock-cell-fundNumber')).toHaveTextContent(orphanCase.cipher);
+      expect(screen.getByText(orphanCase.name)).toBeInTheDocument();
+      expect(screen.getByText(orphanCase.cipher)).toBeInTheDocument();
     });
 
     it('should render the delete-fund modal and the case row modals', () => {
