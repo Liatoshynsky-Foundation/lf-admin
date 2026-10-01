@@ -100,6 +100,7 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
 }));
 
 const mockRefetch = jest.fn();
+const mockRefetchFund = jest.fn();
 const mockDeleteCase = jest.fn().mockResolvedValue({});
 const mockUpdateCase = jest.fn().mockResolvedValue({});
 let mockCases: unknown[] = [];
@@ -250,6 +251,16 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
+  it('refreshes the fund after saving a case', async () => {
+    const user = userEvent.setup();
+    render(<FundCasesBlock fundId="fund-1" onCaseChanged={mockRefetchFund} />);
+
+    await user.click(screen.getByRole('button', { name: /Додати справу/ }));
+    await user.click(screen.getByText('save modal'));
+
+    expect(mockRefetchFund).toHaveBeenCalled();
+  });
+
   it('maps a published case to the Published badge status', () => {
     mockCases = [buildCase({ status: CaseStatus.Published })];
     render(<FundCasesBlock fundId="fund-1" />);
@@ -334,7 +345,31 @@ describe('FundCasesBlock', () => {
 
     expect(mockDeleteCase).toHaveBeenCalledWith({ id: 'case-1' });
     expect(mockRefetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith('Справу видалено.');
     expect(capturedDeleteModalProps?.open).toBe(false);
+  });
+
+  it('refreshes the fund after deleting a case', async () => {
+    const user = userEvent.setup();
+    render(<FundCasesBlock fundId="fund-1" onCaseChanged={mockRefetchFund} />);
+
+    await user.click(screen.getByText('Видалити'));
+    await user.click(screen.getByText('confirm delete'));
+
+    expect(mockRefetchFund).toHaveBeenCalled();
+  });
+
+  it('shows an error toast and keeps the delete confirmation open when deletion fails', async () => {
+    const user = userEvent.setup();
+    mockDeleteCase.mockRejectedValueOnce(new Error('delete failed'));
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await user.click(screen.getByText('Видалити'));
+    await user.click(screen.getByText('confirm delete'));
+
+    expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити справу. Спробуйте ще раз.');
+    expect(mockRefetch).not.toHaveBeenCalled();
+    expect(capturedDeleteModalProps?.open).toBe(true);
   });
 
   it('closes the delete confirmation without deleting', async () => {

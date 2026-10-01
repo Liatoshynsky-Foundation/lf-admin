@@ -187,7 +187,8 @@ const buildData = (overrides: Partial<{
   hasUnsavedChanges: overrides.hasUnsavedChanges ?? false,
   currentStatus: 'currentStatus' in overrides ? overrides.currentStatus : BaseContentStatuses.Hidden,
   fundId: overrides.fundId,
-  handleSave: overrides.handleSave ?? jest.fn().mockResolvedValue('new-id')
+  handleSave: overrides.handleSave ?? jest.fn().mockResolvedValue('new-id'),
+  refetchFund: jest.fn().mockResolvedValue(undefined)
 });
 
 describe('FundView', () => {

@@ -17,10 +17,20 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 const FUND_CASES_LABEL = 'Справи в фонді';
+const DELETE_CASE_SUCCESS_MESSAGE = 'Справу видалено.';
+const DELETE_CASE_ERROR_MESSAGE = 'Не вдалося видалити справу. Спробуйте ще раз.';
 
 const columns = createCaseTableColumns();
 
-export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId?: string, fundStatus?: BaseContentStatuses }>) {
+export default function FundCasesBlock({
+  fundId,
+  fundStatus,
+  onCaseChanged
+}: Readonly<{
+  fundId?: string;
+  fundStatus?: BaseContentStatuses;
+  onCaseChanged?: () => Promise<unknown>;
+}>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
@@ -154,7 +164,10 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
           initialData={modalState.initialData}
           fundId={fundId}
           caseId={modalState.caseId}
-          onSaved={() => refetch()}
+          onSaved={async () => {
+            await refetch();
+            await onCaseChanged?.();
+          }}
         />
       )}
 
@@ -165,9 +178,15 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
         description={`Ви впевнені, що хочете видалити справу «${deleteModalState.caseName ?? ''}»?`}
         onConfirm={async () => {
           if (!deleteModalState.caseId) return;
-          await deleteCase({ id: deleteModalState.caseId });
-          setDeleteModalState({ open: false });
-          await refetch();
+          try {
+            await deleteCase({ id: deleteModalState.caseId });
+            setDeleteModalState({ open: false });
+            await refetch();
+            await onCaseChanged?.();
+            toast.success(DELETE_CASE_SUCCESS_MESSAGE);
+          } catch {
+            toast.error(DELETE_CASE_ERROR_MESSAGE);
+          }
         }}
       />
     </Box>
