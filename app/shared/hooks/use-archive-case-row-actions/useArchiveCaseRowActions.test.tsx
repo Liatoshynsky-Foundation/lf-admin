@@ -253,7 +253,7 @@ describe('useArchiveCaseRowActions', () => {
       expect(onCaseChangedMock).toHaveBeenCalled();
     });
 
-    it('should show a warning toast when publishing a case under a hidden fund', async () => {
+    it('should show success and warning toasts when publishing a case under a hidden fund', async () => {
       const user = userEvent.setup();
       const caseItem = buildCase({
         status: BaseContentStatuses.Hidden

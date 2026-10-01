@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
-import { getCaseStatusErrorMessage, showCaseStatusSuccessToast } from '~/lib/utils/caseStatus';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -93,7 +93,7 @@ export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId
                           caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
                       try {
                         await updateCase({ id: caseItem.id, input: { status: nextStatus } });
-                        showCaseStatusSuccessToast(nextStatus, fundStatus);
+                        showCaseStatusToast(nextStatus, fundStatus);
                         await refetch();
                       } catch (error) {
                         toast.error(getCaseStatusErrorMessage(error, nextStatus));

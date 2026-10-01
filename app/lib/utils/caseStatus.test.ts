@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 
-import { getCaseStatusErrorMessage, showCaseStatusSuccessToast } from './caseStatus';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from './caseStatus';
 import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
@@ -21,17 +21,17 @@ describe('caseStatus helpers', () => {
     jest.clearAllMocks();
   });
 
-  describe('showCaseStatusSuccessToast', () => {
+  describe('showCaseStatusToast', () => {
     it.each([
       [CaseStatus.Published, 'Справу успішно опубліковано'],
       [CaseStatus.Draft, 'Справу успішно сховано']
     ])('should show the correct success toast for $0 status', (status, message) => {
-      showCaseStatusSuccessToast(status);
+      showCaseStatusToast(status);
       expect(toast.success).toHaveBeenCalledWith(message);
     });
 
-    it('should show a warning when publishing a case under a hidden fund', () => {
-      showCaseStatusSuccessToast(CaseStatus.Published, BaseContentStatuses.Hidden);
+    it('should show a success toats and a warning when publishing a case under a hidden fund', () => {
+      showCaseStatusToast(CaseStatus.Published, BaseContentStatuses.Hidden);
       expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
       expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
     });

@@ -288,7 +288,7 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
-  it('shows a warning when publishing a case under a hidden fund', async () =>{
+  it('should show success and warning toasts when publishing a case under a hidden fund', async () =>{
     const user = userEvent.setup();
     mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
 

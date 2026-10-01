@@ -15,7 +15,7 @@ import {
   type PdfEntry
 } from '~/constants/archive';
 import { Fund } from '~/constants/fund';
-import { getCaseStatusErrorMessage, showCaseStatusSuccessToast } from '~/lib/utils/caseStatus';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { EmptyState } from '~/shared/components/empty-state';
@@ -192,7 +192,7 @@ export const FundsTable = ({
       try {
         const fundStatus = nextStatus === CaseStatus.Published ? await getFundStatus(item.fundId) : undefined;
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        showCaseStatusSuccessToast(nextStatus, fundStatus);
+        showCaseStatusToast(nextStatus, fundStatus);
         await onCaseChanged?.();
       } catch (error) {
         toast.error(getCaseStatusErrorMessage(error, nextStatus));

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
 import { ArchiveCaseModal } from '~/(logged_in)/archive/(components)/ArchiveCaseModal';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
-import { getCaseStatusErrorMessage, showCaseStatusSuccessToast } from '~/lib/utils/caseStatus';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -49,7 +49,7 @@ export const useArchiveCaseRowActions = (onCaseChanged?: () => Promise<unknown>)
       const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Draft : CaseStatus.Published;
       try {
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        showCaseStatusSuccessToast(nextStatus, fundStatus);
+        showCaseStatusToast(nextStatus, fundStatus);
         await onCaseChanged?.();
       } catch (error) {
         toast.error(getCaseStatusErrorMessage(error, nextStatus));

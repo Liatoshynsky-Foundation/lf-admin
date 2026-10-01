@@ -4,7 +4,7 @@ import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
-export const showCaseStatusSuccessToast = (nextStatus: CaseStatus, fundStatus?: BaseContentStatuses) => {
+export const showCaseStatusToast = (nextStatus: CaseStatus, fundStatus?: BaseContentStatuses) => {
   toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
 
   if (nextStatus === CaseStatus.Published && fundStatus === BaseContentStatuses.Hidden) {

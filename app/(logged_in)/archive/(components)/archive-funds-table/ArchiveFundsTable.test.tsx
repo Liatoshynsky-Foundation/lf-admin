@@ -610,7 +610,7 @@ describe('ArchiveFundsTable', () => {
       }
     );
 
-    it('should show a warning when publishing a case under a hidden fund', async () =>{
+    it('should show success and warning toats when publishing a case under a hidden fund', async () =>{
       mockGetFundStatus.mockResolvedValueOnce(BaseContentStatuses.Hidden);
       mockUpdateCase.mockResolvedValueOnce(undefined);
       const user = userEvent.setup();
