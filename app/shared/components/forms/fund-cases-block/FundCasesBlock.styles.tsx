@@ -33,6 +33,12 @@ export const styles: Record<string, SxProps<Theme>> = {
     padding: '0 24px 24px'
   },
 
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '0 24px 24px'
+  },
+
   cipherText: {
     fontStyle: 'italic'
   }

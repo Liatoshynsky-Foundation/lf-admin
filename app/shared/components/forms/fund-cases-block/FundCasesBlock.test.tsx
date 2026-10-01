@@ -99,6 +99,25 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
   }
 }));
 
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  __esModule: true,
+  Pagination: ({
+    totalPages,
+    currentPage,
+    onPageChange
+  }: {
+    totalPages: number;
+    currentPage: number;
+    onPageChange: (event: unknown, page: number) => void;
+  }) => (
+    <nav data-testid="pagination">
+      <span data-testid="pagination-current-page">{currentPage}</span>
+      <span data-testid="pagination-total-pages">{totalPages}</span>
+      <button onClick={(event) => onPageChange(event, currentPage + 1)}>next page</button>
+    </nav>
+  )
+}));
+
 const mockRefetch = jest.fn();
 const mockDeleteCase = jest.fn().mockResolvedValue({});
 const mockUpdateCase = jest.fn().mockResolvedValue({});
@@ -176,6 +195,26 @@ describe('FundCasesBlock', () => {
     expect(screen.getByTestId('table-layout')).toBeInTheDocument();
     expect(screen.getByTestId('row-case-1')).toBeInTheDocument();
     expect(screen.getByTestId('row-case-2')).toBeInTheDocument();
+  });
+
+  it('paginates cases with eight rows per page', async () => {
+    const user = userEvent.setup();
+    mockCases = Array.from({ length: 9 }, (_, index) => buildCase({
+      id: `case-${index + 1}`,
+      caseNumber: index + 1
+    }));
+
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    expect(screen.getAllByTestId(/^row-case-/)).toHaveLength(8);
+    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('1');
+    expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+
+    await user.click(screen.getByRole('button', { name: 'next page' }));
+
+    expect(screen.getAllByTestId(/^row-case-/)).toHaveLength(1);
+    expect(screen.getByTestId('row-case-9')).toBeInTheDocument();
+    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
   });
 
   it('renders an error message when the cases query fails', () => {
