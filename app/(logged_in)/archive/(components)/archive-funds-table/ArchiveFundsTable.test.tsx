@@ -11,6 +11,7 @@ import {
   ARCHIVE_EMPTY_STATE_TITLE,
   ARCHIVE_FUNDS_TABLE_HEADERS
 } from '~/constants/archive';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseRowData, ColumnDef } from '~/shared/components/table-layout/row-variants/Row.types';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
@@ -31,16 +32,26 @@ const COPY_LINK_ERROR_MESSAGE = 'Не вдалося скопіювати пос
 const mockDeleteFund = jest.fn();
 const mockDeleteCase = jest.fn();
 const mockUpdateCase = jest.fn();
+const mockGetFundStatus = jest.fn();
+
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteFund: () => [mockDeleteFund],
   useDeleteCase: () => [mockDeleteCase],
-  useUpdateCase: () => [mockUpdateCase]
+  useUpdateCase: () => [mockUpdateCase],
+  useGetFundStatus: () => mockGetFundStatus
 }));
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() }
-}));
+jest.mock('react-hot-toast', () => {
+  const toast = Object.assign(jest.fn(), {
+    success: jest.fn(), 
+    error: jest.fn()
+  });
+  
+  return {
+    __esModule: true,
+    default: toast 
+  };
+});
 
 jest.mock('../ArchiveCaseModal', () => ({
   ArchiveCaseModal: (props: {
@@ -583,20 +594,45 @@ describe('ArchiveFundsTable', () => {
     );
 
     it.each([
-      { rejection: new Error('Не вдалося змінити'), expectedMessage: 'Не вдалося змінити' },
-      { rejection: 'boom', expectedMessage: 'Не вдалося змінити статус справи' }
+      { status: BaseContentStatuses.Hidden, rejection: new Error('Не вдалося змінити'), expectedMessage: 'Не вдалося змінити' },
+      { status: BaseContentStatuses.Hidden, rejection: 'boom', expectedMessage: casesStatusMessages.publishError },
+      { status: BaseContentStatuses.Published, rejection: 'boom', expectedMessage: casesStatusMessages.updateError },
     ])(
       'should show an error toast ($expectedMessage) when toggling status rejects',
-      async ({ rejection, expectedMessage }) => {
+      async ({ status, rejection, expectedMessage }) => {
         mockUpdateCase.mockRejectedValueOnce(rejection);
         const user = userEvent.setup();
-        renderWithCase();
+        renderWithCase({ caseOverrides: { status } });
 
         await user.click(screen.getByTestId('action-toggle-status'));
 
         expect(toast.error).toHaveBeenCalledWith(expectedMessage);
       }
     );
+
+    it('should show a warning when publishing a case under a hidden fund', async () =>{
+      mockGetFundStatus.mockResolvedValueOnce(BaseContentStatuses.Hidden);
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      const user = userEvent.setup();
+
+      renderWithCase({
+        caseOverrides: {
+          status: BaseContentStatuses.Hidden
+        }
+      });
+
+      await user.click(screen.getByTestId('action-toggle-status'));
+
+      expect(mockGetFundStatus).toHaveBeenCalledWith(caseItem.fundId);
+      expect(mockUpdateCase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: caseItem.id,
+          input: {status: CaseStatus.Published}
+        })
+      );
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    });
 
     it('should delete a case, calling onCaseChanged, when confirmed', async () => {
       const onCaseChangedMock = jest.fn().mockResolvedValue(undefined);

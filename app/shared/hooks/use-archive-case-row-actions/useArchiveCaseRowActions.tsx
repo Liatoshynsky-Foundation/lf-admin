@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
 import { ArchiveCaseModal } from '~/(logged_in)/archive/(components)/ArchiveCaseModal';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
+import { casesStatusMessages } from '~/constants/errors';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -32,7 +33,7 @@ export const useArchiveCaseRowActions = (onCaseChanged?: () => Promise<unknown>)
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
 
-  const getCaseRow = (item: ArchiveCase): CaseRowFields => {
+  const getCaseRow = (item: ArchiveCase, fundStatus?: BaseContentStatuses): CaseRowFields => {
     const editData: ArchiveCaseInitialData = {
       descriptionNumber: String(item.descriptionNumber),
       caseNumber: String(item.caseNumber),
@@ -49,9 +50,19 @@ export const useArchiveCaseRowActions = (onCaseChanged?: () => Promise<unknown>)
       try {
         await updateCase({ id: item.id, input: { status: nextStatus } });
         toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
+
+        if (nextStatus === CaseStatus.Published && fundStatus === BaseContentStatuses.Hidden) {
+          toast(casesStatusMessages.publishHiddenFundWarning);
+        }
         await onCaseChanged?.();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+        toast.error(
+          error instanceof Error 
+            ? error.message 
+            : nextStatus === CaseStatus.Published 
+              ? casesStatusMessages.publishError 
+              : casesStatusMessages.updateError
+        );
       }
     };
 

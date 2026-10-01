@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
+import { casesStatusMessages } from '~/constants/errors';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -19,7 +20,7 @@ const FUND_CASES_LABEL = 'Справи в фонді';
 
 const columns = createCaseTableColumns(styles.cipherText);
 
-export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>) {
+export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId?: string, fundStatus?: BaseContentStatuses }>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
@@ -97,9 +98,19 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
                             ? 'Справу успішно опубліковано'
                             : 'Справу успішно сховано'
                         );
+                        
+                        if (nextStatus === CaseStatus.Published && fundStatus === BaseContentStatuses.Hidden) {
+                          toast(casesStatusMessages.publishHiddenFundWarning);
+                        }
                         await refetch();
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+                        toast.error(
+                          error instanceof Error 
+                            ? error.message 
+                            : nextStatus === CaseStatus.Published
+                              ? casesStatusMessages.publishError 
+                              : casesStatusMessages.updateError
+                        );
                       }
                     }
                   }
