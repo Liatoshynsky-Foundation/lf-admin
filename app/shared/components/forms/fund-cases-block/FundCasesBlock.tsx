@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -19,7 +20,7 @@ const FUND_CASES_LABEL = 'Справи в фонді';
 
 const columns = createCaseTableColumns();
 
-export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>) {
+export default function FundCasesBlock({ fundId, fundStatus }: Readonly<{ fundId?: string, fundStatus?: BaseContentStatuses }>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
@@ -94,14 +95,10 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
                           caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
                       try {
                         await updateCase({ id: caseItem.id, input: { status: nextStatus } });
-                        toast.success(
-                          nextStatus === CaseStatus.Published
-                            ? 'Справу успішно опубліковано'
-                            : 'Справу успішно сховано'
-                        );
+                        showCaseStatusToast(nextStatus, fundStatus);
                         await refetch();
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+                        toast.error(getCaseStatusErrorMessage(error, nextStatus));
                       }
                     }
                   }

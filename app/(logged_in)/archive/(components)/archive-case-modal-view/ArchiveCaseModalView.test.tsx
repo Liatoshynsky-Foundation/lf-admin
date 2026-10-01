@@ -6,21 +6,15 @@ import { ARCHIVE_CASE_MODAL_LABELS } from '~/constants/archive';
 
 jest.mock('~/shared/components/composition-modal/file-item/FileItem', () => ({
   __esModule: true,
-  default: ({
-    fileName,
-    fileType,
-    onDelete,
-  }: {
-    fileName?: string;
-    fileType?: string;
-    onDelete?: () => void;
-  }) => (
+  default: ({ fileName, fileType, onDelete }: { fileName?: string; fileType?: string; onDelete?: () => void }) => (
     <div data-testid="file-item">
       <span data-testid="file-name">{fileName}</span>
       <span data-testid="file-type">{fileType}</span>
-      <button data-testid="file-delete-btn" onClick={onDelete}>Delete</button>
+      <button data-testid="file-delete-btn" onClick={onDelete}>
+        Delete
+      </button>
     </div>
-  ),
+  )
 }));
 
 jest.mock('~/shared/components/composition-modal/label-action-row/LabelActionRow', () => ({
@@ -29,7 +23,7 @@ jest.mock('~/shared/components/composition-modal/label-action-row/LabelActionRow
     title,
     action,
     actionButtonText,
-    disabled,
+    disabled
   }: {
     title?: string;
     action?: () => void;
@@ -42,14 +36,12 @@ jest.mock('~/shared/components/composition-modal/label-action-row/LabelActionRow
         {actionButtonText}
       </button>
     </div>
-  ),
+  )
 }));
 
 jest.mock('~/shared/components/composition-modal/label-row/LabelRow', () => ({
   __esModule: true,
-  default: ({ title }: { title?: string }) => (
-    <div data-testid="label-row">{title}</div>
-  ),
+  default: ({ title }: { title?: string }) => <div data-testid="label-row">{title}</div>
 }));
 const mockSetDescriptionNumber = jest.fn();
 const mockSetCaseNumber = jest.fn();
@@ -86,8 +78,7 @@ const defaultProps: ArchiveCaseModalViewProps = {
   handleDeletePdf: mockHandleDeletePdf,
   handleSave: mockHandleSave,
   handleCancel: mockHandleCancel,
-  isSubmitDisabled: true,
-  isCancelDisabled: true
+  isSubmitDisabled: true
 };
 
 describe('ArchiveCaseModalView', () => {
@@ -170,22 +161,19 @@ describe('ArchiveCaseModalView', () => {
     expect(mockHandleOpenUploadFlow).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClose if close button is clicked', async () => {
+  it('should call handleCancel when close button is clicked', async () => {
     const user = userEvent.setup();
     render(<ArchiveCaseModalView {...defaultProps} />);
+
     const closeButton = screen.getByRole('button', { name: 'Закрити' });
+
     await user.click(closeButton);
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    expect(mockHandleCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should call handleDeletePdf when FileItem delete button is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <ArchiveCaseModalView
-        {...defaultProps}
-        currentPdfFile={{ fileName: 'doc.pdf', name: 'doc.pdf' }}
-      />
-    );
+    render(<ArchiveCaseModalView {...defaultProps} currentPdfFile={{ fileName: 'doc.pdf', name: 'doc.pdf' }} />);
 
     await user.click(screen.getByTestId('file-delete-btn'));
     expect(mockHandleDeletePdf).toHaveBeenCalledTimes(1);
@@ -193,7 +181,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleCancel 1 time when cancel button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
 
     const cancelButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel });
     await user.click(cancelButton);
@@ -203,7 +191,7 @@ describe('ArchiveCaseModalView', () => {
 
   it('should call handleSave 1 time when enabled and submit button is clicked', async () => {
     const user = userEvent.setup();
-    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} isCancelDisabled={false} />);
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={false} />);
 
     const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
     await user.click(saveButton);
@@ -212,59 +200,22 @@ describe('ArchiveCaseModalView', () => {
   });
 
   it.each([
-    {
-      isSubmitDisabled: true,
-      isCancelButtonDisabled: false,
-      expectedSaveState: 'disabled',
-      expectedCancelState: 'enabled',
-    },
-    {
-      isSubmitDisabled: false,
-      isCancelButtonDisabled: false,
-      expectedSaveState: 'enabled',
-      expectedCancelState: 'enabled',
-    },
-    {
-      isSubmitDisabled: false,
-      isCancelButtonDisabled: true,
-      expectedSaveState: 'enabled',
-      expectedCancelState: 'disabled',
-    },
-  ])(
-    'should render the save button as $expectedSaveState and the cancel button as $expectedCancelState when isSubmitDisabled is $isSubmitDisabled and isCancelButtonDisabled is $isCancelButtonDisabled',
-    ({ isSubmitDisabled, isCancelButtonDisabled, expectedSaveState, expectedCancelState }) => {
-      render(
-        <ArchiveCaseModalView
-          {...defaultProps}
-          isSubmitDisabled={isSubmitDisabled}
-          isCancelDisabled={isCancelButtonDisabled}
-        />
-      );
+    [true, true],
+    [false, false]
+  ])('renders Save button with disabled=%s when isSubmitDisabled is %s', (isSubmitDisabled, expectedDisabled) => {
+    render(<ArchiveCaseModalView {...defaultProps} isSubmitDisabled={isSubmitDisabled} />);
 
-      const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
-      const cancelButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.cancel });
+    const saveButton = screen.getByRole('button', { name: ARCHIVE_CASE_MODAL_LABELS.save });
 
-      if (expectedSaveState === 'disabled') {
-        expect(saveButton).toBeDisabled();
-      } else {
-        expect(saveButton).toBeEnabled();
-      }
-
-      if (expectedCancelState === 'disabled') {
-        expect(cancelButton).toBeDisabled();
-      } else {
-        expect(cancelButton).toBeEnabled();
-      }
+    if (expectedDisabled) {
+      expect(saveButton).toBeDisabled();
+    } else {
+      expect(saveButton).toBeEnabled();
     }
-  );
+  });
 
   it(`should render the pdf name and disable the "${ARCHIVE_CASE_MODAL_LABELS.addFile}" button if the pdf file is picked`, () => {
-    render(
-      <ArchiveCaseModalView
-        {...defaultProps}
-        currentPdfFile={{ fileName: 'file.pdf', name: 'file.pdf' }}
-      />
-    );
+    render(<ArchiveCaseModalView {...defaultProps} currentPdfFile={{ fileName: 'file.pdf', name: 'file.pdf' }} />);
 
     expect(screen.getByTestId('file-item')).toBeInTheDocument();
     expect(screen.getByTestId('file-name')).toHaveTextContent('file.pdf');

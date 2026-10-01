@@ -44,7 +44,6 @@ export interface ArchiveCaseModalViewProps {
   handleSave: () => void;
   handleCancel: () => void;
   isSubmitDisabled: boolean;
-  isCancelDisabled: boolean;
 }
 
 export const ArchiveCaseModalView = ({
@@ -73,7 +72,6 @@ export const ArchiveCaseModalView = ({
   handleSave,
   handleCancel,
   isSubmitDisabled,
-  isCancelDisabled
 }: ArchiveCaseModalViewProps) => {
   const getDialogTitle = () => {
     if (mode !== 'edit') return ARCHIVE_CASE_MODAL_LABELS.title;
@@ -82,10 +80,19 @@ export const ArchiveCaseModalView = ({
   };
 
   return (
-    <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
+    <Dialog
+      disableScrollLock
+      open={isOpen}
+      sx={styles.dialog}
+      onClose={(_, reason) => {
+        if (reason === 'backdropClick') return;
+        onClose();
+      }}
+      fullWidth
+    >
       <DialogTitle sx={styles.dialogHeaderBox}>
         <Typography sx={styles.dialogTitle}>{getDialogTitle()}</Typography>
-        <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
+        <IconButton aria-label="Закрити" onClick={handleCancel} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>
       </DialogTitle>
@@ -189,7 +196,7 @@ export const ArchiveCaseModalView = ({
       </DialogContent>
 
       <DialogActions sx={styles.dialogActions}>
-        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel} disabled={isCancelDisabled}>
+        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel}>
           {ARCHIVE_CASE_MODAL_LABELS.cancel}
         </Button>
         <Button

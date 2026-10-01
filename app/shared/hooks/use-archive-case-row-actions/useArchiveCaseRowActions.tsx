@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
 import { ArchiveCaseModal } from '~/(logged_in)/archive/(components)/ArchiveCaseModal';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
@@ -33,7 +34,6 @@ export const useArchiveCaseRowActions = (
   const [updateCase] = useUpdateCase();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
-
   const openEditCase = (item: ArchiveCase) => {
     setEditCase({
       item,
@@ -56,16 +56,16 @@ export const useArchiveCaseRowActions = (
     }
   }, [initialCase?.id]);
 
-  const getCaseRow = (item: ArchiveCase): CaseRowFields => {
+  const getCaseRow = (item: ArchiveCase, fundStatus?: BaseContentStatuses): CaseRowFields => {
 
     const toggleStatus = async () => {
       const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Draft : CaseStatus.Published;
       try {
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        toast.success(nextStatus === CaseStatus.Published ? 'Справу успішно опубліковано' : 'Справу успішно сховано');
+        showCaseStatusToast(nextStatus, fundStatus);
         await onCaseChanged?.();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+        toast.error(getCaseStatusErrorMessage(error, nextStatus));
       }
     };
 

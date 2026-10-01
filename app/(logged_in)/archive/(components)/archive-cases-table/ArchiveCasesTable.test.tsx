@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import type { ArchiveCase } from '../archive-funds-table/ArchiveFundsTable';
 import { ArchiveCasesTable } from './ArchiveCasesTable';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -330,13 +331,14 @@ describe('ArchiveCasesTable', () => {
   );
 
   it.each([
-    { thrown: new Error('мережева помилка'), expectedMessage: 'мережева помилка' },
-    { thrown: 'щось пішло не так', expectedMessage: 'Не вдалося змінити статус справи' }
-  ])('shows an error toast when changing status fails ($expectedMessage)', async ({ thrown, expectedMessage }) => {
+    { status: BaseContentStatuses.Published, thrown: new Error('мережева помилка'), expectedMessage: 'мережева помилка' },
+    { status: BaseContentStatuses.Published, thrown: 'щось пішло не так', expectedMessage: casesStatusMessages.updateError },
+    { status: BaseContentStatuses.Hidden, thrown: 'щось пішло не так', expectedMessage: casesStatusMessages.publishError },
+  ])('shows an error toast when changing status fails ($expectedMessage)', async ({ status, thrown, expectedMessage }) => {
     const user = userEvent.setup();
     mockUpdateCase.mockRejectedValueOnce(thrown);
     const onCaseChanged = jest.fn(async () => undefined);
-    render(<ArchiveCasesTable cases={[mockCase({ id: '1' })]} onCaseChanged={onCaseChanged} />);
+    render(<ArchiveCasesTable cases={[mockCase({ id: '1', status })]} onCaseChanged={onCaseChanged} />);
 
     await user.click(screen.getByTestId('menu-item-toggle-status'));
 

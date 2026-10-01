@@ -180,7 +180,7 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
           </Box>
         </Box>
 
-        {mode === 'edit' ? <FundCasesBlock fundId={fundId} /> : null}
+        {mode === 'edit' ? <FundCasesBlock fundId={fundId} fundStatus={currentStatus} /> : null}
       </Box>
 
       <ActionMenu

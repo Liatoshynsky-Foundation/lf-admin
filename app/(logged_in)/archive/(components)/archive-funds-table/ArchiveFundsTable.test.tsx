@@ -27,6 +27,18 @@ type TableLayoutProps<TGroup, TSub, TPlain> = {
 const COPY_LINK_SUCCESS_MESSAGE = 'Посилання скопійовано в буфер обміну.';
 const COPY_LINK_ERROR_MESSAGE = 'Не вдалося скопіювати посилання. Спробуйте ще раз.';
 
+const mockDeleteFund = jest.fn();
+const mockDeleteCase = jest.fn();
+const mockUpdateCase = jest.fn();
+const mockGetFundStatus = jest.fn();
+
+jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
+  useDeleteFund: () => [mockDeleteFund],
+  useDeleteCase: () => [mockDeleteCase],
+  useUpdateCase: () => [mockUpdateCase],
+  useGetFundStatus: () => mockGetFundStatus
+}));
+
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: { success: jest.fn(), error: jest.fn() }
@@ -65,15 +77,6 @@ const clearClipboardWriteText = () => {
     });
   }
 };
-
-const mockDeleteFund = jest.fn();
-const mockDeleteCase = jest.fn();
-const mockUpdateCase = jest.fn();
-jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
-  useDeleteFund: () => [mockDeleteFund],
-  useDeleteCase: () => [mockDeleteCase],
-  useUpdateCase: () => [mockUpdateCase]
-}));
 
 const mockGetCaseRow = jest.fn((caseItem: ArchiveCase) => ({
   id: caseItem.id,

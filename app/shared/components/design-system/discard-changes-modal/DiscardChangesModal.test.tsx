@@ -24,6 +24,20 @@ describe('DiscardChangesModal', () => {
     ).toBeInTheDocument();
   });
 
+  it('should render custom title, description and button texts', () => {
+    setup({
+      title: 'Вийти без збереження?',
+      description: 'Ваші зміни не будуть збережені.',
+      cancelButtonText: 'Залишитись',
+      confirmButtonText: 'Вийти'
+    });
+
+    expect(screen.getByText('Вийти без збереження?')).toBeInTheDocument();
+    expect(screen.getByText('Ваші зміни не будуть збережені.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Залишитись' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Вийти' })).toBeInTheDocument();
+  });
+
   it('should call handleClose when "Повернутись" button is clicked', () => {
     const { handleClose } = setup();
 

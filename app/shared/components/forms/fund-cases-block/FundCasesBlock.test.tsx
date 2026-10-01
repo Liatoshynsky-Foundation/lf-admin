@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import FundCasesBlock from './FundCasesBlock';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -111,10 +112,17 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useUpdateCase: () => [mockUpdateCase]
 }));
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() }
-}));
+jest.mock('react-hot-toast', () => {
+  const toast = Object.assign(jest.fn(), {
+    success: jest.fn(), 
+    error: jest.fn()
+  });
+
+  return {
+    __esModule: true,
+    default: toast
+  };
+});
 
 const localized = (uk: string) => ({ uk, en: uk });
 
@@ -280,27 +288,38 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
-  it('handles errors when toggling a case status', async () => {
+  it('should show success and warning toasts when publishing a case under a hidden fund', async () =>{
     const user = userEvent.setup();
-    mockUpdateCase.mockRejectedValueOnce(new Error('Update failed'));
     mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
-    render(<FundCasesBlock fundId="fund-1" />);
+
+    render(
+      <FundCasesBlock
+        fundId='fund-1'
+        fundStatus={BaseContentStatuses.Hidden}
+      />
+    );
 
     await user.click(screen.getByText('Опублікувати'));
 
-    expect(mockUpdateCase).toHaveBeenCalledWith({ id: 'case-1', input: { status: CaseStatus.Published } });
-    expect(toast.error).toHaveBeenCalledWith('Update failed');
+    expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+    expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
   });
 
-  it('handles generic errors when toggling a case status', async () => {
+  it.each([
+    { status: CaseStatus.Draft, rejection: new Error('Update failed'), expectedMessage: 'Update failed' },
+    { status: CaseStatus.Draft, rejection: 'Some string error', expectedMessage: casesStatusMessages.publishError },
+    { status: CaseStatus.Published, rejection: 'Some string error', expectedMessage: casesStatusMessages.updateError },
+  ])('handles errors when toggling a case status', async ({ status, rejection, expectedMessage }) => {
     const user = userEvent.setup();
-    mockUpdateCase.mockRejectedValueOnce('Some string error');
-    mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
+    const isPublished = status === CaseStatus.Published;
+    mockUpdateCase.mockRejectedValueOnce(rejection);
+    mockCases = [buildCase({ id: 'case-1', status })];
     render(<FundCasesBlock fundId="fund-1" />);
 
-    await user.click(screen.getByText('Опублікувати'));
+    await user.click(screen.getByText(isPublished ? 'Сховати' : 'Опублікувати'));
 
-    expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити статус справи');
+    expect(mockUpdateCase).toHaveBeenCalledWith({ id: 'case-1', input: { status: isPublished ? CaseStatus.Draft : CaseStatus.Published } });
+    expect(toast.error).toHaveBeenCalledWith(expectedMessage);
   });
 
   it('opens the delete confirmation with the case name and deletes on confirm', async () => {
