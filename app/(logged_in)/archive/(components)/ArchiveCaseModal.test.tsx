@@ -19,6 +19,35 @@ jest.mock('react-hot-toast', () => ({
 const mockCreateCase = jest.fn();
 const mockUpdateCase = jest.fn();
 
+jest.mock('./DiscardChangesModal', () => ({
+  __esModule: true,
+  default: ({
+    open,
+    handleClose,
+    handleSubmit,
+    title,
+    description,
+    cancelButtonText,
+    confirmButtonText
+  }: {
+    open: boolean;
+    handleClose: () => void;
+    handleSubmit: () => void;
+    title?: string;
+    description?: string;
+    cancelButtonText?: string;
+    confirmButtonText?: string;
+  }) =>
+    open ? (
+      <div data-testid="discard-changes-modal">
+        <div>{title}</div>
+        <div>{description}</div>
+        <button onClick={handleClose}>{cancelButtonText}</button>
+        <button onClick={handleSubmit}>{confirmButtonText}</button>
+      </div>
+    ) : null
+}));
+
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   __esModule: true,
   useCreateCase: jest.fn(),
@@ -58,7 +87,7 @@ jest.mock('./archive-case-modal-view/ArchiveCaseModalView', () => ({
         Save
       </button>
       <button data-testid="view-cancel-btn" onClick={props.handleCancel}>
-        Cancel
+        Скасувати
       </button>
     </div>
   )
@@ -221,6 +250,30 @@ describe('ArchiveCaseModal', () => {
       expect(screen.getByTestId('view-is-open')).toHaveTextContent('true');
       expect(screen.getByTestId('view-case-number')).toHaveTextContent('CASE-99');
       expect(screen.getByTestId('view-mode')).toHaveTextContent('create');
+    });
+
+    it('should open create discard modal with correct texts when cancel is clicked', async () => {
+      const user = userEvent.setup();
+
+      render(<ArchiveCaseModal {...defaultProps} mode="create" />);
+
+      await user.click(screen.getByRole('button', { name: 'Скасувати' }));
+
+      expect(screen.getByTestId('discard-changes-modal')).toBeInTheDocument();
+      expect(screen.getByText('Скасувати створення справи?')).toBeInTheDocument();
+      expect(screen.getByText('Незбережені дані будуть втрачені.')).toBeInTheDocument();
+    });
+
+    it('should open edit discard modal with correct texts when cancel is clicked', async () => {
+      const user = userEvent.setup();
+
+      render(<ArchiveCaseModal {...defaultProps} mode="edit" />);
+
+      await user.click(screen.getByRole('button', { name: 'Скасувати' }));
+
+      expect(screen.getByTestId('discard-changes-modal')).toBeInTheDocument();
+      expect(screen.getByText('Скасувати редагування?')).toBeInTheDocument();
+      expect(screen.getByText('Незбережені зміни будуть втрачені.')).toBeInTheDocument();
     });
 
     it('passes mode="edit" to ArchiveCaseModalView when provided', () => {
@@ -409,7 +462,7 @@ describe('ArchiveCaseModal', () => {
         status: CaseStatus.Draft
       });
       expect(mockUpdateCase).not.toHaveBeenCalled();
-      expect(toast.success).toHaveBeenCalledWith('Справу успішно додано');
+      expect(toast.success).toHaveBeenCalledWith('Справу збережено.');
       expect(onSaved).toHaveBeenCalledTimes(1);
     });
 

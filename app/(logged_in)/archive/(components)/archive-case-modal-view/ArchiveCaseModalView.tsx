@@ -1,4 +1,15 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Typography
+} from '@mui/material';
 import { X } from 'lucide-react';
 
 import { styles } from './ArchiveCaseModalView.styles';
@@ -60,15 +71,23 @@ export const ArchiveCaseModalView = ({
   handleSave,
   handleCancel,
   isSubmitDisabled,
-  isCancelDisabled
 }: ArchiveCaseModalViewProps) => {
   return (
-    <Dialog disableScrollLock open={isOpen} sx={styles.dialog} onClose={onClose} fullWidth>
+    <Dialog
+      disableScrollLock
+      open={isOpen}
+      sx={styles.dialog}
+      onClose={(_, reason) => {
+        if (reason === 'backdropClick') return;
+        onClose();
+      }}
+      fullWidth
+    >
       <DialogTitle sx={styles.dialogHeaderBox}>
         <Typography sx={styles.dialogTitle}>
           {mode === 'edit' ? ARCHIVE_CASE_MODAL_LABELS.title_edit : ARCHIVE_CASE_MODAL_LABELS.title}
         </Typography>
-        <IconButton aria-label="Закрити" onClick={onClose} sx={styles.closeButton}>
+        <IconButton aria-label="Закрити" onClick={handleCancel} sx={styles.closeButton}>
           <X size={24} strokeWidth={1.5} />
         </IconButton>
       </DialogTitle>
@@ -147,11 +166,7 @@ export const ArchiveCaseModalView = ({
             <Stack sx={styles.sectionStack}>
               {currentPdfFile.fileName && (
                 <Box sx={styles.fileItemWrapper}>
-                  <FileItem
-                    fileName={currentPdfFile.fileName}
-                    fileType="pdf"
-                    onDelete={handleDeletePdf}
-                  />
+                  <FileItem fileName={currentPdfFile.fileName} fileType="pdf" onDelete={handleDeletePdf} />
                 </Box>
               )}
             </Stack>
@@ -176,7 +191,7 @@ export const ArchiveCaseModalView = ({
       </DialogContent>
 
       <DialogActions sx={styles.dialogActions}>
-        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel} disabled={isCancelDisabled}>
+        <Button variant="outlined" sx={styles.cancelButton} onClick={handleCancel}>
           {ARCHIVE_CASE_MODAL_LABELS.cancel}
         </Button>
         <Button
