@@ -17,6 +17,9 @@ import {
   type DeleteCaseMutationVariables,
   type DeleteFundMutationVariables,
   type FundFiltersInput,
+  FundStatusDocument,
+  FundStatusQuery,
+  FundStatusQueryVariables,
   SortOrder,
   type UpdateCaseMutation,
   type UpdateCaseMutationVariables,
@@ -31,8 +34,7 @@ import {
   useFundByIdQuery,
   usePaginatedFundsQuery,
   useUpdateCaseMutation,
-  useUpdateFundMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateFundMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -57,15 +59,6 @@ const PUBLISHED_CASES_BY_FUND_QUERY = gql`
   }
 `;
 
-const FUND_STATUS_QUERY = gql`
-  query FundStatus($id: String!) {
-    findFundById(id: $id) {
-      id
-      status
-    }
-  }
-`;
-
 const statusMap: Record<string, BaseContentStatuses> = {
   draft: BaseContentStatuses.Draft,
   published: BaseContentStatuses.Published,
@@ -82,8 +75,8 @@ export const useGetFundStatus = () => {
 
   return useCallback(
     async (fundId: string): Promise<BaseContentStatuses | undefined> => {
-      const { data } = await client.query<{ findFundById?: { status?: string } | null }>({
-        query: FUND_STATUS_QUERY,
+      const { data } = await client.query<FundStatusQuery, FundStatusQueryVariables>({
+        query: FundStatusDocument,
         variables: { id: fundId },
         fetchPolicy: 'network-only'
       });
