@@ -74,7 +74,11 @@ export default function DateTimePicker({
     Boolean(startDateTime) && Boolean(endDateTime) && dayjs(endDateTime).isBefore(dayjs(startDateTime));
   const startRequiredError = forceShowErrors && !startValue;
   const startInvalidError = Boolean(startValue) && !startValue?.isValid();
-  const startHelperText = startRequiredError ? errors.required : startInvalidError ? errors.invalidDateTime : undefined;
+  
+  let startHelperText: string | undefined;
+  if (startRequiredError) startHelperText = errors.required;
+  else if (startInvalidError) startHelperText = errors.invalidDateTime;
+
   const endHelperText = endBeforeStart ? errors.endBeforeStart : undefined;
 
   const renderPicker = (
