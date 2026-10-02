@@ -14,11 +14,12 @@ describe('useFundPublishWarning', () => {
     jest.clearAllMocks();
   });
 
-  it('should show the warning without querying when the fund has no cases', async () => {
+  it('should query the backend and show the warning when the fund has no published cases', async () => {
+    mockHasPublishedCasesInFund.mockResolvedValueOnce(false);
     const { result } = renderHook(() => useFundPublishWarning());
 
     await expect(result.current({ fundId: 'fund-1', casesCount: 0 })).resolves.toBe('show-warning');
-    expect(mockHasPublishedCasesInFund).not.toHaveBeenCalled();
+    expect(mockHasPublishedCasesInFund).toHaveBeenCalledWith('fund-1');
   });
 
   it('should allow publishing a new fund with cases before it has an id', async () => {

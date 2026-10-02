@@ -17,9 +17,6 @@ import {
   type DeleteCaseMutationVariables,
   type DeleteFundMutationVariables,
   type FundFiltersInput,
-  FundStatusDocument,
-  FundStatusQuery,
-  FundStatusQueryVariables,
   SortOrder,
   type UpdateCaseMutation,
   type UpdateCaseMutationVariables,
@@ -60,12 +57,21 @@ const PUBLISHED_CASES_BY_FUND_QUERY = gql`
   }
 `;
 
+const FUND_STATUS_QUERY = gql`
+  query FundStatus($id: String!) {
+    findFundById(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
 const statusMap: Record<string, BaseContentStatuses> = {
   draft: BaseContentStatuses.Draft,
   published: BaseContentStatuses.Published,
   hidden: BaseContentStatuses.Hidden,
   archived: BaseContentStatuses.Archived,
-  editing: BaseContentStatuses.Editing,
+  editing: BaseContentStatuses.Editing
 };
 
 export const useFundById = (id: string, options: QueryHookOptions = {}) =>
@@ -74,15 +80,18 @@ export const useFundById = (id: string, options: QueryHookOptions = {}) =>
 export const useGetFundStatus = () => {
   const client = useApolloClient();
 
-  return useCallback(async (fundId: string): Promise<BaseContentStatuses | undefined> => {
-    const { data } = await client.query<FundStatusQuery, FundStatusQueryVariables>({
-      query: FundStatusDocument,
-      variables: {id: fundId},
-      fetchPolicy: 'network-only'
-    });
+  return useCallback(
+    async (fundId: string): Promise<BaseContentStatuses | undefined> => {
+      const { data } = await client.query<{ findFundById?: { status?: string } | null }>({
+        query: FUND_STATUS_QUERY,
+        variables: { id: fundId },
+        fetchPolicy: 'network-only'
+      });
 
-    return statusMap[data.findFundById?.status ?? ''];
-  }, [client]);
+      return statusMap[data.findFundById?.status ?? ''];
+    },
+    [client]
+  );
 };
 
 export const useCasesByFundId = (fundId?: string) => {
