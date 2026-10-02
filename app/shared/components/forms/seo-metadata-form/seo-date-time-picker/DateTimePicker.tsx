@@ -4,8 +4,8 @@ import { Box, FormHelperText } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DesktopDateTimePicker } from '@mui/x-date-pickers/DesktopDateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
-import { useCallback } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
+import { useCallback, useEffect,useState } from 'react';
 
 import { styles } from './DateTimePicker.style';
 import { seoFormErrors } from '~/constants/errors';
@@ -37,13 +37,28 @@ export default function DateTimePicker({
   locale = 'uk',
   labels = {}
 }: DateTimePickerProps) {
+  const [startValue, setStartValue] = useState<Dayjs | null>(startDateTime ? dayjs(startDateTime) : null);
+
   const errors = seoFormErrors[locale];
   const startLabel = labels.startDateTime ?? FALLBACK_LABELS.startDateTime;
   const endLabel = labels.endDateTime ?? FALLBACK_LABELS.endDateTime;
 
+  useEffect(() => {
+    setStartValue(startDateTime ? dayjs(startDateTime) : null);
+  }, [startDateTime]);
+
   const handleStartChange = useCallback(
     (newValue: dayjs.Dayjs | null) => {
-      onChange(newValue ? newValue.toISOString() : undefined, endDateTime);
+      setStartValue(newValue);
+
+      if (!newValue) {
+        onChange(undefined, endDateTime);
+        return;
+      }
+
+      if (newValue?.isValid()) {
+        onChange(newValue.toISOString(), endDateTime);
+      }
     },
     [onChange, endDateTime]
   );
@@ -57,12 +72,13 @@ export default function DateTimePicker({
 
   const endBeforeStart =
     Boolean(startDateTime) && Boolean(endDateTime) && dayjs(endDateTime).isBefore(dayjs(startDateTime));
-  const startRequiredError = forceShowErrors && !startDateTime;
-  const startHelperText = startRequiredError ? errors.required : undefined;
+  const startRequiredError = forceShowErrors && !startValue;
+  const startInvalidError = Boolean(startValue) && !startValue?.isValid();
+  const startHelperText = startRequiredError ? errors.required : startInvalidError ? errors.invalidDateTime : undefined;
   const endHelperText = endBeforeStart ? errors.endBeforeStart : undefined;
 
   const renderPicker = (
-    value?: string,
+    value?: Dayjs | null,
     label?: string,
     onChangeCb?: (val: dayjs.Dayjs | null) => void,
     extraProps?: {
@@ -78,7 +94,7 @@ export default function DateTimePicker({
     return (
       <DesktopDateTimePicker
         label={label}
-        value={value ? dayjs(value) : null}
+        value={value}
         onChange={onChangeCb}
         ampm={false}
         {...restExtra}
@@ -106,12 +122,12 @@ export default function DateTimePicker({
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
         <Box sx={styles.container}>
           <Box sx={styles.field}>
-            {renderPicker(startDateTime, startLabel, handleStartChange, {
+            {renderPicker(startValue, startLabel, handleStartChange, {
               onClose: onStartBlur,
               slotProps: {
                 textField: {
                   required: true,
-                  error: startRequiredError,
+                  error: startRequiredError || startInvalidError,
                   onBlur: onStartBlur
                 }
               }
@@ -124,7 +140,7 @@ export default function DateTimePicker({
           </Box>
           <Box sx={styles.separator}>—</Box>
           <Box sx={styles.field}>
-            {renderPicker(endDateTime, endLabel, handleEndChange, {
+            {renderPicker(endDateTime ? dayjs(endDateTime) : null, endLabel, handleEndChange, {
               minDateTime: startDateTime ? dayjs(startDateTime) : undefined,
               slotProps: {
                 textField: {

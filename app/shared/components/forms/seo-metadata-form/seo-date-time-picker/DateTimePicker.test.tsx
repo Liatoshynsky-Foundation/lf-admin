@@ -6,6 +6,8 @@ import type { DateTimePickerProps } from './DateTimePicker';
 import DateTimePicker from './DateTimePicker';
 import { seoFormErrors } from '~/constants/errors';
 
+const mockHandleChange = jest.fn();
+
 jest.mock('@mui/x-date-pickers/DesktopDateTimePicker', () => ({
   DesktopDateTimePicker: ({
     label,
@@ -41,6 +43,10 @@ jest.mock('@mui/x-date-pickers/DesktopDateTimePicker', () => ({
 describe('DateTimePicker', () => {
   const fallbackLabels = { startDateTime: 'Event start', endDateTime: 'Event end' };
 
+  beforeEach(() => {
+    mockHandleChange.mockClear();
+  });
+
   const renderPicker = (props: Partial<DateTimePickerProps> = {}) => {
     render(<DateTimePicker onChange={jest.fn()} {...props} />);
     const startInput = screen.getByLabelText(props.labels?.startDateTime ?? fallbackLabels.startDateTime);
@@ -66,20 +72,59 @@ describe('DateTimePicker', () => {
     ['start', '2025-01-01T10:00:00', undefined, 'startInput', '2025-01-02T12:00:00', [expect.any(String), undefined]],
     ['end', undefined, '2025-01-02T10:00:00', 'endInput', '2025-01-03T12:00:00', [undefined, expect.any(String)]]
   ] as const)('calls onChange when %s date changes', (_type, start, end, inputKey, newValue, expected) => {
-    const handleChange = jest.fn();
-    const inputs = renderPicker({ startDateTime: start, endDateTime: end, onChange: handleChange });
+    const inputs = renderPicker({ startDateTime: start, endDateTime: end, onChange: mockHandleChange });
     changeInput(inputs[inputKey], newValue);
-    expect(handleChange).toHaveBeenCalledWith(expected[0], expected[1]);
+    expect(mockHandleChange).toHaveBeenCalledWith(expected[0], expected[1]);
   });
 
   test.each([
     ['start', { startDateTime: '2025-01-01T10:00:00' }, 'startInput'],
     ['end', { endDateTime: '2025-01-02T10:00:00' }, 'endInput']
   ] as const)('calls onChange with undefined when %s date is cleared', (_type, props, inputKey) => {
-    const handleChange = jest.fn();
-    const inputs = renderPicker({ ...props, onChange: handleChange });
+    const inputs = renderPicker({ ...props, onChange: mockHandleChange });
     changeInput(inputs[inputKey], '');
-    expect(handleChange).toHaveBeenCalledWith(undefined, undefined);
+    expect(mockHandleChange).toHaveBeenCalledWith(undefined, undefined);
+  });
+
+  it('shows invalid date error and does not call onChange when start date is invalid', () => {
+    const { startInput } = renderPicker({ onChange: mockHandleChange });
+
+    changeInput(startInput, 'invalid');
+
+    expect(mockHandleChange).not.toHaveBeenCalled();
+    expect(screen.getByText(seoFormErrors.uk.invalidDateTime)).toBeInTheDocument();
+  });
+
+  it('calls onChange when a valid start date is entered after an invalid date', () => {
+    const { startInput } = renderPicker({ onChange: mockHandleChange });
+
+    changeInput(startInput, 'invalid');
+    changeInput(startInput, '2025-01-02T18:00:00');
+
+    expect(mockHandleChange).toHaveBeenCalledTimes(1);
+    expect(mockHandleChange).toHaveBeenLastCalledWith(expect.any(String), undefined);
+  });
+
+  it('updates start date when startDateTime prop changes', () => {
+    const { rerender } = render(
+      <DateTimePicker 
+        startDateTime="2025-01-01T10:00:00" 
+        onChange={mockHandleChange} 
+      />
+    );
+
+    const startInput = screen.getByLabelText(fallbackLabels.startDateTime);
+
+    expect(startInput).toHaveValue('2025-01-01T10:00:00');
+
+    rerender(
+      <DateTimePicker 
+        startDateTime="2025-01-02T12:00:00" 
+        onChange={mockHandleChange} 
+      />
+    );
+
+    expect(startInput).toHaveValue('2025-01-02T12:00:00');
   });
 
   it('renders dash separator', () => {

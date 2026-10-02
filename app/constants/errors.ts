@@ -205,7 +205,8 @@ export const seoFormErrors = {
     required: 'Обовʼязкове поле.',
     invalidUrl: 'Некоректний URL.',
     keywords: 'Ключові слова мають бути через кому, без порожніх значень.',
-    endBeforeStart: 'Дата кінця не може бути раніше дати початку'
+    endBeforeStart: 'Дата кінця не може бути раніше дати початку',
+    invalidDateTime: 'Некоректна дата або час. Формат ДД.ММ.РРРР гг:хх'
   },
   en: {
     descriptionMaxLength: 'Value must not exceed 250 characters.',
@@ -217,7 +218,8 @@ export const seoFormErrors = {
     required: 'Required field.',
     invalidUrl: 'Invalid URL.',
     keywords: 'Keywords must be comma-separated, without empty values.',
-    endBeforeStart: 'End date cannot be earlier than start date'
+    endBeforeStart: 'End date cannot be earlier than start date',
+    invalidDateTime: 'Invalid date or time. Format: MM/DD/YYYY hh:mm'
   }
 };
 
