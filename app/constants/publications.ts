@@ -270,7 +270,7 @@ export const ADMIN_TITLE_LENGTH = { min: 2, max: 250 } as const;
 
 export const PUBLICATION_SEO_REQUIRED = {
   uk: { title: true, description: true },
-  en: { title: true, description: false }
+  en: { title: false, description: false }
 } as const;
 
 export const PUBLICATION_SEO_LABELS = {
