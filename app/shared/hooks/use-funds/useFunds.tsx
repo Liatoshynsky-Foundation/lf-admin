@@ -34,8 +34,7 @@ import {
   useFundByIdQuery,
   usePaginatedFundsQuery,
   useUpdateCaseMutation,
-  useUpdateFundMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateFundMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -65,7 +64,7 @@ const statusMap: Record<string, BaseContentStatuses> = {
   published: BaseContentStatuses.Published,
   hidden: BaseContentStatuses.Hidden,
   archived: BaseContentStatuses.Archived,
-  editing: BaseContentStatuses.Editing,
+  editing: BaseContentStatuses.Editing
 };
 
 export const useFundById = (id: string, options: QueryHookOptions = {}) =>
@@ -74,15 +73,18 @@ export const useFundById = (id: string, options: QueryHookOptions = {}) =>
 export const useGetFundStatus = () => {
   const client = useApolloClient();
 
-  return useCallback(async (fundId: string): Promise<BaseContentStatuses | undefined> => {
-    const { data } = await client.query<FundStatusQuery, FundStatusQueryVariables>({
-      query: FundStatusDocument,
-      variables: {id: fundId},
-      fetchPolicy: 'network-only'
-    });
+  return useCallback(
+    async (fundId: string): Promise<BaseContentStatuses | undefined> => {
+      const { data } = await client.query<FundStatusQuery, FundStatusQueryVariables>({
+        query: FundStatusDocument,
+        variables: { id: fundId },
+        fetchPolicy: 'network-only'
+      });
 
-    return statusMap[data.findFundById?.status ?? ''];
-  }, [client]);
+      return statusMap[data.findFundById?.status ?? ''];
+    },
+    [client]
+  );
 };
 
 export const useCasesByFundId = (fundId?: string) => {
