@@ -344,8 +344,13 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Event start date validation', () => {
-    it('should reject createEvent when event start date is empty', async () => {
-      const input = createMockInput({ eventDateTimeStart: '' });
+    it.each([
+      '',
+      '2026-02-31T18:00:00.000Z',
+      '2026-13-09T18:00:00.000Z',
+      'invalid-date'
+    ])('should reject createEvent when event start date is invalid: %s', async (eventDateTimeStart) => {
+      const input = createMockInput({ eventDateTimeStart });
 
       await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
         extensions: {
@@ -356,8 +361,13 @@ describe('EventsMutation Resolvers', () => {
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
-    it('should reject updateEvent when event start date is empty', async () => {
-      const input: UpdateEventInput = { eventDateTimeStart: '' };
+    it.each([
+      '',
+      '2026-02-31T18:00:00.000Z',
+      '2026-13-09T18:00:00.000Z',
+      'invalid-date'
+    ])('should reject updateEvent when event start date is invalid: %s', async (eventDateTimeStart) => {
+      const input: UpdateEventInput = { eventDateTimeStart };
 
       await expect(EventsMutation.updateEvent({}, { id: '1', input }, adminContext)).rejects.toMatchObject({
         extensions: {
