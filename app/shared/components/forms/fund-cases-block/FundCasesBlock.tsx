@@ -2,14 +2,16 @@
 
 import { Box, Button, Typography } from '@mui/material';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
+import { ARCHIVE_ITEMS_PER_PAGE } from '~/constants/archive';
 import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
+import { Pagination } from '~/shared/components/pagination/Pagination';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCasesByFundId, useDeleteCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
@@ -34,6 +36,7 @@ export default function FundCasesBlock({
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
+  const [page, setPage] = useState(1);
   const [modalState, setModalState] = useState<{
     open: boolean;
     caseId?: string;
@@ -51,7 +54,21 @@ export default function FundCasesBlock({
       : a.caseNumber - b.caseNumber
   );
 
-  const rows = sortedCases.map((caseItem) => ({
+  const totalPages = Math.ceil(sortedCases.length / ARCHIVE_ITEMS_PER_PAGE);
+  const currentPage = Math.min(page, Math.max(totalPages, 1));
+
+  useEffect(() => {
+    setPage(1);
+  }, [fundId]);
+
+  useEffect(() => {
+    if (page > totalPages && totalPages > 0) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const rows = sortedCases.slice(
+    (currentPage - 1) * ARCHIVE_ITEMS_PER_PAGE,
+    currentPage * ARCHIVE_ITEMS_PER_PAGE
+  ).map((caseItem) => ({
     type: 'individual' as const,
     id: caseItem.id,
     plainData: {
@@ -154,6 +171,16 @@ export default function FundCasesBlock({
       <Box sx={styles.content}>
         <TableLayout data={rows} columns={columns} withoutFirstColOffset={true} />
       </Box>
+
+      {totalPages > 1 && (
+        <Box sx={styles.pagination}>
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+          />
+        </Box>
+      )}
 
       {fundId && (
         <ArchiveCaseModal
