@@ -124,7 +124,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
       suggestions: suggestions.notes,
       fileType: 'pdf',
       onAdd: () =>
-        setNoteEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, date: null, fileName: null }]),
+        setNoteEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, fileName: null }]),
       onUpdate: handleUpdateNote,
       onDelete: (id: string) => setNoteEntries((prev) => prev.filter((e) => e.id !== id)),
       onTriggerUpload
@@ -178,9 +178,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
                       mode={section.mode}
                       suggestions={section.suggestions}
                       value={entry.name}
-                      date={'date' in entry ? entry.date : null}
                       onSelect={(val: string | null) => section.onUpdate(entry.id, { name: val })}
-                      onDateChange={(val: Dayjs | null) => section.onUpdate(entry.id, { date: val })}
                       onUpload={() => onUpload(section, entry)}
                       onDelete={() => section.onDelete(entry.id)}
                     />

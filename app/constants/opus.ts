@@ -94,7 +94,6 @@ export const COMPOSITION_MODAL_LABELS = {
   audioName: 'Назва аудіо',
   notesName: 'Назва нот',
   notesNamePlaceholder: 'Введіть назву нот',
-  publishDate: 'Дата видання',
   emptyFilesNotice:
     'Додайте файли для відкритого доступу. Якщо файли не додані, користувачі зможуть звʼязатися з вами.',
   cancel: 'Скасувати',

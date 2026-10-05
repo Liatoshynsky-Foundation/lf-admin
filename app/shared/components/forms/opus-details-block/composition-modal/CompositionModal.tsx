@@ -11,15 +11,8 @@ import {
   COMPOSITION_MODAL_LABELS,
   COMPOSITION_MODAL_TEXTS,
   COMPOSITION_TITLE_LIMITS,
-  COMPOSITION_VALIDATION_MESSAGES,
   COMPOSITION_YEAR_LIMITS
 } from '~/constants/opus';
-import {
-  formatPublishDate,
-  formatPublishDateForSave,
-  formatPublishDateInput,
-  publishDateToDayjs
-} from '~/lib/utils/date';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { isAudioUploadFile, isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
@@ -39,7 +32,6 @@ interface CompositionModalProps {
 }
 
 type MediaTarget = { field: 'audios' | 'notes'; rowId?: string };
-type NoteErrors = { [rowId: string]: { name?: string; publishDate?: string } };
 
 const emptyComposition = (): OpusCompositionData => ({
   id: createCompositionId(),
@@ -63,7 +55,6 @@ export default function CompositionModal({
   const [titleError, setTitleError] = useState('');
   const [genreError, setGenreError] = useState('');
   const [yearError, setYearError] = useState('');
-  const [noteErrors, setNoteErrors] = useState<NoteErrors>({});
   const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
   const [assetErrorTarget, setAssetErrorTarget] = useState<MediaTarget | null>(null);
 
@@ -73,7 +64,6 @@ export default function CompositionModal({
       setTitleError('');
       setGenreError('');
       setYearError('');
-      setNoteErrors({});
       setMediaTarget(null);
       setAssetErrorTarget(null);
     }
@@ -97,7 +87,7 @@ export default function CompositionModal({
   };
 
   const addNoteRow = (): void => {
-    const row: OpusMediaFileData = { id: createCompositionId(), name: '', publishDate: '' };
+    const row: OpusMediaFileData = { id: createCompositionId(), name: '' };
     setComposition((prev) => ({ ...prev, notes: [...prev.notes, row] }));
   };
 
@@ -107,28 +97,11 @@ export default function CompositionModal({
       notes: prev.notes.map((row) => (row.id === id ? { ...row, ...patch } : row))
     }));
 
-    setNoteErrors((prev) => {
-      const updated = { ...prev };
-      if (updated[id]) {
-        if ('name' in patch) delete updated[id].name;
-        if ('publishDate' in patch) delete updated[id].publishDate;
-        if (Object.keys(updated[id]).length === 0) delete updated[id];
-      }
-      return updated;
-    });
-
     onClearError?.();
   };
 
   const removeMediaRow = (field: 'audios' | 'notes', id: string): void => {
     setComposition((prev) => ({ ...prev, [field]: prev[field].filter((row) => row.id !== id) }));
-    if (field === 'notes') {
-      setNoteErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[id];
-        return updated;
-      });
-    }
   };
 
   const clearNoteFile = (id: string): void => {
@@ -168,7 +141,6 @@ export default function CompositionModal({
     let newTitleError = '';
     let newGenreError = '';
     let newYearError = '';
-    const newNoteErrors: NoteErrors = {};
 
     const titleResult = compositionTitleSchema.safeParse(composition.name);
     if (!titleResult.success) {
@@ -188,46 +160,15 @@ export default function CompositionModal({
       isValid = false;
     }
 
-    composition.notes.forEach((note) => {
-      const errs: { name?: string; publishDate?: string } = {};
-      const noteName = note.name ?? '';
-      const hasName = Boolean(noteName.trim());
-      const dateValue = note.publishDate ?? '';
-      const hasDate = Boolean(dateValue.trim());
-      const hasFile = Boolean(note.fileUrl);
-
-      if (hasDate && !publishDateToDayjs(dateValue)) {
-        errs.publishDate = COMPOSITION_VALIDATION_MESSAGES.yearInvalid;
-        isValid = false;
-      }
-
-      if (hasDate && !hasName && !hasFile) {
-        errs.publishDate = COMPOSITION_MODAL_TEXTS.emptyNoteDateError;
-        isValid = false;
-      }
-
-      if (Object.keys(errs).length > 0) {
-        newNoteErrors[note.id] = errs;
-      }
-    });
-
     setTitleError(newTitleError);
     setGenreError(newGenreError);
     setYearError(newYearError);
-    setNoteErrors(newNoteErrors);
 
     if (!isValid) {
       return;
     }
 
-    const filteredNotes = composition.notes
-      .filter(
-        (note) => (note.name ?? '').trim() || (note.publishDate && String(note.publishDate).trim()) || note.fileUrl
-      )
-      .map((note) => ({
-        ...note,
-        publishDate: formatPublishDateForSave(note.publishDate) ?? ''
-      }));
+    const filteredNotes = composition.notes.filter((note) => (note.name ?? '').trim() || note.fileUrl);
 
     onSubmit({ ...composition, name: composition.name.trim(), notes: filteredNotes });
   };
@@ -343,8 +284,6 @@ export default function CompositionModal({
           </Box>
 
           {composition.notes.map((note) => {
-            const errs = noteErrors[note.id] || {};
-
             return (
               <Box key={note.id} sx={styles.noteGroup}>
                 <Box sx={styles.mediaRow}>
@@ -353,22 +292,8 @@ export default function CompositionModal({
                     placeholder={COMPOSITION_MODAL_LABELS.notesNamePlaceholder}
                     value={note.name ?? ''}
                     onChange={(event) => updateNoteRow(note.id, { name: event.target.value })}
-                    error={Boolean(errs.name)}
-                    helperText={errs.name}
                     size="small"
                     sx={styles.mediaNameField}
-                  />
-                  <TextField
-                    label={COMPOSITION_MODAL_LABELS.publishDate}
-                    sx={styles.mediaDateField}
-                    value={formatPublishDate(note.publishDate)}
-                    placeholder="ДД/ММ/РРРР"
-                    onChange={(event) =>
-                      updateNoteRow(note.id, { publishDate: formatPublishDateInput(event.target.value) })
-                    }
-                    error={Boolean(errs.publishDate)}
-                    helperText={errs.publishDate}
-                    size="small"
                   />
                   <IconButton
                     aria-label={COMPOSITION_MODAL_TEXTS.uploadFileAriaLabel}
