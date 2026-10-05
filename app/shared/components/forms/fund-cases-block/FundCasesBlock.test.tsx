@@ -37,24 +37,24 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
     capturedTableLayoutProps.columns = props.columns;
     capturedTableLayoutProps.data = props.data;
     return (
-      <div data-testid="table-layout">
-        {props.data.map((row) => (
-          <div key={String(row.plainData.id)} data-testid={`row-${row.plainData.id}`}>
-            {props.columns.map((col) => (
-              <div key={col.id} data-testid={`cell-${row.plainData.id}-${col.id}`}>
-                {col.renderPlain(row.plainData)}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+      <table>
+        <tbody>
+          {props.data.map((row) => (
+            <tr key={String(row.plainData.id)}>
+              {props.columns.map((col) => (
+                <td key={col.id}>{col.renderPlain(row.plainData)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     );
   }
 }));
 
 jest.mock('~/shared/components/table-layout/components/StatusBadge', () => ({
   __esModule: true,
-  StatusBadge: ({ status }: { status: string }) => <span data-testid="status-badge">{status}</span>
+  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>
 }));
 
 jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
@@ -66,7 +66,7 @@ jest.mock('~/shared/components/table-layout/components/RowActions', () => ({
     editAction: { editLabel: string; onEditClick?: () => void };
     menuActions: { menuItems: { items: { id: string; text: { name: string }; onClick?: () => void }[] }[] };
   }) => (
-    <div data-testid="row-actions">
+    <div>
       <button onClick={editAction.onEditClick}>{editAction.editLabel}</button>
       {menuActions.menuItems.flatMap((group) =>
         group.items.map((item) => (
@@ -85,7 +85,7 @@ jest.mock('../../../../(logged_in)/archive/(components)/ArchiveCaseModal', () =>
   ArchiveCaseModal: (props: Record<string, unknown>) => {
     capturedModalProps = props;
     return props.isOpen ? (
-      <div data-testid="archive-case-modal">
+      <div role="dialog">
         <button onClick={() => (props.setIsOpen as (open: boolean) => void)(false)}>close modal</button>
         <button onClick={() => (props.onSaved as () => void)()}>save modal</button>
       </div>
@@ -99,7 +99,7 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
   DeleteCompositionModal: (props: Record<string, unknown>) => {
     capturedDeleteModalProps = props;
     return props.open ? (
-      <div data-testid="delete-modal">
+      <div role="dialog">
         <span>{props.description as string}</span>
         <button onClick={() => (props.onConfirm as () => void)()}>confirm delete</button>
         <button onClick={() => (props.onClose as () => void)()}>close delete</button>
@@ -204,9 +204,8 @@ describe('FundCasesBlock', () => {
 
     expect(screen.getByText('Справи в фонді')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Додати справу/ })).toBeInTheDocument();
-    expect(screen.getByTestId('table-layout')).toBeInTheDocument();
-    expect(screen.getByTestId('row-case-1')).toBeInTheDocument();
-    expect(screen.getByTestId('row-case-2')).toBeInTheDocument();
+    expect(screen.getAllByRole('row')).toHaveLength(2);
+    expect(screen.getByText('Друга справа')).toBeInTheDocument();
   });
 
   it('paginates cases with eight rows per page', async () => {
@@ -235,7 +234,7 @@ describe('FundCasesBlock', () => {
     render(<FundCasesBlock fundId="fund-1" />);
 
     expect(screen.getByText('Не вдалося завантажити справи фонду.')).toBeInTheDocument();
-    expect(screen.queryByTestId('table-layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('opens the create modal (no caseId) when the add-case button is clicked', async () => {
@@ -278,6 +277,34 @@ describe('FundCasesBlock', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/archive/fund/fund-1/edit', { scroll: false });
   });
 
+  it('keeps other query parameters when removing caseId', async () => {
+    mockSearchParams = new URLSearchParams('caseId=case-1&tab=cases');
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await waitFor(() => expect(capturedModalProps?.isOpen).toBe(true));
+    expect(mockRouter.replace).toHaveBeenCalledWith('/archive/fund/fund-1/edit?tab=cases', { scroll: false });
+  });
+
+  it('shows an error toast and removes caseId when the shared case is not found', async () => {
+    mockSearchParams = new URLSearchParams('caseId=missing-case');
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Справу не знайдено'));
+    expect(capturedModalProps?.isOpen).toBe(false);
+    expect(mockRouter.replace).toHaveBeenCalledWith('/archive/fund/fund-1/edit', { scroll: false });
+  });
+
+  it('maps pdfFile when opening a shared case', async () => {
+    mockSearchParams = new URLSearchParams('caseId=case-1');
+    mockCases = [buildCase({ pdfFile: { filename: 'test.pdf', url: 'http://test.com', mimeType: 'application/pdf' } })];
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await waitFor(() => expect(capturedModalProps?.isOpen).toBe(true));
+    expect(capturedModalProps?.initialData).toMatchObject({
+      currentPdfFile: { name: 'test.pdf', fileName: 'test.pdf', url: 'http://test.com', mimeType: 'application/pdf' }
+    });
+  });
+
   it('shares a case link to the fund edit page', async () => {
     const user = userEvent.setup();
     const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
@@ -289,6 +316,17 @@ describe('FundCasesBlock', () => {
       `${window.location.origin}/archive/fund/fund-1/edit?caseId=case-1`
     );
     expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+  });
+
+  it('shows an error toast when copying the share link fails', async () => {
+    const user = userEvent.setup();
+    jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('denied'));
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await user.click(screen.getByText('Поширити'));
+
+    expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('opens the edit modal mapping pdfFile if present', async () => {
@@ -306,6 +344,27 @@ describe('FundCasesBlock', () => {
 
     expect(capturedModalProps?.initialData).toMatchObject({
       currentPdfFile: { name: 'test.pdf', fileName: 'test.pdf', url: 'http://test.com', mimeType: 'application/pdf' }
+    });
+  });
+
+  it.each([
+    { pdfFile: null, expectedPdfFile: undefined },
+    {
+      pdfFile: { filename: 'test.pdf', url: 'http://test.com', mimeType: 'application/pdf' },
+      expectedPdfFile: { name: 'test.pdf', fileName: 'test.pdf', url: 'http://test.com', mimeType: 'application/pdf' }
+    }
+  ])('opens the edit modal from the row menu with mapped initialData', async ({ pdfFile, expectedPdfFile }) => {
+    const user = userEvent.setup();
+    mockCases = [buildCase({ id: 'case-1', caseName: 'Архівна справа', pdfFile })];
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await user.click(screen.getByText('Редагувати'));
+
+    expect(capturedModalProps?.mode).toBe('edit');
+    expect(capturedModalProps?.caseId).toBe('case-1');
+    expect(capturedModalProps?.initialData).toMatchObject({
+      caseName: 'Архівна справа',
+      currentPdfFile: expectedPdfFile
     });
   });
 
@@ -338,14 +397,14 @@ describe('FundCasesBlock', () => {
     mockCases = [buildCase({ status: CaseStatus.Published })];
     render(<FundCasesBlock fundId="fund-1" />);
 
-    expect(screen.getByTestId('status-badge')).toHaveTextContent(BaseContentStatuses.Published);
+    expect(screen.getByText(BaseContentStatuses.Published)).toBeInTheDocument();
   });
 
   it('maps a draft case to the Hidden badge status', () => {
     mockCases = [buildCase({ status: CaseStatus.Draft })];
     render(<FundCasesBlock fundId="fund-1" />);
 
-    expect(screen.getByTestId('status-badge')).toHaveTextContent(BaseContentStatuses.Hidden);
+    expect(screen.getByText(BaseContentStatuses.Hidden)).toBeInTheDocument();
   });
 
   it('toggles a published case to hidden and refetches', async () => {
@@ -412,7 +471,7 @@ describe('FundCasesBlock', () => {
     render(<FundCasesBlock fundId="fund-1" />);
 
     await user.click(screen.getByText('Видалити'));
-    expect(screen.getByTestId('delete-modal')).toHaveTextContent('Справа на видалення');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Справа на видалення');
 
     await user.click(screen.getByText('confirm delete'));
 
@@ -457,26 +516,25 @@ describe('FundCasesBlock', () => {
     expect(capturedDeleteModalProps?.open).toBe(false);
   });
 
-  it('does not render the ArchiveCaseModal when fundId is not provided', () => {
+  it('does not open the ArchiveCaseModal when fundId is not provided', async () => {
+    const user = userEvent.setup();
     render(<FundCasesBlock />);
 
-    expect(screen.queryByTestId('archive-case-modal')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Додати справу/ }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('sorts rows by descriptionNumber, then by caseNumber within the same description', () => {
-    const caseA = buildCase({ id: 'case-a', descriptionNumber: 2, caseNumber: 1 });
-    const caseB = buildCase({ id: 'case-b', descriptionNumber: 1, caseNumber: 2 });
-    const caseC = buildCase({ id: 'case-c', descriptionNumber: 1, caseNumber: 1 });
+    const caseA = buildCase({ id: 'case-a', caseName: 'Справа A', descriptionNumber: 2, caseNumber: 1 });
+    const caseB = buildCase({ id: 'case-b', caseName: 'Справа B', descriptionNumber: 1, caseNumber: 2 });
+    const caseC = buildCase({ id: 'case-c', caseName: 'Справа C', descriptionNumber: 1, caseNumber: 1 });
     mockCases = [caseA, caseB, caseC];
 
     render(<FundCasesBlock fundId="fund-1" />);
 
-    const renderedRows = screen.getAllByTestId(/row-case-/);
-    expect(renderedRows.map((row) => row.getAttribute('data-testid'))).toEqual([
-      'row-case-c',
-      'row-case-b',
-      'row-case-a'
-    ]);
+    const renderedNames = screen.getAllByText(/^Справа [ABC]$/);
+    expect(renderedNames.map((name) => name.textContent)).toEqual(['Справа C', 'Справа B', 'Справа A']);
   });
 
   it('renders correctly all columns in plain mode', () => {
