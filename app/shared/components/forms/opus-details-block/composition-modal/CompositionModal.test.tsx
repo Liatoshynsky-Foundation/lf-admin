@@ -1,4 +1,3 @@
-import 'dayjs/locale/uk';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactElement } from 'react';
 
@@ -54,7 +53,6 @@ const INPUTS = {
   genre: 'Жанр',
   year: 'Рік',
   noteName: 'Назва нот',
-  noteDate: 'Дата видання',
   audioName: 'Назва аудіо',
   createButton: 'Створити',
   addNotesButton: 'Додати ноти',
@@ -62,8 +60,6 @@ const INPUTS = {
   saveButton: 'Зберегти'
 } as const;
 
-const MOCK_NOTE_DATE = '01/01/2020';
-const MOCK_UPDATED_NOTE_DATE = '01/01/2022';
 const MOCK_UPDATED_NOTE_NAME = 'Оновлені ноти';
 
 const INITIAL_COMPOSITION_VALUE: OpusCompositionData = {
@@ -73,7 +69,7 @@ const INITIAL_COMPOSITION_VALUE: OpusCompositionData = {
   year: '',
   audios: [{ id: 'a1', name: 'Запис', fileUrl: 'https://files/rec.mp3' }],
   notes: [
-    { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf', publishDate: '01/01/2020' },
+    { id: 'n1', name: 'Ноти 1', fileUrl: 'https://files/sheet.pdf' },
     { id: 'n2', name: 'Ноти 2' }
   ]
 };
@@ -186,118 +182,12 @@ describe('CompositionModal', () => {
     expect(nameField).toHaveValue('');
   });
 
-  it('adds a notes row with name and date fields', () => {
+  it('adds a notes row with a name field', () => {
     render(<CompositionModal {...baseProps} mode="create" />);
 
     fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
 
     expect(screen.getByLabelText(INPUTS.noteName)).toBeInTheDocument();
-    expect(screen.getByLabelText(INPUTS.noteDate)).toBeInTheDocument();
-  });
-
-  it('accepts a valid note publication date', () => {
-    render(<CompositionModal {...baseProps} mode="create" />);
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
-    const dateField = screen.getByLabelText(INPUTS.noteDate);
-
-    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
-    expect(dateField).toHaveValue('01/01/2023');
-  });
-
-  it('formats a typed publication date and submits it as an ISO date', () => {
-    const onSubmit = jest.fn();
-    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
-
-    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
-    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
-    const dateField = screen.getByLabelText(INPUTS.noteDate);
-    fireEvent.change(dateField, { target: { value: '01122020' } });
-
-    expect(dateField).toHaveValue('01/12/2020');
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
-
-    expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ notes: [expect.objectContaining({ publishDate: '2020-12-01' })] })
-    );
-  });
-
-  it('keeps a partial note publication date visible and reports it as invalid', () => {
-    const onSubmit = jest.fn();
-    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
-
-    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
-    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
-    const dateField = screen.getByLabelText(INPUTS.noteDate);
-    fireEvent.change(dateField, { target: { value: '0112' } });
-
-    expect(dateField).toHaveValue('01/12');
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.yearInvalid)).toBeInTheDocument();
-  });
-
-  it('clears a prefilled note publication date', () => {
-    render(<CompositionModal {...baseProps} mode="edit" initialValue={INITIAL_COMPOSITION_VALUE} />);
-
-    const dateField = screen.getByDisplayValue(MOCK_NOTE_DATE);
-    fireEvent.change(dateField, { target: { value: '' } });
-
-    expect(screen.queryByDisplayValue(MOCK_NOTE_DATE)).not.toBeInTheDocument();
-  });
-
-  it('shows error on note if publishDate is set without name or file', () => {
-    const onSubmit = jest.fn();
-    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
-
-    const titleInput = screen.getByLabelText(INPUTS.title);
-    fireEvent.change(titleInput, { target: { value: 'Valid Title' } });
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
-    const dateField = screen.getByLabelText(INPUTS.noteDate);
-    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(
-      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
-    ).toBeInTheDocument();
-  });
-
-  it('clears note errors when editing note name and date after a validation error', () => {
-    const onSubmit = jest.fn();
-    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
-
-    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.addNotesButton }));
-
-    const dateField = screen.getByLabelText(INPUTS.noteDate);
-    fireEvent.change(dateField, { target: { value: '01/01/2023' } });
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(
-      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
-    ).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText(INPUTS.noteName), { target: { value: 'Ноти' } });
-    expect(
-      screen.getByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
-    ).toBeInTheDocument();
-
-    fireEvent.change(dateField, { target: { value: '01/01/2024' } });
-    expect(
-      screen.queryByText((content) => content.includes(COMPOSITION_MODAL_TEXTS.emptyNoteDateError))
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
-    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it('removes a note row using its delete button', () => {
@@ -341,7 +231,6 @@ describe('CompositionModal', () => {
     expect(screen.getByText('second.mp3')).toBeInTheDocument();
     expect(screen.getByText('sheet.pdf')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Ноти 1')).toBeInTheDocument();
-    expect(screen.getByDisplayValue(MOCK_NOTE_DATE)).toBeInTheDocument();
     expect(screen.queryByText(/Додайте файли/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: COMPOSITION_MODAL_LABELS.addAudio })).toBeDisabled();
   });
@@ -363,9 +252,7 @@ describe('CompositionModal', () => {
     render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} />);
 
     fireEvent.change(screen.getByDisplayValue('Ноти 1'), { target: { value: MOCK_UPDATED_NOTE_NAME } });
-    fireEvent.change(screen.getByDisplayValue(MOCK_NOTE_DATE), { target: { value: MOCK_UPDATED_NOTE_DATE } });
     expect(screen.getByDisplayValue(MOCK_UPDATED_NOTE_NAME)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(MOCK_UPDATED_NOTE_DATE)).toBeInTheDocument();
 
     const iconButtons = screen.getAllByRole('button');
     const clearFileBtn = iconButtons.find(
@@ -471,7 +358,7 @@ describe('CompositionModal', () => {
           ...INITIAL_COMPOSITION_VALUE,
           name: 'Valid Title',
           audios: [],
-          notes: [{ id: 'unnamed-note', fileUrl: 'https://files/sheet.pdf', publishDate: '01/01/2020' }]
+          notes: [{ id: 'unnamed-note', fileUrl: 'https://files/sheet.pdf' }]
         }}
         onSubmit={onSubmit}
       />
@@ -577,20 +464,6 @@ describe('CompositionModal', () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByText(COMPOSITION_VALIDATION_MESSAGES.genreTooShort)).toBeInTheDocument();
-  });
-
-  it('blocks submit and shows an error for an invalid note publication date', () => {
-    const onSubmit = jest.fn();
-    const initialValue: OpusCompositionData = {
-      ...INITIAL_COMPOSITION_VALUE,
-      notes: [{ id: 'invalid-date', name: 'Ноти', publishDate: 'not-a-date' }]
-    };
-    render(<CompositionModal {...baseProps} mode="edit" initialValue={initialValue} onSubmit={onSubmit} />);
-
-    fireEvent.click(screen.getByRole('button', { name: INPUTS.saveButton }));
-
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText('Введіть коректну дату.')).toBeInTheDocument();
   });
 
   it('restricts non-numeric input for the year field', () => {

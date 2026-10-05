@@ -1,36 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import dayjs from 'dayjs';
 import React from 'react';
 
 import ActionableSuggestItem from './ActionableSuggestItem';
-
-jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
-  __esModule: true,
-  LocalizationProvider: ({ children }: { readonly children: React.ReactNode }) => <>{children}</>
-}));
-
-jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  __esModule: true,
-  DatePicker: ({
-    label,
-    value,
-    onChange
-  }: {
-    readonly label: string;
-    readonly value: unknown;
-    readonly onChange: (val: unknown) => void;
-  }) => (
-    <div data-testid="mock-date-picker">
-      <label htmlFor="mock-date-input">{label}</label>
-      <input
-        id="mock-date-input"
-        data-testid="date-picker-input"
-        value={value ? dayjs(value as string).format('DD/MM/YYYY') : ''}
-        onChange={() => onChange(dayjs('2026-06-14'))}
-      />
-    </div>
-  )
-}));
 
 jest.mock('@mui/material', () => {
   const actualMui = jest.requireActual('@mui/material');
@@ -72,14 +43,12 @@ describe('ActionableSuggestItem', () => {
   let onUploadMock: jest.Mock;
   let onDeleteMock: jest.Mock;
   let onSelectMock: jest.Mock;
-  let onDateChangeMock: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     onUploadMock = jest.fn();
     onDeleteMock = jest.fn();
     onSelectMock = jest.fn();
-    onDateChangeMock = jest.fn();
   });
 
   const renderComponent = (overrides = {}) => {
@@ -89,8 +58,6 @@ describe('ActionableSuggestItem', () => {
         onUpload={onUploadMock}
         onDelete={onDeleteMock}
         onSelect={onSelectMock}
-        date={null}
-        onDateChange={onDateChangeMock}
         {...overrides}
       />
     );
@@ -101,7 +68,6 @@ describe('ActionableSuggestItem', () => {
 
     expect(screen.getByLabelText('Назва аудіо *')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Введіть назву аудіо')).toBeInTheDocument();
-    expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
   });
 
   it('should render pdf input mode labels and hide date picking interfaces when mode is pdf', () => {
@@ -109,18 +75,13 @@ describe('ActionableSuggestItem', () => {
 
     expect(screen.getByLabelText('Назва PDF')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Введіть назву PDF')).toBeInTheDocument();
-    expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
   });
 
-  it('should render notes alternative mode inputs and mount localization selectors when mode is notes', () => {
-    const mockDate = dayjs('2026-05-20');
-    renderComponent({ mode: 'notes', value: 'Nocturne Op. 9', date: mockDate });
+  it('should render notes input mode labelss', () => {
+    renderComponent({ mode: 'notes', value: 'Nocturne Op. 9' });
 
     expect(screen.getByLabelText('Назва нот *')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Введіть назву нот')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
-    expect(screen.getByLabelText('Дата видання')).toBeInTheDocument();
-    expect(screen.getByTestId('date-picker-input')).toHaveValue('20/05/2026');
   });
 
   it('should propagate values correctly up when selecting alternate suggestion parameters', () => {
@@ -130,15 +91,6 @@ describe('ActionableSuggestItem', () => {
     fireEvent.change(selectElement, { target: { value: 'Prelude in C' } });
 
     expect(onSelectMock).toHaveBeenCalledWith('Prelude in C');
-  });
-
-  it('should trigger target parameter updates when the nested date picking handler fires', () => {
-    renderComponent({ mode: 'notes' });
-
-    const dateInputElement = screen.getByTestId('date-picker-input');
-    fireEvent.change(dateInputElement, { target: { value: '14/06/2026' } });
-
-    expect(onDateChangeMock).toHaveBeenCalledWith(expect.any(dayjs));
   });
 
   it('should execute context triggers sequentially exactly once when action button clicks happen', () => {
@@ -154,7 +106,7 @@ describe('ActionableSuggestItem', () => {
   });
 
   it('should use default values for props when they are completely omitted', () => {
-    const propsWithoutOptionalAndDate = {
+    const propsWithoutOptional = {
       suggestions: mockSuggestions,
       onUpload: onUploadMock,
       onDelete: onDeleteMock,
@@ -163,30 +115,10 @@ describe('ActionableSuggestItem', () => {
 
     render(
       <ActionableSuggestItem
-        {...(propsWithoutOptionalAndDate as unknown as React.ComponentProps<typeof ActionableSuggestItem>)}
+        {...(propsWithoutOptional as unknown as React.ComponentProps<typeof ActionableSuggestItem>)}
       />
     );
 
     expect(screen.getByLabelText('Назва аудіо *')).toBeInTheDocument();
-  });
-
-  it('should safe guard date changes and not crash if onDateChange is missing', () => {
-    const propsWithoutDateCallback = {
-      suggestions: mockSuggestions,
-      onUpload: onUploadMock,
-      onDelete: onDeleteMock,
-      onSelect: onSelectMock,
-      mode: 'notes' as const,
-      date: dayjs('2026-05-20')
-    };
-
-    render(
-      <ActionableSuggestItem
-        {...(propsWithoutDateCallback as unknown as React.ComponentProps<typeof ActionableSuggestItem>)}
-      />
-    );
-
-    expect(screen.queryByTestId('mock-date-picker')).not.toBeInTheDocument();
-    expect(onDateChangeMock).not.toHaveBeenCalled();
   });
 });
