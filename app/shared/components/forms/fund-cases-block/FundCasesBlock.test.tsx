@@ -110,9 +110,10 @@ jest.mock('~/shared/components/pagination/Pagination', () => ({
     currentPage: number;
     onPageChange: (event: unknown, page: number) => void;
   }) => (
-    <nav data-testid="pagination">
-      <span data-testid="pagination-current-page">{currentPage}</span>
-      <span data-testid="pagination-total-pages">{totalPages}</span>
+    <nav>
+      {Array.from({ length: totalPages }, (_, index) => (
+        <span key={index} aria-current={index + 1 === currentPage ? 'page' : undefined}>{index + 1}</span>
+      ))}
       <button onClick={(event) => onPageChange(event, currentPage + 1)}>next page</button>
     </nav>
   )
@@ -201,20 +202,21 @@ describe('FundCasesBlock', () => {
     const user = userEvent.setup();
     mockCases = Array.from({ length: 9 }, (_, index) => buildCase({
       id: `case-${index + 1}`,
+      caseName: `Справа ${index + 1}`,
       caseNumber: index + 1
     }));
 
     render(<FundCasesBlock fundId="fund-1" />);
 
-    expect(screen.getAllByTestId(/^row-case-/)).toHaveLength(8);
-    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('1');
-    expect(screen.getByTestId('pagination-total-pages')).toHaveTextContent('2');
+    expect(screen.getAllByText(/^Справа \d+$/)).toHaveLength(8);
+    expect(screen.getByText('1')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('2')).not.toHaveAttribute('aria-current');
 
     await user.click(screen.getByRole('button', { name: 'next page' }));
 
-    expect(screen.getAllByTestId(/^row-case-/)).toHaveLength(1);
-    expect(screen.getByTestId('row-case-9')).toBeInTheDocument();
-    expect(screen.getByTestId('pagination-current-page')).toHaveTextContent('2');
+    expect(screen.getAllByText(/^Справа \d+$/)).toHaveLength(1);
+    expect(screen.getByText('Справа 9')).toBeInTheDocument();
+    expect(screen.getByText('2')).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders an error message when the cases query fails', () => {
