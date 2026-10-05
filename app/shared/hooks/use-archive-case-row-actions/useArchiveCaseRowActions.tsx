@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
 import { ArchiveCaseModal } from '~/(logged_in)/archive/(components)/ArchiveCaseModal';
+import { buildArchiveCaseShareUrl } from '~/lib/utils/archiveCaseShare';
 import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
@@ -93,9 +94,7 @@ export const useArchiveCaseRowActions = (
                 text: { name: 'Поширити' },
                 onClick: async () => {
                   try {
-                    await navigator.clipboard.writeText(
-                      `${window.location.origin}${window.location.pathname}?caseId=${encodeURIComponent(item.id)}`
-                    );
+                    await navigator.clipboard.writeText(buildArchiveCaseShareUrl(window.location.origin, item.id, item.fundId));
                     toast.success('Посилання скопійовано в буфер обміну.');
                   } catch {
                     toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');

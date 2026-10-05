@@ -360,7 +360,7 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.delete('caseId');
     const query = nextParams.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [caseToEdit?.id, cases, casesLoading, pathname, router, searchParams, sharedCaseId]);
   const shouldUseAllFundsForGrouping = isAllTab && !appliedSearch && isAllStatus;
   const fundIdsForCaseGrouping = new Set(

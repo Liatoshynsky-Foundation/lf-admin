@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
@@ -7,6 +7,15 @@ import FundCasesBlock from './FundCasesBlock';
 import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
+
+let mockSearchParams = new URLSearchParams();
+const mockRouter = { replace: jest.fn() };
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/archive/fund/fund-1/edit',
+  useSearchParams: () => mockSearchParams
+}));
 
 interface ColumnDefLike {
   id: string;
@@ -186,6 +195,7 @@ describe('FundCasesBlock', () => {
     capturedDeleteModalProps = null;
     mockCases = [buildCase()];
     mockError = undefined;
+    mockSearchParams = new URLSearchParams();
   });
 
   it('renders the header, add button, and a row per case', () => {
@@ -257,6 +267,28 @@ describe('FundCasesBlock', () => {
       detailedCaseDescription: 'Детальний опис',
       currentPdfFile: undefined
     });
+  });
+
+  it('opens the case modal from caseId and removes the query parameter', async () => {
+    mockSearchParams = new URLSearchParams('caseId=case-1');
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await waitFor(() => expect(capturedModalProps?.isOpen).toBe(true));
+    expect(capturedModalProps?.caseId).toBe('case-1');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/archive/fund/fund-1/edit', { scroll: false });
+  });
+
+  it('shares a case link to the fund edit page', async () => {
+    const user = userEvent.setup();
+    const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await user.click(screen.getByText('Поширити'));
+
+    expect(writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/archive/fund/fund-1/edit?caseId=case-1`
+    );
+    expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
   });
 
   it('opens the edit modal mapping pdfFile if present', async () => {
