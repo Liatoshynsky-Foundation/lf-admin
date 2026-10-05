@@ -26,6 +26,26 @@ const DELETE_CASE_ERROR_MESSAGE = 'Не вдалося видалити спра
 
 const columns = createCaseTableColumns();
 
+type CaseItem = NonNullable<ReturnType<typeof useCasesByFundId>['cases']>[number];
+
+const toInitialData = (c: CaseItem): ArchiveCaseInitialData => ({
+  descriptionNumber: String(c.descriptionNumber),
+  caseNumber: String(c.caseNumber),
+  sheetsNumber: String(c.sheetsNumber),
+  caseDate: c.caseDate.uk,
+  caseName: c.caseName.uk,
+  caseDescriptions: c.caseDescriptions.uk,
+  detailedCaseDescription: c.detailedCaseDescription?.uk ?? '',
+  currentPdfFile: c.pdfFile
+    ? {
+      name: c.pdfFile.filename,
+      fileName: c.pdfFile.filename,
+      url: c.pdfFile.url,
+      mimeType: c.pdfFile.mimeType
+    }
+    : undefined
+});
+
 export default function FundCasesBlock({
   fundId,
   fundStatus,
@@ -36,9 +56,11 @@ export default function FundCasesBlock({
   onCaseChanged?: () => Promise<unknown>;
 }>) {
   const { cases, loading, error, refetch } = useCasesByFundId(fundId);
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
   const sharedCaseId = searchParams.get('caseId');
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
@@ -49,7 +71,12 @@ export default function FundCasesBlock({
     cipher?: string;
     initialData?: ArchiveCaseInitialData;
   }>({ open: false });
-  const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; caseId?: string; caseName?: string }>({
+
+  const [deleteModalState, setDeleteModalState] = useState<{
+    open: boolean;
+    caseId?: string;
+    caseName?: string;
+  }>({
     open: false
   });
 
@@ -78,179 +105,108 @@ export default function FundCasesBlock({
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [pathname, router, searchParams]);
 
+  const openEditModal = useCallback(
+    (c: CaseItem) =>
+      setModalState({
+        open: true,
+        caseId: c.id,
+        cipher: c.cipher,
+        initialData: toInitialData(c)
+      }),
+    []
+  );
+
+  const openDeleteModal = (c: CaseItem) => setDeleteModalState({ open: true, caseId: c.id, caseName: c.caseName.uk });
+
   useEffect(() => {
     if (!sharedCaseId || !fundId || loading) return;
 
-    const sharedCase = cases.find((caseItem) => caseItem.id === sharedCaseId);
+    const sharedCase = cases.find((c) => c.id === sharedCaseId);
     if (!sharedCase) {
       toast.error('Справу не знайдено');
       clearSharedCaseId();
       return;
     }
 
-    setModalState({
-      open: true,
-      caseId: sharedCase.id,
-      cipher: sharedCase.cipher,
-      initialData: {
-        descriptionNumber: String(sharedCase.descriptionNumber),
-        caseNumber: String(sharedCase.caseNumber),
-        sheetsNumber: String(sharedCase.sheetsNumber),
-        caseDate: sharedCase.caseDate.uk,
-        caseName: sharedCase.caseName.uk,
-        caseDescriptions: sharedCase.caseDescriptions.uk,
-        detailedCaseDescription: sharedCase.detailedCaseDescription?.uk ?? '',
-        currentPdfFile: sharedCase.pdfFile
-          ? {
-            name: sharedCase.pdfFile.filename,
-            fileName: sharedCase.pdfFile.filename,
-            url: sharedCase.pdfFile.url,
-            mimeType: sharedCase.pdfFile.mimeType
-          }
-          : undefined
-      }
-    });
+    openEditModal(sharedCase);
     clearSharedCaseId();
-  }, [cases, clearSharedCaseId, fundId, loading, pathname, router, searchParams, sharedCaseId]);
+  }, [cases, clearSharedCaseId, fundId, loading, openEditModal, sharedCaseId]);
+
+  const buildMenuItems = (c: CaseItem) => {
+    const deleteItem = {
+      id: 'delete',
+      text: { name: 'Видалити' },
+      onClick: () => openDeleteModal(c)
+    };
+
+    if (c.status !== CaseStatus.Draft && c.status !== CaseStatus.Published) {
+      return [{ items: [deleteItem] }];
+    }
+
+    const isPublished = c.status === CaseStatus.Published;
+    const nextStatus = isPublished ? CaseStatus.Draft : CaseStatus.Published;
+
+    return [
+      {
+        items: [
+          { id: 'edit', text: { name: 'Редагувати' }, onClick: () => openEditModal(c) },
+          {
+            id: 'share',
+            text: { name: 'Поширити' },
+            onClick: async () => {
+              try {
+                await navigator.clipboard.writeText(buildArchiveCaseShareUrl(window.location.origin, c.id, fundId));
+                toast.success('Посилання скопійовано в буфер обміну.');
+              } catch {
+                toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+              }
+            }
+          }
+        ]
+      },
+      {
+        items: [
+          {
+            id: 'toggle-status',
+            text: { name: isPublished ? 'Сховати' : 'Опублікувати' },
+            onClick: async () => {
+              try {
+                await updateCase({ id: c.id, input: { status: nextStatus } });
+                showCaseStatusToast(nextStatus, fundStatus);
+                await refetch();
+              } catch (err) {
+                toast.error(getCaseStatusErrorMessage(err, nextStatus));
+              }
+            }
+          },
+          deleteItem
+        ]
+      }
+    ];
+  };
 
   const rows = sortedCases
     .slice((currentPage - 1) * ARCHIVE_ITEMS_PER_PAGE, currentPage * ARCHIVE_ITEMS_PER_PAGE)
-    .map((caseItem) => ({
+    .map((c) => ({
       type: 'individual' as const,
-      id: caseItem.id,
+      id: c.id,
       plainData: {
-        id: caseItem.id,
-        cipher: caseItem.cipher,
-        caseName: caseItem.caseName.uk,
-        sheetsNumber: caseItem.sheetsNumber,
-        caseDate: caseItem.caseDate.uk,
-        caseDescription: caseItem.caseDescriptions.uk,
-        updatedAt: caseItem.updatedAt,
-        status: caseItem.status === CaseStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Hidden,
+        id: c.id,
+        cipher: c.cipher,
+        caseName: c.caseName.uk,
+        sheetsNumber: c.sheetsNumber,
+        caseDate: c.caseDate.uk,
+        caseDescription: c.caseDescriptions.uk,
+        updatedAt: c.updatedAt,
+        status: c.status === CaseStatus.Published ? BaseContentStatuses.Published : BaseContentStatuses.Hidden,
         editAction: {
           editHref: undefined,
-          onEditClick: () =>
-            setModalState({
-              open: true,
-              caseId: caseItem.id,
-              cipher: caseItem.cipher,
-              initialData: {
-                descriptionNumber: String(caseItem.descriptionNumber),
-                caseNumber: String(caseItem.caseNumber),
-                sheetsNumber: String(caseItem.sheetsNumber),
-                caseDate: caseItem.caseDate.uk,
-                caseName: caseItem.caseName.uk,
-                caseDescriptions: caseItem.caseDescriptions.uk,
-                detailedCaseDescription: caseItem.detailedCaseDescription?.uk ?? '',
-                currentPdfFile: caseItem.pdfFile
-                  ? {
-                    name: caseItem.pdfFile.filename,
-                    fileName: caseItem.pdfFile.filename,
-                    url: caseItem.pdfFile.url,
-                    mimeType: caseItem.pdfFile.mimeType
-                  }
-                  : undefined
-              }
-            }),
-          editLabel: `Редагувати справу ${caseItem.caseName.uk}`
+          onEditClick: () => openEditModal(c),
+          editLabel: `Редагувати справу ${c.caseName.uk}`
         },
         menuActions: {
-          menuTriggerLabel: `Дії для справи ${caseItem.caseName.uk}`,
-          menuItems: [
-            ...(caseItem.status === CaseStatus.Draft || caseItem.status === CaseStatus.Published
-              ? [
-                {
-                  items: [
-                    {
-                      id: 'edit',
-                      text: { name: 'Редагувати' },
-                      onClick: () =>
-                        setModalState({
-                          open: true,
-                          caseId: caseItem.id,
-                          cipher: caseItem.cipher,
-                          initialData: {
-                            descriptionNumber: String(caseItem.descriptionNumber),
-                            caseNumber: String(caseItem.caseNumber),
-                            sheetsNumber: String(caseItem.sheetsNumber),
-                            caseDate: caseItem.caseDate.uk,
-                            caseName: caseItem.caseName.uk,
-                            caseDescriptions: caseItem.caseDescriptions.uk,
-                            detailedCaseDescription: caseItem.detailedCaseDescription?.uk ?? '',
-                            currentPdfFile: caseItem.pdfFile
-                              ? {
-                                name: caseItem.pdfFile.filename,
-                                fileName: caseItem.pdfFile.filename,
-                                url: caseItem.pdfFile.url,
-                                mimeType: caseItem.pdfFile.mimeType
-                              }
-                              : undefined
-                          }
-                        })
-                    },
-                    {
-                      id: 'share',
-                      text: { name: 'Поширити' },
-                      onClick: async () => {
-                        try {
-                          await navigator.clipboard.writeText(
-                            buildArchiveCaseShareUrl(window.location.origin, caseItem.id, fundId)
-                          );
-                          toast.success('Посилання скопійовано в буфер обміну.');
-                        } catch {
-                          toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  items: [
-                    {
-                      id: 'toggle-status',
-                      text: { name: caseItem.status === CaseStatus.Published ? 'Сховати' : 'Опублікувати' },
-                      onClick: async () => {
-                        const nextStatus =
-                            caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
-                        try {
-                          await updateCase({ id: caseItem.id, input: { status: nextStatus } });
-                          showCaseStatusToast(nextStatus, fundStatus);
-                          await refetch();
-                        } catch (error) {
-                          toast.error(getCaseStatusErrorMessage(error, nextStatus));
-                        }
-                      }
-                    },
-                    {
-                      id: 'delete',
-                      text: { name: 'Видалити' },
-                      onClick: () =>
-                        setDeleteModalState({
-                          open: true,
-                          caseId: caseItem.id,
-                          caseName: caseItem.caseName.uk
-                        })
-                    }
-                  ]
-                }
-              ]
-              : [
-                {
-                  items: [
-                    {
-                      id: 'delete',
-                      text: { name: 'Видалити' },
-                      onClick: () =>
-                        setDeleteModalState({
-                          open: true,
-                          caseId: caseItem.id,
-                          caseName: caseItem.caseName.uk
-                        })
-                    }
-                  ]
-                }
-              ])
-          ]
+          menuTriggerLabel: `Дії для справи ${c.caseName.uk}`,
+          menuItems: buildMenuItems(c)
         }
       }
     }));
