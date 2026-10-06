@@ -419,13 +419,22 @@ describe('CompositionModal', () => {
     }
   });
 
-  it.each(['0000', '9999'])('accepts valid boundary year %s', (year) => {
+  it.each(['1900', '3000'])('accepts valid boundary year %s', (year) => {
     const onSubmit = jest.fn();
     render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
     fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
     fireEvent.change(screen.getByLabelText(INPUTS.year), { target: { value: year } });
     fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['0000', '1899', '3001', '9999'])('rejects out of range year %s', (year) => {
+    const onSubmit = jest.fn();
+    render(<CompositionModal {...baseProps} mode="create" onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText(INPUTS.title), { target: { value: 'Valid Title' } });
+    fireEvent.change(screen.getByLabelText(INPUTS.year), { target: { value: year } });
+    fireEvent.click(screen.getByRole('button', { name: INPUTS.createButton }));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('accepts a whitespace-padded year after normalization', () => {
