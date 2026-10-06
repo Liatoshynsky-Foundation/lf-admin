@@ -133,7 +133,7 @@ export const CaseErrors = {
     'Справа з таким номером опису та номером справи вже існує в цьому фонді. Змініть один із номерів.',
   CASE_NOT_FOUND: (id: string) => `Case with id "${id}" not found`,
   FUND_NOT_FOUND: (fundId: string) => `Fund with id "${fundId}" not found`,
-  INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.'
+  INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.',
 };
 
 export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
@@ -141,6 +141,12 @@ export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
   CASE_NOT_FOUND: 'CASE_NOT_FOUND',
   FUND_NOT_FOUND: 'FUND_NOT_FOUND',
   INVALID_PDF_FILE: 'INVALID_PDF_FILE'
+};
+
+export const casesStatusMessages = {
+  publishError: 'Не вдалося опублікувати справу. Спробуйте ще раз',
+  updateError: 'Не вдалося змінити статус справи',
+  publishHiddenFundWarning: 'Справу опубліковано, але вона не буде доступна на сайті, доки фонд приховано'
 };
 
 export const ResearchWorkErrors = {
@@ -199,7 +205,8 @@ export const seoFormErrors = {
     required: 'Обовʼязкове поле.',
     invalidUrl: 'Некоректний URL.',
     keywords: 'Ключові слова мають бути через кому, без порожніх значень.',
-    endBeforeStart: 'Дата кінця не може бути раніше дати початку'
+    endBeforeStart: 'Дата кінця не може бути раніше дати початку',
+    invalidDateTime: 'Некоректна дата або час. Формат ДД.ММ.РРРР гг:хх'
   },
   en: {
     descriptionMaxLength: 'Value must not exceed 250 characters.',
@@ -211,7 +218,8 @@ export const seoFormErrors = {
     required: 'Required field.',
     invalidUrl: 'Invalid URL.',
     keywords: 'Keywords must be comma-separated, without empty values.',
-    endBeforeStart: 'End date cannot be earlier than start date'
+    endBeforeStart: 'End date cannot be earlier than start date',
+    invalidDateTime: 'Invalid date or time. Format: MM/DD/YYYY hh:mm'
   }
 };
 

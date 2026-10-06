@@ -51,6 +51,7 @@ import {
   useDeleteCase,
   useDeleteFund,
   useFundById,
+  useGetFundStatus,
   useHasPublishedCasesInFund,
   usePaginatedFunds,
   useUpdateCase,
@@ -144,7 +145,7 @@ describe('useFunds', () => {
   });
 
   describe('useAllFunds', () => {
-    it('should map findAllFunds entries, preferring chronologicalBoundaries over documentCreationDate', () => {
+    it('should map findAllFunds entries using documentCreationDate for dates', () => {
       mockUseAllFundsQuery.mockReturnValue({
         data: {
           findAllFunds: [
@@ -174,7 +175,7 @@ describe('useFunds', () => {
           name: 'Архів',
           descriptions: 2,
           cases: 3,
-          dates: '1900-1920',
+          dates: '1901',
           status: BaseContentStatuses.Published,
           updatedAt: '2023-01-01'
         }
@@ -183,7 +184,7 @@ describe('useFunds', () => {
       expect(result.current.error).toBeUndefined();
     });
 
-    it('should fall back to documentCreationDate when chronologicalBoundaries is missing', () => {
+    it('should use documentCreationDate when chronologicalBoundaries is present', () => {
       mockUseAllFundsQuery.mockReturnValue({
         data: {
           findAllFunds: [
@@ -305,7 +306,7 @@ describe('useFunds', () => {
           name: 'Архів',
           descriptions: 2,
           cases: 3,
-          dates: '1900-1920',
+          dates: '1901',
           status: BaseContentStatuses.Published,
           updatedAt: '2023-01-01'
         }
@@ -490,6 +491,41 @@ describe('useFunds', () => {
   
       Object.defineProperty(FundErrors, 'NETWORK_ERROR_DELETE', { value: originalNetwork, configurable: true });
       Object.defineProperty(FundErrors, 'FAILED_TO_DELETE', { value: originalFailed, configurable: true });
+    });
+  });
+
+  describe('useGetFundStatus', () =>{
+    it('should query fund status by fund id and return the mapped status', async () => {
+      mockApolloQuery.mockResolvedValue({
+        data: {
+          findFundById: {
+            status: 'hidden'
+          }
+        }
+      });
+
+      const { result } = renderHook(() => useGetFundStatus());
+
+      await expect(result.current('fund-1')).resolves.toBe(BaseContentStatuses.Hidden);
+
+      expect(mockApolloQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: { id: 'fund-1' },
+          fetchPolicy: 'network-only'
+        })
+      );
+    });
+
+    it('should return undefined when fund is not found', async () =>{
+      mockApolloQuery.mockResolvedValue({
+        data: {
+          findFundById: null
+        }
+      });
+
+      const { result } = renderHook(() => useGetFundStatus());
+
+      await expect(result.current('fund-1')).resolves.toBeUndefined();
     });
   });
 

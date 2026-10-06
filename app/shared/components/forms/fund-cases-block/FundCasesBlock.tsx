@@ -2,13 +2,16 @@
 
 import { Box, Button, Typography } from '@mui/material';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModal } from '../../../../(logged_in)/archive/(components)/ArchiveCaseModal';
 import { createCaseTableColumns } from '../../table-layout/columns/caseTableColumns';
 import { styles } from './FundCasesBlock.styles';
+import { ARCHIVE_ITEMS_PER_PAGE } from '~/constants/archive';
+import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
+import { Pagination } from '~/shared/components/pagination/Pagination';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCasesByFundId, useDeleteCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
@@ -16,16 +19,28 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 const FUND_CASES_LABEL = 'Справи в фонді';
+const DELETE_CASE_SUCCESS_MESSAGE = 'Справу видалено.';
+const DELETE_CASE_ERROR_MESSAGE = 'Не вдалося видалити справу. Спробуйте ще раз.';
 
-const columns = createCaseTableColumns(styles.cipherText);
+const columns = createCaseTableColumns();
 
-export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>) {
+export default function FundCasesBlock({
+  fundId,
+  fundStatus,
+  onCaseChanged
+}: Readonly<{
+  fundId?: string;
+  fundStatus?: BaseContentStatuses;
+  onCaseChanged?: () => Promise<unknown>;
+}>) {
   const { cases, error, refetch } = useCasesByFundId(fundId);
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
+  const [page, setPage] = useState(1);
   const [modalState, setModalState] = useState<{
     open: boolean;
     caseId?: string;
+    cipher?: string;
     initialData?: ArchiveCaseInitialData;
   }>({ open: false });
   const [deleteModalState, setDeleteModalState] = useState<{ open: boolean; caseId?: string; caseName?: string }>({
@@ -39,7 +54,21 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
       : a.caseNumber - b.caseNumber
   );
 
-  const rows = sortedCases.map((caseItem) => ({
+  const totalPages = Math.ceil(sortedCases.length / ARCHIVE_ITEMS_PER_PAGE);
+  const currentPage = Math.min(page, Math.max(totalPages, 1));
+
+  useEffect(() => {
+    setPage(1);
+  }, [fundId]);
+
+  useEffect(() => {
+    if (page > totalPages && totalPages > 0) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const rows = sortedCases.slice(
+    (currentPage - 1) * ARCHIVE_ITEMS_PER_PAGE,
+    currentPage * ARCHIVE_ITEMS_PER_PAGE
+  ).map((caseItem) => ({
     type: 'individual' as const,
     id: caseItem.id,
     plainData: {
@@ -57,6 +86,7 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
           setModalState({
             open: true,
             caseId: caseItem.id,
+            cipher: caseItem.cipher,
             initialData: {
               descriptionNumber: String(caseItem.descriptionNumber),
               caseNumber: String(caseItem.caseNumber),
@@ -92,14 +122,10 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
                           caseItem.status === CaseStatus.Published ? CaseStatus.Draft : CaseStatus.Published;
                       try {
                         await updateCase({ id: caseItem.id, input: { status: nextStatus } });
-                        toast.success(
-                          nextStatus === CaseStatus.Published
-                            ? 'Справу успішно опубліковано'
-                            : 'Справу успішно сховано'
-                        );
+                        showCaseStatusToast(nextStatus, fundStatus);
                         await refetch();
                       } catch (error) {
-                        toast.error(error instanceof Error ? error.message : 'Не вдалося змінити статус справи');
+                        toast.error(getCaseStatusErrorMessage(error, nextStatus));
                       }
                     }
                   }
@@ -146,15 +172,29 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
         <TableLayout data={rows} columns={columns} withoutFirstColOffset={true} />
       </Box>
 
+      {totalPages > 1 && (
+        <Box sx={styles.pagination}>
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+          />
+        </Box>
+      )}
+
       {fundId && (
         <ArchiveCaseModal
           isOpen={modalState.open}
           setIsOpen={(open: boolean) => setModalState((state) => ({ ...state, open }))}
           mode={modalState.caseId ? 'edit' : 'create'}
+          cipher={modalState.cipher}
           initialData={modalState.initialData}
           fundId={fundId}
           caseId={modalState.caseId}
-          onSaved={() => refetch()}
+          onSaved={async () => {
+            await refetch();
+            await onCaseChanged?.();
+          }}
         />
       )}
 
@@ -165,9 +205,15 @@ export default function FundCasesBlock({ fundId }: Readonly<{ fundId?: string }>
         description={`Ви впевнені, що хочете видалити справу «${deleteModalState.caseName ?? ''}»?`}
         onConfirm={async () => {
           if (!deleteModalState.caseId) return;
-          await deleteCase({ id: deleteModalState.caseId });
-          setDeleteModalState({ open: false });
-          await refetch();
+          try {
+            await deleteCase({ id: deleteModalState.caseId });
+            setDeleteModalState({ open: false });
+            await refetch();
+            await onCaseChanged?.();
+            toast.success(DELETE_CASE_SUCCESS_MESSAGE);
+          } catch {
+            toast.error(DELETE_CASE_ERROR_MESSAGE);
+          }
         }}
       />
     </Box>

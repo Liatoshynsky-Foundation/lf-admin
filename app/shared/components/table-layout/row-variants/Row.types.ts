@@ -35,6 +35,8 @@ export type ColumnDef<TGroup, TSub, TPlain> = {
   hasRightDivider?: boolean;
   hasLeftDivider?: boolean;
   align?: 'left' | 'center' | 'right';
+  hideSub?: boolean;
+  subGridColumn?: string;
 
   renderGroup?: (group: TGroup) => React.ReactNode;
   renderSub?: (sub: TSub & { id: string }, group: TGroup) => React.ReactNode;

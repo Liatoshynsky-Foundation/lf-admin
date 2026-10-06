@@ -70,7 +70,7 @@ export const styles = {
     ...tableText,
     ...twoLineEllipsis,
     width: '100%',
-    ...(colId === 'fundNumber' ? { fontSize: '16px', fontWeight: 400 } : {}),
+    ...(colId === 'fundNumber' ? { fontSize: '16px', fontWeight: 700 } : {}),
     ...(colId === 'status' ? { textAlign: 'center' } : { textAlign: 'left' }),
   }),
 
@@ -78,7 +78,8 @@ export const styles = {
     hasRightDivider?: boolean, 
     hasLeftDivider?: boolean, 
     hasContent?: boolean,
-    align: 'left' | 'center' | 'right' = 'left'
+    align: 'left' | 'center' | 'right' = 'left',
+    gridColumn?: string
   ): SxProps<Theme> => ({
     minWidth: 0,
     height: '100%',
@@ -92,6 +93,7 @@ export const styles = {
     borderLeftColor: hasLeftDivider && hasContent ? tableDividerColor : 'transparent',
     
     justifyContent: alignToJustify[align],
+    ...(gridColumn ? { gridColumn } : {})
   }),
 
   subCellText: (colId: string): SxProps<Theme> => ({

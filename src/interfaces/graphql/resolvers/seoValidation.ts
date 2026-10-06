@@ -22,6 +22,10 @@ export type SeoLengthValidationInput = {
 
 type Locale = (typeof LOCALES)[number];
 
+const EMPTY_LOCALIZED_STRING: LocalizedString = { uk: '', en: '' };
+
+const hasCoverImageSrc = (coverImage?: LocalizedImage): boolean => Boolean(coverImage?.src?.trim());
+
 const getInvalidLocalizedFields = (
   value: LocalizedString | undefined,
   field: SeoLengthField,
@@ -47,6 +51,7 @@ const getInvalidLocalizedFields = (
 const TITLE_REQUIRED_LOCALES = ['uk', 'en'] as const;
 const DESCRIPTION_REQUIRED_LOCALES = ['uk'] as const;
 const NO_REQUIRED_LOCALES = [] as const;
+const ALT_REQUIRED_LOCALES = LOCALES;
 
 export const validateSeoLengths = ({
   title,
@@ -66,8 +71,11 @@ export const validateSeoLengths = ({
     seoValidationErrors.KEYWORDS_LENGTH_INVALID,
     getInvalidLocalizedFields(keywords, 'keywords', NO_REQUIRED_LOCALES)
   );
+
+  const altRequiredLocales = hasCoverImageSrc(coverImage) ? ALT_REQUIRED_LOCALES : NO_REQUIRED_LOCALES;
+
   throwBadUserInput(
     seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
-    getInvalidLocalizedFields(coverImage?.alt, 'altText', NO_REQUIRED_LOCALES)
+    getInvalidLocalizedFields(coverImage?.alt ?? EMPTY_LOCALIZED_STRING, 'altText', altRequiredLocales)
   );
 };

@@ -1,4 +1,3 @@
-import { Dayjs } from 'dayjs';
 
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
@@ -147,7 +146,6 @@ export interface AudioEntry {
 export interface NoteEntry {
   id: string;
   name: string | null;
-  date: Dayjs | null;
   fileName: string | null;
 }
 

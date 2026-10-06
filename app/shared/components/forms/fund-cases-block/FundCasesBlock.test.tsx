@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
 import FundCasesBlock from './FundCasesBlock';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -98,7 +99,28 @@ jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal',
   }
 }));
 
+jest.mock('~/shared/components/pagination/Pagination', () => ({
+  __esModule: true,
+  Pagination: ({
+    totalPages,
+    currentPage,
+    onPageChange
+  }: {
+    totalPages: number;
+    currentPage: number;
+    onPageChange: (event: unknown, page: number) => void;
+  }) => (
+    <nav>
+      {Array.from({ length: totalPages }, (_, index) => (
+        <span key={index} aria-current={index + 1 === currentPage ? 'page' : undefined}>{index + 1}</span>
+      ))}
+      <button onClick={(event) => onPageChange(event, currentPage + 1)}>next page</button>
+    </nav>
+  )
+}));
+
 const mockRefetch = jest.fn();
+const mockRefetchFund = jest.fn();
 const mockDeleteCase = jest.fn().mockResolvedValue({});
 const mockUpdateCase = jest.fn().mockResolvedValue({});
 let mockCases: unknown[] = [];
@@ -111,10 +133,17 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useUpdateCase: () => [mockUpdateCase]
 }));
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() }
-}));
+jest.mock('react-hot-toast', () => {
+  const toast = Object.assign(jest.fn(), {
+    success: jest.fn(), 
+    error: jest.fn()
+  });
+
+  return {
+    __esModule: true,
+    default: toast
+  };
+});
 
 const localized = (uk: string) => ({ uk, en: uk });
 
@@ -168,6 +197,27 @@ describe('FundCasesBlock', () => {
     expect(screen.getByTestId('table-layout')).toBeInTheDocument();
     expect(screen.getByTestId('row-case-1')).toBeInTheDocument();
     expect(screen.getByTestId('row-case-2')).toBeInTheDocument();
+  });
+
+  it('paginates cases with eight rows per page', async () => {
+    const user = userEvent.setup();
+    mockCases = Array.from({ length: 9 }, (_, index) => buildCase({
+      id: `case-${index + 1}`,
+      caseName: `Справа ${index + 1}`,
+      caseNumber: index + 1
+    }));
+
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    expect(screen.getAllByText(/^Справа \d+$/)).toHaveLength(8);
+    expect(screen.getByText('1')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText('2')).not.toHaveAttribute('aria-current');
+
+    await user.click(screen.getByRole('button', { name: 'next page' }));
+
+    expect(screen.getAllByText(/^Справа \d+$/)).toHaveLength(1);
+    expect(screen.getByText('Справа 9')).toBeInTheDocument();
+    expect(screen.getByText('2')).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders an error message when the cases query fails', () => {
@@ -242,6 +292,16 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
+  it('refreshes the fund after saving a case', async () => {
+    const user = userEvent.setup();
+    render(<FundCasesBlock fundId="fund-1" onCaseChanged={mockRefetchFund} />);
+
+    await user.click(screen.getByRole('button', { name: /Додати справу/ }));
+    await user.click(screen.getByText('save modal'));
+
+    expect(mockRefetchFund).toHaveBeenCalled();
+  });
+
   it('maps a published case to the Published badge status', () => {
     mockCases = [buildCase({ status: CaseStatus.Published })];
     render(<FundCasesBlock fundId="fund-1" />);
@@ -280,27 +340,38 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
-  it('handles errors when toggling a case status', async () => {
+  it('should show success and warning toasts when publishing a case under a hidden fund', async () =>{
     const user = userEvent.setup();
-    mockUpdateCase.mockRejectedValueOnce(new Error('Update failed'));
     mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
-    render(<FundCasesBlock fundId="fund-1" />);
+
+    render(
+      <FundCasesBlock
+        fundId='fund-1'
+        fundStatus={BaseContentStatuses.Hidden}
+      />
+    );
 
     await user.click(screen.getByText('Опублікувати'));
 
-    expect(mockUpdateCase).toHaveBeenCalledWith({ id: 'case-1', input: { status: CaseStatus.Published } });
-    expect(toast.error).toHaveBeenCalledWith('Update failed');
+    expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+    expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
   });
 
-  it('handles generic errors when toggling a case status', async () => {
+  it.each([
+    { status: CaseStatus.Draft, rejection: new Error('Update failed'), expectedMessage: 'Update failed' },
+    { status: CaseStatus.Draft, rejection: 'Some string error', expectedMessage: casesStatusMessages.publishError },
+    { status: CaseStatus.Published, rejection: 'Some string error', expectedMessage: casesStatusMessages.updateError },
+  ])('handles errors when toggling a case status', async ({ status, rejection, expectedMessage }) => {
     const user = userEvent.setup();
-    mockUpdateCase.mockRejectedValueOnce('Some string error');
-    mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
+    const isPublished = status === CaseStatus.Published;
+    mockUpdateCase.mockRejectedValueOnce(rejection);
+    mockCases = [buildCase({ id: 'case-1', status })];
     render(<FundCasesBlock fundId="fund-1" />);
 
-    await user.click(screen.getByText('Опублікувати'));
+    await user.click(screen.getByText(isPublished ? 'Сховати' : 'Опублікувати'));
 
-    expect(toast.error).toHaveBeenCalledWith('Не вдалося змінити статус справи');
+    expect(mockUpdateCase).toHaveBeenCalledWith({ id: 'case-1', input: { status: isPublished ? CaseStatus.Draft : CaseStatus.Published } });
+    expect(toast.error).toHaveBeenCalledWith(expectedMessage);
   });
 
   it('opens the delete confirmation with the case name and deletes on confirm', async () => {
@@ -315,7 +386,31 @@ describe('FundCasesBlock', () => {
 
     expect(mockDeleteCase).toHaveBeenCalledWith({ id: 'case-1' });
     expect(mockRefetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith('Справу видалено.');
     expect(capturedDeleteModalProps?.open).toBe(false);
+  });
+
+  it('refreshes the fund after deleting a case', async () => {
+    const user = userEvent.setup();
+    render(<FundCasesBlock fundId="fund-1" onCaseChanged={mockRefetchFund} />);
+
+    await user.click(screen.getByText('Видалити'));
+    await user.click(screen.getByText('confirm delete'));
+
+    expect(mockRefetchFund).toHaveBeenCalled();
+  });
+
+  it('shows an error toast and keeps the delete confirmation open when deletion fails', async () => {
+    const user = userEvent.setup();
+    mockDeleteCase.mockRejectedValueOnce(new Error('delete failed'));
+    render(<FundCasesBlock fundId="fund-1" />);
+
+    await user.click(screen.getByText('Видалити'));
+    await user.click(screen.getByText('confirm delete'));
+
+    expect(toast.error).toHaveBeenCalledWith('Не вдалося видалити справу. Спробуйте ще раз.');
+    expect(mockRefetch).not.toHaveBeenCalled();
+    expect(capturedDeleteModalProps?.open).toBe(true);
   });
 
   it('closes the delete confirmation without deleting', async () => {

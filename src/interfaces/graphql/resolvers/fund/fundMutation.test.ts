@@ -1,11 +1,14 @@
 import { GraphQLError } from 'graphql';
+import { ClientSession } from 'mongoose';
 import { ZodError } from 'zod';
 
 import { createMockContext } from '../testUtils';
 import { FundMutation } from './fundMutation';
 import { FundErrorCodes, FundErrors, graphqlErrors } from '~/constants/errors';
 import { Fund } from '~/src/domain/entities/Fund';
+import { ICaseRepository } from '~/src/domain/repositories/caseRepository';
 import { CreateFundInput, IFundRepository, UpdateFundInput } from '~/src/domain/repositories/fundRepository';
+import { withTransaction } from '~/src/infrastructure/repositories/helpers';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const createMockCreateFundInput = (overrides: Partial<CreateFundInput> = {}): CreateFundInput => ({
@@ -55,7 +58,7 @@ const mockFindById = jest.fn();
 const mockFindByFundNumber = jest.fn();
 const mockFindAll = jest.fn();
 
-const mockRepo: Partial<IFundRepository> = {
+const mockFundRepo: Partial<IFundRepository> = {
   create: mockCreate,
   update: mockUpdate,
   delete: mockDelete,
@@ -64,9 +67,24 @@ const mockRepo: Partial<IFundRepository> = {
   findAll: mockFindAll
 };
 
-const adminContext = createMockContext(true, 'fundRepository', mockRepo);
-const userContext = createMockContext(false, 'fundRepository', mockRepo);
+jest.mock('~/src/infrastructure/repositories/helpers', () => ({
+  withTransaction: jest.fn()
+}));
 
+const mockWithTransaction = withTransaction as jest.MockedFunction<typeof withTransaction>;
+const mockSession = {} as ClientSession;
+const mockDeleteByFundId = jest.fn();
+
+const mockCaseRepo: Partial<ICaseRepository> = {
+  deleteByFundId: mockDeleteByFundId
+};
+
+
+const adminContext = createMockContext(true, 'fundRepository', mockFundRepo);
+adminContext.requestContainer.cradle.caseRepository = mockCaseRepo as ICaseRepository;
+
+const userContext = createMockContext(false, 'fundRepository', mockFundRepo);
+userContext.requestContainer.cradle.caseRepository = mockCaseRepo as ICaseRepository;
 
 const runValidationTests = (action: 'create' | 'update') => {
   const isCreate = action === 'create';
@@ -115,6 +133,10 @@ const runValidationTests = (action: 'create' | 'update') => {
 describe('FundMutation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockWithTransaction.mockImplementation(async (callback) => {
+      return callback(mockSession);
+    });
   });
 
   describe('createFund', () => {
@@ -330,21 +352,26 @@ describe('FundMutation', () => {
       await expect(FundMutation.deleteFund({}, { id: deleteId }, userContext)).rejects.toThrow(GraphQLError);
 
       expect(mockDelete).not.toHaveBeenCalled();
+      expect(mockDeleteByFundId).not.toHaveBeenCalled();
     });
-    it('should successfully call repo delete method and return false - unsuccessful delete', async () => {
+    it('should delete related cases and return false if fund deletion was unsuccessful', async () => {
       const deleteId = 'non-exitested-id';
       mockDelete.mockResolvedValue(false);
 
       const isDeleted = await FundMutation.deleteFund({}, { id: deleteId }, adminContext);
       expect(isDeleted).toBe(false);
+      expect(mockDeleteByFundId).toHaveBeenCalledWith(deleteId, mockSession);
+      expect(mockDelete).toHaveBeenCalledWith(deleteId, mockSession);
     });
 
-    it('should successfully call repo delete method and return true - successfull delete', async () => {
+    it('should delete related cases and return true if fund deletion was successful', async () => {
       const deleteId = 'some-id';
       mockDelete.mockResolvedValue(true);
 
       const isDeleted = await FundMutation.deleteFund({}, { id: deleteId }, adminContext);
       expect(isDeleted).toBe(true);
+      expect(mockDeleteByFundId).toHaveBeenCalledWith(deleteId, mockSession);
+      expect(mockDelete).toHaveBeenCalledWith(deleteId, mockSession);
     });
   });
 

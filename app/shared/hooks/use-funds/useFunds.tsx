@@ -17,6 +17,9 @@ import {
   type DeleteCaseMutationVariables,
   type DeleteFundMutationVariables,
   type FundFiltersInput,
+  FundStatusDocument,
+  FundStatusQuery,
+  FundStatusQueryVariables,
   SortOrder,
   type UpdateCaseMutation,
   type UpdateCaseMutationVariables,
@@ -31,8 +34,7 @@ import {
   useFundByIdQuery,
   usePaginatedFundsQuery,
   useUpdateCaseMutation,
-  useUpdateFundMutation
-} from '~/types/graphql/generated/graphql';
+  useUpdateFundMutation} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -62,11 +64,28 @@ const statusMap: Record<string, BaseContentStatuses> = {
   published: BaseContentStatuses.Published,
   hidden: BaseContentStatuses.Hidden,
   archived: BaseContentStatuses.Archived,
-  editing: BaseContentStatuses.Editing,
+  editing: BaseContentStatuses.Editing
 };
 
 export const useFundById = (id: string, options: QueryHookOptions = {}) =>
   useFundByIdQuery({ variables: { id }, fetchPolicy: 'network-only', skip: options.skip || !id });
+
+export const useGetFundStatus = () => {
+  const client = useApolloClient();
+
+  return useCallback(
+    async (fundId: string): Promise<BaseContentStatuses | undefined> => {
+      const { data } = await client.query<FundStatusQuery, FundStatusQueryVariables>({
+        query: FundStatusDocument,
+        variables: { id: fundId },
+        fetchPolicy: 'network-only'
+      });
+
+      return statusMap[data.findFundById?.status ?? ''];
+    },
+    [client]
+  );
+};
 
 export const useCasesByFundId = (fundId?: string) => {
   const { data, loading, error, refetch } = useAllCasesQuery({
@@ -96,7 +115,6 @@ type FundListItem = {
 };
 
 const mapFundListItem = (f: FundListItem) => {
-  const dates = f.chronologicalBoundaries?.uk ?? f.documentCreationDate.uk;
   const status = statusMap[f.status] ?? BaseContentStatuses.Hidden;
 
   return {
@@ -105,7 +123,7 @@ const mapFundListItem = (f: FundListItem) => {
     name: f.name.uk,
     descriptions: f.descriptionsCount,
     cases: f.casesCount,
-    dates,
+    dates: f.documentCreationDate.uk,
     status,
     updatedAt: f.updatedAt
   };

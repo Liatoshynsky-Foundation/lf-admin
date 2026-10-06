@@ -1,4 +1,4 @@
-import { FilterQuery, Model } from 'mongoose';
+import { ClientSession,FilterQuery, Model } from 'mongoose';
 
 import dbConnect from '../../db/connect';
 import { createBaseRepository } from '../baseRepository/baseRepository';
@@ -113,8 +113,17 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
     countDistinctDescriptionNumbers: async (fundId: Case['fundId']): Promise<number> => {
       await dbConnect();
 
-      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', { fundId });
+      const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', {
+        fundId,
+        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+      });
       return distinctDescriptionNumbers.length;
+    },
+
+    deleteByFundId: async (fundId: Case['fundId'], session?: ClientSession): Promise<void> => {
+      await dbConnect();
+
+      await CaseModel.deleteMany({ fundId }, session ? { session } : undefined);
     }
   };
 };

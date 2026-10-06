@@ -3,11 +3,9 @@
 import toast from 'react-hot-toast';
 
 import { ArchiveCaseModalView } from './archive-case-modal-view/ArchiveCaseModalView';
-import {
-  ARCHIVE_CASE_MODAL_LABELS,
-  PDF_FILE_ACCEPT,
-} from '~/constants/archive';
+import { ARCHIVE_CASE_MODAL_LABELS, PDF_FILE_ACCEPT } from '~/constants/archive';
 import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
+import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import { MediaModal } from '~/shared/components/media-modal/MediaModal';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import { resolvePdfAttachmentFromMediaModal } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
@@ -18,25 +16,69 @@ import {
   useArchiveCaseModal
 } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
 import { useCreateCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
-import {
-  CaseStatus,
-  useCreateAssetMutation
-} from '~/types/graphql/generated/graphql';
+import { CaseStatus, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
 interface ArchiveCaseModalProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   mode?: 'create' | 'edit';
+  cipher?: string;
   initialData?: ArchiveCaseInitialData;
   fundId?: string;
   caseId?: string;
   onSaved?: () => void;
 }
 
-export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialData, fundId, caseId, onSaved }: ArchiveCaseModalProps) => {
+export const ArchiveCaseModal = ({
+  isOpen,
+  setIsOpen,
+  mode = 'create',
+  cipher,
+  initialData,
+  fundId,
+  caseId,
+  onSaved
+}: ArchiveCaseModalProps) => {
   const [createCase] = useCreateCase();
   const [updateCase] = useUpdateCase();
   const [createAsset] = useCreateAssetMutation();
+
+  const handleSaveCase = async (input: ArchiveCaseSaveData): Promise<void> => {
+    let pdfFile = null;
+
+    if (input.pdfUrl) {
+      pdfFile = {
+        filename: input.pdfUrl.split('/').pop() ?? 'document.pdf',
+        url: input.pdfUrl,
+        mimeType: 'application/pdf'
+      };
+    }
+
+    const mutationInput = {
+      fundId: fundId ?? '',
+      descriptionNumber: input.descriptionNumber,
+      caseNumber: input.caseNumber,
+      caseName: { uk: input.name, en: input.name },
+      caseDate: { uk: input.dates, en: input.dates },
+      sheetsNumber: input.sheetsNumber,
+      caseDescriptions: { uk: input.nameDescription, en: input.nameDescription },
+      detailedCaseDescription: input.contentDescription
+        ? { uk: input.contentDescription, en: input.contentDescription }
+        : undefined,
+      pdfFile
+    };
+
+    if (caseId) {
+      const { fundId: _fundId, ...caseInput } = mutationInput;
+      await updateCase({ id: caseId, input: caseInput });
+      toast.success('Справу успішно змінено');
+    } else {
+      await createCase({ ...mutationInput, status: CaseStatus.Draft });
+      toast.success('Справу збережено.');
+    }
+    onSaved?.();
+  };
+
   const {
     descriptionNumber,
     setDescriptionNumber,
@@ -61,51 +103,20 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
     handleDeletePdf,
     handleSave,
     handleCancel,
+    isDiscardModalOpen,
+    handleConfirmDiscardModal,
+    handleCloseDiscardModal,
     isSubmitDisabled,
-    isCancelDisabled,
     fieldErrors
   } = useArchiveCaseModal({
     setIsOpen,
     ...(initialData ? { initialData } : {}),
-    ...((fundId || caseId) ? { onSave: async (input: ArchiveCaseSaveData) => {
-      const mutationInput = {
-        fundId: fundId ?? '',
-        descriptionNumber: input.descriptionNumber,
-        caseNumber: input.caseNumber,
-        caseName: { uk: input.name, en: input.name },
-        caseDate: { uk: input.dates, en: input.dates },
-        sheetsNumber: input.sheetsNumber,
-        caseDescriptions: { uk: input.nameDescription, en: input.nameDescription },
-        detailedCaseDescription: input.contentDescription
-          ? { uk: input.contentDescription, en: input.contentDescription }
-          : undefined,
-        pdfFile: input.pdfUrl
-          ? {
-            filename: input.pdfUrl.split('/').pop() ?? 'document.pdf',
-            url: input.pdfUrl,
-            mimeType: 'application/pdf'
-          }
-          : null
-      };
-
-      if (caseId) {
-        const { fundId: _fundId, ...caseInput } = mutationInput;
-        await updateCase({ id: caseId, input: caseInput });
-      } else {
-        await createCase({ ...mutationInput, status: CaseStatus.Draft });
-      }
-      toast.success(caseId ? 'Справу успішно змінено' : 'Справу успішно додано');
-      onSaved?.();
-    } } : {})
+    ...(fundId || caseId ? { onSave: handleSaveCase } : {})
   });
 
   const handleApplyPdf = async (result: MediaModalResult) => {
     try {
-      const resolved = await resolvePdfAttachmentFromMediaModal(
-        result,
-        createAsset,
-        'Не вдалося завантажити PDF файл'
-      );
+      const resolved = await resolvePdfAttachmentFromMediaModal(result, createAsset, 'Не вдалося завантажити PDF файл');
 
       if (!resolved) {
         return;
@@ -120,6 +131,10 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
       toast.error(resolveErrorMessage(error, 'Не вдалося завантажити файл.'));
     }
   };
+
+  const isCreate = mode === 'create';
+  const discardTitle = isCreate ? 'Скасувати створення справи?' : 'Скасувати редагування?';
+  const discardDescription = isCreate ? 'Незбережені дані будуть втрачені.' : 'Незбережені зміни будуть втрачені.';
 
   return (
     <>
@@ -148,6 +163,7 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
         isOpen={isOpen}
         onClose={handleCancel}
         mode={mode}
+        cipher={cipher}
         descriptionNumber={descriptionNumber}
         setDescriptionNumber={setDescriptionNumber}
         caseNumber={caseNumber}
@@ -168,8 +184,17 @@ export const ArchiveCaseModal = ({ isOpen, setIsOpen, mode = 'create', initialDa
         handleSave={handleSave}
         handleCancel={handleCancel}
         isSubmitDisabled={isSubmitDisabled}
-        isCancelDisabled={isCancelDisabled}
         fieldErrors={fieldErrors}
+      />
+
+      <DiscardChangesModal
+        open={isDiscardModalOpen}
+        handleClose={handleCloseDiscardModal}
+        handleSubmit={handleConfirmDiscardModal}
+        title={discardTitle}
+        description={discardDescription}
+        cancelButtonText="Продовжити редагування"
+        confirmButtonText="Так, скасувати"
       />
     </>
   );

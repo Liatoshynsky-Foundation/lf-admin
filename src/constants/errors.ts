@@ -48,7 +48,8 @@ export const newsValidationErrors = {
 };
 
 export const eventValidationErrors = {
-  START_DATE_REQUIRED: 'Event start date is required'
+  START_DATE_REQUIRED: 'Event start date is required',
+  START_DATE_INVALID: 'Event start date is invalid'
 };
 
 export const opusServiceErrors = {

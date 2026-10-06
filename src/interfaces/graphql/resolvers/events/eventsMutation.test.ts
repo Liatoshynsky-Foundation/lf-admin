@@ -143,14 +143,26 @@ describe('EventsMutation Resolvers', () => {
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should accept empty keywords and empty alt text', async () => {
+    it('should accept empty keywords and empty alt text when cover image src is missing', async () => {
       const input = createMockInput({
         keywords: { uk: '', en: '' },
-        coverImage: { src: 'event.jpg', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } }
+        coverImage: { src: '', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } }
       } as Partial<CreateEventInput>);
       (mockRepo.create as jest.Mock).mockResolvedValue(createMockEntity({ id: 'event-ok' }));
 
       await expect(EventsMutation.createEvent({}, { input }, adminContext)).resolves.toBeDefined();
+    });
+
+    it('should reject empty alt text when cover image src is present', async () => {
+      const input = createMockInput({
+        coverImage: { src: 'event.jpg', alt: { uk: '', en: '' }, caption: { uk: '', en: '' } }
+      } as Partial<CreateEventInput>);
+
+      await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
+        extensions: { code: 'BAD_USER_INPUT', fields: ['altText.uk', 'altText.en'] }
+      });
+
+      expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
     it('should accept empty EN description while requiring EN title', async () => {
@@ -332,8 +344,13 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Event start date validation', () => {
-    it('should reject createEvent when event start date is empty', async () => {
-      const input = createMockInput({ eventDateTimeStart: '' });
+    it.each([
+      '',
+      '2026-02-31T18:00:00.000Z',
+      '2026-13-09T18:00:00.000Z',
+      'invalid-date'
+    ])('should reject createEvent when event start date is invalid: %s', async (eventDateTimeStart) => {
+      const input = createMockInput({ eventDateTimeStart });
 
       await expect(EventsMutation.createEvent({}, { input }, adminContext)).rejects.toMatchObject({
         extensions: {
@@ -344,8 +361,13 @@ describe('EventsMutation Resolvers', () => {
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
-    it('should reject updateEvent when event start date is empty', async () => {
-      const input: UpdateEventInput = { eventDateTimeStart: '' };
+    it.each([
+      '',
+      '2026-02-31T18:00:00.000Z',
+      '2026-13-09T18:00:00.000Z',
+      'invalid-date'
+    ])('should reject updateEvent when event start date is invalid: %s', async (eventDateTimeStart) => {
+      const input: UpdateEventInput = { eventDateTimeStart };
 
       await expect(EventsMutation.updateEvent({}, { id: '1', input }, adminContext)).rejects.toMatchObject({
         extensions: {

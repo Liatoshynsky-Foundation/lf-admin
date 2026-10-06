@@ -1,6 +1,5 @@
 'use client';
 
-import type { SxProps, Theme } from '@mui/material';
 import { Typography } from '@mui/material';
 
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
@@ -23,19 +22,13 @@ export type CaseTableRow = {
   menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 };
 
-export const createCaseTableColumns = (
-  cipherTextSx: SxProps<Theme>
-): readonly ColumnDef<never, never, CaseTableRow>[] => [
+export const createCaseTableColumns = (): readonly ColumnDef<never, never, CaseTableRow>[] => [
   {
     id: 'cipher',
     headerLabel: 'Шифр',
-    width: '120px',
+    width: '153px',
     align: 'left',
-    renderPlain: (row) => (
-      <Typography component="span" sx={cipherTextSx}>
-        {row.cipher}
-      </Typography>
-    )
+    renderPlain: (row) => row.cipher.replace(/^Ф\./, 'ф.')
   },
   {
     id: 'caseName',
@@ -45,18 +38,18 @@ export const createCaseTableColumns = (
     renderPlain: (row) => row.caseName
   },
   {
-    id: 'sheetsNumber',
-    headerLabel: 'Аркуші',
-    width: '84px',
-    align: 'left',
-    renderPlain: (row) => row.sheetsNumber
-  },
-  {
     id: 'caseDate',
     headerLabel: 'Дати',
     width: '110px',
     align: 'left',
     renderPlain: (row) => row.caseDate
+  },
+  {
+    id: 'sheetsNumber',
+    headerLabel: 'Аркуші',
+    width: '84px',
+    align: 'left',
+    renderPlain: (row) => row.sheetsNumber
   },
   {
     id: 'caseDescription',

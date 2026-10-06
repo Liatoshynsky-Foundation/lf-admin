@@ -45,7 +45,18 @@ export const FundActionMenuItems = ({ onAction }: { onAction: (action: string) =
 ];
 
 export default function FundView({ data, mode = 'create' }: Readonly<FundViewProps>) {
-  const { details, setDetails, errors, forceShowErrors, isSaved, currentStatus, hasUnsavedChanges, fundId, handleSave } = data;
+  const {
+    details,
+    setDetails,
+    errors,
+    forceShowErrors,
+    isSaved,
+    currentStatus,
+    hasUnsavedChanges,
+    fundId,
+    handleSave,
+    refetchFund
+  } = data;
 
   const router = useRouter();
   const checkFundPublishWarning = useFundPublishWarning();
@@ -180,7 +191,9 @@ export default function FundView({ data, mode = 'create' }: Readonly<FundViewPro
           </Box>
         </Box>
 
-        {mode === 'edit' ? <FundCasesBlock fundId={fundId} /> : null}
+        {mode === 'edit' ? (
+          <FundCasesBlock fundId={fundId} fundStatus={currentStatus} onCaseChanged={refetchFund} />
+        ) : null}
       </Box>
 
       <ActionMenu

@@ -159,7 +159,7 @@ export const useUpsertFund = (fundId?: string) => {
     mode === 'create' ? BaseContentStatuses.Hidden : undefined
   );
 
-  const { data: queryData } = useFundById(id || '', { skip: !id });
+  const { data: queryData, refetch: refetchFund } = useFundById(id || '', { skip: !id });
   const [createFund] = useCreateFund();
   const [updateFund] = useUpdateFund();
 
@@ -311,6 +311,7 @@ export const useUpsertFund = (fundId?: string) => {
     hasUnsavedChanges,
     currentStatus,
     fundId: id,
-    handleSave
+    handleSave,
+    refetchFund
   };
 };

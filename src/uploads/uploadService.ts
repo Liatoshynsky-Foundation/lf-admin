@@ -1,4 +1,5 @@
 import { UPLOAD_ERRORS } from './errors';
+import { convertImageToSrgb } from './imageProcessing';
 import { StorageAdapter } from './storage';
 import { UploadedFile, UploadOptions, UploadResult } from './types';
 import { preserveOriginalFilenameSafely } from './utils';
@@ -56,7 +57,8 @@ export const createUploadService = (config: UploadServiceConfig) => {
         storageMetadata.directory = options.directory;
       }
 
-      const storageResult = await storage.store(file.buffer, filename, file.mimetype, storageMetadata);
+      const processedBuffer = fileType === 'image' ? await convertImageToSrgb(file.buffer, file.mimetype) : file.buffer;
+      const storageResult = await storage.store(processedBuffer, filename, file.mimetype, storageMetadata);
 
       if (!storageResult.success) {
         return {

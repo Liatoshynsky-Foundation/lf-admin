@@ -11,14 +11,9 @@ export const useFundPublishWarning = () => {
   const hasPublishedCasesInFund = useHasPublishedCasesInFund();
 
   return async ({ fundId, casesCount }: FundPublishWarningParams): Promise<FundPublishWarningResult> => {
-    if (casesCount === 0) {
-      return 'show-warning';
-    }
-
     if (!fundId) {
-      return 'publish';
+      return casesCount === 0 ? 'show-warning' : 'publish';
     }
-
     try {
       const hasPublishedCases = await hasPublishedCasesInFund(fundId);
       return hasPublishedCases ? 'publish' : 'show-warning';

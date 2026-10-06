@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { ClientSession, Model } from 'mongoose';
 
 import { CaseRepository, DbCase } from './caseRepository';
 import { Case } from '~/src/domain/entities/Case';
@@ -32,6 +32,7 @@ const saveMock = jest.fn();
 const findOneMock = jest.fn();
 const findAllMock = jest.fn();
 const distinctMock = jest.fn();
+const deleteManyMock = jest.fn();
 
 describe('caseRepository', () => {
   const MockCaseModel = jest.fn().mockImplementation(() => ({
@@ -41,7 +42,8 @@ describe('caseRepository', () => {
   Object.assign(MockCaseModel, {
     findOne: findOneMock,
     find: findAllMock,
-    distinct: distinctMock
+    distinct: distinctMock,
+    deleteMany: deleteManyMock
   });
 
   beforeEach(() => {
@@ -280,12 +282,15 @@ describe('caseRepository', () => {
   });
 
   describe('countDistinctDescriptionNumbers', () => {
-    it('should return the number of distinct descriptionNumber values for a fund', async () => {
+    it('should return the number of distinct descriptions with a detailed description', async () => {
       distinctMock.mockResolvedValue([1, 2, 3]);
 
       const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
-      expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', { fundId: mockFundId });
+      expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', {
+        fundId: mockFundId,
+        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+      });
       expect(result).toBe(3);
     });
 
@@ -295,6 +300,19 @@ describe('caseRepository', () => {
       const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
       expect(result).toBe(0);
+    });
+  });
+
+  describe('deleteByFundId', () => {
+    it('should call deleteMany with the specified fundId and session', async () => {
+      const session = {} as ClientSession;
+
+      await repository.deleteByFundId(mockFundId, session);
+
+      expect(deleteManyMock).toHaveBeenCalledWith(
+        { fundId: mockFundId },
+        { session }
+      );
     });
   });
 

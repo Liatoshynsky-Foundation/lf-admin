@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 import { useArchiveCaseRowActions } from './useArchiveCaseRowActions';
 import type { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
+import { casesStatusMessages } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -14,10 +15,17 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useUpdateCase: () => [mockUpdateCase],
 }));
 
-jest.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() },
-}));
+jest.mock('react-hot-toast', () => {
+  const toast = Object.assign(jest.fn(), {
+    success: jest.fn(),
+    error: jest.fn(),
+  });
+
+  return {
+    __esModule: true,
+    default: toast
+  };
+});
 
 jest.mock('~/shared/components/delete-composition-modal/DeleteCompositionModal', () => ({
   DeleteCompositionModal: (props: { open: boolean; onClose: () => void; onConfirm: () => void; description: string }) => (
@@ -64,13 +72,14 @@ const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
 const TestHarness = ({
   caseItem,
   onCaseChanged,
+  fundStatus,
 }: {
   caseItem: ArchiveCase;
   onCaseChanged?: () => Promise<unknown>;
+  fundStatus?: BaseContentStatuses;
 }) => {
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
-  const row = getCaseRow(caseItem);
-  const shareItem = row.menuActions.menuItems[0].items.find((item) => item.id === 'share');
+  const row = getCaseRow(caseItem, fundStatus);
 
   return (
     <div>
@@ -88,7 +97,6 @@ const TestHarness = ({
           menuTriggerLabel: row.menuActions.menuTriggerLabel,
         })}
       </div>
-      <span data-testid="share-href">{shareItem?.href}</span>
       <button data-testid="edit-action" onClick={row.editAction.onEditClick}>edit-action</button>
       {row.menuActions.menuItems.flatMap((group) => group.items).map((item) => (
         <button key={item.id} data-testid={`menu-${item.id}`} onClick={item.onClick}>
@@ -121,7 +129,6 @@ describe('useArchiveCaseRowActions', () => {
       editLabel: `Редагувати справу ${caseItem.name}`,
       menuTriggerLabel: `Дії для справи ${caseItem.name}`,
     }));
-    expect(screen.getByTestId('share-href')).toHaveTextContent(`/archive/case/${caseItem.id}/share`);
   });
 
   describe('Edit Case Flow', () => {
@@ -213,6 +220,36 @@ describe('useArchiveCaseRowActions', () => {
     });
   });
 
+  describe('Share Case Flow', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should copy the link and show a success toast when the Clipboard API succeeds', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
+    it('should show an error toast when the Clipboard API rejects', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+      const caseItem = buildCase();
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`?caseId=${caseItem.id}`));
+      expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    });
+  });
+
   describe('Toggle Status Flow', () => {
     it.each([
       {
@@ -243,6 +280,31 @@ describe('useArchiveCaseRowActions', () => {
       expect(onCaseChangedMock).toHaveBeenCalled();
     });
 
+    it('should show success and warning toasts when publishing a case under a hidden fund', async () => {
+      const user = userEvent.setup();
+      const caseItem = buildCase({
+        status: BaseContentStatuses.Hidden
+      });
+
+      mockUpdateCase.mockResolvedValue(undefined);
+
+      render(
+        <TestHarness 
+          caseItem={caseItem} 
+          fundStatus={BaseContentStatuses.Hidden}
+        />
+      );
+
+      await user.click(screen.getByTestId('menu-toggle-status'));
+
+      expect(mockUpdateCase).toHaveBeenCalledWith({
+        id: caseItem.id,
+        input: { status: CaseStatus.Published }
+      });
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    });
+
     it('should not call onCaseChanged after a successful toggle when it is not provided', async () => {
       const user = userEvent.setup();
       mockUpdateCase.mockResolvedValueOnce(undefined);
@@ -255,13 +317,14 @@ describe('useArchiveCaseRowActions', () => {
     });
 
     it.each([
-      { rejection: new Error('Мережева помилка'), expectedMessage: 'Мережева помилка' },
-      { rejection: 'нетипова відмова', expectedMessage: 'Не вдалося змінити статус справи' },
-    ])('should show an error toast when the update fails ($expectedMessage)', async ({ rejection, expectedMessage }) => {
+      { status: BaseContentStatuses.Hidden, rejection: new Error('Мережева помилка'), expectedMessage: 'Мережева помилка' },
+      { status: BaseContentStatuses.Published, rejection: 'нетипова відмова', expectedMessage: casesStatusMessages.updateError },
+      { status: BaseContentStatuses.Hidden, rejection: 'нетипова відмова', expectedMessage: casesStatusMessages.publishError },
+    ])('should show an error toast when the update fails ($expectedMessage)', async ({ status, rejection, expectedMessage }) => {
       const user = userEvent.setup();
       const onCaseChangedMock = jest.fn();
       mockUpdateCase.mockRejectedValueOnce(rejection);
-      render(<TestHarness caseItem={buildCase()} onCaseChanged={onCaseChangedMock} />);
+      render(<TestHarness caseItem={buildCase({ status })} onCaseChanged={onCaseChangedMock} />);
 
       await user.click(screen.getByTestId('menu-toggle-status'));
 

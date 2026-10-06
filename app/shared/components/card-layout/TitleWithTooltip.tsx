@@ -9,9 +9,10 @@ interface TitleWithTooltipProps {
   text: string;
   lineClamp?: number;
   fontWeight?: number;
+  fontSize?: number;
 }
 
-const TitleWithTooltip = ({ text, lineClamp, fontWeight }: TitleWithTooltipProps) => {
+const TitleWithTooltip = ({ text, lineClamp, fontWeight, fontSize }: TitleWithTooltipProps) => {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
 
@@ -33,7 +34,12 @@ const TitleWithTooltip = ({ text, lineClamp, fontWeight }: TitleWithTooltipProps
 
   return (
     <TooltipCustom title={isTitleTruncated ? text : ''}>
-      <Typography ref={titleRef} variant="subtitle1" component="h3" sx={styles.title(lineClamp, fontWeight)}>
+      <Typography
+        ref={titleRef}
+        variant="subtitle1"
+        component="h3"
+        sx={styles.title(lineClamp, fontWeight, fontSize)}
+      >
         {text}
       </Typography>
     </TooltipCustom>

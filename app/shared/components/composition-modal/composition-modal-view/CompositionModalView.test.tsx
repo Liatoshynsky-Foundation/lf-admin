@@ -14,9 +14,7 @@ interface MockDatePickerProps {
 interface MockActionableSuggestItemProps {
   readonly mode: SuggestItemMode;
   readonly value: string | null;
-  readonly date: Dayjs | null;
   readonly onSelect: (val: string | null) => void;
-  readonly onDateChange: (val: Dayjs | null) => void;
   readonly onUpload: () => void;
   readonly onDelete: () => void;
 }
@@ -66,15 +64,11 @@ jest.mock('../label-action-row/LabelActionRow', () => ({
 
 jest.mock('../actionable-suggest-item/ActionableSuggestItem', () => ({
   __esModule: true,
-  default: ({ mode, value, date, onSelect, onDateChange, onUpload, onDelete }: MockActionableSuggestItemProps) => (
+  default: ({ mode, value, onSelect, onUpload, onDelete }: MockActionableSuggestItemProps) => (
     <div data-testid={`suggest-item-${mode}`}>
       <span data-testid="suggest-value">{value || 'empty'}</span>
-      <span data-testid="suggest-date">{date?.isValid() ? date.format('YYYY-MM-DD') : 'empty-date'}</span>
       <button data-testid="action-select-item" onClick={() => onSelect('Selected Item')}>
         Select Track
-      </button>
-      <button data-testid="action-date-item" onClick={() => onDateChange(dayjs('2026-06-14'))}>
-        Set Date
       </button>
       <button data-testid="action-upload-item" onClick={onUpload}>
         Upload
@@ -199,17 +193,15 @@ describe('CompositionModalView', () => {
     expect(screen.queryByTestId('info-alert')).not.toBeInTheDocument();
   });
 
-  it('should allow editing row parameters, assigning item name titles and specific dates correctly', () => {
+  it('should allow editing note name', () => {
     renderComponent();
 
     fireEvent.click(screen.getByTestId('btn-add-Ноти'));
 
     const notesContainer = screen.getByTestId('suggest-item-notes');
     fireEvent.click(within(notesContainer).getByTestId('action-select-item'));
-    fireEvent.click(within(notesContainer).getByTestId('action-date-item'));
 
     expect(within(notesContainer).getByTestId('suggest-value')).toHaveTextContent('Selected Item');
-    expect(within(notesContainer).getByTestId('suggest-date')).toHaveTextContent('2026-06-14');
   });
 
   it('should successfully run file upload routines through the upload handler and render file items with targeted file names', () => {
