@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { config as appConfig } from '../../../../src/config';
 import { getUploadModule, parseFormDataOptions } from '~/api/uploads/upload-handler';
 
 export async function POST(req: NextRequest) {
@@ -9,6 +10,13 @@ export async function POST(req: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
+    }
+
+    if (file.size > appConfig.uploads.maxFileSize) {
+      return NextResponse.json(
+        { success: false, error: `File size exceeds the limit ${appConfig.uploads.maxFileSize / (1024 * 1024)} MB` },
+        { status: 413 }
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -29,10 +37,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, errors: result.errors }, { status: result.statusCode ?? 400 });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: result
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: result
+      },
+      { status: 201 }
+    );
   } catch {
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }

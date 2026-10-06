@@ -18,10 +18,11 @@ export const createUploadService = (config: UploadServiceConfig) => {
     try {
       const fileType = options.fileType || defaultFileType;
 
-      const validationRules = {
-        ...defaultValidationRules,
-        ...options.validationRules
-      };
+      const validationRules =
+        fileType === defaultFileType
+          ? { ...defaultValidationRules, ...options.validationRules }
+          : options.validationRules;
+
       const validator: FileValidator = createValidator({
         fileType,
         rules: validationRules

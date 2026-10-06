@@ -16,8 +16,8 @@ export interface ValidatorConfig {
   rules?: FileValidationRules;
 }
 
-const LIMITS = {
-  DOCUMENT: 10 * 1024 * 1024,
+export const LIMITS = {
+  DOCUMENT: 300 * 1024 * 1024,
   ARCHIVE: 50 * 1024 * 1024,
   AUDIO: 12 * 1024 * 1024,
   VIDEO: 100 * 1024 * 1024,

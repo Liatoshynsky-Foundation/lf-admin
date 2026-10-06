@@ -1,3 +1,5 @@
+import { DEFAULT_MAX_FILE_SIZE } from './index';
+
 describe('Config Module', () => {
   const originalEnv = process.env;
 
@@ -35,7 +37,7 @@ describe('Config Module', () => {
     });
     expect(config.uploads.storage.type).toBe('cloud');
     expect(config.uploads.storage.cloudProvider).toBe('cloudflare');
-    expect(config.uploads.maxFileSize).toBe(10485760);
+    expect(config.uploads.maxFileSize).toBe(DEFAULT_MAX_FILE_SIZE);
     expect(config.uploads.maxFiles).toBe(10);
   });
 

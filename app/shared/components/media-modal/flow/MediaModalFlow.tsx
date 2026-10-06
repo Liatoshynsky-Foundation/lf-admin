@@ -29,6 +29,8 @@ export type MediaModalFlowProps = {
   isAllowedFile?: (file: File) => boolean;
   invalidFileError?: string;
   uploadAriaLabel?: string;
+  maxSizeBytes?: number;
+  fileTooLargeError?: string;
   mediaKind?: MediaKind;
   aspectRatio?: number;
   persistUploadAsAsset?: boolean;
@@ -57,6 +59,8 @@ export function MediaModalFlow({
   isAllowedFile,
   invalidFileError,
   uploadAriaLabel,
+  maxSizeBytes,
+  fileTooLargeError,
   mediaKind = 'image',
   aspectRatio,
   persistUploadAsAsset,
@@ -288,6 +292,8 @@ export function MediaModalFlow({
         accept,
         isAllowedFile,
         invalidFileError,
+        maxSizeBytes,
+        fileTooLargeError,
         ariaLabel: uploadAriaLabel
       });
     }

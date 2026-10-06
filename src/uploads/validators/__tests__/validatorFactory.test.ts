@@ -34,24 +34,32 @@ describe('createValidator', () => {
   });
 
   describe('size limits and extra validations', () => {
-    it('should validate document size limit (10MB)', async () => {
+    it('should validate document size limit (300MB)', async () => {
       const validator = createValidator({ fileType: 'document' });
-      const bigBuffer = Buffer.alloc(11 * 1024 * 1024);
+      const bigBuffer = Buffer.alloc(301 * 1024 * 1024);
       const result = await validator.validate(bigBuffer, 'doc.txt', 'text/plain');
       expect(result.valid).toBe(false);
-      expect(result.errors[0]).toBe('Розмір документа не може перевищувати 10MB');
+      expect(result.errors[0]).toBe('Розмір документа не може перевищувати 300MB');
+    });
+    
+    it('should allow documents up to 300MB', async () => {
+      const validator = createValidator({ fileType: 'document' });
+      const bigBuffer = Buffer.alloc(300 * 1024 * 1024);
+      const result = await validator.validate(bigBuffer, 'doc.txt', 'text/plain');
+      expect(result.valid).toBe(true);
+      expect(result.errors[0]).toBeUndefined();
     });
 
-    it('should cap effective max size at default limit even if rules.maxSize is larger', async () => {
+    it('should respect custom maxSize when it is smaller than the default limit', async () => {
       const validator = createValidator({
         fileType: 'document',
         rules: { maxSize: 20 * 1024 * 1024 }
       });
-      const buffer = Buffer.alloc(11 * 1024 * 1024);
+      const buffer = Buffer.alloc(21 * 1024 * 1024);
       const result = await validator.validate(buffer, 'doc.txt', 'text/plain');
 
       expect(result.valid).toBe(false);
-      expect(result.errors[0]).toBe('Розмір документа не може перевищувати 10MB');
+      expect(result.errors[0]).toContain('exceeds maximum allowed size');;
     });
 
     it('should validate archive size limit (50MB)', async () => {

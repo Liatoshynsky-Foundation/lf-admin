@@ -33,7 +33,7 @@ export const parseFormDataOptions = (formData: FormData): UploadOptions => {
     }
   };
 
-  options.validationRules = tryParse(validationRules);
+  options.validationRules = { maxSize: appConfig.uploads.maxFileSize, ...tryParse(validationRules) };
   options.metadata = tryParse(metadata);
 
   return options;

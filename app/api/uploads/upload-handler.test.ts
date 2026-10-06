@@ -1,7 +1,7 @@
 import { initializeUploadModule } from '../../../src/uploads/initialize';
 import { getUploadModule, parseFormDataOptions } from './upload-handler';
+import { DEFAULT_MAX_FILE_SIZE } from '~/src/config';
 
-jest.mock('../../../src/config', () => ({ config: {} }));
 jest.mock('../../../src/uploads/initialize');
 
 describe('upload-handler', () => {
@@ -33,7 +33,7 @@ describe('upload-handler', () => {
     expect(res).toEqual({
       fileType: 'image',
       directory: 'uploads',
-      validationRules: { min: 1 },
+      validationRules: { maxSize: DEFAULT_MAX_FILE_SIZE, min: 1 },
       metadata: { key: 'val' }
     });
   });
@@ -46,7 +46,7 @@ describe('upload-handler', () => {
     const res = parseFormDataOptions(fd);
 
     expect(res).toEqual({
-      validationRules: undefined,
+      validationRules: { maxSize: DEFAULT_MAX_FILE_SIZE },
       metadata: undefined
     });
   });
@@ -58,16 +58,18 @@ describe('upload-handler', () => {
 
     const res = parseFormDataOptions(fd);
 
-    expect(res.validationRules).toBeUndefined();
+    expect(res.validationRules).toEqual({
+      maxSize: DEFAULT_MAX_FILE_SIZE
+    });
     expect(res.metadata).toBeUndefined();
   });
 
-  test('tryParse handles non-string values safely', () => {
+  test('parseFormDataOptions handles non-string validation rules safely', () => {
     const fd = new FormData();
     fd.append('validationRules', new File([], 'test.txt'));
 
     const res = parseFormDataOptions(fd);
 
-    expect(res.validationRules).toBeUndefined();
+    expect(res.validationRules).toEqual({ maxSize: DEFAULT_MAX_FILE_SIZE });
   });
 });
