@@ -9,7 +9,7 @@ const PAGE_SLUG = 'about-us';
 describe('useManagedPageSections', () => {
   beforeEach(() => {
     useStore.setState({
-      blocks: { [PAGE_SLUG]: { OurGoals: { title: { uk: {}, en: {} }, goals: [] } } },
+      blocks: { [PAGE_SLUG]: { OurGoals: { title: { uk: {}, en: {} }, goals: [], hidden: false } } },
       blocksOrder: { [PAGE_SLUG]: ['OurGoals'] },
       isChanged: false
     });
@@ -24,7 +24,8 @@ describe('useManagedPageSections', () => {
 
     const sectionId = result.current.sections[0]?.id;
     expect(sectionId).toBeDefined();
-    expect(useStore.getState().blocks[PAGE_SLUG]?.[sectionId!]).toMatchObject({ kind: 'managedPageSection' });
+    const pageBlocks = useStore.getState().blocks[PAGE_SLUG] as Record<string, unknown> | undefined;
+    expect(pageBlocks?.[sectionId!]).toMatchObject({ kind: 'managedPageSection' });
     expect(useStore.getState().blocksOrder[PAGE_SLUG]).toEqual(['OurGoals', sectionId]);
     expect(useStore.getState().isChanged).toBe(true);
   });
@@ -41,7 +42,8 @@ describe('useManagedPageSections', () => {
       result.current.removeSection(section.id);
     });
 
-    expect(useStore.getState().blocks[PAGE_SLUG]?.[section.id]).toBeUndefined();
+    const pageBlocks = useStore.getState().blocks[PAGE_SLUG] as Record<string, unknown> | undefined;
+    expect(pageBlocks?.[section.id]).toBeUndefined();
     expect(useStore.getState().blocksOrder[PAGE_SLUG]).toEqual(['OurGoals']);
   });
 });

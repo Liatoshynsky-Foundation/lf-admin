@@ -120,7 +120,11 @@ const PageSectionCard = ({ section, index, locale, onChange, onDelete }: PageSec
   );
 };
 
-export const PageSectionsEditor = (pageSlug: string) => {
+export interface PageSectionsEditorProps {
+  pageSlug: string;
+}
+
+export const PageSectionsEditor = ({ pageSlug }: PageSectionsEditorProps) => {
   const locale = useStore((state) => state.locale);
   const { sections, addSection, updateSection, removeSection, reorderSections } = useManagedPageSections(pageSlug);
 

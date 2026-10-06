@@ -43,7 +43,7 @@ const CollapsibleBlock = ({
           </Box>
         )}
         <Box sx={styles.titleRow}>
-          <Box component="span" sx={[styles.titleText, onDelete ? { flex: '1 1 auto' } : null]}>
+          <Box component="span" sx={[styles.titleText, ...sxToArray(onDelete ? { flex: '1 1 auto' } : undefined)]}>
             {title}
           </Box>
           {onDelete && (
