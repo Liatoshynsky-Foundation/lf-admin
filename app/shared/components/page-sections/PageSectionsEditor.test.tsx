@@ -1,27 +1,24 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
 
 import { createPageSection } from './pageSection.utils';
 import { PageSectionsEditor } from './PageSectionsEditor';
 
-jest.mock('~/shared/hooks/use-managed-page-sections/useManagedPageSections', () => {
-  const React = require('react') as typeof import('react');
+jest.mock('~/shared/hooks/use-managed-page-sections/useManagedPageSections', () => ({
+  useManagedPageSections: () => {
+    const [sections, setSections] = React.useState<ReturnType<typeof createPageSection>[]>([]);
 
-  return {
-    useManagedPageSections: () => {
-      const [sections, setSections] = React.useState<ReturnType<typeof createPageSection>[]>([]);
-
-      return {
-        sections,
-        addSection: () => setSections((current) => [...current, createPageSection()]),
-        updateSection: (next: ReturnType<typeof createPageSection>) =>
-          setSections((current) => current.map((section) => (section.id === next.id ? next : section))),
-        removeSection: (sectionId: string) =>
-          setSections((current) => current.filter((section) => section.id !== sectionId)),
-        reorderSections: (reordered: ReturnType<typeof createPageSection>[]) => setSections(reordered)
-      };
-    }
-  };
-});
+    return {
+      sections,
+      addSection: () => setSections((current) => [...current, createPageSection()]),
+      updateSection: (next: ReturnType<typeof createPageSection>) =>
+        setSections((current) => current.map((section) => (section.id === next.id ? next : section))),
+      removeSection: (sectionId: string) =>
+        setSections((current) => current.filter((section) => section.id !== sectionId)),
+      reorderSections: (reordered: ReturnType<typeof createPageSection>[]) => setSections(reordered)
+    };
+  }
+}));
 
 jest.mock('~/public/icons/trash.svg', () => {
   const TrashIcon = () => <svg data-testid="trash-icon" />;

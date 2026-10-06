@@ -14,10 +14,10 @@ import { useStore } from '~/store';
 
 export const useManagedPageSections = (pageSlug: string) => {
   const blocks = useStore((state) => state.blocks[pageSlug]) as Record<string, unknown> | undefined;
-  const blocksOrder = useStore((state) => state.blocksOrder[pageSlug]) ?? [];
+  const blocksOrder = useStore((state) => state.blocksOrder[pageSlug]);
   const replacePageBlocks = useStore((state) => state.replacePageBlocks);
 
-  const sections = useMemo(() => sectionsFromStore(blocksOrder, blocks), [blocks, blocksOrder]);
+  const sections = useMemo(() => sectionsFromStore(blocksOrder ?? [], blocks), [blocks, blocksOrder]);
 
   const persistSections = useCallback(
     (nextSections: PageSection[]) => {
