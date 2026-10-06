@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { POST } from './route';
 import { getUploadModule, parseFormDataOptions } from '~/api/uploads/upload-handler';
+import { DEFAULT_MAX_FILE_SIZE } from '~/src/config';
 
 const mockUploadFile = jest.fn();
 
@@ -104,6 +105,36 @@ describe('POST /api/uploads/single', () => {
 
     expect(json.success).toBe(false);
     expect(json.errors).toEqual(mockErrors);
+  });
+
+  it('should return 413 when file size exceeds the maximum limit', async () => {
+    const mockFile = createMockFile('large.pdf', 'application/pdf', DEFAULT_MAX_FILE_SIZE + 1);
+
+    const req = buildMockRequest(mockFile);
+    const res = await POST(req);
+
+    expect(res.status).toBe(413);
+
+    const json = (await res.json()) as { success: boolean; error: string };
+
+    expect(json.success).toBe(false);
+    expect(json.error).toBe('File size exceeds the limit 300 MB');
+    expect(mockFile.arrayBuffer).not.toHaveBeenCalled();
+    expect(mockUploadFile).not.toHaveBeenCalled();
+  });
+
+  it('should allow a file up to the maximum size limit', async () => {
+    const mockFile = createMockFile('large.pdf', 'application/pdf', DEFAULT_MAX_FILE_SIZE);
+    const mockResult = { success: true, url: 'https://storage/large.pdf' };
+
+    (parseFormDataOptions as jest.Mock).mockReturnValue({});
+    mockUploadFile.mockResolvedValue(mockResult);
+
+    const req = buildMockRequest(mockFile);
+    const res = await POST(req);
+
+    expect(res.status).toBe(201);
+    expect(mockUploadFile).toHaveBeenCalled();
   });
 
   it('should return 500 when exception is thrown', async () => {

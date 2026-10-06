@@ -18,6 +18,8 @@ export type UploadRendererProps = {
   accept?: string;
   isAllowedFile?: (file: File) => boolean;
   invalidFileError?: string;
+  maxSizeBytes?: number;
+  fileTooLargeError?: string;
   ariaLabel?: string;
 };
 

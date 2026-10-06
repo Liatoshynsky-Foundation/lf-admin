@@ -17,11 +17,11 @@ describe('UploadService', () => {
     exists: jest.fn(),
     getMetadata: jest.fn(),
     getUrl: jest.fn(),
-    list: jest.fn(),
+    list: jest.fn()
   };
 
   const mockValidator: jest.Mocked<FileValidator> = {
-    validate: jest.fn(),
+    validate: jest.fn()
   };
 
   let service: UploadService;
@@ -32,7 +32,7 @@ describe('UploadService', () => {
     mimetype: 'image/jpeg',
     fieldname: 'file',
     encoding: '7bit',
-    size: 12,
+    size: 12
   };
 
   beforeEach(() => {
@@ -41,7 +41,7 @@ describe('UploadService', () => {
     mockStorage.exists.mockResolvedValue(false);
     service = createUploadService({
       storage: mockStorage,
-      defaultFileType: 'image',
+      defaultFileType: 'image'
     });
   });
 
@@ -181,7 +181,7 @@ describe('UploadService', () => {
       const results = await service.uploadFiles(files);
 
       expect(results).toHaveLength(2);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
       expect(mockStorage.store).toHaveBeenCalledTimes(2);
     });
 
@@ -292,6 +292,18 @@ describe('UploadService', () => {
       });
     });
 
+    it('should use document validation rules instead of default image rules', async () => {
+      mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
+      mockStorage.store.mockResolvedValue({ success: true, metadata: { filename: 'test.pdf' } as StorageMetadata });
+
+      await service.uploadFile(
+        { ...testFile, originalname: 'test.pdf', mimetype: 'application/pdf' },
+        { fileType: 'document', validationRules: { maxSize: 300 * 1024 * 1024 } }
+      );
+
+      expect(mockedCreateValidator).toHaveBeenCalledWith({ fileType: 'document', rules: { maxSize: 300 * 1024 * 1024 } });
+    });
+
     it('should use a custom filename generator when provided', async () => {
       mockValidator.validate.mockResolvedValue({ valid: true, errors: [] });
       mockStorage.store.mockResolvedValue({
@@ -329,7 +341,9 @@ describe('UploadService', () => {
     });
 
     it('should return default unknown error if thrown value is an Error object', async () => {
-      mockValidator.validate.mockImplementation(() => { throw new Error('string-error'); });
+      mockValidator.validate.mockImplementation(() => {
+        throw new Error('string-error');
+      });
 
       const result = await service.uploadFile(testFile);
       expect(result.errors).toContain('string-error');

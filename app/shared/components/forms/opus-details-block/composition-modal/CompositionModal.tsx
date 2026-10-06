@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { styles } from './CompositionModal.styles';
 import Button from '~/components/design-system/button/Button';
+import { SHEET_MUSIC_FILE_SIZE_ERROR, SHEET_MUSIC_MAX_FILE_SIZE_BYTES } from '~/constants/creativity';
 import {
   COMPOSITION_GENRE_LIMITS,
   COMPOSITION_MODAL_LABELS,
@@ -361,6 +362,8 @@ export default function CompositionModal({
         onClose={() => setMediaTarget(null)}
         onApply={handleMediaApply}
         directory={isAudioTarget ? 'compositions' : 'uploads'}
+        maxSizeBytes={SHEET_MUSIC_MAX_FILE_SIZE_BYTES}
+        fileTooLargeError={SHEET_MUSIC_FILE_SIZE_ERROR}
         mediaKind={isAudioTarget ? 'audio' : 'pdf'}
         accept={isAudioTarget ? 'audio/*' : 'application/pdf'}
         isAllowedFile={isAudioTarget ? isAudioUploadFile : isPdfUploadFile}
