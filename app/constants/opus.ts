@@ -46,6 +46,11 @@ export const OPUS_FIELD_LIMITS = {
   maxPerformances: 5
 } as const;
 
+export const COMPOSITION_YEAR_RANGE = {
+  min: 1900,
+  max: 3000
+} as const;
+
 export const OPUS_YEAR_RANGE = { min: 1900, max: 2100 } as const;
 
 export const COMPOSITION_TITLE_LIMITS = { min: 2, max: 250 } as const;
@@ -72,7 +77,8 @@ export const COMPOSITION_VALIDATION_MESSAGES = {
   genreTooShort: 'Введіть щонайменше 2 символи.',
   genreTooLong: 'Жанр не може перевищувати 150 символів.',
   yearInvalid: 'Введіть коректну дату.',
-  publishDateInvalid: 'Введіть коректну дату видання.'
+  publishDateInvalid: 'Введіть коректну дату видання.',
+  yearOutOfRange: `Рік має бути в межах від ${COMPOSITION_YEAR_RANGE.min} до ${COMPOSITION_YEAR_RANGE.max}`
 } as const;
 
 export const COMPOSITION_ACTIONS_MESSAGES = {

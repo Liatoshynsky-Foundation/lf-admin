@@ -1,3 +1,5 @@
+import { COMPOSITION_YEAR_RANGE } from './opus';
+
 export const errors = {
   MISSING_DB_OR_HOST: '❌ MONGO_DB and MONGO_HOST must be defined',
   MISSING_CREDENTIALS: '❌ Credentials are missing for remote MongoDB',
@@ -99,7 +101,8 @@ export const CompositionErrors = {
   NETWORK_ERROR_UPDATE: 'Network error while updating composition',
   FAILED_TO_UPDATE: 'Failed to update composition',
   NETWORK_ERROR_DELETE: 'Network error while deleting composition',
-  FAILED_TO_DELETE: 'Failed to delete composition'
+  FAILED_TO_DELETE: 'Failed to delete composition',
+  INVALID_YEAR_RANGE: `Year must be between ${COMPOSITION_YEAR_RANGE.min} and ${COMPOSITION_YEAR_RANGE.max}`
 };
 
 export const FundErrors = {
@@ -133,7 +136,7 @@ export const CaseErrors = {
     'Справа з таким номером опису та номером справи вже існує в цьому фонді. Змініть один із номерів.',
   CASE_NOT_FOUND: (id: string) => `Case with id "${id}" not found`,
   FUND_NOT_FOUND: (fundId: string) => `Fund with id "${fundId}" not found`,
-  INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.',
+  INVALID_PDF_FILE: () => 'Можна прикріпити лише PDF-файл.'
 };
 
 export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
@@ -227,8 +230,10 @@ export const FoundationTeamErrors = {
   MISSING_INTRO: 'Будь ласка, заповніть вступну секцію',
   MISSING_INTRO_UK: 'Будь ласка, заповніть вступну секцію для української версії',
   MISSING_INTRO_EN: 'Будь ласка, заповніть вступну секцію для англійської версії',
-  MISSING_MEMBER_UK: 'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) українською мовою для учасника.',
-  MISSING_MEMBER_EN: 'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) англійською мовою для учасника.'
+  MISSING_MEMBER_UK:
+    'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) українською мовою для учасника.',
+  MISSING_MEMBER_EN:
+    'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) англійською мовою для учасника.'
 };
 export const compositionMediaErrors = {
   ASSET_NAME_CONFLICT: (filename: string): string =>
@@ -254,4 +259,3 @@ export const publicationErrors = {
     genericError: 'Something went wrong. Please try again.'
   }
 };
-

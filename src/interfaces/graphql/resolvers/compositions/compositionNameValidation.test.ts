@@ -89,15 +89,11 @@ describe('composition name validation', () => {
     });
 
     it('throws when genre is too short', () => {
-      expect(() => assertCompositionGenreValid('a')).toThrow(
-        COMPOSITION_VALIDATION_MESSAGES.genreTooShort
-      );
+      expect(() => assertCompositionGenreValid('a')).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooShort);
     });
 
     it('throws when genre is too long', () => {
-      expect(() => assertCompositionGenreValid('a'.repeat(151))).toThrow(
-        COMPOSITION_VALIDATION_MESSAGES.genreTooLong
-      );
+      expect(() => assertCompositionGenreValid('a'.repeat(151))).toThrow(COMPOSITION_VALIDATION_MESSAGES.genreTooLong);
     });
   });
 
@@ -114,10 +110,21 @@ describe('composition name validation', () => {
       expect(() => assertCompositionYearValid(2026)).not.toThrow();
     });
 
-    it('throws when year is invalid', () => {
-      expect(() => assertCompositionYearValid(202)).toThrow(
-        COMPOSITION_VALIDATION_MESSAGES.yearInvalid
-      );
+    it('allows boundary years (1900 and 3000)', () => {
+      expect(() => assertCompositionYearValid(1900)).not.toThrow();
+      expect(() => assertCompositionYearValid(3000)).not.toThrow();
+    });
+
+    it('throws when year is less than 1900', () => {
+      expect(() => assertCompositionYearValid(1899)).toThrow(COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
+    });
+
+    it('throws when year is greater than 3000', () => {
+      expect(() => assertCompositionYearValid(3001)).toThrow(COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
+    });
+
+    it('throws when year is invalid format (non-4-digit)', () => {
+      expect(() => assertCompositionYearValid(202)).toThrow(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
     });
   });
 
@@ -127,33 +134,25 @@ describe('composition name validation', () => {
         throwIfCompositionNameDuplicateKey(
           {
             code: 11000,
-            keyValue: { 'name.uk': COMPOSITION_NAME },
+            keyValue: { 'name.uk': COMPOSITION_NAME }
           },
           'fallback'
         )
-      ).toThrow(
-        compositionsServiceErrors.COMPOSITION_NAME_TAKEN(COMPOSITION_NAME)
-      );
+      ).toThrow(compositionsServiceErrors.COMPOSITION_NAME_TAKEN(COMPOSITION_NAME));
     });
 
     it('uses the trimmed fallback name when no name is present', () => {
-      expect(() =>
-        throwIfCompositionNameDuplicateKey({ code: 11000 }, ' fallback ')
-      ).toThrow(
+      expect(() => throwIfCompositionNameDuplicateKey({ code: 11000 }, ' fallback ')).toThrow(
         compositionsServiceErrors.COMPOSITION_NAME_TAKEN('fallback')
       );
     });
 
     it('does not throw for non-duplicate-key errors', () => {
-      expect(() =>
-        throwIfCompositionNameDuplicateKey({ code: 1 }, 'fallback')
-      ).not.toThrow();
+      expect(() => throwIfCompositionNameDuplicateKey({ code: 1 }, 'fallback')).not.toThrow();
     });
 
     it('does not throw for null error', () => {
-      expect(() =>
-        throwIfCompositionNameDuplicateKey(null, 'fallback')
-      ).not.toThrow();
+      expect(() => throwIfCompositionNameDuplicateKey(null, 'fallback')).not.toThrow();
     });
   });
 });
