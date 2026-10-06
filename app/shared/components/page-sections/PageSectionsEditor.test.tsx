@@ -1,6 +1,27 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 
+import { createPageSection } from './pageSection.utils';
 import { PageSectionsEditor } from './PageSectionsEditor';
+
+jest.mock('~/shared/hooks/use-managed-page-sections/useManagedPageSections', () => {
+  const React = require('react') as typeof import('react');
+
+  return {
+    useManagedPageSections: () => {
+      const [sections, setSections] = React.useState<ReturnType<typeof createPageSection>[]>([]);
+
+      return {
+        sections,
+        addSection: () => setSections((current) => [...current, createPageSection()]),
+        updateSection: (next: ReturnType<typeof createPageSection>) =>
+          setSections((current) => current.map((section) => (section.id === next.id ? next : section))),
+        removeSection: (sectionId: string) =>
+          setSections((current) => current.filter((section) => section.id !== sectionId)),
+        reorderSections: (reordered: ReturnType<typeof createPageSection>[]) => setSections(reordered)
+      };
+    }
+  };
+});
 
 jest.mock('~/public/icons/trash.svg', () => {
   const TrashIcon = () => <svg data-testid="trash-icon" />;
@@ -43,10 +64,11 @@ jest.mock('~/shared/components/sortable-list/SortableList', () => ({
 const sectionHeadings = () => screen.getAllByRole('heading').map((heading) => heading.textContent);
 
 const addSection = () => fireEvent.click(screen.getByRole('button', { name: 'Додати секцію' }));
+const renderEditor = () => render(<PageSectionsEditor pageSlug="about-us" />);
 
 describe('PageSectionsEditor', () => {
   it('should show only the add button until a section is created', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
 
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Додати секцію' })).toBeInTheDocument();
@@ -61,7 +83,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should edit the section title with the same field as other sections', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
@@ -71,7 +93,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should add a subtitle, a paragraph and a bullet, then remove the paragraph', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
@@ -92,7 +114,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should edit a paragraph with the same field used in other sections', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати абзац' }));
@@ -102,7 +124,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should delete a section and reorder the remaining ones by drag', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     addSection();
@@ -125,7 +147,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should show only the add button after the last section is removed', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     fireEvent.click(screen.getByRole('button', { name: 'Видалити секцію' }));
@@ -135,7 +157,7 @@ describe('PageSectionsEditor', () => {
   });
 
   it('should reorder content items inside a section', () => {
-    render(<PageSectionsEditor />);
+    renderEditor();
     addSection();
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
@@ -143,7 +165,9 @@ describe('PageSectionsEditor', () => {
 
     fireEvent.click(screen.getAllByTestId('trigger-drag')[0]);
 
-    const fields = screen.getAllByTestId(/textfield-wrapper-/).filter((field) => field.getAttribute('data-testid') !== 'textfield-wrapper-Заголовок секції');
+    const fields = screen
+      .getAllByTestId(/textfield-wrapper-/)
+      .filter((field) => field.getAttribute('data-testid') !== 'textfield-wrapper-Заголовок секції');
     expect(fields[0]).toHaveAttribute('data-testid', 'textfield-wrapper-Абзац');
     expect(fields[1]).toHaveAttribute('data-testid', 'textfield-wrapper-Підзаголовок');
   });

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, CircularProgress, Divider,Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Divider, Stack, Typography } from '@mui/material';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -130,7 +130,7 @@ export const EditablePageLayout = ({
           <>
             {content}
             <Box sx={{ px: '32px', pb: '32px' }}>
-              <PageSectionsEditor />
+              <PageSectionsEditor pageSlug={pageSlug} />
             </Box>
           </>
         )}
@@ -151,7 +151,7 @@ export const EditablePageLayout = ({
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
       {content}
-      {!isLoading && <PageSectionsEditor />}
+      {!isLoading && <PageSectionsEditor pageSlug={pageSlug} />}
     </Box>
   );
 };

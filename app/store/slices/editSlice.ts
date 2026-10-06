@@ -171,6 +171,20 @@ export const createEditSlice: StateCreator<EditState> = (set, get) => ({
     });
   },
 
+  replacePageBlocks: (pageId: string, blocks: Record<string, unknown>, blocksOrder: string[]) => {
+    set({
+      blocks: {
+        ...get().blocks,
+        [pageId]: blocks
+      },
+      blocksOrder: {
+        ...get().blocksOrder,
+        [pageId]: blocksOrder
+      },
+      isChanged: true
+    });
+  },
+
   toggleBlockVisibility: <K extends keyof BlocksMap>(pageId: string, blockId: K) => {
     const prevPageBlocks = get().blocks[pageId] || {};
     const prevBlock = prevPageBlocks[blockId];

@@ -3,10 +3,9 @@
 import { DragEndEvent } from '@dnd-kit/core';
 import { Box, IconButton } from '@mui/material';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
 
 import { type PageSection, type SectionItemType } from './pageSection.types';
-import { createPageSection, createSectionItem, SECTION_ITEM_LABEL, sectionOrdinalTitle } from './pageSection.utils';
+import { createSectionItem, SECTION_ITEM_LABEL, sectionOrdinalTitle } from './pageSection.utils';
 import { styles } from './PageSectionsEditor.styles';
 import { PAGE_SECTION_ADD_ACTIONS } from '~/constants/pageSections';
 import { proseToHeaderText } from '~/lib/utils/prose';
@@ -18,6 +17,7 @@ import Button from '~/shared/components/design-system/button/Button';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
+import { useManagedPageSections } from '~/shared/hooks/use-managed-page-sections/useManagedPageSections';
 import { useStore } from '~/store';
 import { CONTENT_TYPE } from '~/types/blocks/contentTypes';
 import type { ProseDoc } from '~/types/common';
@@ -34,7 +34,9 @@ const PageSectionCard = ({ section, index, locale, onChange, onDelete }: PageSec
   const updateItemValue = (itemId: string, value: PageSection['items'][number]['value'][typeof locale]) => {
     onChange({
       ...section,
-      items: section.items.map((item) => (item.id === itemId ? { ...item, value: { ...item.value, [locale]: value } } : item))
+      items: section.items.map((item) =>
+        item.id === itemId ? { ...item, value: { ...item.value, [locale]: value } } : item
+      )
     });
   };
 
@@ -91,7 +93,11 @@ const PageSectionCard = ({ section, index, locale, onChange, onDelete }: PageSec
         />
 
         {section.items.length > 0 && (
-          <SortableList id={`page-section-items-${section.id}`} items={section.items.map((item) => item.id)} onDragEnd={handleItemsDragEnd}>
+          <SortableList
+            id={`page-section-items-${section.id}`}
+            items={section.items.map((item) => item.id)}
+            onDragEnd={handleItemsDragEnd}
+          >
             {itemList}
           </SortableList>
         )}
@@ -114,12 +120,16 @@ const PageSectionCard = ({ section, index, locale, onChange, onDelete }: PageSec
   );
 };
 
-export const PageSectionsEditor = () => {
+type PageSectionsEditorProps = {
+  pageSlug: string;
+};
+
+export const PageSectionsEditor = ({ pageSlug }: PageSectionsEditorProps) => {
   const locale = useStore((state) => state.locale);
-  const [sections, setSections] = useState<PageSection[]>([]);
+  const { sections, addSection, updateSection, removeSection, reorderSections } = useManagedPageSections(pageSlug);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    handleSortableDragEnd(event, sections, setSections);
+    handleSortableDragEnd(event, sections, reorderSections);
   };
 
   return (
@@ -133,8 +143,8 @@ export const PageSectionsEditor = () => {
                   section={section}
                   index={index}
                   locale={locale}
-                  onChange={(next) => setSections((current) => current.map((item) => (item.id === next.id ? next : item)))}
-                  onDelete={() => setSections((current) => current.filter((item) => item.id !== section.id))}
+                  onChange={updateSection}
+                  onDelete={() => removeSection(section.id)}
                 />
               </SortableItemWrapper>
             </Box>
@@ -143,7 +153,7 @@ export const PageSectionsEditor = () => {
       )}
 
       <Box sx={styles.addSectionRow}>
-        <Button variant="filled" color="primary" startIcon={<Plus size={16} />} onClick={() => setSections((current) => [...current, createPageSection()])}>
+        <Button variant="filled" color="primary" startIcon={<Plus size={16} />} onClick={addSection}>
           Додати секцію
         </Button>
       </Box>
