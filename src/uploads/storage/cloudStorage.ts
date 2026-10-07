@@ -60,7 +60,6 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     throw new Error(UPLOAD_ERRORS.CLOUD_STORAGE_NOT_IMPLEMENTED(provider));
   };
 
-
   const getTargetKey = (filename: string, folder?: string, metadataDir?: unknown): string => {
     const targetFolder = folder ?? (typeof metadataDir === 'string' ? metadataDir : folderPrefix);
     return targetFolder ? `${targetFolder}/${filename}` : filename;
@@ -82,9 +81,17 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
 
       const key = getTargetKey(filename, undefined, metadata.directory);
 
-      const originalName = typeof metadata.originalName === 'string'
-        ? metadata.originalName
-        : filename;
+      const originalName = typeof metadata.originalName === 'string' ? metadata.originalName : filename;
+
+      const asciiMetadata = Object.fromEntries(
+        Object.entries({
+          originalName,
+          uploadedAt: new Date().toISOString(),
+          ...metadata
+        })
+          .map(([k, v]) => [k, String(v)])
+          .filter(([, v]) => /^[\x00-\x7F]*$/.test(v))
+      );
 
       await client.send(
         new PutObjectCommand({
@@ -92,11 +99,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           Key: key,
           Body: buffer,
           ContentType: mimeType,
-          Metadata: {
-            originalName,
-            uploadedAt: new Date().toISOString(),
-            ...Object.fromEntries(Object.entries(metadata).map(([k, v]) => [k, String(v)]))
-          }
+          Metadata: asciiMetadata
         })
       );
 
@@ -120,9 +123,7 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : UPLOAD_ERRORS.UNKNOWN_ERROR_OCCURRED;
 
-      const originalName = typeof metadata.originalName === 'string'
-        ? metadata.originalName
-        : filename;
+      const originalName = typeof metadata.originalName === 'string' ? metadata.originalName : filename;
 
       return {
         success: false,
@@ -200,10 +201,15 @@ export const createCloudStorage = (options: CloudStorageOptions): StorageAdapter
           throw copyError;
         }
 
-        const storeResult = await store(sourceBuffer, targetFilename, sourceMetadata?.mimeType ?? 'application/octet-stream', {
-          directory: folder ?? folderPrefix,
-          originalName: targetFilename
-        });
+        const storeResult = await store(
+          sourceBuffer,
+          targetFilename,
+          sourceMetadata?.mimeType ?? 'application/octet-stream',
+          {
+            directory: folder ?? folderPrefix,
+            originalName: targetFilename
+          }
+        );
 
         if (!storeResult.success) {
           throw new Error(storeResult.error ?? UPLOAD_ERRORS.STORAGE_FAILED);
