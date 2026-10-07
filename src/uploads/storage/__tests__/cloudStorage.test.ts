@@ -438,43 +438,43 @@ describe('createCloudStorage', () => {
   });
 
   describe('move', () => {
-    it('should copy the source object to the target key and delete the source object', async () => {
-      const options = createCloudflareOptions();
+    it.each([
+      {
+        name: 'a file in a folder',
+        options: createCloudflareOptions(),
+        source: 'old name.jpeg',
+        target: 'new-name.jpeg',
+        folder: 'photos',
+        copySource: 'test-bucket/photos/old%20name.jpeg',
+        copyKey: 'photos/new-name.jpeg',
+        deleteKey: 'photos/old name.jpeg'
+      },
+      {
+        name: 'a file at the storage root',
+        options: createAwsOptions(),
+        source: 'old.txt',
+        target: 'new.txt',
+        folder: '',
+        copySource: 'test-bucket/old.txt',
+        copyKey: 'new.txt',
+        deleteKey: 'old.txt'
+      },
+    ])('should move $namr', async ({ options, source, target, folder, copySource, copyKey, deleteKey }) => {
       const storage = createCloudStorage(options);
 
       mockSend.mockResolvedValue({});
 
-      const result = await storage.move('old name.jpeg', 'new-name.jpeg', 'photos');
+      const result = await storage.move(source, target, folder);
 
       expect(result.success).toBe(true);
       expect(MockCopyObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        CopySource: 'test-bucket/photos/old%20name.jpeg',
-        Key: 'photos/new-name.jpeg'
+        CopySource: copySource,
+        Key: copyKey
       });
       expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
         Bucket: 'test-bucket',
-        Key: 'photos/old name.jpeg'
-      });
-    });
-
-    it('should move files at the storage root when folder is an empty string', async () => {
-      const options = createAwsOptions();
-      const storage = createCloudStorage(options);
-
-      mockSend.mockResolvedValue({});
-
-      const result = await storage.move('old.txt', 'new.txt', '');
-
-      expect(result.success).toBe(true);
-      expect(MockCopyObjectCommand).toHaveBeenCalledWith({
-        Bucket: 'test-bucket',
-        CopySource: 'test-bucket/old.txt',
-        Key: 'new.txt'
-      });
-      expect(MockDeleteObjectCommand).toHaveBeenCalledWith({
-        Bucket: 'test-bucket',
-        Key: 'old.txt'
+        Key: deleteKey
       });
     });
 
