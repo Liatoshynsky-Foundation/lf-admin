@@ -280,6 +280,29 @@ describe('createCloudStorage', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Cloud storage for gcp not yet implemented');
     });
+
+    it('should omit non-ASCII metadata values', async () => {
+      const options = createAwsOptions();
+      const storage = createCloudStorage(options);
+      const { buffer, mimeType } = createTestFile();
+
+      mockSend.mockResolvedValue({});
+
+      await storage.store(buffer, 'Принципи_надії_1.jpeg', mimeType, {
+        originalName: 'Принципи_надії_1.jpeg',
+        userId: '123'
+      });
+
+      expect(MockPutObjectCommand).toHaveBeenCalled();
+
+      const command = MockPutObjectCommand.mock.calls[0][0];
+
+      expect(command.Metadata).toEqual({
+        uploadedAt: expect.any(String),
+        userId: '123'
+      });
+      expect(command.Metadata).not.toHaveProperty('originalName');
+    });
   });
 
   describe('retrieve', () => {
@@ -736,7 +759,10 @@ describe('createCloudStorage', () => {
     });
 
     it('should generate correct URL for GCP', () => {
-      const options = createAwsOptions({ provider: 'gcp' as unknown as CloudStorageOptions['provider'], credentials: {} });
+      const options = createAwsOptions({
+        provider: 'gcp' as unknown as CloudStorageOptions['provider'],
+        credentials: {}
+      });
       const storage = createCloudStorage(options);
       const url = storage.getUrl('test.txt');
 
