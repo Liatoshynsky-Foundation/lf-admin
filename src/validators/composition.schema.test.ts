@@ -7,40 +7,21 @@ describe('compositionYearSchema', () => {
     expect(compositionYearSchema.safeParse('   ').success).toBe(true);
   });
 
-  it('allows valid boundary years (1900 and 3000)', () => {
-    expect(compositionYearSchema.safeParse('1900').success).toBe(true);
-    expect(compositionYearSchema.safeParse('3000').success).toBe(true);
+  it.each(['1900', '2024', '3000'])('allows valid year %s', (year) => {
+    expect(compositionYearSchema.safeParse(year).success).toBe(true);
   });
 
-  it('allows a year inside the range', () => {
-    expect(compositionYearSchema.safeParse('2024').success).toBe(true);
+  it.each(['1899', '3001'])('rejects year outside range %s', (year) => {
+    const result = compositionYearSchema.safeParse(year);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
   });
 
-  it('rejects years outside range (1899 and 3001)', () => {
-    const minResult = compositionYearSchema.safeParse('1899');
-    expect(minResult.success).toBe(false);
-    if (!minResult.success) {
-      expect(minResult.error.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
-    }
+  it.each(['123', 'abcd'])('rejects non-4-digit string %s', (year) => {
+    const result = compositionYearSchema.safeParse(year);
 
-    const maxResult = compositionYearSchema.safeParse('3001');
-    expect(maxResult.success).toBe(false);
-    if (!maxResult.success) {
-      expect(maxResult.error.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
-    }
-  });
-
-  it('rejects non-4-digit strings', () => {
-    const shortResult = compositionYearSchema.safeParse('123');
-    expect(shortResult.success).toBe(false);
-    if (!shortResult.success) {
-      expect(shortResult.error.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
-    }
-
-    const textResult = compositionYearSchema.safeParse('abcd');
-    expect(textResult.success).toBe(false);
-    if (!textResult.success) {
-      expect(textResult.error.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
-    }
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe(COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
   });
 });
