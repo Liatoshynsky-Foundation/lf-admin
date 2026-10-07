@@ -7,9 +7,7 @@ import {
   mapPageToSeoBlockValue,
   mapSeoBlockValueToUpdatePageSeoInput
 } from '~/shared/components/forms/seo-metadata-form/mappers/page.mapper';
-import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
-import { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 import { useGetPageSeoQuery, useUpdatePageSeoMutation } from '~/types/graphql/generated/graphql';
 
 export const usePageSeo = (slug: string) => {
@@ -22,14 +20,6 @@ export const usePageSeo = (slug: string) => {
   useEffect(() => {
     latestSeoRef.current = seoValue;
   }, [seoValue]);
-
-  const pageExtraFields = (_locale: 'uk' | 'en', value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => (
-    <SeoCanonicalUrlField
-      value={value.canonicalUrl ?? ''}
-      onChange={(val) => onChange({ ...value, canonicalUrl: val })}
-      onBlur={() => {}}
-    />
-  );
 
   useEffect(() => {
     if (data?.pageBlocks) {
@@ -52,5 +42,5 @@ export const usePageSeo = (slug: string) => {
     }
   };
 
-  return { seoValue, setSeoValue, loading, handleSave, pageExtraFields };
+  return { seoValue, setSeoValue, loading, handleSave };
 };

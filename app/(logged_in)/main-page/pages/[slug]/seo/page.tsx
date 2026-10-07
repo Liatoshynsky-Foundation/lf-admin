@@ -15,7 +15,7 @@ export default function PageSeoPage() {
   const { slug } = useParams();
   const router = useRouter();
 
-  const { seoValue, setSeoValue, handleSave, pageExtraFields, loading } = usePageSeo(slug as string);
+  const { seoValue, setSeoValue, handleSave, loading } = usePageSeo(slug as string);
 
   const handleCancel = () => {
     router.push(MAIN_PAGE_BASE_PATH);
@@ -44,7 +44,6 @@ export default function PageSeoPage() {
           value={seoValue}
           extraFieldsBeforeKeywords
           onChange={setSeoValue}
-          extraFields={pageExtraFields}
         />
       </Box>
     </Box>
