@@ -459,7 +459,7 @@ describe('createCloudStorage', () => {
         copyKey: 'new.txt',
         deleteKey: 'old.txt'
       },
-    ])('should move $namr', async ({ options, source, target, folder, copySource, copyKey, deleteKey }) => {
+    ])('should move $name', async ({ options, source, target, folder, copySource, copyKey, deleteKey }) => {
       const storage = createCloudStorage(options);
 
       mockSend.mockResolvedValue({});
