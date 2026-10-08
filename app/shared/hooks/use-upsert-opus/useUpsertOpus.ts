@@ -21,6 +21,7 @@ import {
   isCompositionNameRequiredError,
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import type {
   SeoBlockErrors,
@@ -28,11 +29,11 @@ import type {
 } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
 import { type SeoField, validateSeoField } from '~/shared/components/forms/seo-metadata-form/validateSeoField';
-import { useCreateOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
+import { useCreateOpus, useOpusById, useUpdateOpus, useUpsertOpusPreview } from '~/shared/hooks/use-opuses/useOpuses';
 import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
+import { OpusNumberKind, OpusStatus, UpdateOpusMutationVariables } from '~/types/graphql/generated/graphql';
 import type {
   FetchedOpusData,
   OpusCompositionData,
@@ -116,6 +117,89 @@ export type UseUpsertOpusResult = {
   isSaved: boolean;
 
   handleSave: (status: BaseContentStatuses) => Promise<string | undefined>;
+  handlePreview: () => Promise<void>;
+};
+
+const toOpusNumberKind = (value: string): OpusNumberKind => {
+  switch (value) {
+  case OpusNumberKind.Sineop:
+    return OpusNumberKind.Sineop;
+  case OpusNumberKind.Compositions:
+    return OpusNumberKind.Compositions;
+  case OpusNumberKind.Op:
+  default:
+    return OpusNumberKind.Op;
+  }
+};
+
+const toOpusStatus = (status: BaseContentStatuses): OpusStatus => {
+  if (status === BaseContentStatuses.Published) {
+    return OpusStatus.Published;
+  }
+
+  return OpusStatus.Draft;
+};
+
+const getOpusNumber = (value: string, fallback = 0): number => {
+  const number = Number(value.trim());
+
+  return Number.isFinite(number) ? number : fallback;
+};
+
+type BuildOpusInputArgs = {
+  details: OpusDetailsValue;
+  seoValue: SeoBlockValue;
+  crop: CropRect | null;
+  isEditing: boolean;
+  status?: BaseContentStatuses;
+};
+
+const buildOpusInput = ({
+  details,
+  seoValue,
+  crop,
+  isEditing,
+  status
+}: BuildOpusInputArgs): UpdateOpusMutationVariables['input'] => {
+  const { uk: ukMeta, en: enMeta } = seoValue.meta;
+  const opusName = details.name.trim();
+  const hasOgImage = Boolean(seoValue.ogImage);
+
+  return {
+    numberKind: toOpusNumberKind(details.numberKind),
+    number: getOpusNumber(details.number),
+    name: {
+      uk: opusName,
+      en: isEditing ? undefined : opusName
+    },
+    additionalText: details.additionalText.trim() || undefined,
+    creationYear: details.creationYear.trim(),
+    endYear: details.endYear.trim() || undefined,
+    datesNote: details.datesNote.trim() || undefined,
+    genre: {
+      uk: details.genre.trim() || undefined,
+      en: isEditing ? undefined : details.genre.trim() || undefined
+    },
+    compositions: details.compositions.map(toCompositionInput),
+    adminTitle: opusName,
+    title: { uk: ukMeta.title.trim(), en: enMeta.title.trim() },
+    description: { uk: ukMeta.description.trim(), en: enMeta.description.trim() },
+    keywords: { uk: ukMeta.keywords.trim(), en: enMeta.keywords.trim() },
+    allowIndexation: { uk: seoValue.allowIndexing.uk, en: seoValue.allowIndexing.en },
+    coverImage: {
+      src: seoValue.ogImage || opusName,
+      alt: {
+        uk: getAltText(ukMeta.altText?.uk, hasOgImage, opusName),
+        en: getAltText(enMeta.altText?.en, hasOgImage, opusName)
+      },
+      caption: { uk: opusName, en: opusName },
+      ...(crop && { crop })
+    },
+    ...(status && {
+      status: toOpusStatus(status),
+      publishedAt: status === BaseContentStatuses.Published ? new Date().toISOString() : undefined
+    })
+  };
 };
 
 export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusResult => {
@@ -124,6 +208,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusRes
 
   const [createOpus] = useCreateOpus();
   const [updateOpus] = useUpdateOpus();
+  const [upsertOpusPreview] = useUpsertOpusPreview();
 
   const [details, setDetails] = useState<OpusDetailsValue>(initialOpusDetails);
   const [detailsErrors, setDetailsErrors] = useState<OpusDetailsErrors>({
@@ -374,47 +459,18 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusRes
 
     clearCompositionErrors();
 
-    const opusName = currentDetails.name.trim();
-    const hasOgImage = Boolean(currentSeo.ogImage);
-
     if (hasSeoErrors) {
       toast.error(COMPOSITION_REQUIRED_FIELDS_ERROR);
       return undefined;
     }
 
-    const input = {
-      numberKind: currentDetails.numberKind as unknown as OpusNumberKind,
-      number: Number(currentDetails.number.trim()),
-      name: {
-        uk: opusName,
-        en: isEditing ? undefined : opusName
-      },
-      additionalText: currentDetails.additionalText.trim() || undefined,
-      creationYear: currentDetails.creationYear.trim(),
-      endYear: currentDetails.endYear.trim() || undefined,
-      datesNote: currentDetails.datesNote.trim() || undefined,
-      genre: {
-        uk: currentDetails.genre.trim() || undefined,
-        en: isEditing ? undefined : currentDetails.genre.trim() || undefined
-      },
-      compositions: currentDetails.compositions.map(toCompositionInput),
-      adminTitle: opusName,
-      title: { uk: ukMeta.title.trim(), en: enMeta.title.trim() },
-      description: { uk: ukMeta.description.trim(), en: enMeta.description.trim() },
-      keywords: { uk: ukMeta.keywords.trim(), en: enMeta.keywords.trim() },
-      allowIndexation: { uk: currentSeo.allowIndexing.uk, en: currentSeo.allowIndexing.en },
-      coverImage: {
-        src: currentSeo.ogImage || opusName,
-        alt: {
-          uk: getAltText(ukMeta.altText?.uk, hasOgImage, opusName),
-          en: getAltText(enMeta.altText?.en, hasOgImage, opusName)
-        },
-        caption: { uk: opusName, en: opusName },
-        ...(currentCrop && { crop: currentCrop })
-      },
-      status: status as unknown as OpusStatus,
-      publishedAt: status === BaseContentStatuses.Published ? new Date().toISOString() : undefined
-    };
+    const input = buildOpusInput({
+      details: currentDetails,
+      seoValue: currentSeo,
+      crop: currentCrop,
+      isEditing,
+      status
+    });
 
     try {
       let savedId: string | undefined;
@@ -442,6 +498,38 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusRes
     }
   };
 
+  const handlePreview = async (): Promise<void> => {
+    if (!isEditing || !id) {
+      return;
+    }
+
+    const { details: currentDetails, seoValue: currentSeo, crop: currentCrop } = latestDataRef.current;
+    const input = buildOpusInput({
+      details: currentDetails,
+      seoValue: currentSeo,
+      crop: currentCrop,
+      isEditing
+    });
+
+    try {
+      const result = await upsertOpusPreview({ sourceId: id, input });
+      const previewOpus = result.data?.upsertOpusPreview;
+
+      if (!previewOpus?.id || !previewOpus.slug) {
+        toast.error('Не вдалося підготувати передогляд');
+        return;
+      }
+
+      await fetchPreview({
+        slug: `artistry/${previewOpus.slug}`,
+        lang: 'uk',
+        draftId: previewOpus.id
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Не вдалося підготувати передогляд');
+    }
+  };
+
   return {
     isEditing,
     isLoading: isEditing && opusQuery.loading,
@@ -456,6 +544,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusRes
     crop,
     setCrop: changeCrop,
     isSaved,
-    handleSave
+    handleSave,
+    handlePreview
   };
 };

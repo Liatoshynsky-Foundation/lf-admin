@@ -69,6 +69,7 @@ const createMockData = (
   setCrop: jest.fn(),
   isSaved: false,
   handleSave: jest.fn(),
+  handlePreview: jest.fn(),
   ...overrides
 });
 
@@ -95,6 +96,15 @@ describe('OpusView Component', () => {
     render(<OpusView data={createMockData({ isEditing: true })} mode="edit" />);
 
     expect(screen.getByText('Редагування опусу')).toBeInTheDocument();
+  });
+
+  it('triggers preview from the edit opus header', () => {
+    const handlePreview = jest.fn();
+    render(<OpusView data={createMockData({ isEditing: true, handlePreview })} mode="edit" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Передогляд' }));
+
+    expect(handlePreview).toHaveBeenCalledTimes(1);
   });
 
   it('saves and redirects to the advanced content editor on successful create', async () => {

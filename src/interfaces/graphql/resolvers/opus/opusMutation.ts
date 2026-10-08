@@ -28,6 +28,10 @@ import { CompositionInput, ICompositionRepository } from '~/domain/repositories/
 import { CreateOpusInput, IOpusRepository, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import { withTransaction } from '~/src/infrastructure/repositories/helpers';
 import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
+import {
+  OPUS_PREVIEW_SLUG,
+  truncateForPreviewSuffix
+} from '~/src/shared/utils/opusPreview/opusPreview';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { OpusGalleryItemInput, OpusStatus, UpdateOpusStatusPayload } from '~/types/graphql/generated/graphql';
 
@@ -82,7 +86,9 @@ export type UpdateOpusGQLInput = Omit<CreateOpusGQLInput, 'title' | 'description
 
 type CreateOpusArgs = { input: CreateOpusGQLInput };
 type UpdateOpusArgs = { id: string; input: UpdateOpusGQLInput };
+type UpsertOpusPreviewArgs = { sourceId: string; input: UpdateOpusGQLInput };
 type UnlinkCompositionArgs = { opusId: string; compositionId: string };
+type PreviewOpusInput = CreateOpusInput & UpdateOpusInput;
 
 const assertAuthenticated = (context: GraphQLContext): void => {
   if (!context.admin) {
@@ -423,6 +429,92 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
   return Object.fromEntries(Object.entries(candidate).filter(([, value]) => value !== undefined)) as UpdateOpusInput;
 };
 
+const nonEmptyLocalizedString = (value?: LocalizedString | null, fallback = ''): LocalizedString => ({
+  uk: value?.uk?.trim() || fallback,
+  en: value?.en?.trim() || fallback
+});
+
+const previewLocalizedString = (
+  value?: LocalizedString | null,
+  existing?: LocalizedString | null,
+  fallback = OPUS_PREVIEW_SLUG
+): LocalizedString => {
+  const uk = value?.uk?.trim() || existing?.uk?.trim() || fallback;
+  const en = value?.en?.trim() || existing?.en?.trim() || uk;
+
+  return { uk, en };
+};
+
+const previewNumber = (value: number | undefined, fallback: number | undefined): number =>
+  Number.isFinite(value) ? Number(value) : fallback ?? 0;
+
+const sanitizePreviewGallery = (gallery?: OpusGalleryItemInput[] | null): OpusGalleryItem[] =>
+  (gallery ?? [])
+    .filter((item) => Boolean(item.src?.trim()))
+    .map((item) => ({
+      ...item,
+      id: item.id ?? '',
+      src: item.src.trim()
+    }));
+
+const sanitizePreviewPerformances = (performances?: OpusPerformance[] | null): OpusPerformance[] =>
+  (performances ?? [])
+    .filter((performance) =>
+      Boolean(
+        performance.videoUrl?.trim() ||
+        performance.title?.uk?.trim() ||
+        performance.title?.en?.trim()
+      )
+    )
+    .map((performance) => ({
+      ...performance,
+      id: performance.id ?? '',
+      title: nonEmptyLocalizedString(performance.title),
+      videoUrl: performance.videoUrl?.trim() || ''
+    }));
+
+const getPreviewCompositionIds = (inputCompositions?: GQLComposition[]): string[] =>
+  (inputCompositions ?? [])
+    .map((composition) => composition.id)
+    .filter((id): id is string => Boolean(id));
+
+const buildPreviewOpusData = (
+  input: UpdateOpusGQLInput,
+  sourceOpus: Opus
+): PreviewOpusInput => {
+  const previewCompositionIds = getPreviewCompositionIds(input.compositions);
+  const previewAdditionalText =
+    input.additionalText === undefined ? sourceOpus.additionalText : formattedAdditionalText(input.additionalText);
+
+  return {
+    number: previewNumber(input.number, sourceOpus.number),
+    numberKind: input.numberKind || sourceOpus.numberKind || 'op',
+    title: input.title ?? sourceOpus.title,
+    name: previewLocalizedString(input.name, sourceOpus.name),
+    description: input.description ?? sourceOpus.description,
+    additionalText: truncateForPreviewSuffix(previewAdditionalText),
+    creationYear: input.creationYear?.trim() || sourceOpus.creationYear || '',
+    endYear: input.endYear ?? sourceOpus.endYear ?? null,
+    datesNote: input.datesNote ?? sourceOpus.datesNote ?? null,
+    genre: input.genre ?? sourceOpus.genre ?? null,
+    adminTitle: OPUS_PREVIEW_SLUG,
+    slug: OPUS_PREVIEW_SLUG,
+    introDescription: input.introDescription ?? sourceOpus.introDescription ?? null,
+    parts: input.parts ?? sourceOpus.parts ?? null,
+    keywords: input.keywords ?? sourceOpus.keywords ?? null,
+    allowIndexation: { uk: false, en: false },
+    coverImage: input.coverImage ?? sourceOpus.coverImage ?? null,
+    status: OpusStatus.Draft,
+    publishedAt: null,
+    meta: { views: 0 },
+    compositions: previewCompositionIds.length > 0 ? previewCompositionIds : sourceOpus.compositions || [],
+    gallery: sanitizePreviewGallery(input.gallery),
+    performancesTitle: input.performancesTitle ?? sourceOpus.performancesTitle ?? null,
+    performances: sanitizePreviewPerformances(input.performances),
+    blocksOrder: input.blocksOrder ?? sourceOpus.blocksOrder ?? null
+  };
+};
+
 export const OpusMutation = {
   createOpus: async (_: unknown, { input }: CreateOpusArgs, context: GraphQLContext): Promise<OpusFull> => {
     assertAuthenticated(context);
@@ -604,6 +696,43 @@ export const OpusMutation = {
     if (input.coverImage?.crop) {
       await syncImagesCrops(opus.id, input.coverImage, { isCoverImage: true });
     }
+    return { ...opus, compositions };
+  },
+
+  upsertOpusPreview: async (
+    _: unknown,
+    { sourceId, input }: UpsertOpusPreviewArgs,
+    context: GraphQLContext
+  ): Promise<OpusFull> => {
+    assertAuthenticated(context);
+
+    const {
+      opusRepository: repo,
+      compositionsRepository: compositionsRepo
+    } = context.requestContainer.cradle;
+
+    const sourceOpus = await findExistingOpus(repo, sourceId);
+    const previewOpus = await repo.findBySlug(OPUS_PREVIEW_SLUG);
+    const previewData = buildPreviewOpusData(input, sourceOpus);
+
+    await ensureUniqueOpus(
+      repo,
+      previewData.number,
+      previewData.additionalText,
+      previewData.numberKind,
+      previewOpus?.id
+    );
+
+    const opus = previewOpus
+      ? await updateAndVerifyOpus(repo, previewOpus.id, previewData)
+      : await repo.create(previewData);
+
+    const compositionIds = (opus.compositions ?? []).map((composition) => composition.toString());
+    const compositions = orderCompositionsByIds(
+      compositionIds,
+      await compositionsRepo.findByIds(compositionIds)
+    );
+
     return { ...opus, compositions };
   },
 

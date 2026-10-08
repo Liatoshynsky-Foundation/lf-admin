@@ -12,17 +12,30 @@ import {
   OPUS_VALIDATION_MESSAGES,
   REQUIRED_FIELD_ERROR
 } from '~/constants/opus';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import { useDeleteOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
+import {
+  useDeleteOpus,
+  useOpusById,
+  useUpdateOpus,
+  useUpsertOpusPreview
+} from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
-import type { DeleteOpusMutationVariables, UpdateOpusMutationVariables } from '~/types/graphql/generated/graphql';
+import type {
+  DeleteOpusMutationVariables,
+  UpdateOpusMutationVariables,
+  UpsertOpusPreviewMutationVariables
+} from '~/types/graphql/generated/graphql';
 import { OpusCompositionData } from '~/types/opus';
 
 const mockNavigate = jest.fn();
 const mockUpdateOpus = jest.fn();
 const mockDeleteOpus = jest.fn();
+const mockUpsertOpusPreview = jest.fn();
 const updateOpusForTest = (variables: UpdateOpusMutationVariables) => mockUpdateOpus({ variables });
 const deleteOpusForTest = (variables: DeleteOpusMutationVariables) => mockDeleteOpus({ variables });
+const upsertOpusPreviewForTest = (variables: UpsertOpusPreviewMutationVariables) =>
+  mockUpsertOpusPreview({ variables });
 
 jest.mock('next/navigation', () => ({
   useSearchParams: jest.fn(() => ({
@@ -33,6 +46,10 @@ jest.mock('next/navigation', () => ({
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
   error: jest.fn()
+}));
+
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: jest.fn()
 }));
 
 jest.mock('~/shared/hooks/use-navigation-guard/useNavigationGuard', () => ({
@@ -46,6 +63,7 @@ jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useOpusById: jest.fn(),
   useUpdateOpus: jest.fn(),
+  useUpsertOpusPreview: jest.fn(),
   useDeleteOpus: jest.fn()
 }));
 
@@ -100,6 +118,7 @@ describe('useGroupContent Hook', () => {
     (useNavigationGuard as jest.Mock).mockReturnValue({ navigate: mockNavigate });
     (useOpusById as jest.Mock).mockReturnValue({ data: undefined, loading: false, error: undefined });
     (useUpdateOpus as jest.Mock).mockReturnValue([updateOpusForTest, { loading: false }]);
+    (useUpsertOpusPreview as jest.Mock).mockReturnValue([upsertOpusPreviewForTest, { loading: false }]);
     (useDeleteOpus as jest.Mock).mockReturnValue([deleteOpusForTest, { loading: false }]);
   });
 
@@ -688,6 +707,35 @@ describe('useGroupContent Hook', () => {
       expect(mockUpdateOpus).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith('Групу опубліковано');
       expect(result.current.isDirty).toBe(false);
+    });
+
+    it('should upsert system preview and open client preview without publishing the source opus', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({ data: { opusById: mockFetchedOpus }, loading: false });
+      mockUpsertOpusPreview.mockResolvedValue({
+        data: { upsertOpusPreview: { id: 'preview-id', slug: 'sys-preview-artistry' } }
+      });
+      (fetchPreview as jest.Mock).mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      await act(async () => {
+        await result.current.handlePreviewClick();
+      });
+
+      const previewVariables = mockUpsertOpusPreview.mock.calls[0][0].variables;
+      expect(previewVariables.sourceId).toBe('test-id');
+      expect(previewVariables.input).not.toHaveProperty('status');
+      expect(previewVariables.input.name).toEqual({ uk: 'Test Opus UK', en: 'Test Opus EN' });
+      expect(fetchPreview).toHaveBeenCalledWith({
+        slug: 'artistry/sys-preview-artistry',
+        lang: 'uk',
+        draftId: 'preview-id'
+      });
+      expect(mockUpdateOpus).not.toHaveBeenCalled();
     });
 
     it('should handle menu option PUBLISH correctly', async () => {
