@@ -77,7 +77,8 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
     onDeleted,
     onCaseChanged,
     onPublish,
-    onUnpublish
+    onUnpublish,
+    caseToEdit
   }: FundsTableProps) => (
     <div data-testid="funds-table">
       <div data-testid="funds-table-has-active-search">{JSON.stringify(hasActiveSearch)}</div>
@@ -93,6 +94,7 @@ jest.mock('./archive-funds-table/ArchiveFundsTable', () => ({
         ))}
       </div>
       <button onClick={() => onCaseChanged?.()}>refresh cases</button>
+      {caseToEdit && <p>editing {caseToEdit.name}</p>}
       {cases.length > 0 && (
         <ul data-testid="cases-list">
           {cases.map((item) => (
@@ -264,16 +266,18 @@ jest.mock('~/shared/components/search-status-toolbar/SearchStatusToolbar', () =>
 }));
 
 const mockRouter = { replace: jest.fn() };
+const mockUseSearchParams = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
   usePathname: () => '/archive',
-  useSearchParams: () => new URLSearchParams()
+  useSearchParams: () => mockUseSearchParams()
 }));
 
 describe('ArchivePageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseArchiveFiltering.mockReturnValue(defaultMockReturnValue);
+    mockUseSearchParams.mockReturnValue(new URLSearchParams());
     mockUsePaginatedFunds.mockReturnValue({
       funds: [] as MappedFund[],
       totalPages: 0,
@@ -565,6 +569,24 @@ describe('ArchivePageContent', () => {
       expect(mockUpdateFund).not.toHaveBeenCalled();
     });
 
+    it('should show an error toast and keep the fund hidden when publishing fails', async () => {
+      const user = userEvent.setup();
+      mockUsePaginatedFunds.mockReturnValue({
+        funds: [mockFund({ status: 'hidden', cases: 2 })],
+        totalPages: 1,
+        loading: false,
+        error: undefined
+      });
+      mockUpdateFund.mockRejectedValueOnce(new Error('boom'));
+
+      render(<ArchivePageContent activeTab="all" />);
+      await user.click(screen.getByText('publish 1'));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith(FundErrors.FAILED_TO_PUBLISH));
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(screen.getByText('Fund - 1 - hidden')).toBeInTheDocument();
+    });
+
     it('should unpublish a published fund', async () => {
       const user = userEvent.setup();
       mockUsePaginatedFunds.mockReturnValue({
@@ -735,6 +757,55 @@ describe('ArchivePageContent', () => {
       render(<ArchivePageContent activeTab="cases" />);
 
       expect(screen.getByTestId('empty-state-title')).toHaveTextContent(CASES_EMPTY_STATE_NO_RESULTS_TITLE);
+    });
+  });
+
+  describe('shared case link (caseId query parameter)', () => {
+    it('should open the shared case for editing and remove caseId from the URL', () => {
+      mockUseSearchParams.mockReturnValue(new URLSearchParams('caseId=2'));
+      mockUseAllCases.mockReturnValue({
+        cases: [
+          mockCase({ id: '1', caseNumber: 1, name: 'Перша справа' }),
+          mockCase({ id: '2', caseNumber: 2, name: 'Друга справа' })
+        ],
+        loading: false,
+        error: undefined
+      });
+
+      render(<ArchivePageContent activeTab="cases" />);
+
+      expect(screen.getByText('editing Друга справа')).toBeInTheDocument();
+      expect(mockRouter.replace).toHaveBeenCalledWith('/archive', { scroll: false });
+    });
+
+    it('should keep other query parameters when removing caseId', () => {
+      mockUseSearchParams.mockReturnValue(new URLSearchParams('caseId=1&tab=cases'));
+      mockUseAllCases.mockReturnValue({ cases: [mockCase()], loading: false, error: undefined });
+
+      render(<ArchivePageContent activeTab="cases" />);
+
+      expect(mockRouter.replace).toHaveBeenCalledWith('/archive?tab=cases', { scroll: false });
+    });
+
+    it('should show an error toast and remove caseId when the shared case is not found', () => {
+      mockUseSearchParams.mockReturnValue(new URLSearchParams('caseId=missing'));
+      mockUseAllCases.mockReturnValue({ cases: [mockCase()], loading: false, error: undefined });
+
+      render(<ArchivePageContent activeTab="cases" />);
+
+      expect(toast.error).toHaveBeenCalledWith('Справу не знайдено');
+      expect(screen.queryByText(/^editing/)).not.toBeInTheDocument();
+      expect(mockRouter.replace).toHaveBeenCalledWith('/archive', { scroll: false });
+    });
+
+    it('should wait for the cases to load before resolving the shared case', () => {
+      mockUseSearchParams.mockReturnValue(new URLSearchParams('caseId=1'));
+      mockUseAllCases.mockReturnValue({ cases: [], loading: true, error: undefined });
+
+      render(<ArchivePageContent activeTab="cases" />);
+
+      expect(toast.error).not.toHaveBeenCalled();
+      expect(mockRouter.replace).not.toHaveBeenCalled();
     });
   });
 
