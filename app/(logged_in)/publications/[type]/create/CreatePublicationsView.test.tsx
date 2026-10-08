@@ -121,8 +121,8 @@ jest.mock('~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDa
   )
 }));
 
-jest.mock('~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField', () => ({
-  SeoCanonicalUrlField: ({
+jest.mock('~/shared/components/forms/seo-metadata-form/seo-sourceurl-field/SeoSourceUrlField', () => ({
+  SeoSourceUrlField: ({
     value,
     onChange,
     onBlur
@@ -131,9 +131,9 @@ jest.mock('~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/Se
     onChange: (val: string) => void;
     onBlur?: () => void;
   }) => (
-    <div data-testid="mock-seo-canonical-url-field">
+    <div data-testid="mock-seo-source-url-field">
       <input
-        data-testid="canonical-url-input"
+        data-testid="source-url-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
@@ -217,8 +217,8 @@ const createMockData = (
   isEditing: false,
   isLoading: false,
   isValidType: true,
-  canonicalUrlError: '',
-  setCanonicalUrlError: jest.fn(),
+  sourceUrlError: '',
+  setSourceUrlError: jest.fn(),
   publicationType: 'news' as PublicationsItemType,
   pageTitle: 'Створення Новини',
   adminTitle: '',
@@ -268,7 +268,7 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
 
       expect(screen.queryByTestId('mock-seo-datetime-fields')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('mock-seo-canonical-url-field')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('mock-seo-source-url-field')).not.toBeInTheDocument();
     });
 
     it('should render correctly for Events (includes DateTime fields)', () => {
@@ -279,12 +279,12 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.getByTestId('mock-seo-datetime-fields')).toBeInTheDocument();
     });
 
-    it('should render correctly for Media (includes Canonical URL field)', () => {
+    it('should render correctly for Media (includes Source URL field)', () => {
       const mockData = createMockData({ publicationType: 'media' });
       render(<CreatePublicationsView data={mockData} />);
 
       expect(screen.getByLabelText('Нотатки адміністратора')).toBeInTheDocument();
-      expect(screen.getByTestId('mock-seo-canonical-url-field')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-seo-source-url-field')).toBeInTheDocument();
     });
   });
 
@@ -411,8 +411,8 @@ describe('CreatePublicationsView Component', () => {
     });
   });
 
-  describe('SEO Canonical URL Field (Line 92)', () => {
-    it('should call setSeoValue when Canonical URL input changes', () => {
+  describe('SEO Source URL Field (Line 92)', () => {
+    it('should call setSeoValue when Source URL input changes', () => {
       const mockSetSeoValue = jest.fn();
       const mockData = createMockData({
         publicationType: 'media',
@@ -420,7 +420,7 @@ describe('CreatePublicationsView Component', () => {
           ...initialSeoValue,
           meta: {
             ...initialSeoValue.meta,
-            uk: { ...initialSeoValue.meta.uk, canonicalUrl: 'http://old.url' }
+            uk: { ...initialSeoValue.meta.uk, sourceUrl: 'http://old.url' }
           }
         },
         setSeoValue: mockSetSeoValue
@@ -428,7 +428,7 @@ describe('CreatePublicationsView Component', () => {
 
       render(<CreatePublicationsView data={mockData} />);
 
-      const input = screen.getByTestId('canonical-url-input');
+      const input = screen.getByTestId('source-url-input');
       fireEvent.change(input, { target: { value: 'http://new.url' } });
       fireEvent.blur(input);
 
@@ -437,7 +437,7 @@ describe('CreatePublicationsView Component', () => {
         expect.objectContaining({
           meta: expect.objectContaining({
             uk: expect.objectContaining({
-              canonicalUrl: 'http://new.url'
+              sourceUrl: 'http://new.url'
             })
           })
         })

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { styles } from '../SeoMetadataForm.styles';
 import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
 
-interface SeoCanonicalUrlFieldProps {
+interface SeoSourceUrlFieldProps {
   readonly value: string;
   readonly onChange: (val: string) => void;
   readonly onBlur?: () => void;
@@ -14,20 +14,20 @@ interface SeoCanonicalUrlFieldProps {
   readonly forceShowErrors?: boolean;
 }
 
-const validateCanonicalUrl = (val: string): string => {
+const validateSourceUrl = (val: string): string => {
   if (!val.trim()) return 'Обовʼязкове поле';
 
   return isValidHttpUrl(val) ? '' : 'Некоректний URL';
 };
 
-export function SeoCanonicalUrlField({ value, externalError, onChange, onBlur, label, forceShowErrors = false }: SeoCanonicalUrlFieldProps) {
+export function SeoSourceUrlField({ value, externalError, onChange, onBlur, label, forceShowErrors = false }: SeoSourceUrlFieldProps) {
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (forceShowErrors) setTouched(true);
   }, [forceShowErrors]);
 
-  const error = touched ? validateCanonicalUrl(value) : '';
+  const error = touched ? validateSourceUrl(value) : '';
 
   const handleBlur = () => {
     setTouched(true);
@@ -41,7 +41,7 @@ export function SeoCanonicalUrlField({ value, externalError, onChange, onBlur, l
 
   return (
     <TextField
-      label={label || 'Canonical URL'}
+      label={label || 'Source URL'}
       value={value}
       onChange={(e) => handleChange(e.target.value)}
       onBlur={handleBlur}

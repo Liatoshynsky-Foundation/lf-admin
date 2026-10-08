@@ -26,7 +26,6 @@ const pageSeoData = {
   title: { uk: 'Про нас', en: 'About us' },
   description: { uk: 'Опис', en: 'Description' },
   keywords: { uk: 'ключові слова', en: 'keywords' },
-  canonicalUrl: { uk: 'https://example.com/uk', en: 'https://example.com/en' },
   coverImage: { src: '/cover.png', alt: { uk: 'Зображення', en: 'Image' } },
   allowIndexation: { uk: false, en: true },
   updatedAt: '2024-01-01T00:00:00.000Z'
@@ -77,13 +76,11 @@ describe('usePageSeo', () => {
           title: 'UK Title',
           description: 'UK Desc',
           keywords: 'uk keywords',
-          canonicalUrl: 'https://example.com/uk'
         },
         en: {
           title: 'EN Title',
           description: 'EN Desc',
           keywords: 'en keywords',
-          canonicalUrl: 'https://example.com/en'
         }
       },
       ogImage: '/cover.png',
@@ -107,7 +104,6 @@ describe('usePageSeo', () => {
           title: { uk: 'UK Title', en: 'EN Title' },
           description: { uk: 'UK Desc', en: 'EN Desc' },
           keywords: { uk: 'uk keywords', en: 'en keywords' },
-          canonicalUrl: { uk: 'https://example.com/uk', en: 'https://example.com/en' },
           allowIndexation: { uk: false, en: true }
         }
       },

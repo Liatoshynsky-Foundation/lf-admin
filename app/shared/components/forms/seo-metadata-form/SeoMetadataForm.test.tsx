@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { SeoCanonicalUrlField } from './seo-canonicalurl-field/SeoCanonicalUrlField';
+import { SeoSourceUrlField } from './seo-sourceurl-field/SeoSourceUrlField';
 import SeoMetadataForm, { LocalizedMeta, SeoMetadataFormProps } from './SeoMetadataForm';
 import { seoFormErrors } from '~/constants/errors';
 import {
@@ -91,23 +91,23 @@ jest.mock('./seo-base-fields/SeoBaseFields', () => {
     }) => (
       <div data-testid="mock-seo-base-fields">
         <button
-          data-testid="trigger-canonical-valid"
+          data-testid="trigger-source-valid"
           onClick={() => {
-            onBlur('canonicalUrl');
-            onFieldChange('canonicalUrl', 'https://example.com');
+            onBlur('sourceUrl');
+            onFieldChange('sourceUrl', 'https://example.com');
           }}
         >
-          Valid Canonical
+          Valid Source
         </button>
 
         <button
-          data-testid="trigger-canonical-invalid"
+          data-testid="trigger-source-invalid"
           onClick={() => {
-            onBlur('canonicalUrl');
-            onFieldChange('canonicalUrl', 'invalid-url');
+            onBlur('sourceUrl');
+            onFieldChange('sourceUrl', 'invalid-url');
           }}
         >
-          Invalid Canonical
+          Invalid Source
         </button>
 
         <button
@@ -159,7 +159,7 @@ const defaultProps: SeoMetadataFormProps = {
     title: '',
     description: '',
     keywords: '',
-    canonicalUrl: ''
+    sourceUrl: ''
   },
   onChange: jest.fn(),
   locale: 'uk',
@@ -279,21 +279,21 @@ describe('SeoMetadataForm', () => {
     await waitFor(() => expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument());
   });
 
-  it('validates canonicalUrl: empty, valid, invalid', async () => {
-    const CanonicalWrapper = () => {
+  it('validates sourceUrl: empty, valid, invalid', async () => {
+    const SourceWrapper = () => {
       const [value, setValue] = React.useState(defaultProps.value);
-      const canonicalExtraFields: SeoMetadataFormProps['extraFields'] = (val, onChange) => (
-        <SeoCanonicalUrlField
-          value={val.canonicalUrl || ''}
-          onChange={(newVal) => onChange({ ...val, canonicalUrl: newVal })}
+      const sourceExtraFields: SeoMetadataFormProps['extraFields'] = (val, onChange) => (
+        <SeoSourceUrlField
+          value={val.sourceUrl || ''}
+          onChange={(newVal) => onChange({ ...val, sourceUrl: newVal })}
         />
       );
 
-      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} extraFields={canonicalExtraFields} />;
+      return <SeoMetadataForm {...defaultProps} value={value} onChange={setValue} extraFields={sourceExtraFields} />;
     };
 
-    render(<CanonicalWrapper />);
-    const input = screen.getByLabelText(/canonical url/i);
+    render(<SourceWrapper />);
+    const input = screen.getByLabelText(/source url/i);
 
     await user.type(input, 'https://test.com');
     fireEvent.blur(input);
@@ -351,9 +351,9 @@ describe('SeoMetadataForm', () => {
     expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();
   });
 
-  it('does not render canonicalUrl without extraFields', () => {
+  it('does not render sourceUrl without extraFields', () => {
     render(<SeoMetadataForm {...defaultProps} />);
-    expect(screen.queryByLabelText(/canonical url/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/source url/i)).not.toBeInTheDocument();
   });
 
   it('renders without labels', () => {
@@ -696,11 +696,11 @@ describe('SeoMetadataForm', () => {
     await waitFor(() => expect(screen.queryByText(/обовʼязкове поле/i)).not.toBeInTheDocument());
   });
 
-  it('covers valid canonicalUrl and default case branches in validateField', async () => {
+  it('covers valid sourceUrl and default case branches in validateField', async () => {
     renderWithState();
 
-    await user.click(screen.getByTestId('trigger-canonical-valid'));
-    await user.click(screen.getByTestId('trigger-canonical-invalid'));
+    await user.click(screen.getByTestId('trigger-source-valid'));
+    await user.click(screen.getByTestId('trigger-source-invalid'));
     await user.click(screen.getByTestId('trigger-default-case'));
 
     expect(screen.getByTestId('mock-seo-base-fields')).toBeInTheDocument();

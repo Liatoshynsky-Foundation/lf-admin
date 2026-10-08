@@ -107,7 +107,7 @@ export type PublicationFormState = {
 export const usePublicationForm = () => {
   const [adminTitle, setAdminTitle] = useState('');
   const [adminTitleError, setAdminTitleError] = useState('');
-  const [canonicalUrlError, setCanonicalUrlError] = useState('');
+  const [sourceUrlError, setSourceUrlError] = useState('');
   const [publishDate, setPublishDate] = useState<Dayjs | null>(null);
   const [seoValue, setSeoValue] = useState<SeoBlockValue>(initialSeoValue);
   const [crop, setCrop] = useState<ImageCropData>(null);
@@ -197,8 +197,8 @@ export const usePublicationForm = () => {
     setAdminTitle: changeAdminTitle,
     adminTitleError,
     setAdminTitleError,
-    canonicalUrlError,
-    setCanonicalUrlError,
+    sourceUrlError,
+    setSourceUrlError,
     publishDate,
     setPublishDate: changePublishDate,
     seoValue,

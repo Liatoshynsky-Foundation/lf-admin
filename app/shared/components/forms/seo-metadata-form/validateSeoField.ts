@@ -5,7 +5,7 @@ import {
   META_TITLE_LENGTH
 } from '~/constants/publications';
 
-export type SeoField = 'title' | 'description' | 'keywords' | 'canonicalUrl' | 'altText';
+export type SeoField = 'title' | 'description' | 'keywords' | 'sourceUrl' | 'altText';
 
 export type SeoFieldValidationError =
   | ''
@@ -19,7 +19,7 @@ export type SeoFieldValidationError =
   | 'keywords';
 
 type LengthLimit = { min: number; max: number };
-type SeoLengthField = Exclude<SeoField, 'canonicalUrl'>;
+type SeoLengthField = Exclude<SeoField, 'sourceUrl'>;
 
 const lengthLimits: Record<SeoLengthField, LengthLimit> = {
   title: META_TITLE_LENGTH,
@@ -42,7 +42,7 @@ const validateLength = (field: SeoLengthField, value: string): SeoFieldValidatio
   return '';
 };
 
-const validateCanonicalUrl = (value: string): SeoFieldValidationError => {
+const validateSourceUrl = (value: string): SeoFieldValidationError => {
   if (!value) return '';
 
   try {
@@ -74,7 +74,7 @@ export const validateSeoField = (
   value: string,
   { required = false }: SeoFieldValidationOptions = {}
 ): SeoFieldValidationError => {
-  if (field === 'canonicalUrl') return validateCanonicalUrl(value);
+  if (field === 'sourceUrl') return validateSourceUrl(value);
 
   const trimmed = value.trim();
   if (!trimmed) return validateEmptyValue(field, required);

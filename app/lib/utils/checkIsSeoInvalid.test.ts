@@ -5,22 +5,22 @@ describe('checkIsSeoInvalid', () => {
   const validUkMeta = {
     title: 'UK Title',
     description: 'UK Description',
-    canonicalUrl: 'https://site.ua',
+    sourceUrl: 'https://site.ua',
     keywords: ''
   };
 
   const validEnMeta = {
     title: 'EN Title',
     description: 'EN Description',
-    canonicalUrl: 'https://site.com',
+    sourceUrl: 'https://site.com',
     keywords: ''
   };
   const validTicketUrl = { uk: 'https://ticket.ua', en: 'https://ticket.com' };
 
   describe('it fails (return true)', () => {
-    it('if type is "media" and uk canonicalUrl is invalid', () => {
+    it('if type is "media" and uk sourceUrl is invalid', () => {
       const result = checkIsSeoInvalid(
-        { ...validUkMeta, canonicalUrl: 'not-a-url' },
+        { ...validUkMeta, sourceUrl: 'not-a-url' },
         validEnMeta,
         'media',
         validTicketUrl
@@ -28,10 +28,10 @@ describe('checkIsSeoInvalid', () => {
       expect(result).toBe(true);
     });
 
-    it('if type is "media" and en canonicalUrl is invalid', () => {
+    it('if type is "media" and en sourceUrl is invalid', () => {
       const result = checkIsSeoInvalid(
         validUkMeta,
-        { ...validEnMeta, canonicalUrl: 'not-a-url' },
+        { ...validEnMeta, sourceUrl: 'not-a-url' },
         'media',
         validTicketUrl
       );
@@ -43,10 +43,10 @@ describe('checkIsSeoInvalid', () => {
       expect(result).toBe(true);
     });
 
-    it.each(['uk', 'en'])('if type is "media" and %s canonicalUrl has unsupported protocol', (locale) => {
+    it.each(['uk', 'en'])('if type is "media" and %s sourceUrl has unsupported protocol', (locale) => {
       const result = checkIsSeoInvalid(
-        locale === 'uk' ? { ...validUkMeta, canonicalUrl: 'test:' } : validUkMeta,
-        locale === 'en' ? { ...validEnMeta, canonicalUrl: 'test:' } : validEnMeta,
+        locale === 'uk' ? { ...validUkMeta, sourceUrl: 'test:' } : validUkMeta,
+        locale === 'en' ? { ...validEnMeta, sourceUrl: 'test:' } : validEnMeta,
         'media',
         validTicketUrl
       );
@@ -86,7 +86,7 @@ describe('checkIsSeoInvalid', () => {
   });
 
   describe('edge cases', () => {
-    describe('canonicalUrl edge cases', () => {
+    describe('sourceUrl edge cases', () => {
       it.each([
         ['media', 'uk', undefined],
         ['media', 'uk', ''],
@@ -113,11 +113,11 @@ describe('checkIsSeoInvalid', () => {
         ['events', 'en', '   '],
         ['events', 'en', 'not-a-url']
       ] as const)(
-        'should return expected validity status for type "%s" when %s canonicalUrl is %p',
+        'should return expected validity status for type "%s" when %s sourceUrl is %p',
         (type, locale, value) => {
           const result = checkIsSeoInvalid(
-            locale === 'uk' ? { ...validUkMeta, canonicalUrl: value } : validUkMeta,
-            locale === 'en' ? { ...validEnMeta, canonicalUrl: value } : validEnMeta,
+            locale === 'uk' ? { ...validUkMeta, sourceUrl: value } : validUkMeta,
+            locale === 'en' ? { ...validEnMeta, sourceUrl: value } : validEnMeta,
             type as PublicationsItemType,
             validTicketUrl
           );

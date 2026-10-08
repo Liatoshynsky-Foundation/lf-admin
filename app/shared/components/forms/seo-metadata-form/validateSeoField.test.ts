@@ -11,7 +11,7 @@ const SEO_FIELD = {
   description: 'description',
   keywords: 'keywords',
   altText: 'altText',
-  canonicalUrl: 'canonicalUrl'
+  sourceUrl: 'sourceUrl'
 } as const;
 
 const SEO_LENGTH_FIELDS = [
@@ -54,9 +54,9 @@ describe('validateSeoField', () => {
     expect(validateSeoField(SEO_FIELD.keywords, INVALID_KEYWORDS[1])).toBe(SEO_ERROR.keywords);
   });
 
-  it('validates canonical URLs and allows an empty value', () => {
-    expect(validateSeoField(SEO_FIELD.canonicalUrl, EMPTY_STRING)).toBe(EMPTY_STRING);
-    expect(validateSeoField(SEO_FIELD.canonicalUrl, 'https://example.com/page')).toBe(EMPTY_STRING);
-    expect(validateSeoField(SEO_FIELD.canonicalUrl, 'not-a-url')).toBe(SEO_ERROR.invalidUrl);
+  it('validates source URLs and allows an empty value', () => {
+    expect(validateSeoField(SEO_FIELD.sourceUrl, EMPTY_STRING)).toBe(EMPTY_STRING);
+    expect(validateSeoField(SEO_FIELD.sourceUrl, 'https://example.com/page')).toBe(EMPTY_STRING);
+    expect(validateSeoField(SEO_FIELD.sourceUrl, 'not-a-url')).toBe(SEO_ERROR.invalidUrl);
   });
 });
