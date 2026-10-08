@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { SeoCanonicalUrlField } from './SeoCanonicalUrlField';
+import { SeoSourceUrlField } from './SeoSourceUrlField';
 
 jest.mock('@mui/material', () => ({
   TextField: ({
@@ -36,32 +36,32 @@ const baseProps = {
   onBlur: jest.fn()
 };
 
-describe('SeoCanonicalUrlField', () => {
+describe('SeoSourceUrlField', () => {
   it('renders default label when label prop is not provided', () => {
-    render(<SeoCanonicalUrlField {...baseProps} />);
-    expect(screen.getByText('Canonical URL')).toBeInTheDocument();
+    render(<SeoSourceUrlField {...baseProps} />);
+    expect(screen.getByText('Source URL')).toBeInTheDocument();
   });
 
   it('renders custom label when label prop is provided', () => {
-    render(<SeoCanonicalUrlField {...baseProps} label="My URL" />);
+    render(<SeoSourceUrlField {...baseProps} label="My URL" />);
     expect(screen.getByText('My URL')).toBeInTheDocument();
   });
 
   it('renders the given value', () => {
-    render(<SeoCanonicalUrlField {...baseProps} value="https://example.com" />);
+    render(<SeoSourceUrlField {...baseProps} value="https://example.com" />);
     expect(screen.getByRole('textbox')).toHaveValue('https://example.com');
   });
 
   it('calls onChange with input value on change', () => {
     const onChange = jest.fn();
-    render(<SeoCanonicalUrlField {...baseProps} onChange={onChange} />);
+    render(<SeoSourceUrlField {...baseProps} onChange={onChange} />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'https://new.com' } });
     expect(onChange).toHaveBeenCalledWith('https://new.com');
   });
 
   it('calls onBlur when field loses focus', () => {
     const onBlur = jest.fn();
-    render(<SeoCanonicalUrlField {...baseProps} onBlur={onBlur} />);
+    render(<SeoSourceUrlField {...baseProps} onBlur={onBlur} />);
     fireEvent.blur(screen.getByRole('textbox'));
     expect(onBlur).toHaveBeenCalledTimes(1);
   });
@@ -73,7 +73,7 @@ describe('SeoCanonicalUrlField', () => {
     ['валідний URL після blur — помилки немає', 'https://example.com', true, false, null],
     ['порожнє значення без blur — помилки немає', '', false, false, null]
   ] as const)('%s', (_desc, value, doBlur, _unused, expectedHelperText) => {
-    render(<SeoCanonicalUrlField {...baseProps} value={value} />);
+    render(<SeoSourceUrlField {...baseProps} value={value} />);
     if (doBlur) {
       fireEvent.blur(screen.getByRole('textbox'));
     }

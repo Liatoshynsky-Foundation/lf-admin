@@ -12,8 +12,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 const getErrorConfig = (locale: 'uk' | 'en') => [
   {
     key: 'url_1',
-    handle: ({ setCanonicalUrlError }: { setCanonicalUrlError: (msg: string) => void }) =>
-      setCanonicalUrlError(publicationErrors[locale].duplicateCanonicalUrl)
+    handle: ({ setSourceUrlError }: { setSourceUrlError : (msg: string) => void }) =>
+      setSourceUrlError(publicationErrors[locale].duplicateSourceUrl)
   },
   {
     key: 'E11000',
@@ -58,7 +58,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
         title: fetchedData?.title?.[lang] || '',
         description: fetchedData?.description?.[lang] || '',
         keywords: fetchedData?.keywords?.[lang] || '',
-        canonicalUrl: type === 'media' ? fetchedData?.url || '' : '',
+        sourceUrl: type === 'media' ? fetchedData?.url || '' : '',
         altText: {
           uk: fetchedData?.coverImage?.alt?.uk || '',
           en: fetchedData?.coverImage?.alt?.en || ''
@@ -124,7 +124,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const formState = { adminTitle, publishDate: getDateIsoString(publishDate) ?? null, seoValue, crop: form.latestDataRef.current.crop };
 
       const result = await strategy.saveDocument(status, payload, formState, targetId);
-      form.setCanonicalUrlError('');
+      form.setSourceUrlError('');
 
       return { id: result?.id, slug: result?.slug };
     } catch (error: unknown) {
@@ -138,7 +138,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
           return;
         }
 
-        matched.handle({ setCanonicalUrlError: form.setCanonicalUrlError });
+        matched.handle({ setSourceUrlError: form.setSourceUrlError });
       }
     }
   };

@@ -58,7 +58,7 @@ describe('useUpsertPublication', () => {
   const mockSetAdminTitleError = jest.fn();
   const mockSetSeoErrors = jest.fn();
   const mockSetForceShowErrors = jest.fn();
-  const mockSetCanonicalUrlError = jest.fn();
+  const mockSetSourceUrlError = jest.fn();
 
   const setupFormMockState = (customTitle: string = MOCK_PUBLICATION.adminTitle, customPublishDate: Dayjs | null = null, customSeoValue = createMockSeoValue()) => {
     (usePublicationForm as jest.Mock).mockReturnValue({
@@ -75,7 +75,7 @@ describe('useUpsertPublication', () => {
       setAdminTitleError: mockSetAdminTitleError,
       setForceShowErrors: mockSetForceShowErrors,
       setSeoErrors: mockSetSeoErrors,
-      setCanonicalUrlError: mockSetCanonicalUrlError,
+      setSourceUrlError: mockSetSourceUrlError,
       latestDataRef: {
         current: {
           adminTitle: customTitle,
@@ -212,9 +212,9 @@ describe('useUpsertPublication', () => {
         assert: () => expect(toast.error).toHaveBeenCalledWith(publicationErrors.uk.duplicateData)
       },
       {
-        scenario: 'canonical url duplicate error',
+        scenario: 'source url duplicate error',
         errorMsg: 'Duplicate key url_1',
-        assert: () => expect(mockSetCanonicalUrlError).toHaveBeenCalledWith(publicationErrors.uk.duplicateCanonicalUrl)
+        assert: () => expect(mockSetSourceUrlError).toHaveBeenCalledWith(publicationErrors.uk.duplicateSourceUrl)
       },
       {
         scenario: 'generic unknown error',
@@ -401,7 +401,7 @@ describe('useUpsertPublication', () => {
       );
     });
 
-    it('should set canonicalUrl in meta when editing media publication type', () => {
+    it('should set sourceUrl in meta when editing media publication type', () => {
       const mockMediaData = {
         adminTitle: 'Медіа згадка',
         url: 'https://example.com/media'
@@ -420,8 +420,8 @@ describe('useUpsertPublication', () => {
         expect.objectContaining({
           seoValue: expect.objectContaining({
             meta: expect.objectContaining({
-              uk: expect.objectContaining({ canonicalUrl: 'https://example.com/media' }),
-              en: expect.objectContaining({ canonicalUrl: 'https://example.com/media' })
+              uk: expect.objectContaining({ sourceUrl: 'https://example.com/media' }),
+              en: expect.objectContaining({ sourceUrl: 'https://example.com/media' })
             })
           })
         })

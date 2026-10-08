@@ -23,7 +23,7 @@ type BilingualMetaFields = {
   description?: LocalizedField;
   keywords?: LocalizedField;
   altText?: LocalizedField;
-  canonicalUrl?: LocalizedField;
+  sourceUrl?: LocalizedField;
 };
 
 const createBilingualMeta = ({
@@ -31,14 +31,14 @@ const createBilingualMeta = ({
   description = { uk: 'Опис укр', en: 'Description en' },
   keywords = { uk: 'новини', en: 'news' },
   altText = DEFAULT_ALT_TEXT,
-  canonicalUrl
+  sourceUrl
 }: BilingualMetaFields = {}): SeoBlockValue['meta'] => {
   const createLocaleMeta = (locale: 'uk' | 'en'): LocalizedMeta => ({
     title: title[locale],
     description: description[locale],
     keywords: keywords[locale],
     altText,
-    ...(canonicalUrl ? { canonicalUrl: canonicalUrl[locale] } : {})
+    ...(sourceUrl ? { sourceUrl: sourceUrl[locale] } : {})
   });
 
   return {
@@ -168,7 +168,7 @@ describe('usePublicationForm', () => {
             title: { uk: 'T', en: 'T' },
             description: { uk: 'D', en: 'D' },
             keywords: EMPTY_LOCALIZED,
-            canonicalUrl: { uk: 'invalid', en: 'https://url.com' }
+            sourceUrl: { uk: 'invalid', en: 'https://url.com' }
           })
         },
         'media',
@@ -201,7 +201,7 @@ describe('usePublicationForm', () => {
       act(() => {
         result.current.setAdminTitle('Нова назва');
         result.current.setAdminTitleError('Помилка');
-        result.current.setCanonicalUrlError('URL помилка');
+        result.current.setSourceUrlError('URL помилка');
         result.current.setForceShowErrors(true);
         result.current.setPublishDate(testDate);
         result.current.setCrop(cropData);
@@ -209,7 +209,7 @@ describe('usePublicationForm', () => {
 
       expect(result.current.adminTitle).toBe('Нова назва');
       expect(result.current.adminTitleError).toBe('Помилка');
-      expect(result.current.canonicalUrlError).toBe('URL помилка');
+      expect(result.current.sourceUrlError).toBe('URL помилка');
       expect(result.current.forceShowErrors).toBe(true);
       expect(result.current.publishDate).toEqual(testDate);
       expect(result.current.crop).toEqual(cropData);

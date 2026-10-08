@@ -8,7 +8,6 @@ const buildLocaleMeta = (page: PageSeoData, lang: 'uk' | 'en'): LocalizedMeta =>
   title: page.title[lang] ?? '',
   description: page.description[lang] ?? '',
   keywords: page.keywords?.[lang] ?? '',
-  canonicalUrl: page.canonicalUrl?.[lang] ?? undefined
 });
 
 export const mapPageToSeoBlockValue = (page: PageSeoData): SeoBlockValue => ({
@@ -36,10 +35,6 @@ export const mapSeoBlockValueToUpdatePageSeoInput = (slug: string, value: SeoBlo
   keywords: {
     uk: value.meta.uk.keywords,
     en: value.meta.en.keywords
-  },
-  canonicalUrl: {
-    uk: value.meta.uk.canonicalUrl ?? '',
-    en: value.meta.en.canonicalUrl ?? ''
   },
   allowIndexation: {
     uk: value.allowIndexing.uk,

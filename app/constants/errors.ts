@@ -247,7 +247,7 @@ export const publicationErrors = {
     previewSlugFailed: 'Виникла помилка при отриманні даних для попереднього перегляду',
     previewOpenFailed: 'Не вдалося відкрити попередній перегляд.',
     duplicateData: 'Публікація з такими даними вже існує.',
-    duplicateCanonicalUrl: 'Публікація з таким canonical URL вже існує.',
+    duplicateSourceUrl: 'Публікація з таким source URL вже існує.',
     genericError: 'Щось пішло не так. Спробуйте ще раз.'
   },
   en: {
@@ -255,7 +255,7 @@ export const publicationErrors = {
     previewSlugFailed: 'An error occurred while retrieving data for the preview',
     previewOpenFailed: 'Failed to open preview.',
     duplicateData: 'A publication with this data already exists.',
-    duplicateCanonicalUrl: 'A publication with this canonical URL already exists.',
+    duplicateSourceUrl: 'A publication with this source URL already exists.',
     genericError: 'Something went wrong. Please try again.'
   }
 };

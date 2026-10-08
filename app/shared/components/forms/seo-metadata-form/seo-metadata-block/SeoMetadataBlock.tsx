@@ -28,8 +28,8 @@ export type SeoBlockErrors = {
 
 const defaultValue: SeoBlockValue = {
   meta: {
-    uk: { title: '', description: '', keywords: '', canonicalUrl: undefined },
-    en: { title: '', description: '', keywords: '', canonicalUrl: undefined }
+    uk: { title: '', description: '', keywords: '', sourceUrl: undefined },
+    en: { title: '', description: '', keywords: '', sourceUrl: undefined }
   },
   ogImage: null,
   allowIndexing: { uk: true, en: true },

@@ -23,7 +23,7 @@ export interface LocalizedMeta {
   title: string;
   description: string;
   keywords: string;
-  canonicalUrl?: string;
+  sourceUrl?: string;
   startDateTime?: string;
   endDateTime?: string;
   altText?: { uk: string; en: string };
@@ -66,7 +66,7 @@ export interface SeoMetadataFormProps {
 const getFileNameFromUrl = (url: string | null): string | undefined =>
   url ? url.split('/').pop()?.split('?')[0] : undefined;
 
-const seoFields = new Set<SeoField>(['title', 'description', 'keywords', 'canonicalUrl', 'altText']);
+const seoFields = new Set<SeoField>(['title', 'description', 'keywords', 'sourceUrl', 'altText']);
 
 const getSeoFieldError = (
   field: keyof LocalizedMeta,

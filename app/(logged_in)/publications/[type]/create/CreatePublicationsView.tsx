@@ -23,9 +23,9 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
 import SeoCollapsibleBlock from '~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock';
-import { SeoCanonicalUrlField } from '~/shared/components/forms/seo-metadata-form/seo-canonicalurl-field/SeoCanonicalUrlField';
 import { SeoDateTimeFields } from '~/shared/components/forms/seo-metadata-form/seo-datetime-fields/SeoDateTimeFields';
 import { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
+import { SeoSourceUrlField } from '~/shared/components/forms/seo-metadata-form/seo-sourceurl-field/SeoSourceUrlField';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { useUpsertPublication } from '~/shared/hooks/use-upsert-publication/useUpsertPublication';
@@ -50,7 +50,7 @@ export default function CreatePublicationsView({
     setAdminTitle,
     adminTitleError,
     setAdminTitleError,
-    canonicalUrlError,
+    sourceUrlError,
     publishDate,
     setPublishDate,
     seoValue,
@@ -105,14 +105,15 @@ export default function CreatePublicationsView({
       value: SeoBlockValue['meta']['uk'],
       onChange: (val: SeoBlockValue['meta']['uk']) => void
     ) => (
-      <SeoCanonicalUrlField
-        value={value.canonicalUrl ?? ''}
-        externalError={canonicalUrlError}
-        onChange={(val) => onChange({ ...value, canonicalUrl: val })}
+      <SeoSourceUrlField
+        label={PUBLICATION_SEO_LABELS[_locale].sourceUrl}
+        value={value.sourceUrl ?? ''}
+        externalError={sourceUrlError}
+        onChange={(val) => onChange({ ...value, sourceUrl: val })}
         forceShowErrors={forceShowErrors}
       />
     ),
-    [forceShowErrors, canonicalUrlError]
+    [forceShowErrors, sourceUrlError]
   );
 
   let seoExtraFields: typeof eventsExtraFields | typeof mediaExtraFields | undefined;

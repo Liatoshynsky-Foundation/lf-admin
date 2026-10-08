@@ -132,7 +132,7 @@ export const useMediaStrategy = (id?: string, skip = false): PublicationStrategy
     const { uk: ukMeta, en: enMeta } = formState.seoValue.meta;
     const fullPayload = {
       ...payload,
-      url: ukMeta.canonicalUrl || enMeta.canonicalUrl || formState.adminTitle,
+      url: ukMeta.sourceUrl || enMeta.sourceUrl || formState.adminTitle,
       status: status as string as MediaStatus,
       ...(payload.slug ? { slug: payload.slug } : {})
     };

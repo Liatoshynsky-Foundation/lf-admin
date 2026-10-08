@@ -9,8 +9,8 @@ export const checkIsSeoInvalid = (
   ticketUrl: SeoBlockValue['ticketUrl']
 ): boolean => {
   if (publicationType === 'media') {
-    const ukUrl = ukMeta.canonicalUrl ?? '';
-    const enUrl = enMeta.canonicalUrl ?? '';
+    const ukUrl = ukMeta.sourceUrl ?? '';
+    const enUrl = enMeta.sourceUrl ?? '';
     return !ukUrl.trim() || !enUrl.trim() || !isValidHttpUrl(ukUrl) || !isValidHttpUrl(enUrl);
   }
   if (publicationType === 'events') {
