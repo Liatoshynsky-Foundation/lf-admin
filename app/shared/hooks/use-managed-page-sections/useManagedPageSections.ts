@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-
 import {
   isManagedPageSectionBlock,
   mergeBlocksOrderWithManagedSections,
@@ -17,63 +15,51 @@ export const useManagedPageSections = (pageSlug: string) => {
   const blocksOrder = useStore((state) => state.blocksOrder[pageSlug]);
   const replacePageBlocks = useStore((state) => state.replacePageBlocks);
 
-  const sections = useMemo(() => sectionsFromStore(blocksOrder ?? [], blocks), [blocks, blocksOrder]);
+  const sections = sectionsFromStore(blocksOrder ?? [], blocks);
 
-  const persistSections = useCallback(
-    (nextSections: PageSection[]) => {
-      const originalBlocks = (useStore.getState().blocks[pageSlug] ?? {}) as Record<string, unknown>;
-      const currentOrder = useStore.getState().blocksOrder[pageSlug] ?? [];
-      const nextBlocks = { ...originalBlocks };
+  const persistSections = (nextSections: PageSection[]) => {
+    const originalBlocks = (useStore.getState().blocks[pageSlug] ?? {}) as Record<string, unknown>;
+    const currentOrder = useStore.getState().blocksOrder[pageSlug] ?? [];
+    const nextBlocks = { ...originalBlocks };
 
-      Object.keys(nextBlocks).forEach((blockId) => {
-        if (isManagedPageSectionBlock(nextBlocks[blockId])) {
-          delete nextBlocks[blockId];
-        }
-      });
+    Object.keys(nextBlocks).forEach((blockId) => {
+      if (isManagedPageSectionBlock(nextBlocks[blockId])) {
+        delete nextBlocks[blockId];
+      }
+    });
 
-      nextSections.forEach((section) => {
-        const existing = originalBlocks[section.id];
-        const hidden = isManagedPageSectionBlock(existing) ? existing.hidden : false;
-        nextBlocks[section.id] = sectionToBlock(section, hidden);
-      });
+    nextSections.forEach((section) => {
+      const existing = originalBlocks[section.id];
+      const hidden = isManagedPageSectionBlock(existing) ? existing.hidden : false;
+      nextBlocks[section.id] = sectionToBlock(section, hidden);
+    });
 
-      replacePageBlocks(
-        pageSlug,
-        nextBlocks,
-        mergeBlocksOrderWithManagedSections(
-          currentOrder,
-          originalBlocks,
-          nextSections.map((section) => section.id)
-        )
-      );
-    },
-    [pageSlug, replacePageBlocks]
-  );
+    replacePageBlocks(
+      pageSlug,
+      nextBlocks,
+      mergeBlocksOrderWithManagedSections(
+        currentOrder,
+        originalBlocks,
+        nextSections.map((section) => section.id)
+      )
+    );
+  };
 
-  const addSection = useCallback(() => {
+  const addSection = () => {
     persistSections([...sections, createPageSection()]);
-  }, [persistSections, sections]);
+  };
 
-  const updateSection = useCallback(
-    (nextSection: PageSection) => {
-      persistSections(sections.map((section) => (section.id === nextSection.id ? nextSection : section)));
-    },
-    [persistSections, sections]
-  );
+  const updateSection = (nextSection: PageSection) => {
+    persistSections(sections.map((section) => (section.id === nextSection.id ? nextSection : section)));
+  };
 
-  const removeSection = useCallback(
-    (sectionId: string) => {
-      persistSections(sections.filter((section) => section.id !== sectionId));
-    },
-    [persistSections, sections]
-  );
+  const removeSection = (sectionId: string) => {
+    persistSections(sections.filter((section) => section.id !== sectionId));
+  };
 
-  const reorderSections = useCallback(
-    (reordered: PageSection[]) => {
-      persistSections(reordered);
-    },
-    [persistSections]
-  );
+  const reorderSections = (reordered: PageSection[]) => {
+    persistSections(reordered);
+  };
 
   return {
     sections,
