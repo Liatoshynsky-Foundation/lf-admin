@@ -478,40 +478,80 @@ const getPreviewCompositionIds = (inputCompositions?: GQLComposition[]): string[
     .map((composition) => composition.id)
     .filter((id): id is string => Boolean(id));
 
+const buildPreviewMainFields = (
+  input: UpdateOpusGQLInput,
+  sourceOpus: Opus,
+  previewAdditionalText: string | null | undefined
+): Pick<
+  PreviewOpusInput,
+  | 'number'
+  | 'numberKind'
+  | 'title'
+  | 'name'
+  | 'description'
+  | 'additionalText'
+  | 'creationYear'
+  | 'endYear'
+  | 'datesNote'
+  | 'genre'
+> => ({
+  number: previewNumber(input.number, sourceOpus.number),
+  numberKind: input.numberKind || sourceOpus.numberKind || 'op',
+  title: input.title ?? sourceOpus.title,
+  name: previewLocalizedString(input.name, sourceOpus.name),
+  description: input.description ?? sourceOpus.description,
+  additionalText: truncateForPreviewSuffix(previewAdditionalText),
+  creationYear: input.creationYear?.trim() || sourceOpus.creationYear || '',
+  endYear: input.endYear ?? sourceOpus.endYear ?? null,
+  datesNote: input.datesNote ?? sourceOpus.datesNote ?? null,
+  genre: input.genre ?? sourceOpus.genre ?? null
+});
+
+const buildPreviewSeoFields = (
+  input: UpdateOpusGQLInput,
+  sourceOpus: Opus
+): Pick<PreviewOpusInput, 'introDescription' | 'parts' | 'keywords' | 'coverImage'> => ({
+  introDescription: input.introDescription ?? sourceOpus.introDescription ?? null,
+  parts: input.parts ?? sourceOpus.parts ?? null,
+  keywords: input.keywords ?? sourceOpus.keywords ?? null,
+  coverImage: input.coverImage ?? sourceOpus.coverImage ?? null
+});
+
+const buildPreviewContentFields = (
+  input: UpdateOpusGQLInput,
+  sourceOpus: Opus,
+  previewCompositionIds: string[]
+): Pick<
+  PreviewOpusInput,
+  'compositions' | 'gallery' | 'performancesTitle' | 'performances' | 'blocksOrder'
+> => ({
+  compositions: previewCompositionIds.length > 0 ? previewCompositionIds : sourceOpus.compositions || [],
+  gallery: sanitizePreviewGallery(input.gallery),
+  performancesTitle: input.performancesTitle ?? sourceOpus.performancesTitle ?? null,
+  performances: sanitizePreviewPerformances(input.performances),
+  blocksOrder: input.blocksOrder ?? sourceOpus.blocksOrder ?? null
+});
+
 const buildPreviewOpusData = (
   input: UpdateOpusGQLInput,
   sourceOpus: Opus
 ): PreviewOpusInput => {
   const previewCompositionIds = getPreviewCompositionIds(input.compositions);
   const previewAdditionalText =
-    input.additionalText === undefined ? sourceOpus.additionalText : formattedAdditionalText(input.additionalText);
+    input.additionalText === undefined
+      ? sourceOpus.additionalText
+      : formattedAdditionalText(input.additionalText);
 
   return {
-    number: previewNumber(input.number, sourceOpus.number),
-    numberKind: input.numberKind || sourceOpus.numberKind || 'op',
-    title: input.title ?? sourceOpus.title,
-    name: previewLocalizedString(input.name, sourceOpus.name),
-    description: input.description ?? sourceOpus.description,
-    additionalText: truncateForPreviewSuffix(previewAdditionalText),
-    creationYear: input.creationYear?.trim() || sourceOpus.creationYear || '',
-    endYear: input.endYear ?? sourceOpus.endYear ?? null,
-    datesNote: input.datesNote ?? sourceOpus.datesNote ?? null,
-    genre: input.genre ?? sourceOpus.genre ?? null,
+    ...buildPreviewMainFields(input, sourceOpus, previewAdditionalText),
+    ...buildPreviewSeoFields(input, sourceOpus),
+    ...buildPreviewContentFields(input, sourceOpus, previewCompositionIds),
     adminTitle: OPUS_PREVIEW_SLUG,
     slug: OPUS_PREVIEW_SLUG,
-    introDescription: input.introDescription ?? sourceOpus.introDescription ?? null,
-    parts: input.parts ?? sourceOpus.parts ?? null,
-    keywords: input.keywords ?? sourceOpus.keywords ?? null,
     allowIndexation: { uk: false, en: false },
-    coverImage: input.coverImage ?? sourceOpus.coverImage ?? null,
     status: OpusStatus.Draft,
     publishedAt: null,
-    meta: { views: 0 },
-    compositions: previewCompositionIds.length > 0 ? previewCompositionIds : sourceOpus.compositions || [],
-    gallery: sanitizePreviewGallery(input.gallery),
-    performancesTitle: input.performancesTitle ?? sourceOpus.performancesTitle ?? null,
-    performances: sanitizePreviewPerformances(input.performances),
-    blocksOrder: input.blocksOrder ?? sourceOpus.blocksOrder ?? null
+    meta: { views: 0 }
   };
 };
 

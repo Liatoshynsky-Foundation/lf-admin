@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
 import OpusView from './OpusView';
@@ -98,11 +99,12 @@ describe('OpusView Component', () => {
     expect(screen.getByText('Редагування опусу')).toBeInTheDocument();
   });
 
-  it('triggers preview from the edit opus header', () => {
+  it('triggers preview from the edit opus header', async () => {
+    const user = userEvent.setup();
     const handlePreview = jest.fn();
     render(<OpusView data={createMockData({ isEditing: true, handlePreview })} mode="edit" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Передогляд' }));
+    await user.click(screen.getByRole('button', { name: 'Передогляд' }));
 
     expect(handlePreview).toHaveBeenCalledTimes(1);
   });
