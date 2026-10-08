@@ -1,4 +1,5 @@
-import { act,fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import CollapsibleBlock from './CollapsibleBlock';
@@ -139,7 +140,8 @@ describe('CollapsibleBlock', () => {
     expect(onToggleVisibility).toHaveBeenCalledTimes(2);
   });
 
-  it('should call onDelete without expanding the accordion', () => {
+  it('should call onDelete without expanding the accordion', async () => {
+    const user = userEvent.setup();
     const onDelete = jest.fn();
     render(
       <CollapsibleBlock title={titleText} onDelete={onDelete}>
@@ -150,13 +152,14 @@ describe('CollapsibleBlock', () => {
     const cont = screen.getByTestId('inserted-container');
     expect(cont).toHaveStyle('visibility: hidden');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Видалити секцію' }));
+    await user.click(screen.getByRole('button', { name: 'Видалити секцію' }));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(cont).toHaveStyle('visibility: hidden');
   });
 
-  it('should call onDelete on Enter and Space, and ignore other keys', () => {
+  it('should call onDelete on Enter and Space, and ignore other keys', async () => {
+    const user = userEvent.setup();
     const onDelete = jest.fn();
     render(
       <CollapsibleBlock title={titleText} onDelete={onDelete}>
@@ -165,14 +168,17 @@ describe('CollapsibleBlock', () => {
     );
 
     const deleteButton = screen.getByRole('button', { name: 'Видалити секцію' });
+    act(() => {
+      deleteButton.focus();
+    });
 
-    fireEvent.keyDown(deleteButton, { key: 'a' });
+    await user.keyboard('a');
     expect(onDelete).not.toHaveBeenCalled();
 
-    fireEvent.keyDown(deleteButton, { key: 'Enter' });
+    await user.keyboard('{Enter}');
     expect(onDelete).toHaveBeenCalledTimes(1);
 
-    fireEvent.keyDown(deleteButton, { key: ' ' });
+    await user.keyboard(' ');
     expect(onDelete).toHaveBeenCalledTimes(2);
   });
 

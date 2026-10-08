@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { createPageSection } from './pageSection.utils';
@@ -60,42 +61,49 @@ jest.mock('~/shared/components/sortable-list/SortableList', () => ({
 
 const sectionHeadings = () => screen.getAllByRole('heading').map((heading) => heading.textContent);
 
-const addSection = () => fireEvent.click(screen.getByRole('button', { name: 'Додати секцію' }));
 const renderEditor = () => render(<PageSectionsEditor pageSlug="about-us" />);
 
 describe('PageSectionsEditor', () => {
-  it('should show only the add button until a section is created', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+  });
+
+  const addSection = () => user.click(screen.getByRole('button', { name: 'Додати секцію' }));
+
+  it('should show only the add button until a section is created', async () => {
     renderEditor();
 
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Додати секцію' })).toBeInTheDocument();
 
-    addSection();
+    await addSection();
 
     expect(sectionHeadings()).toEqual(['Перша секція']);
 
-    addSection();
+    await addSection();
 
     expect(sectionHeadings()).toEqual(['Перша секція', 'Друга секція']);
   });
 
-  it('should edit the section title with the same field as other sections', () => {
+  it('should edit the section title with the same field as other sections', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getByTestId('trigger-change-Заголовок секції'));
+    await user.click(screen.getByTestId('trigger-change-Заголовок секції'));
 
     expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent('Updated Заголовок секції');
     expect(sectionHeadings()).toEqual(['Updated Заголовок секції']);
   });
 
-  it('should add a subtitle, a paragraph and a bullet, then remove the paragraph', () => {
+  it('should add a subtitle, a paragraph and a bullet, then remove the paragraph', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Додати абзац' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Додати елемент маркованого списку' }));
+    await user.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
+    await user.click(screen.getByRole('button', { name: 'Додати абзац' }));
+    await user.click(screen.getByRole('button', { name: 'Додати елемент маркованого списку' }));
 
     expect(screen.getByTestId('textfield-wrapper-Підзаголовок')).toBeInTheDocument();
     expect(screen.getByTestId('textfield-wrapper-Абзац')).toBeInTheDocument();
@@ -104,63 +112,63 @@ describe('PageSectionsEditor', () => {
     const paragraph = screen.getByTestId('textfield-wrapper-Абзац').parentElement?.parentElement;
     if (!paragraph) throw new Error('Paragraph row was not rendered');
 
-    fireEvent.click(within(paragraph).getByRole('button', { name: 'Видалити' }));
+    await user.click(within(paragraph).getByRole('button', { name: 'Видалити' }));
 
     expect(screen.queryByTestId('textfield-wrapper-Абзац')).not.toBeInTheDocument();
     expect(screen.getByTestId('textfield-wrapper-Підзаголовок')).toBeInTheDocument();
   });
 
-  it('should edit a paragraph with the same field used in other sections', () => {
+  it('should edit a paragraph with the same field used in other sections', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати абзац' }));
-    fireEvent.click(screen.getByTestId('trigger-change-Абзац'));
+    await user.click(screen.getByRole('button', { name: 'Додати абзац' }));
+    await user.click(screen.getByTestId('trigger-change-Абзац'));
 
     expect(screen.getByTestId('textfield-json-Абзац')).toHaveTextContent('Updated Абзац');
   });
 
-  it('should delete a section and reorder the remaining ones by drag', () => {
+  it('should delete a section and reorder the remaining ones by drag', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getAllByTestId('trigger-change-Заголовок секції')[1]);
+    await user.click(screen.getAllByTestId('trigger-change-Заголовок секції')[1]);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Видалити секцію' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Видалити секцію' })[0]);
 
     expect(screen.getAllByTestId('textfield-json-Заголовок секції')).toHaveLength(1);
     expect(screen.getByTestId('textfield-json-Заголовок секції')).toHaveTextContent('Updated Заголовок секції');
     expect(sectionHeadings()).toEqual(['Updated Заголовок секції']);
 
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getAllByTestId('trigger-drag')[0]);
+    await user.click(screen.getAllByTestId('trigger-drag')[0]);
 
     const reordered = screen.getAllByTestId('textfield-json-Заголовок секції');
     expect(reordered[0]).not.toHaveTextContent('Updated Заголовок секції');
     expect(reordered[1]).toHaveTextContent('Updated Заголовок секції');
   });
 
-  it('should show only the add button after the last section is removed', () => {
+  it('should show only the add button after the last section is removed', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Видалити секцію' }));
+    await user.click(screen.getByRole('button', { name: 'Видалити секцію' }));
 
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Додати секцію' })).toBeInTheDocument();
   });
 
-  it('should reorder content items inside a section', () => {
+  it('should reorder content items inside a section', async () => {
     renderEditor();
-    addSection();
+    await addSection();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Додати абзац' }));
+    await user.click(screen.getByRole('button', { name: 'Додати підзаголовок' }));
+    await user.click(screen.getByRole('button', { name: 'Додати абзац' }));
 
-    fireEvent.click(screen.getAllByTestId('trigger-drag')[0]);
+    await user.click(screen.getAllByTestId('trigger-drag')[0]);
 
     const fields = screen
       .getAllByTestId(/textfield-wrapper-/)
