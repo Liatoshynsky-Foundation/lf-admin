@@ -1,9 +1,7 @@
-
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusCompositionData } from '~/types/opus';
-
 
 export const WORKS_TABS_NAMES = {
   ALL: 'all',
@@ -45,10 +43,7 @@ export type WorksFilterConfig = Readonly<{
 export const WORKS_PAGE_TITLE = 'Творчість';
 export const WORKS_BASE_PATH = '/creativity';
 
-export const WORKS_STATUSES = [
-  BaseContentStatuses.Draft,
-  BaseContentStatuses.Published,
-] as const;
+export const WORKS_STATUSES = [BaseContentStatuses.Draft, BaseContentStatuses.Published] as const;
 
 export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: WORKS_TABS_NAMES.ALL, label: 'Всі', href: WORKS_BASE_PATH },
@@ -56,7 +51,6 @@ export const WORKS_TABS: ReadonlyArray<WorksTabConfig> = [
   { value: WORKS_TABS_NAMES.SINEOP, label: 'Безопусні', href: `${WORKS_BASE_PATH}/sineop` },
   { value: WORKS_TABS_NAMES.WORKS, label: 'Твори', href: `${WORKS_BASE_PATH}/compositions` }
 ];
-
 
 const WORKS_STATUS_FILTER_OPTIONS: ReadonlyArray<FilterOption> = [
   {
@@ -122,7 +116,7 @@ export interface GroupData {
   groupNumber: string;
   genre: { uk: string; en: string };
   additionalText: string;
-  groupTitle: { uk: string; en: string }; 
+  groupTitle: { uk: string; en: string };
   creationYear: string;
   endYear: string;
   dateAdditionalText: string;

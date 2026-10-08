@@ -23,6 +23,7 @@ import FileItem from '../file-item/FileItem';
 import LabelActionRow from '../label-action-row/LabelActionRow';
 import { styles } from './CompositionModalView.styles';
 import { AudioEntry, CompositionFileType, NoteEntry } from '~/constants/creativity';
+import { COMPOSITION_YEAR_RANGE } from '~/constants/opus';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 type Entry = AudioEntry | NoteEntry;
@@ -92,7 +93,6 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
   const handleCancel = () => {
     onClose();
     clearInput();
-
   };
 
   const handleSave = async () => {
@@ -123,8 +123,7 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
       entries: noteEntries,
       suggestions: suggestions.notes,
       fileType: 'pdf',
-      onAdd: () =>
-        setNoteEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, fileName: null }]),
+      onAdd: () => setNoteEntries((prev) => [...prev, { id: crypto.randomUUID(), name: null, fileName: null }]),
       onUpdate: handleUpdateNote,
       onDelete: (id: string) => setNoteEntries((prev) => prev.filter((e) => e.id !== id)),
       onTriggerUpload
@@ -158,8 +157,8 @@ export const CompositionModalView: React.FC<CompositionModalViewProps> = ({
                   label="Рік *"
                   views={['year']}
                   value={year}
-                  minDate={dayjs('1900')}
-                  maxDate={dayjs()}
+                  minDate={dayjs().year(COMPOSITION_YEAR_RANGE.min).startOf('year')}
+                  maxDate={dayjs().year(COMPOSITION_YEAR_RANGE.max).endOf('year')}
                   onChange={(newValue: Dayjs | null) => setYear(newValue)}
                   sx={styles.datePicker}
                 />

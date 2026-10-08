@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { COMPOSITION_VALIDATION_MESSAGES } from '~/constants/opus';
+import { COMPOSITION_VALIDATION_MESSAGES, COMPOSITION_YEAR_RANGE } from '~/constants/opus';
 
 export const compositionTitleSchema = z
   .string()
@@ -18,4 +18,9 @@ export const compositionGenreSchema = z
 export const compositionYearSchema = z
   .string()
   .trim()
-  .refine((year) => !year || /^\d{4}$/.test(year), COMPOSITION_VALIDATION_MESSAGES.yearInvalid);
+  .refine((year) => !year || /^\d{4}$/.test(year), COMPOSITION_VALIDATION_MESSAGES.yearInvalid)
+  .refine((year) => {
+    if (!year) return true;
+    const typedYear = Number(year);
+    return typedYear >= COMPOSITION_YEAR_RANGE.min && typedYear <= COMPOSITION_YEAR_RANGE.max;
+  }, COMPOSITION_VALIDATION_MESSAGES.yearOutOfRange);
