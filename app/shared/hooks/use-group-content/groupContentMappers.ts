@@ -25,9 +25,13 @@ const getPersistedId = (id?: string): string | undefined => {
   return id;
 };
 
-const mapLocalizedTrimmedValue = (value?: { uk?: unknown; en?: unknown } | null) => ({
-  uk: String(value?.uk || '').trim(),
-  en: String(value?.en || '').trim()
+type LocalizedText = { uk?: string | null; en?: string | null };
+
+const trimText = (value?: string | null): string => value?.trim() || '';
+
+const mapLocalizedTrimmedValue = (value?: LocalizedText | null) => ({
+  uk: trimText(value?.uk),
+  en: trimText(value?.en)
 });
 
 const mapCompositionInput = (
@@ -144,7 +148,9 @@ const buildGroupMediaInput = (
   UpdateOpusMutationVariables['input'],
   'compositions' | 'gallery' | 'performancesTitle' | 'performances'
 > => ({
-  compositions: (groupData.compositions || []).map(mapCompositionInput),
+  compositions: (groupData.compositions || []).map((composition, index) =>
+    mapCompositionInput(composition, index)
+  ),
   gallery: (groupData.photos || []).map(mapGalleryInput),
   performancesTitle: {
     uk: String(groupData.performancesTitle || ''),
