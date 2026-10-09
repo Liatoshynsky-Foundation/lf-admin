@@ -3,7 +3,8 @@ import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
-import { isMediaItemFilled, mapMediaItemFromApi } from './compositionMedia';
+import { mapMediaItemFromApi } from './compositionMedia';
+import { buildOpusContentInput } from './groupContentMappers';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   COMPOSITION_DUPLICATE_ERROR,
@@ -33,11 +34,6 @@ import {
 } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import {
-  OpusNumberKind,
-  OpusStatus,
-  UpdateOpusMutationVariables
-} from '~/types/graphql/generated/graphql';
 import { FetchedOpusData } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
@@ -164,125 +160,6 @@ const validatePhoto = (
 
   validatePhotoAltText(photo, newErrors, setCurrentLanguage);
   validatePhotoCaption(photo, newErrors, setCurrentLanguage);
-};
-
-const mapStatus = (statusToSave?: BaseContentStatuses): OpusStatus | undefined => {
-  if (statusToSave === BaseContentStatuses.Published) {
-    return OpusStatus.Published;
-  }
-
-  return undefined;
-};
-
-const toOpusNumberKind = (value: string): OpusNumberKind => {
-  switch (value) {
-  case OpusNumberKind.Sineop:
-    return OpusNumberKind.Sineop;
-  case OpusNumberKind.Compositions:
-    return OpusNumberKind.Compositions;
-  case OpusNumberKind.Op:
-  default:
-    return OpusNumberKind.Op;
-  }
-};
-
-const buildOpusContentInput = (
-  groupData: GroupData,
-  statusToSave?: BaseContentStatuses
-): UpdateOpusMutationVariables['input'] => {
-  const mappedStatus = mapStatus(statusToSave);
-
-  return {
-    number: Number(groupData.groupNumber.trim()),
-    numberKind: toOpusNumberKind(groupData.titlePrefix),
-    genre: {
-      uk: String(groupData.genre?.uk || '').trim(),
-      en: String(groupData.genre?.en || '').trim()
-    },
-    additionalText: String(groupData.additionalText || '').trim() || '',
-    ...(mappedStatus && { status: mappedStatus }),
-    name: {
-      uk: String(groupData.groupTitle?.uk || ''),
-      en: String(groupData.groupTitle?.en || '')
-    },
-    creationYear: String(groupData.creationYear || '').trim(),
-    endYear: groupData.endYear ? String(groupData.endYear) : null,
-    datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null,
-    parts: {
-      uk: String(groupData.parts?.uk || ''),
-      en: String(groupData.parts?.en || '')
-    },
-    introDescription: {
-      uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
-      en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
-    },
-    blocksOrder: groupData.blocksOrder || ['details', 'intro', 'photos', 'works', 'performances'],
-    compositions: (groupData.compositions || []).map((work, index) => ({
-      id: work.id,
-      name: work.name.trim(),
-      genre: work.genre.trim() || undefined,
-      year: work.year.trim() || undefined,
-      order: index + 1,
-      audios: (work.audios || [])
-        .filter(isMediaItemFilled)
-        .map((audio) => ({
-          name: audio.name,
-          fileUrl: audio.fileUrl,
-          publishDate: ''
-        })),
-      notes: (work.notes || [])
-        .filter(isMediaItemFilled)
-        .map((note) => ({
-          name: note.name?.trim() || '',
-          fileName: note.fileName,
-          fileUrl: note.fileUrl ? note.fileUrl : null,
-          publishDate: note.publishDate || ''
-        }))
-    })),
-    gallery: (groupData.photos || []).map((photo) => {
-      const cropData = photo.crop as {
-        rect?: { x: number; y: number; width: number; height: number };
-        x?: number;
-        y?: number;
-        width?: number;
-        height?: number;
-      } | null;
-
-      const mappedCrop = cropData
-        ? {
-          x: cropData.rect?.x ?? cropData.x ?? 0,
-          y: cropData.rect?.y ?? cropData.y ?? 0,
-          width: cropData.rect?.width ?? cropData.width ?? 0,
-          height: cropData.rect?.height ?? cropData.height ?? 0
-        }
-        : null;
-
-      return {
-        id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
-        src: photo.src ? String(photo.src) : '',
-        description: {
-          uk: (photo.caption?.uk || '').trim(),
-          en: (photo.caption?.en || '').trim()
-        },
-        altText: {
-          uk: (photo.altText?.uk || '').trim(),
-          en: (photo.altText?.en || '').trim()
-        },
-        crop: mappedCrop
-      };
-    }),
-    performancesTitle: {
-      uk: String(groupData.performancesTitle || ''),
-      en: String(groupData.performancesTitle || '')
-    },
-    performances: (groupData.performances || [])
-      .map((perf) => ({
-        id: perf.id?.includes('-') ? undefined : perf.id,
-        title: { uk: (perf.caption?.uk || '').trim(), en: (perf.caption?.en || '').trim() },
-        videoUrl: (perf.url || '').trim()
-      }))
-      .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
-  };
 };
 
 export const useGroupContent = (id: string) => {
