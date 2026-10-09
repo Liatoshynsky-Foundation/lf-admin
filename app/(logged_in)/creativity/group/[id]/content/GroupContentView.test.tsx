@@ -95,13 +95,16 @@ jest.mock('~/shared/components/divided-header/DividedHeader', () => ({
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
   default: ({
+    onPreview,
     onPublish,
     onMenuOpen
   }: {
+    onPreview: () => void;
     onPublish: () => void;
     onMenuOpen: (e: MouseEvent<HTMLButtonElement>) => void;
   }) => (
     <div data-testid="header-right-actions">
+      <button onClick={onPreview}>Preview Action</button>
       <button onClick={onPublish}>Publish Action</button>
       <button onClick={(e) => onMenuOpen(e)}>Menu Open</button>
     </div>
@@ -183,6 +186,7 @@ const mockUseGroupContent = {
   handleOpen: jest.fn(),
   handleClose: jest.fn(),
   handleFieldChange: jest.fn(),
+  handlePreviewClick: jest.fn(),
   handlePublishClick: jest.fn(),
   handleMenuOptionClick: jest.fn()
 };
@@ -227,6 +231,12 @@ describe('GroupContentView Component', () => {
       render(<GroupContentView id="123" />);
       fireEvent.click(screen.getByText('Publish Action'));
       expect(mockUseGroupContent.handlePublishClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call handlePreviewClick when Preview action is clicked', () => {
+      render(<GroupContentView id="123" />);
+      fireEvent.click(screen.getByText('Preview Action'));
+      expect(mockUseGroupContent.handlePreviewClick).toHaveBeenCalledTimes(1);
     });
 
     it('should open navigation menu when TitleDropdown is clicked', () => {

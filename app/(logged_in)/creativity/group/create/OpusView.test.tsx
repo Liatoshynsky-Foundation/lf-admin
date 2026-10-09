@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 
 import OpusView from './OpusView';
@@ -69,6 +70,7 @@ const createMockData = (
   setCrop: jest.fn(),
   isSaved: false,
   handleSave: jest.fn(),
+  handlePreview: jest.fn(),
   ...overrides
 });
 
@@ -95,6 +97,16 @@ describe('OpusView Component', () => {
     render(<OpusView data={createMockData({ isEditing: true })} mode="edit" />);
 
     expect(screen.getByText('Редагування опусу')).toBeInTheDocument();
+  });
+
+  it('triggers preview from the edit opus header', async () => {
+    const user = userEvent.setup();
+    const handlePreview = jest.fn();
+    render(<OpusView data={createMockData({ isEditing: true, handlePreview })} mode="edit" />);
+
+    await user.click(screen.getByRole('button', { name: 'Передогляд' }));
+
+    expect(handlePreview).toHaveBeenCalledTimes(1);
   });
 
   it('saves and redirects to the advanced content editor on successful create', async () => {

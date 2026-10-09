@@ -3,7 +3,8 @@ import { MouseEvent, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { createCompositionId } from '../use-upsert-opus/useUpsertOpus';
-import { isMediaItemFilled, mapMediaItemFromApi } from './compositionMedia';
+import { mapMediaItemFromApi } from './compositionMedia';
+import { buildOpusContentInput } from './groupContentMappers';
 import { GroupData, GroupDataField, GroupPhoto } from '~/constants/creativity';
 import {
   COMPOSITION_DUPLICATE_ERROR,
@@ -23,14 +24,16 @@ import {
   isCompositionNameRequiredError,
   normalizeCompositionName
 } from '~/lib/utils/compositionErrors';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import { useDeleteOpus, useOpusById, useUpdateOpus } from '~/shared/hooks/use-opuses/useOpuses';
+import {
+  useDeleteOpus,
+  useOpusById,
+  useUpdateOpus,
+  useUpsertOpusPreview
+} from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
-import {
-  OpusNumberKind,
-  OpusStatus
-} from '~/types/graphql/generated/graphql';
 import { FetchedOpusData } from '~/types/opus';
 
 type AnchorId = 'navigation' | 'publish';
@@ -176,6 +179,7 @@ export const useGroupContent = (id: string) => {
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [shouldExitAfterSave, setShouldExitAfterSave] = useState(false);
   const [updateOpus, { loading: isSaving }] = useUpdateOpus();
+  const [upsertOpusPreview, { loading: isPreviewing }] = useUpsertOpusPreview();
 
   const [deleteOpus, { loading: isDeleting }] = useDeleteOpus();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -286,102 +290,8 @@ export const useGroupContent = (id: string) => {
 
   const handleSave = async (statusToSave?: BaseContentStatuses) => {
     if (!groupData) return;
-    let mappedStatus: OpusStatus | undefined = undefined;
-    if (statusToSave === BaseContentStatuses.Published) {
-      mappedStatus = OpusStatus.Published;
-    }
     try {
-      const input = {
-        number: Number(groupData.groupNumber.trim()),
-        numberKind: groupData.titlePrefix as unknown as OpusNumberKind,
-        genre: {
-          uk: String(groupData.genre?.uk || '').trim(),
-          en: String(groupData.genre?.en || '').trim()
-        },
-        additionalText: String(groupData.additionalText || '').trim() || '',
-        ...(mappedStatus && { status: mappedStatus }),
-        name: {
-          uk: String(groupData.groupTitle?.uk || ''),
-          en: String(groupData.groupTitle?.en || '')
-        },
-        creationYear: String(groupData.creationYear || '').trim(),
-        endYear: groupData.endYear ? String(groupData.endYear) : null,
-        datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null,
-        parts: {
-          uk: String(groupData.parts?.uk || ''),
-          en: String(groupData.parts?.en || '')
-        },
-        introDescription: {
-          uk: groupData.description?.uk ? JSON.stringify(groupData.description.uk) : '""',
-          en: groupData.description?.en ? JSON.stringify(groupData.description.en) : '""'
-        },
-        blocksOrder: groupData.blocksOrder || ['details', 'intro', 'photos', 'works', 'performances'],
-        compositions: (groupData.compositions || []).map((work, index) => ({
-          id: work.id,
-          name: work.name.trim(),
-          genre: work.genre.trim() || undefined,
-          year: work.year.trim() || undefined,
-          order: index + 1,
-          audios: (work.audios || [])
-            .filter(isMediaItemFilled)
-            .map((audio) => ({
-              name: audio.name,
-              fileUrl: audio.fileUrl,
-              publishDate: ''
-            })),
-          notes: (work.notes || [])
-            .filter(isMediaItemFilled)
-            .map((note) => ({
-              name: note.name?.trim() || '',
-              fileName: note.fileName,
-              fileUrl: note.fileUrl ? note.fileUrl : null,
-              publishDate: note.publishDate || ''
-            }))
-        })),
-        gallery: (groupData.photos || []).map((photo) => {
-          const cropData = photo.crop as {
-            rect?: { x: number; y: number; width: number; height: number };
-            x?: number;
-            y?: number;
-            width?: number;
-            height?: number;
-          } | null;
-
-          const mappedCrop = cropData
-            ? {
-              x: cropData.rect?.x ?? cropData.x ?? 0,
-              y: cropData.rect?.y ?? cropData.y ?? 0,
-              width: cropData.rect?.width ?? cropData.width ?? 0,
-              height: cropData.rect?.height ?? cropData.height ?? 0
-            }
-            : null;
-
-          return {
-            id: photo.id?.startsWith('photo-') || photo.id?.includes('-') ? undefined : photo.id,
-            src: photo.src ? String(photo.src) : '',
-            description: {
-              uk: (photo.caption?.uk || '').trim(),
-              en: (photo.caption?.en || '').trim()
-            },
-            altText: {
-              uk: (photo.altText?.uk || '').trim(),
-              en: (photo.altText?.en || '').trim()
-            },
-            crop: mappedCrop
-          };
-        }),
-        performancesTitle: {
-          uk: String(groupData.performancesTitle || ''),
-          en: String(groupData.performancesTitle || '')
-        },
-        performances: (groupData.performances || [])
-          .map((perf) => ({
-            id: perf.id?.includes('-') ? undefined : perf.id,
-            title: { uk: (perf.caption?.uk || '').trim(), en: (perf.caption?.en || '').trim() },
-            videoUrl: (perf.url || '').trim()
-          }))
-          .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)
-      };
+      const input = buildOpusContentInput(groupData, statusToSave);
       await updateOpus({ id, input });
       toast.success('Групу опубліковано');
       return true;
@@ -407,6 +317,29 @@ export const useGroupContent = (id: string) => {
       }
       toast.error(error instanceof Error ? error.message : String(error));
       return false;
+    }
+  };
+
+  const handlePreviewClick = async () => {
+    if (!groupData || isPreviewing) return;
+
+    try {
+      const input = buildOpusContentInput(groupData);
+      const result = await upsertOpusPreview({ sourceId: id, input });
+      const previewOpus = result.data?.upsertOpusPreview;
+
+      if (!previewOpus?.id || !previewOpus.slug) {
+        toast.error('Не вдалося підготувати передогляд');
+        return;
+      }
+
+      await fetchPreview({
+        slug: `artistry/${previewOpus.slug}`,
+        lang: langKey,
+        draftId: previewOpus.id
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Не вдалося підготувати передогляд');
     }
   };
 
@@ -604,6 +537,7 @@ export const useGroupContent = (id: string) => {
     handleClose,
     handleFieldChange,
     handlePhotoAltTextBlur,
+    handlePreviewClick,
     handlePublishClick,
     handleMenuOptionClick,
     isDeleteModalOpen,

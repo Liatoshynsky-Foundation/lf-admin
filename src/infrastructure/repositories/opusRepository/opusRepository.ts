@@ -7,6 +7,7 @@ import { Opus } from '~/domain/entities/Opus';
 import { CreateOpusInput, IOpusRepository, OpusFilters, UpdateOpusInput } from '~/domain/repositories/opusRepository';
 import dbConnect from '~/infrastructure/db/connect';
 import { buildBaseQuery, combineConditions, createToEntity, fieldCondition, getBaseSort } from '~/infrastructure/repositories/helpers';
+import { OPUS_PREVIEW_SLUG_PREFIX } from '~/src/shared/utils/opusPreview/opusPreview';
 import { OpusNumberKind, OpusStatus } from '~/types/graphql/generated/graphql';
 
 export type DbOpusGalleryItem = {
@@ -57,6 +58,8 @@ export type DbOpus = {
 type OpusRepoDeps = Readonly<{
   OpusModel: Model<DbOpus>;
 }>;
+
+const systemPreviewSlugPattern = new RegExp(`^${OPUS_PREVIEW_SLUG_PREFIX}`);
 
 const toEntity = (doc: DbOpus): Opus =>
   createToEntity<Opus, DbOpus>(doc, {
@@ -141,7 +144,8 @@ export const OpusRepository = ({ OpusModel }: OpusRepoDeps): IOpusRepository => 
         query,
         fieldCondition<DbOpus>('status', filters?.statuses as unknown as string[], OpusStatus.Draft as string),
         fieldCondition<DbOpus>('numberKind', filters?.numberKind as unknown as string, OpusNumberKind.Op as string),
-        { number: { $type: 'number' } }
+        { number: { $type: 'number' } },
+        { $or: [{ slug: { $exists: false } }, { slug: null }, { slug: { $not: systemPreviewSlugPattern } }] }
       ]);
     },
     getSort,

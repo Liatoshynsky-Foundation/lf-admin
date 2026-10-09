@@ -14,12 +14,15 @@ import {
   OpusStatus,
   type UpdateOpusMutation,
   type UpdateOpusMutationVariables,
+  type UpsertOpusPreviewMutation,
+  type UpsertOpusPreviewMutationVariables,
   useCreateOpusMutation,
   useDeleteOpusMutation,
   useOpusByIdQuery,
   usePaginatedWorksQuery,
   useSearchCompositionsQuery,
   useUpdateOpusMutation,
+  useUpsertOpusPreviewMutation,
   WorksFiltersInput,
   WorksTab
 } from '~/types/graphql/generated/graphql';
@@ -108,6 +111,21 @@ export const useUpdateOpus = () => {
     [mutate]
   );
   return [updateOpus, meta] as const;
+};
+
+export const useUpsertOpusPreview = () => {
+  const [mutate, meta] = useUpsertOpusPreviewMutation();
+  const upsertOpusPreview = useCallback(
+    async (variables: UpsertOpusPreviewMutationVariables) =>
+      safeMutate<UpsertOpusPreviewMutation, UpsertOpusPreviewMutationVariables>(
+        mutate,
+        variables,
+        OpusErrors.NETWORK_ERROR_UPDATE,
+        OpusErrors.FAILED_TO_UPDATE
+      ),
+    [mutate]
+  );
+  return [upsertOpusPreview, meta] as const;
 };
 
 export const useDeleteOpus = () => {
