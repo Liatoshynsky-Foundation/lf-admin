@@ -1,4 +1,5 @@
-import { act,fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import CollapsibleBlock from './CollapsibleBlock';
@@ -20,6 +21,12 @@ jest.mock('~/public/icons/eye-closed.svg', () => {
   const EyeClosed = () => <span>closed eye</span>;
   EyeClosed.displayName = 'EyeClosed';
   return EyeClosed;
+});
+
+jest.mock('~/public/icons/trash.svg', () => {
+  const Trash = () => <span>trash</span>;
+  Trash.displayName = 'Trash';
+  return Trash;
 });
 
 jest.mock('../../grip/Grip');
@@ -131,6 +138,48 @@ describe('CollapsibleBlock', () => {
 
     fireEvent.keyDown(toggle, { key: ' ' });
     expect(onToggleVisibility).toHaveBeenCalledTimes(2);
+  });
+
+  it('should call onDelete without expanding the accordion', async () => {
+    const user = userEvent.setup();
+    const onDelete = jest.fn();
+    render(
+      <CollapsibleBlock title={titleText} onDelete={onDelete}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const cont = screen.getByTestId('inserted-container');
+    expect(cont).toHaveStyle('visibility: hidden');
+
+    await user.click(screen.getByRole('button', { name: 'Видалити секцію' }));
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(cont).toHaveStyle('visibility: hidden');
+  });
+
+  it('should call onDelete on Enter and Space, and ignore other keys', async () => {
+    const user = userEvent.setup();
+    const onDelete = jest.fn();
+    render(
+      <CollapsibleBlock title={titleText} onDelete={onDelete}>
+        <div>Child Content</div>
+      </CollapsibleBlock>
+    );
+
+    const deleteButton = screen.getByRole('button', { name: 'Видалити секцію' });
+    act(() => {
+      deleteButton.focus();
+    });
+
+    await user.keyboard('a');
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.keyboard('{Enter}');
+    expect(onDelete).toHaveBeenCalledTimes(1);
+
+    await user.keyboard(' ');
+    expect(onDelete).toHaveBeenCalledTimes(2);
   });
 
   it('should lock its own pointer events and dim itself when a save is in progress', () => {

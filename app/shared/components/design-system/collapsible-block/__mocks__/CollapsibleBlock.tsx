@@ -4,6 +4,7 @@ interface CollapsibleBlockMockProps {
   grip?: boolean;
   hidden?: boolean;
   onToggleVisibility?: () => void;
+  onDelete?: () => void;
 }
 
 const CollapsibleBlock = ({
@@ -11,11 +12,17 @@ const CollapsibleBlock = ({
   title,
   grip = false,
   hidden = false,
-  onToggleVisibility
+  onToggleVisibility,
+  onDelete
 }: CollapsibleBlockMockProps) => (
   <section data-testid="collapsible-block" data-hidden={hidden}>
     <h2>{title}</h2>
     {grip && <div data-testid="collapsible-block-grip">Grip</div>}
+    {onDelete && (
+      <button type="button" aria-label="Видалити секцію" onClick={onDelete}>
+        Видалити секцію
+      </button>
+    )}
     {onToggleVisibility && (
       <button
         type="button"

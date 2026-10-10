@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, CircularProgress, Divider,Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Divider, Stack, Typography } from '@mui/material';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { styles } from './EditablePageLayout.styles';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
 import { Header } from '~/shared/components/header/Header';
 import LanguageSwitcher from '~/shared/components/language-switcher/LanguageSwitcher';
+import { PageSectionsEditor } from '~/shared/components/page-sections/PageSectionsEditor';
 import { usePageEditor } from '~/shared/hooks/use-page-editor/usePageEditor';
 import { useSavePageBlocks } from '~/shared/hooks/use-save-page/UseSavePage';
 import { useStore } from '~/store';
@@ -123,7 +124,16 @@ export const EditablePageLayout = ({
             </Button>
           </Stack>
         </Stack>
-        {isLoading ? <Box sx={{ p: '32px' }}>{content}</Box> : content}
+        {isLoading ? (
+          <Box sx={{ p: '32px' }}>{content}</Box>
+        ) : (
+          <>
+            {content}
+            <Box sx={{ px: '32px', pb: '32px' }}>
+              <PageSectionsEditor pageSlug={pageSlug} />
+            </Box>
+          </>
+        )}
       </Box>
     );
   }
@@ -141,6 +151,7 @@ export const EditablePageLayout = ({
         onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
       />
       {content}
+      {!isLoading && <PageSectionsEditor pageSlug={pageSlug} />}
     </Box>
   );
 };

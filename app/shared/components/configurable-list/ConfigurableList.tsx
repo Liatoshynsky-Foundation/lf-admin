@@ -50,9 +50,10 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
   const list = items.map((item, index) => {
+    const itemKey = item.id ?? index;
     const content = (
       <ItemWrapper
-        key={item.id}
+        key={itemKey}
         editable={editable && (allowFirstItemDeletion || index !== 0)}
         withSeparator={withSeparator(index)}
         onDelete={() => onDelete(item.id)}
@@ -67,16 +68,18 @@ const ConfigurableList = <T extends ConfigurableListItem>({
     );
 
     return sortable ? (
-      <SortableItemWrapper key={item.id} id={item.id} gripHandle>
+      <SortableItemWrapper key={itemKey} id={item.id ?? itemKey} gripHandle>
         {content}
       </SortableItemWrapper>
-    ) : content;
+    ) : (
+      content
+    );
   });
 
   const listContent = sortable ? (
     <SortableList
       id="configurable-list"
-      items={items.map((item) => item.id)}
+      items={items.map((item, index) => item.id ?? index)}
       onDragEnd={(event) => handleSortableDragEnd(event, items, onReorder ?? (() => undefined))}
     >
       {list}

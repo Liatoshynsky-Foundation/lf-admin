@@ -2,6 +2,7 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent } from '@tiptap/react';
 import { useCallback, useMemo } from 'react';
 
+import { ensureIds } from '~/lib/utils/ensureIds';
 import { generateUniqueId } from '~/lib/utils/generateUniqueId';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import type { SectionListEntry } from '~/types/blocks/contentTypes';
@@ -21,23 +22,27 @@ interface UseSectionListContentProps {
 }
 
 export const useSectionListContent = ({ items, locale, onItemsChange }: UseSectionListContentProps) => {
+  const itemsWithIds = useMemo(() => ensureIds(items), [items]);
+
   const uiItems = useMemo<SectionListUiItem[]>(
     () =>
-      items.map((entry) => ({
+      itemsWithIds.map((entry) => ({
         id: entry.id,
         title: entry.title[locale] as JSONContent,
         description: entry.description[locale] as JSONContent
       })),
-    [items, locale]
+    [itemsWithIds, locale]
   );
 
   const changeItem = useCallback(
     (id: string, field: 'title' | 'description', value: JSONContent) => {
       onItemsChange(
-        items.map((entry) => (entry.id === id ? { ...entry, [field]: { ...entry[field], [locale]: value } } : entry))
+        itemsWithIds.map((entry) =>
+          entry.id === id ? { ...entry, [field]: { ...entry[field], [locale]: value } } : entry
+        )
       );
     },
-    [items, locale, onItemsChange]
+    [itemsWithIds, locale, onItemsChange]
   );
 
   const createItem = useCallback(() => {
@@ -48,19 +53,19 @@ export const useSectionListContent = ({ items, locale, onItemsChange }: UseSecti
       description: { uk: doc, en: doc }
     };
 
-    onItemsChange([...items, newEntry]);
+    onItemsChange([...itemsWithIds, newEntry]);
 
     return { id: newEntry.id, title: doc, description: doc };
-  }, [items, onItemsChange]);
+  }, [itemsWithIds, onItemsChange]);
 
   const deleteItem = useCallback(
-    (id: string) => onItemsChange(items.filter((entry) => entry.id !== id)),
-    [items, onItemsChange]
+    (id: string) => onItemsChange(itemsWithIds.filter((entry) => entry.id !== id)),
+    [itemsWithIds, onItemsChange]
   );
 
   const dragEnd = useCallback(
-    (event: DragEndEvent) => handleSortableDragEnd(event, items, onItemsChange),
-    [items, onItemsChange]
+    (event: DragEndEvent) => handleSortableDragEnd(event, itemsWithIds, onItemsChange),
+    [itemsWithIds, onItemsChange]
   );
 
   return {

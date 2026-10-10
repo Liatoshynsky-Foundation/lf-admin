@@ -42,6 +42,9 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
 }));
 
 jest.mock('~/shared/components/header/Header');
+jest.mock('~/shared/components/page-sections/PageSectionsEditor', () => ({
+  PageSectionsEditor: () => <div data-testid="page-sections-editor" />
+}));
 jest.mock('~/shared/components/language-switcher/LanguageSwitcher', () => {
   const MockLanguageSwitcher = () => <div data-testid="language-switcher" />;
   MockLanguageSwitcher.displayName = 'MockLanguageSwitcher';
@@ -114,6 +117,7 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('header')).toBeInTheDocument();
       expect(screen.getByTestId('title')).toHaveTextContent(headerTitle);
       expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
     });
 
     it('should render Header with correct title and children when loaded', () => {
@@ -122,6 +126,7 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('header')).toBeInTheDocument();
       expect(screen.getByTestId('title')).toHaveTextContent(headerTitle);
       expect(screen.getByTestId('child-content')).toHaveTextContent(childrenText);
+      expect(screen.getByTestId('page-sections-editor')).toBeInTheDocument();
     });
   });
 
@@ -314,6 +319,7 @@ describe('EditablePageLayout', () => {
       expect(screen.getByRole('heading', { name: headerTitle })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
       expect(screen.getByTestId('child-content')).toBeInTheDocument();
+      expect(screen.getByTestId('page-sections-editor')).toBeInTheDocument();
     });
 
     it('should call handleSave when save button is clicked in simple-layout', () => {
@@ -350,6 +356,7 @@ describe('EditablePageLayout', () => {
       runSimulation({ variant: 'simple-layout' });
 
       expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
     });
   });
 });
