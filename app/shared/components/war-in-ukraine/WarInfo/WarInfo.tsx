@@ -41,6 +41,7 @@ export const WarInfo = () => {
         />
 
         <CustomTextField
+          key={`${blockId}-description-${currentLocale}`}
           fieldType="formatting"
           title="Опис блоку"
           label="Текст опису"
