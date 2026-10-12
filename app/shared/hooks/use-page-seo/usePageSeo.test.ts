@@ -104,6 +104,7 @@ describe('usePageSeo', () => {
           title: { uk: 'UK Title', en: 'EN Title' },
           description: { uk: 'UK Desc', en: 'EN Desc' },
           keywords: { uk: 'uk keywords', en: 'en keywords' },
+          coverImage: { src: '/cover.png' },
           allowIndexation: { uk: false, en: true }
         }
       },

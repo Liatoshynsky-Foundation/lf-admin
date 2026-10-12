@@ -152,6 +152,7 @@ export const PageRepository = ({ PageModel, DraftPageModel }: PageRepoDeps): Pag
       if (input.description != null) $set.description = input.description;
       if (input.keywords != null) $set.keywords = input.keywords;
       if (input.canonicalUrl != null) $set.canonicalUrl = input.canonicalUrl;
+      if (input.coverImage?.src !== undefined) $set['coverImage.src'] = input.coverImage.src;
       if (input.allowIndexation != null) $set.allowIndexation = input.allowIndexation;
 
       if (Object.keys($set).length === 0) {

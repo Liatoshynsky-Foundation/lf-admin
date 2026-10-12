@@ -51,6 +51,7 @@ input UpdatePageSeoInput {
   description: JSON
   keywords: JSON
   canonicalUrl: JSON
+  coverImage: JSON
   allowIndexation: JSON
 }
 
