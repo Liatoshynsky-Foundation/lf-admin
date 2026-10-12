@@ -430,6 +430,29 @@ describe('OpusRepository', () => {
       expect(chain.sort).toHaveBeenCalledWith({ number: 1, additionalText: 1 });
     });
 
+    it('filters system preview opuses out of admin lists', async () => {
+      const chain = mockChain();
+      findMock.mockReturnValue(chain);
+
+      await repository.findAll({
+        numberKind: OpusNumberKind.Op
+      });
+
+      expect(findMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $and: expect.arrayContaining([
+            {
+              $or: [
+                { slug: { $exists: false } },
+                { slug: null },
+                { slug: { $not: /^sys-preview-/ } }
+              ]
+            }
+          ])
+        })
+      );
+    });
+
     it('sorts additional text in reverse order when sorting descending by number', async () => {
       const chain = mockChain();
       findMock.mockReturnValue(chain);

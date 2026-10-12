@@ -1086,6 +1086,150 @@ describe('OpusMutation Resolvers', () => {
     });
   });
 
+  describe('upsertOpusPreview', () => {
+    const previewInput = {
+      ...BASE_UPDATE_INPUT,
+      additionalText: 'bis',
+      gallery: [
+        { id: 'empty-photo', src: '   ', altText: { uk: '', en: '' }, description: { uk: '', en: '' } },
+        { id: 'photo-1', src: ' https://example.com/photo.jpg ', altText: { uk: '', en: '' }, description: { uk: '', en: '' } }
+      ],
+      performances: [
+        { id: 'empty-performance', videoUrl: '', title: { uk: '', en: '' } },
+        { id: 'performance-1', videoUrl: ' https://youtu.be/test ', title: { uk: 'Відео', en: '' } }
+      ],
+      compositions: [
+        { id: COMPOSITION_ID_2, name: 'Composition 2' },
+        { name: 'Unsaved composition' }
+      ]
+    } satisfies UpdateOpusGQLInput;
+
+    it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
+      await expect(
+        OpusMutation.upsertOpusPreview({}, { sourceId: OPUS_ID, input: previewInput }, userContext)
+      ).rejects.toThrow(
+        new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+          extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+        })
+      );
+
+      expect(mockOpusRepo.create).not.toHaveBeenCalled();
+      expect(mockOpusRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should create a system preview opus when it does not exist yet', async () => {
+      const previewOpus = {
+        ...MOCK_OPUS_ENTITY,
+        id: 'preview-id',
+        slug: 'sys-preview-artistry',
+        additionalText: 'bis (Preview)',
+        compositions: [COMPOSITION_ID_2]
+      } as Opus;
+
+      mockOpusRepo.findBySlug.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockOpusRepo.create.mockResolvedValue(previewOpus);
+      mockCompositionsRepo.findByIds.mockResolvedValue([MOCK_COMPOSITION_2]);
+      mockedOrderCompositionsByIds.mockReturnValue([MOCK_COMPOSITION_2]);
+
+      const result = await OpusMutation.upsertOpusPreview(
+        {},
+        { sourceId: OPUS_ID, input: previewInput },
+        adminContext
+      );
+
+      expect(mockOpusRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'sys-preview-artistry',
+          adminTitle: 'sys-preview-artistry',
+          status: OpusStatus.Draft,
+          additionalText: 'bis (Preview)',
+          allowIndexation: { uk: false, en: false },
+          compositions: [COMPOSITION_ID_2],
+          gallery: [expect.objectContaining({ id: 'photo-1', src: 'https://example.com/photo.jpg' })],
+          performances: [expect.objectContaining({ id: 'performance-1', videoUrl: 'https://youtu.be/test' })]
+        })
+      );
+      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
+      expect(result).toEqual({ ...previewOpus, compositions: [MOCK_COMPOSITION_2] });
+    });
+
+    it('should reuse and overwrite the existing system preview opus', async () => {
+      const existingPreview = {
+        ...MOCK_OPUS_ENTITY,
+        id: 'preview-id',
+        slug: 'sys-preview-artistry',
+        additionalText: 'old (Preview)'
+      } as Opus;
+      const updatedPreview = {
+        ...existingPreview,
+        additionalText: 'bis (Preview)',
+        compositions: [COMPOSITION_ID_2]
+      } as Opus;
+
+      mockOpusRepo.findBySlug.mockResolvedValue(existingPreview);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockOpusRepo.update.mockResolvedValue(updatedPreview);
+      mockCompositionsRepo.findByIds.mockResolvedValue([MOCK_COMPOSITION_2]);
+      mockedOrderCompositionsByIds.mockReturnValue([MOCK_COMPOSITION_2]);
+
+      await OpusMutation.upsertOpusPreview(
+        {},
+        { sourceId: OPUS_ID, input: previewInput },
+        adminContext
+      );
+
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', 'bis (Preview)');
+      expect(mockOpusRepo.update).toHaveBeenCalledWith(
+        'preview-id',
+        expect.objectContaining({
+          slug: 'sys-preview-artistry',
+          adminTitle: 'sys-preview-artistry',
+          status: OpusStatus.Draft,
+          additionalText: 'bis (Preview)'
+        }),
+        undefined
+      );
+      expect(mockOpusRepo.create).not.toHaveBeenCalled();
+      expect(mockCompositionsRepo.syncForOpus).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to source required fields when preview input is incomplete', async () => {
+      const previewOpus = {
+        ...MOCK_OPUS_ENTITY,
+        id: 'preview-id',
+        slug: 'sys-preview-artistry',
+        additionalText: '(Preview)'
+      } as Opus;
+
+      mockOpusRepo.findBySlug.mockResolvedValue(null);
+      mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+      mockOpusRepo.create.mockResolvedValue(previewOpus);
+      mockedOrderCompositionsByIds.mockReturnValue([]);
+
+      await OpusMutation.upsertOpusPreview(
+        {},
+        {
+          sourceId: OPUS_ID,
+          input: {
+            ...BASE_UPDATE_INPUT,
+            name: { uk: '', en: '' },
+            additionalText: ''
+          }
+        },
+        adminContext
+      );
+
+      expect(mockOpusRepo.findByComplexKey).toHaveBeenCalledWith(OPUS_NUMBER, 'op', '(Preview)');
+      expect(mockOpusRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: MOCK_OPUS_ENTITY.name,
+          additionalText: '(Preview)'
+        })
+      );
+    });
+  });
+
   describe('deleteOpus', () => {
     it('should throw UNAUTHENTICATED error when request is not authenticated', async () => {
       await expect(OpusMutation.deleteOpus({}, { id: OPUS_ID }, userContext)).rejects.toThrow(

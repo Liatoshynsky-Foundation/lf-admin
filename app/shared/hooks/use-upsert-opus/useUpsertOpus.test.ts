@@ -16,6 +16,7 @@ import {
   META_KEYWORDS_LENGTH,
   META_TITLE_LENGTH
 } from '~/constants/publications';
+import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import type { FetchedOpusData, OpusCompositionData } from '~/types/opus';
 
@@ -26,6 +27,7 @@ interface OpusByIdResult {
 
 const mockCreateOpus = jest.fn();
 const mockUpdateOpus = jest.fn();
+const mockUpsertOpusPreview = jest.fn();
 let mockOpusByIdResult: OpusByIdResult;
 
 jest.mock('react-hot-toast', () => ({
@@ -36,7 +38,12 @@ jest.mock('react-hot-toast', () => ({
 jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useCreateOpus: () => [mockCreateOpus],
   useUpdateOpus: () => [mockUpdateOpus],
+  useUpsertOpusPreview: () => [mockUpsertOpusPreview],
   useOpusById: () => mockOpusByIdResult
+}));
+
+jest.mock('~/lib/utils/fetchPreview', () => ({
+  fetchPreview: jest.fn()
 }));
 
 const fullFetchedOpus: FetchedOpusData = {
@@ -128,6 +135,7 @@ describe('useUpsertOpus', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOpusByIdResult = { data: undefined, loading: false };
+    jest.mocked(fetchPreview).mockResolvedValue(undefined);
   });
 
   it('generates a unique composition id', () => {
@@ -739,6 +747,67 @@ describe('useUpsertOpus', () => {
       })
     );
     expect(result.current.isSaved).toBe(true);
+  });
+
+  it('prepares and opens preview for an existing opus without updating the source opus', async () => {
+    mockOpusByIdResult = { data: { opusById: fullFetchedOpus }, loading: false };
+    mockUpsertOpusPreview.mockResolvedValue({
+      data: { upsertOpusPreview: { id: 'preview-id', slug: 'sys-preview-artistry' } }
+    });
+
+    const { result } = renderHook(() => useUpsertOpus({ id: 'opus-1' }));
+
+    await act(async () => {
+      await result.current.handlePreview();
+    });
+
+    expect(mockUpdateOpus).not.toHaveBeenCalled();
+    expect(mockUpsertOpusPreview).toHaveBeenCalledWith({
+      sourceId: 'opus-1',
+      input: expect.objectContaining({
+        number: 42,
+        numberKind: 'sineop',
+        name: { uk: 'Симфонія', en: undefined }
+      })
+    });
+    expect(mockUpsertOpusPreview.mock.calls[0][0].input).not.toHaveProperty('status');
+    expect(fetchPreview).toHaveBeenCalledWith({
+      slug: 'artistry/sys-preview-artistry',
+      lang: 'uk',
+      draftId: 'preview-id'
+    });
+  });
+
+  it('allows preview from incomplete edit form values by sending source-safe fallbacks', async () => {
+    mockOpusByIdResult = { data: { opusById: fullFetchedOpus }, loading: false };
+    mockUpsertOpusPreview.mockResolvedValue({
+      data: { upsertOpusPreview: { id: 'preview-id', slug: 'sys-preview-artistry' } }
+    });
+
+    const { result } = renderHook(() => useUpsertOpus({ id: 'opus-1' }));
+
+    act(() => {
+      result.current.setDetails((prev) => ({
+        ...prev,
+        number: 'not a number',
+        name: '',
+        creationYear: ''
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handlePreview();
+    });
+
+    expect(mockUpsertOpusPreview).toHaveBeenCalledWith({
+      sourceId: 'opus-1',
+      input: expect.objectContaining({
+        number: 0,
+        name: { uk: '', en: undefined },
+        creationYear: ''
+      })
+    });
+    expect(fetchPreview).toHaveBeenCalled();
   });
 
   it('returns undefined when update returns no id', async () => {

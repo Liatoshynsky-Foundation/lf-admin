@@ -48,6 +48,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
     handleClose,
     handleFieldChange,
     handlePhotoAltTextBlur,
+    handlePreviewClick,
     handlePublishClick,
     handleMenuOptionClick,
     isDeleteModalOpen,
@@ -142,7 +143,12 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         originUrl="/creativity"
         onBackClick={handleBackClick}
         rightActionsComponent={
-          <HeaderRightActions mode="edit" onPublish={handlePublishClick} onMenuOpen={(e) => handleOpen(e, 'publish')} />
+          <HeaderRightActions
+            mode="edit"
+            onPreview={handlePreviewClick}
+            onPublish={handlePublishClick}
+            onMenuOpen={(e) => handleOpen(e, 'publish')}
+          />
         }
       >
         <TitleDropdown

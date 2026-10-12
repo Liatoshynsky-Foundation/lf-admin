@@ -95,6 +95,13 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
   }
 }
 
+mutation UpsertOpusPreview($sourceId: ID!, $input: UpdateOpusInput!) {
+  upsertOpusPreview(sourceId: $sourceId, input: $input) {
+    id
+    slug
+  }
+}
+
 mutation DeleteOpus($id: ID!) {
   deleteOpus(id: $id)
 }

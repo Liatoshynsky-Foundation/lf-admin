@@ -33,7 +33,8 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     crop,
     setCrop,
     isSaved,
-    handleSave
+    handleSave,
+    handlePreview
   } = data;
   const router = useRouter();
 
@@ -55,7 +56,15 @@ export default function OpusView({ data, mode = 'create' }: Readonly<OpusViewPro
     <>
       <DividedHeader
         originUrl={OPUSES_BASE_PATH}
-        rightActionsComponent={<HeaderRightActions mode="create" onEdit={onEdit} editLabel="Перейти до редагування" />}
+        rightActionsComponent={
+          <HeaderRightActions
+            mode="create"
+            onEdit={onEdit}
+            onPreview={handlePreview}
+            hidePreview={!data.isEditing}
+            editLabel="Перейти до редагування"
+          />
+        }
       >
         <Typography variant="h7">{mode === 'edit' ? OPUS_PAGE_TITLES.edit : OPUS_PAGE_TITLES.create}</Typography>
         <ProgressStatus isSaved={isSaved} />
