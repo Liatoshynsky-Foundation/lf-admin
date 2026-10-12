@@ -17,13 +17,9 @@ describe('convertImageToSrgb', () => {
       .toBuffer();
 
     const output = await convertImageToSrgb(input, 'image/jpeg');
-    const metadata = await sharp(output).metadata();
+    const { space, exif, iptc, xmp, comments } = await sharp(output).metadata();
 
-    expect(metadata.space).toBe('srgb');
-    expect(metadata.exif).toBeUndefined();
-    expect(metadata.iptc).toBeUndefined();
-    expect(metadata.xmp).toBeUndefined();
-    expect(metadata.comments).toBeUndefined();
+    expect({ space, exif, iptc, xmp, comments }).toEqual({ space: 'srgb' });
   });
 
   it('leaves SVG images unchanged', async () => {
