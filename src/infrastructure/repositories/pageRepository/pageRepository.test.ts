@@ -496,6 +496,7 @@ describe('PageRepository', () => {
       description: { uk: 'SEO Опис', en: 'SEO Description' },
       keywords: { uk: 'ключові слова', en: 'keywords' },
       canonicalUrl: { uk: 'https://example.com/uk', en: 'https://example.com/en' },
+      coverImage: { src: 'https://example.com/cover.jpg' },
       allowIndexation: { uk: false, en: true }
     };
 
@@ -505,6 +506,10 @@ describe('PageRepository', () => {
       description: seoInput.description,
       keywords: seoInput.keywords,
       canonicalUrl: seoInput.canonicalUrl,
+      coverImage: {
+        ...DEFAULT_COVER_IMAGE,
+        src: seoInput.coverImage.src
+      },
       allowIndexation: seoInput.allowIndexation
     };
 
@@ -523,6 +528,7 @@ describe('PageRepository', () => {
             description: seoInput.description,
             keywords: seoInput.keywords,
             canonicalUrl: seoInput.canonicalUrl,
+            'coverImage.src': seoInput.coverImage.src,
             allowIndexation: seoInput.allowIndexation
           }
         },
@@ -536,6 +542,7 @@ describe('PageRepository', () => {
             description: seoInput.description,
             keywords: seoInput.keywords,
             canonicalUrl: seoInput.canonicalUrl,
+            'coverImage.src': seoInput.coverImage.src,
             allowIndexation: seoInput.allowIndexation
           }
         }
@@ -547,8 +554,12 @@ describe('PageRepository', () => {
         status: PageStatus.Published,
         pageType: 'AboutUsPage',
         category: 'foundation',
-        coverImage: DEFAULT_COVER_IMAGE,
+        coverImage: {
+          ...DEFAULT_COVER_IMAGE,
+          src: seoInput.coverImage.src
+        },
         blocks: publishedDoc.blocks,
+        blocksOrder: undefined,
         description: seoInput.description,
         keywords: seoInput.keywords,
         canonicalUrl: seoInput.canonicalUrl,

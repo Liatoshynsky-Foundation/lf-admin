@@ -36,6 +36,9 @@ export const mapSeoBlockValueToUpdatePageSeoInput = (slug: string, value: SeoBlo
     uk: value.meta.uk.keywords,
     en: value.meta.en.keywords
   },
+  coverImage: {
+    src: value.ogImage
+  },
   allowIndexation: {
     uk: value.allowIndexing.uk,
     en: value.allowIndexing.en
