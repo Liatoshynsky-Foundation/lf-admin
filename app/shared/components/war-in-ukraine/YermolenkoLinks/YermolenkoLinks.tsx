@@ -43,6 +43,7 @@ export const YermolenkoLinks = () => {
         <Typography sx={styles.sectionTitle}>Головна інформація</Typography>
 
         <CustomTextField
+          key={`${blockId}-description-${currentLocale}`}
           fieldType="formatting"
           title="Опис"
           label="Текст опису"

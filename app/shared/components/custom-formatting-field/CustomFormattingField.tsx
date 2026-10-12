@@ -145,7 +145,15 @@ export const CustomFormattingField = ({
 
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (pendingUpdateRef.current) {
+        onChangeRef.current(pendingUpdateRef.current);
+        pendingUpdateRef.current = null;
+      }
     };
   }, []);
 
