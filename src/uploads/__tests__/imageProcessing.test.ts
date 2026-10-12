@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { convertImageToSrgb } from '../imageProcessing';
 
 describe('convertImageToSrgb', () => {
-  it('converts JPEG images to sRGB and embeds an sRGB profile', async () => {
+  it('converts JPEG images to sRGB and strips metadata', async () => {
     const input = await sharp({
       create: {
         width: 1,
@@ -12,18 +12,17 @@ describe('convertImageToSrgb', () => {
         background: { r: 255, g: 0, b: 0 }
       }
     })
+      .withMetadata({ exif: { IFD0: { Artist: 'Test photographer' } } })
       .jpeg()
       .toBuffer();
 
     const output = await convertImageToSrgb(input, 'image/jpeg');
-    const metadata = await sharp(output).metadata();
+    const { space, exif, iptc, xmp, comments } = await sharp(output).metadata();
 
-    expect(metadata.space).toBe('srgb');
-    expect(metadata.icc).toEqual(expect.any(Buffer));
-    expect(metadata.icc?.length).toBeGreaterThan(0);
+    expect({ space, exif, iptc, xmp, comments }).toEqual({ space: 'srgb' });
   });
 
-  it('leaves unsupported image formats unchanged', async () => {
+  it('leaves SVG images unchanged', async () => {
     const input = Buffer.from('image');
 
     await expect(convertImageToSrgb(input, 'image/svg+xml')).resolves.toBe(input);
