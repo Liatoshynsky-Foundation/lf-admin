@@ -149,6 +149,17 @@ describe('useArchiveCaseRowActions', () => {
       expect(screen.getByTestId('edit-case-case-id')).toHaveTextContent(caseItem.id);
     });
 
+    it('shares an orphan case using the cases list URL', async () => {
+      const user = userEvent.setup();
+      const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+      render(<TestHarness caseItem={buildCase({ fundId: '' })} />);
+
+      await user.click(screen.getByTestId('menu-share'));
+
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/archive/cases?caseId=case-1`);
+      expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+    });
+
     it('should close the edit modal without calling onCaseChanged', async () => {
       const user = userEvent.setup();
       const onCaseChangedMock = jest.fn();
