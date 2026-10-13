@@ -7,10 +7,11 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { FundErrors } from '~/constants/errors';
-import { FUND_PUBLISH_SUCCESS_MESSAGE } from '~/constants/fund';
+import { FUND_PUBLISH_SUCCESS_MESSAGE, FUND_VALIDATION_MESSAGES } from '~/constants/fund';
 import { resolveLocalizedText, textToProse } from '~/lib/utils/prose';
 import { FundDetailsErrors, FundDetailsValue } from '~/shared/components/forms/fund-details-block/FundDetailsBlock';
 import { useCreateFund, useFundById, useUpdateFund } from '~/shared/hooks/use-funds/useFunds';
+import { useStore } from '~/store';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import type { CreateFundInput } from '~/types/graphql/generated/graphql';
 
@@ -131,12 +132,23 @@ const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
     for (const issue of parsed) {
       const safeIssue = issue as { path?: unknown; message?: unknown } | null;
 
-      const fieldName = Array.isArray(safeIssue?.path) ? safeIssue.path[0] : undefined;
+      const [fieldName, locale] = Array.isArray(safeIssue?.path) ? safeIssue.path : [];
 
-      if (typeof fieldName === 'string' && typeof safeIssue?.message === 'string') {
-        errors[fieldName as keyof FundDetailsValue] = safeIssue.message;
+      if (typeof fieldName !== 'string' || typeof safeIssue?.message !== 'string') continue;
+
+      if (fieldName === 'name') {
+        if (locale !== 'uk' && locale !== 'en') continue;
+
+        errors.name = {
+          ...errors.name,
+          [locale]: safeIssue.message
+        };
         hasErrors = true;
+        continue;
       }
+
+      errors[fieldName as Exclude<keyof FundDetailsValue, 'name'>] = safeIssue.message;
+      hasErrors = true;
     }
 
     return hasErrors ? errors : null;
@@ -149,6 +161,7 @@ export const useUpsertFund = (fundId?: string) => {
   const params = useParams<{ id?: string }>();
   const id = fundId ?? params.id;
   const mode = id ? 'edit' : 'create';
+  const setLocale = useStore((state) => state.setLocale);
 
   const [details, setDetails] = useState<FundDetailsValue>(INITIAL_DETAILS);
   const [initialDetails, setInitialDetails] = useState<FundDetailsValue | null>(null);
@@ -195,7 +208,12 @@ export const useUpsertFund = (fundId?: string) => {
 
   const hasUnsavedChanges = initialDetails !== null && JSON.stringify(details) !== JSON.stringify(initialDetails);
 
-  const validate = useCallback((): boolean => {
+  type ValidationResult = {
+    isValid: boolean;
+    errors: FundDetailsErrors;
+  }
+
+  const validate = useCallback((): ValidationResult => {
     const newErrors: FundDetailsErrors = {};
     let isValid = true;
 
@@ -207,14 +225,17 @@ export const useUpsertFund = (fundId?: string) => {
       isValid = false;
     }
 
-    const nameUk = details.name?.uk || '';
+    newErrors.name = {};
+    for (const locale of ['uk', 'en'] as const) {
+      const name = details.name?.[locale].trim() || '';
 
-    if (!nameUk.trim()) {
-      newErrors.name = 'Назва фонду є обов’язковою.';
-      isValid = false;
-    } else if (nameUk.length > 40) {
-      newErrors.name = 'Назва не може перевищувати 40 символів.';
-      isValid = false;
+      if (!name) {
+        newErrors.name[locale] = FUND_VALIDATION_MESSAGES.nameLocaleRequired[locale];
+        isValid = false;
+      } else if (name.length > 40) {
+        newErrors.name[locale] = FUND_VALIDATION_MESSAGES.nameMaxLength;
+        isValid = false;
+      }
     }
 
     const docDate = details.documentCreationDate || '';
@@ -246,9 +267,11 @@ export const useUpsertFund = (fundId?: string) => {
       newErrors.description = 'Опис не може перевищувати 1000 символів.';
       isValid = false;
     }
-
     setErrors(newErrors);
-    return isValid;
+    return {
+      isValid,
+      errors: newErrors
+    };
   }, [details]);
 
   const saveFund = useCallback(
@@ -271,7 +294,11 @@ export const useUpsertFund = (fundId?: string) => {
   const handleSave = useCallback(
     async (status: BaseContentStatuses): Promise<string | null> => {
       setForceShowErrors(true);
-      if (!validate()) {
+
+      const validation = validate();
+      if (!validation.isValid) {
+        if (validation.errors.name?.uk) setLocale('uk');
+        else if (validation.errors.name?.en) setLocale('en');
         return null;
       }
 
@@ -299,7 +326,7 @@ export const useUpsertFund = (fundId?: string) => {
 
       return null;
     },
-    [validate, details, saveFund]
+    [validate, details, saveFund, setLocale]
   );
 
   return {

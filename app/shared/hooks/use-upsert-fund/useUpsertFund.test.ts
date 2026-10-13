@@ -34,7 +34,15 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useFundById: (...args: unknown[]) => mockUseFundById(...args)
 }));
 
+const mockSetLocale = jest.fn();
+const mockUseStore = jest.fn();
+jest.mock('~/store', () => ({
+  __esModule: true,
+  useStore: (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) => mockUseStore(selector)
+}));
+
 import { useUpsertFund } from './useUpsertFund';
+import { FUND_VALIDATION_MESSAGES } from '~/constants/fund';
 
 const emptyDoc = { type: 'doc', content: [] };
 
@@ -45,6 +53,11 @@ describe('useUpsertFund', () => {
     mockUseFundById.mockReturnValue({ data: undefined });
     mockResolveLocalizedText.mockImplementation((value: unknown) => (typeof value === 'string' ? value : ''));
     mockTextToProse.mockReturnValue(emptyDoc);
+
+    mockUseStore.mockImplementation(
+      (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) =>
+        selector({ locale: 'uk', setLocale: mockSetLocale })
+    );
   });
 
   const validDetails = {
@@ -202,32 +215,55 @@ describe('useUpsertFund', () => {
       expect(result.current.errors.fundNumber).toBeDefined();
     });
 
-    it('fails when name.uk is empty', async () => {
+    it.each([
+      {
+        locale: 'uk' as const,
+        name: { uk: '', en: 'Name' },
+        expectedError: FUND_VALIDATION_MESSAGES.nameLocaleRequired.uk
+      },
+      {
+        locale: 'en' as const,
+        name: { uk: 'Name', en: '' },
+        expectedError: FUND_VALIDATION_MESSAGES.nameLocaleRequired.en
+      }
+    ])('fails when name.$locale is empty', async ({ locale, name, expectedError }) => {
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
       act(() => {
-        result.current.setDetails((prev) => ({ ...prev, name: { uk: '', en: 'Name' } }));
+        result.current.setDetails((prev) => ({ ...prev, name }));
       });
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(result.current.errors.name).toBeDefined();
+      expect(mockSetLocale).toHaveBeenCalledWith(locale);
+      expect(result.current.errors.name?.[locale]).toBe(expectedError);
+      expect(mockCreateFund).not.toHaveBeenCalled();
     });
 
-    it('fails when name.uk exceeds 40 characters', async () => {
+    it.each([
+      {
+        locale: 'uk' as const,
+        name: { uk: 'a'.repeat(41), en: 'Name' }
+      },
+      {
+        locale: 'en' as const,
+        name: { uk: 'Name', en: 'a'.repeat(41) }
+      }
+    ])('fails when name.$locale exceeds 40 characters', async ({ locale, name }) => {
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
       act(() => {
-        result.current.setDetails((prev) => ({ ...prev, name: { uk: 'a'.repeat(41), en: 'Name' } }));
+        result.current.setDetails((prev) => ({ ...prev, name }));
       });
 
       await act(async () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(result.current.errors.name).toBeDefined();
+      expect(result.current.errors.name?.[locale]).toBeDefined();
+      expect(mockCreateFund).not.toHaveBeenCalled();
     });
 
     it('fails when documentCreationDate is empty', async () => {
@@ -304,7 +340,7 @@ describe('useUpsertFund', () => {
     it('validates successfully when description resolves to null or empty', async () => {
       mockResolveLocalizedText.mockReturnValue(null);
       mockCreateFund.mockResolvedValue({ data: { createFund: { id: 'new-id' } } });
-      
+
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
 
@@ -375,7 +411,7 @@ describe('useUpsertFund', () => {
     });
 
     it('maps a backend zod validation error array onto field errors', async () => {
-      const zodMessage = JSON.stringify([{ path: ['name'], message: 'Назва є обов’язковою' }]);
+      const zodMessage = JSON.stringify([{ path: ['name', 'en'], message: 'Назва є обов’язковою' }]);
       mockCreateFund.mockRejectedValue(new Error(`Validation failed ${zodMessage}`));
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
@@ -384,7 +420,7 @@ describe('useUpsertFund', () => {
         await result.current.handleSave(BaseContentStatuses.Draft);
       });
 
-      expect(result.current.errors.name).toBe('Назва є обов’язковою');
+      expect(result.current.errors.name?.en).toBe('Назва є обов’язковою');
       expect(toast.error).toHaveBeenCalled();
     });
 
@@ -414,7 +450,7 @@ describe('useUpsertFund', () => {
     it('ignores backend errors that do not have a path array and falls back to generic error', async () => {
       const zodMessage = JSON.stringify([{ message: 'Some global validation error without path' }]);
       mockCreateFund.mockRejectedValue(new Error(`Validation failed ${zodMessage}`));
-      
+
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
 
@@ -427,7 +463,7 @@ describe('useUpsertFund', () => {
 
     it('ignores invalid JSON safely and falls back to generic error', async () => {
       mockCreateFund.mockRejectedValue(new Error('Validation error [ { bad, json: } ]'));
-      
+
       const { result } = renderHook(() => useUpsertFund());
       setValidDetails(result);
 
@@ -478,10 +514,10 @@ describe('useUpsertFund', () => {
     mockCreateFund.mockResolvedValue({ data: { createFund: { id: 'new-id' } } });
     const { result } = renderHook(() => useUpsertFund());
     setValidDetails(result);
-      
+
     act(() => {
-      result.current.setDetails((prev) => ({ 
-        ...prev, 
+      result.current.setDetails((prev) => ({
+        ...prev,
         chronologicalBoundaries: '1900-1920',
         organizationForm: { uk: 'Організація', en: 'Organization' }
       }));
@@ -501,7 +537,7 @@ describe('useUpsertFund', () => {
 
   it('handles exceptions thrown as strings instead of Error objects', async () => {
     mockCreateFund.mockRejectedValue('уже існує string error');
-      
+
     const { result } = renderHook(() => useUpsertFund());
     setValidDetails(result);
 

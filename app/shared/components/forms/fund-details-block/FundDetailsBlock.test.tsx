@@ -11,7 +11,12 @@ jest.mock('~/store', () => ({
 
 jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', () => ({
   __esModule: true,
-  CustomFormattingField: ({ label, onChange, error, helperText }: {
+  CustomFormattingField: ({
+    label,
+    onChange,
+    error,
+    helperText
+  }: {
     label: string;
     value: unknown;
     onChange: (value: unknown) => void;
@@ -40,12 +45,14 @@ const baseValue: FundDetailsValue = {
   descriptionsCount: 5
 };
 
-const setup = (overrides: Partial<{
-  value: FundDetailsValue;
-  errors: FundDetailsErrors;
-  forceShowErrors: boolean;
-  locale: string;
-}> = {}) => {
+const setup = (
+  overrides: Partial<{
+    value: FundDetailsValue;
+    errors: FundDetailsErrors;
+    forceShowErrors: boolean;
+    locale: string;
+  }> = {}
+) => {
   mockUseStore.mockImplementation((selector: (state: { locale: string }) => unknown) =>
     selector({ locale: overrides.locale ?? 'uk' })
   );
@@ -134,7 +141,7 @@ describe('FundDetailsBlock', () => {
   });
 
   it('does not show error state or helper text when forceShowErrors is false', () => {
-    setup({ errors: { name: 'Назва є обов’язковою.' }, forceShowErrors: false });
+    setup({ errors: { name: { uk: 'Назва українською є обов’язковою.' } }, forceShowErrors: false });
 
     expect(screen.getByLabelText('Назва фонду *')).not.toHaveAttribute('aria-invalid', 'true');
   });
@@ -143,7 +150,10 @@ describe('FundDetailsBlock', () => {
     setup({
       errors: {
         fundNumber: 'err-number',
-        name: 'err-name',
+        name: {
+          uk: 'err-name-uk',
+          en: 'err-name-en'
+        },
         documentCreationDate: 'err-date',
         chronologicalBoundaries: 'err-chrono',
         organizationForm: 'err-org',
@@ -155,7 +165,8 @@ describe('FundDetailsBlock', () => {
     expect(screen.getByLabelText('Номер Фонду *')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('err-number')).toBeInTheDocument();
     expect(screen.getByLabelText('Назва фонду *')).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByText('err-name')).toBeInTheDocument();
+    expect(screen.getByText('err-name-uk')).toBeInTheDocument();
+    expect(screen.queryByText('err-name-en')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Дата утворення документів *')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('err-date')).toBeInTheDocument();
     expect(screen.getByLabelText('Хронологічні межі *')).toHaveAttribute('aria-invalid', 'true');
@@ -164,6 +175,34 @@ describe('FundDetailsBlock', () => {
     expect(screen.getByText('err-org')).toBeInTheDocument();
     expect(screen.getByTestId('cff-error')).toHaveTextContent('true');
     expect(screen.getByTestId('cff-helper')).toHaveTextContent('err-desc');
+  });
+
+  it.each([
+    {
+      locale: 'uk',
+      expectedError: 'err-name-uk',
+      unExpectedError: 'err-name-en'
+    },
+    {
+      locale: 'en',
+      expectedError: 'err-name-en',
+      unExpectedError: 'err-name-uk'
+    }
+  ])('shows the $locale name error and hides the other locale error', ({ locale, expectedError, unExpectedError }) => {
+    setup({
+      locale,
+      errors: {
+        name: {
+          uk: 'err-name-uk',
+          en: 'err-name-en'
+        }
+      },
+      forceShowErrors: true
+    });
+
+    expect(screen.getByLabelText('Назва фонду *')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText(expectedError)).toBeInTheDocument();
+    expect(screen.queryByText(unExpectedError)).not.toBeInTheDocument();
   });
 
   it('calls onChange with an updater that sets documentCreationDate', async () => {
@@ -195,11 +234,11 @@ describe('FundDetailsBlock', () => {
         name: {
           uk: '',
           en: ''
-        }, 
+        },
         organizationForm: {
           uk: '',
           en: ''
-        },
+        }
       }
     });
 
