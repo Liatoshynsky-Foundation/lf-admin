@@ -112,6 +112,26 @@ const handleFundSaveError = (
   return null;
 };
 
+const applyValidationError = (
+  errors: FundDetailsErrors,
+  fieldName: string,
+  locale: unknown,
+  message: string
+): boolean => {
+  if (fieldName === 'name') {
+    if (locale !== 'uk' && locale !== 'en') return false;
+
+    errors.name = {
+      ...errors.name,
+      [locale]: message
+    };
+    return true;
+  }
+
+  errors[fieldName as Exclude<keyof FundDetailsValue, 'name'>] = message;
+  return true;
+};
+
 const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
   const message = error instanceof Error ? error.message : String(error);
 
@@ -136,21 +156,8 @@ const extractValidationErrors = (error: unknown): FundDetailsErrors | null => {
 
       if (typeof fieldName !== 'string' || typeof safeIssue?.message !== 'string') continue;
 
-      if (fieldName === 'name') {
-        if (locale !== 'uk' && locale !== 'en') continue;
-
-        errors.name = {
-          ...errors.name,
-          [locale]: safeIssue.message
-        };
-        hasErrors = true;
-        continue;
-      }
-
-      errors[fieldName as Exclude<keyof FundDetailsValue, 'name'>] = safeIssue.message;
-      hasErrors = true;
+      hasErrors = applyValidationError(errors, fieldName, locale, safeIssue.message) || hasErrors;
     }
-
     return hasErrors ? errors : null;
   } catch {
     return null;
@@ -211,7 +218,7 @@ export const useUpsertFund = (fundId?: string) => {
   type ValidationResult = {
     isValid: boolean;
     errors: FundDetailsErrors;
-  }
+  };
 
   const validate = useCallback((): ValidationResult => {
     const newErrors: FundDetailsErrors = {};
