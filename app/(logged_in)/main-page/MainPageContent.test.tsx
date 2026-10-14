@@ -40,6 +40,12 @@ jest.mock('~/shared/components/page-card/PageCard', () => ({
   ))
 }));
 
+const MOCK_BASE_PAGES = [
+  { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
+  { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
+  { id: '3', slug: 'research', title: 'Research', coverImage: 'img3.png', updatedAt: '2026-06-23' }
+];
+
 describe('MainPagesContent Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -66,24 +72,20 @@ describe('MainPagesContent Component', () => {
   });
 
   it('should display only pages with allowed slugs ("about-us", "privacy-policy", "research")', () => {
-    const mockPages = [
-      { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
-      { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
-      { id: '3', slug: 'research', title: 'Research', coverImage: 'img3.png', updatedAt: '2026-06-23' },
+    const mockExtendedPages = [
+      ...MOCK_BASE_PAGES,
       { id: '4', slug: 'home', title: 'Home Page', coverImage: 'img4.png', updatedAt: '2026-06-23' },
       { id: '5', slug: 'contact', title: 'Contact Us', coverImage: 'img5.png', updatedAt: '2026-06-23' }
     ];
 
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: mockPages }
+      data: { pages: mockExtendedPages }
     });
 
     render(<MainPagesContent activeTab="all" />);
 
-    const cards = screen.getAllByTestId('mock-page-card');
-    expect(cards).toHaveLength(3);
-
+    expect(screen.getAllByTestId('mock-page-card')).toHaveLength(3);
     expect(screen.getByText('About Us')).toBeInTheDocument();
     expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
     expect(screen.getByText('Research')).toBeInTheDocument();
@@ -147,22 +149,14 @@ describe('MainPagesContent Component', () => {
   });
 
   it('should render PageCard with correct editHref for standard pages and custom route for research', () => {
-    const mockPages = [
-      { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
-      { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
-      { id: '3', slug: 'research', title: 'Research', coverImage: 'img3.png', updatedAt: '2026-06-23' }
-    ];
-
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: mockPages }
+      data: { pages: MOCK_BASE_PAGES }
     });
 
     render(<MainPagesContent activeTab="all" />);
 
-    const cards = screen.getAllByTestId('mock-page-card');
-    expect(cards).toHaveLength(3);
-
+    expect(screen.getAllByTestId('mock-page-card')).toHaveLength(3);
     expect(screen.getByText('/about-us')).toBeInTheDocument();
     expect(screen.getByText('/privacy-policy')).toBeInTheDocument();
     expect(screen.getByText('/research-page')).toBeInTheDocument();
