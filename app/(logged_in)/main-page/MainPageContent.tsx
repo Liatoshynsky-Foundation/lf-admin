@@ -22,7 +22,12 @@ const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
   { value: PageCategory.Other, label: 'Інші', href: '/main-page/other' }
 ];
 
-const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy', 'artistry', 'war-in-ukraine', 'archive']);
+const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy', 'artistry', 'war-in-ukraine', 'archive', 'research']);
+
+const PAGE_EDIT_ROUTES: Record<string, string> = {
+  archive: '/archive-page',
+  research: '/research-page'
+};
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
   const { data, loading } = useGetPagesQuery({
@@ -43,9 +48,7 @@ export function MainPagesContent({ activeTab }: MainPagesContentProps) {
             coverImage={item.coverImage}
             title={item.title}
             updatedAt={item.updatedAt}
-            editHref={
-              item.slug === 'archive' ? '/archive-page' : `/${item.slug}`
-            }
+            editHref={PAGE_EDIT_ROUTES[item.slug] ?? `/${item.slug}`}
             editSeoHref={`/main-page/pages/${item.slug}/seo`}
           />
         ))}
