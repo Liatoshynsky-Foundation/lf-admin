@@ -19,7 +19,11 @@ export interface FundDetailsValue {
   descriptionsCount: number;
 }
 
-export type FundDetailsErrors = Partial<Record<keyof FundDetailsValue, string>>;
+type LocalizedNameErrors = Partial<LocalizedString>;
+
+export type FundDetailsErrors = Omit<Partial<Record<keyof FundDetailsValue, string>>, 'name'> & {
+  name?: LocalizedNameErrors;
+};
 
 interface FundDetailsBlockProps {
   value: FundDetailsValue;
@@ -33,7 +37,7 @@ export default function FundDetailsBlock({
   value,
   onChange,
   errors,
-  forceShowErrors,
+  forceShowErrors
 }: Readonly<FundDetailsBlockProps>) {
   const currentLocale = useStore((state) => state.locale);
 
@@ -41,8 +45,13 @@ export default function FundDetailsBlock({
     onChange((prev) => ({ ...prev, [key]: fieldValue }));
   };
 
-  const showError = (field: keyof FundDetailsValue) => forceShowErrors && Boolean(errors[field]);
-  const getHelperText = (field: keyof FundDetailsValue) => (forceShowErrors ? errors[field] : undefined);
+  const getFieldError = (field: keyof FundDetailsValue) => {
+    if (field === 'name') return errors?.name?.[currentLocale];
+    return errors[field];
+  };
+
+  const showError = (field: keyof FundDetailsValue) => forceShowErrors && Boolean(getFieldError(field));
+  const getHelperText = (field: keyof FundDetailsValue) => (forceShowErrors ? getFieldError(field) : undefined);
   const descriptionValue = value.description[currentLocale] as JSONContent;
 
   return (

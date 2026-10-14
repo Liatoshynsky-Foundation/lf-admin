@@ -22,7 +22,11 @@ export const FUND_VALIDATION_MESSAGES = {
   documentCreationDateMaxLength: 'Значення не може перевищувати 150 символів.',
   chronologicalBoundariesMaxLength: 'Значення не може перевищувати 150 символів.',
   organizationFormMaxLength: 'Значення не може перевищувати 150 символів.',
-  descriptionMaxLength: 'Опис не може перевищувати 1000 символів.'
+  descriptionMaxLength: 'Опис не може перевищувати 1000 символів.',
+  nameLocaleRequired: {
+    uk: 'Назва фонду українською є обов’язковою.',
+    en: 'Назва фонду англійською є обов’язковою.'
+  }
 } as const;
 
 export const FUNDS_LOADING_STATE_TITLE = 'Завантаження фондів';
