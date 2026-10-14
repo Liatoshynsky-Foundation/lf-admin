@@ -50,3 +50,5 @@ export const TEAM_MEMBER_NUMERALS = [
   'Сорок дев\'ятий',
   'П\'ятдесятий'
 ];
+
+export const MAX_TEAM_MEMBERS = TEAM_MEMBER_NUMERALS.length;

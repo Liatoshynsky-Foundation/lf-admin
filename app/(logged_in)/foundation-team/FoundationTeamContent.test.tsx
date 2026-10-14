@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { FoundationTeamContent } from './FoundationTeamContent';
+import { MAX_TEAM_MEMBERS } from './FoundationTeamContent.consts';
 import { createDocNode } from '~/__mocks__/utils';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { TeamMemberWithId } from '~/types/store/pages/about-us/blocks/foundationFounderBlock';
@@ -115,8 +116,6 @@ describe('FoundationTeamContent', () => {
     expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
-
-
   it('should update member name, description, and photo via ContributorCard callbacks', () => {
     usePageBlockMock.mockReturnValue({ block: populatedMockBlock });
     render(<FoundationTeamContent />);
@@ -202,6 +201,13 @@ describe('FoundationTeamContent', () => {
       `delete-${TARGET_MEMBER_ID}`,
       'members',
       [mockOtherMember]
+    ],
+    [
+      'deletion of the last remaining member',
+      populatedMockBlock,
+      `delete-${TARGET_MEMBER_ID}`,
+      'members',
+      []
     ]
   ])(
     'should correctly dispatch setField parameters when modifying %s',
@@ -216,5 +222,17 @@ describe('FoundationTeamContent', () => {
       );
     }
   );
-});
 
+  it('should hide add button and not add members when the list is at max capacity', () => {
+    const fullMembersBlock = {
+      ...defaultMockBlock,
+      members: Array.from({ length: MAX_TEAM_MEMBERS }, (_, index) => createMockMember(`member-${index}`))
+    };
+
+    usePageBlockMock.mockReturnValue({ block: fullMembersBlock });
+    render(<FoundationTeamContent />);
+
+    expect(screen.queryByTestId('add-btn')).not.toBeInTheDocument();
+    expect(setFieldMock).not.toHaveBeenCalled();
+  });
+});

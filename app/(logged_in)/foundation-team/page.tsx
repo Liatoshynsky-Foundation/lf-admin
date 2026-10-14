@@ -3,9 +3,12 @@
 import toast from 'react-hot-toast';
 
 import { FoundationTeamContent } from './FoundationTeamContent';
+import { prepareTeamMembersForSave } from './foundationTeamMembers';
 import { FoundationTeamErrors } from '~/constants/errors';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
-import { proseToHeaderText } from '~/lib/utils/prose';
+import { hasMemberImage } from '~/lib/utils/hasMemberImage';
+import { proseToText } from '~/lib/utils/prose';
+import { scrollToFirstInvalidField } from '~/lib/utils/scrollToFirstInvalidField';
 import { EditablePageLayout } from '~/shared/components/editable-page-layout/EditablePageLayout';
 import { useStore } from '~/store';
 import { ProseDoc } from '~/types/common';
@@ -15,27 +18,30 @@ export default function FoundationTeamPage() {
   const setShowValidationErrors = useStore((state) => state.setShowValidationErrors);
 
   const validateBeforeSave = () => {
-    const blocks = useStore.getState().blocks[PAGE_IDS.ABOUT_US];
-    const membersBlock = blocks?.[BLOCK_IDS.FOUNDATION_FOUNDERS] as FoundationFoundersBlock | undefined;
+    const { blocks, locale, setField } = useStore.getState();
+    const membersBlock = blocks[PAGE_IDS.ABOUT_US]?.[BLOCK_IDS.FOUNDATION_FOUNDERS] as
+      | FoundationFoundersBlock
+      | undefined;
     const members = membersBlock?.members || [];
 
-    for (const member of members) {
-      const isNameUaEmpty = !proseToHeaderText(member.name?.uk as ProseDoc);
-      const isNameEnEmpty = !proseToHeaderText(member.name?.en as ProseDoc);
-      const isDescUaEmpty = !proseToHeaderText(member.description?.uk as ProseDoc);
-      const isDescEnEmpty = !proseToHeaderText(member.description?.en as ProseDoc);
-      const isAltUaEmpty = !proseToHeaderText(member.photo?.alt?.uk as ProseDoc);
-      const isAltEnEmpty = !proseToHeaderText(member.photo?.alt?.en as ProseDoc);
+    const { members: preparedMembers, removedEmptyCount } = prepareTeamMembersForSave(members);
+    setField(PAGE_IDS.ABOUT_US, BLOCK_IDS.FOUNDATION_FOUNDERS, 'members', preparedMembers);
 
-      if (isNameUaEmpty || isNameEnEmpty || isDescUaEmpty || isDescEnEmpty || isAltUaEmpty || isAltEnEmpty) {
+    for (const member of preparedMembers) {
+      if (!hasMemberImage(member.photo)) continue;
+
+      const isAltEmpty = !proseToText(member.photo?.alt?.[locale] as ProseDoc)?.trim();
+
+      if (isAltEmpty) {
         setShowValidationErrors(true);
-        if (isNameUaEmpty || isDescUaEmpty || isAltUaEmpty) {
-          toast.error(FoundationTeamErrors.MISSING_MEMBER_UK);
-        } else if (isNameEnEmpty || isDescEnEmpty || isAltEnEmpty) {
-          toast.error(FoundationTeamErrors.MISSING_MEMBER_EN);
-        }
+        toast.error(FoundationTeamErrors.MISSING_ALT);
+        scrollToFirstInvalidField();
         return false;
       }
+    }
+
+    if (removedEmptyCount > 0) {
+      toast.success(FoundationTeamErrors.EMPTY_MEMBERS_REMOVED(removedEmptyCount));
     }
 
     setShowValidationErrors(false);

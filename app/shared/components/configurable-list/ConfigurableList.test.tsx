@@ -104,6 +104,23 @@ describe('ConfigurableList', () => {
     expect(onCreate).toHaveBeenCalled();
   });
 
+  it('should hide add button when showAddButton is false', () => {
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={jest.fn()}
+        showAddButton={false}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+  });
+
   it('should call onDelete with correct id when delete is triggered', () => {
     const onDelete = jest.fn();
     render(

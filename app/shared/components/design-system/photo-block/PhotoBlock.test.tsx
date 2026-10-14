@@ -278,6 +278,67 @@ describe('ImagePreviewBlock', () => {
     jest.useRealTimers();
   });
 
+  it.each([
+    {
+      mode: 'debounce' as const,
+      firstValue: 'test!',
+      expectFirstCall: true
+    },
+    {
+      mode: 'blur' as const,
+      firstValue: 'test',
+      expectFirstCall: false
+    }
+  ])('persists the same alt text after prop resets to empty via $mode', ({ mode, firstValue, expectFirstCall }) => {
+    if (mode === 'debounce') jest.useFakeTimers();
+
+    const onChangeAltText = jest.fn();
+    const { rerender } = renderComponent({
+      showAlternativeText: true,
+      altText: 'test',
+      onChangeAltText
+    });
+    const input = screen.getByLabelText('Alt текст зображення');
+
+    fireEvent.change(input, { target: { value: firstValue } });
+    if (mode === 'debounce') {
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+    } else {
+      fireEvent.blur(input);
+    }
+
+    if (expectFirstCall) {
+      expect(onChangeAltText).toHaveBeenCalledWith(firstValue);
+      onChangeAltText.mockClear();
+    } else {
+      expect(onChangeAltText).not.toHaveBeenCalled();
+    }
+
+    rerender(
+      <ImagePreviewBlock
+        imageUrl="test.jpg"
+        onChangeImage={onChangeImage}
+        showAlternativeText
+        altText=""
+        onChangeAltText={onChangeAltText}
+      />
+    );
+
+    fireEvent.change(input, { target: { value: 'test' } });
+    if (mode === 'debounce') {
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+    } else {
+      fireEvent.blur(input);
+    }
+
+    expect(onChangeAltText).toHaveBeenCalledWith('test');
+    if (mode === 'debounce') jest.useRealTimers();
+  });
+
   it('reports alt text blur and displays its validation error', async () => {
     const user = userEvent.setup();
     const onBlurAltText = jest.fn();
