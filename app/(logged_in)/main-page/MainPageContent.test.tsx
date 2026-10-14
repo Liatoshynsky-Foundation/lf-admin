@@ -6,7 +6,7 @@ import { PageCategory } from '~/types/enums/common.enums';
 import { useGetPagesQuery } from '~/types/graphql/generated/graphql';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  useGetPagesQuery: jest.fn(),
+  useGetPagesQuery: jest.fn()
 }));
 
 jest.mock('~/shared/components/page-header/PageHeader', () => ({
@@ -15,7 +15,7 @@ jest.mock('~/shared/components/page-header/PageHeader', () => ({
       <h2>{title}</h2>
       <div data-testid="mock-tabs">{JSON.stringify(tabs)}</div>
     </div>
-  )),
+  ))
 }));
 
 jest.mock('~/shared/components/cards-grid/CardsGrid', () => ({
@@ -24,7 +24,7 @@ jest.mock('~/shared/components/cards-grid/CardsGrid', () => ({
     <div data-testid="mock-cards-grid" data-columns={JSON.stringify(columns)}>
       {children}
     </div>
-  )),
+  ))
 }));
 
 jest.mock('~/shared/components/page-card/PageCard', () => ({
@@ -37,7 +37,7 @@ jest.mock('~/shared/components/page-card/PageCard', () => ({
       <span>{editHref}</span>
       <span>{editSeoHref}</span>
     </div>
-  )),
+  ))
 }));
 
 describe('MainPagesContent Component', () => {
@@ -48,7 +48,7 @@ describe('MainPagesContent Component', () => {
   it('should return null if loading is true', () => {
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: true,
-      data: undefined,
+      data: undefined
     });
 
     const { container } = render(<MainPagesContent activeTab="all" />);
@@ -58,33 +58,35 @@ describe('MainPagesContent Component', () => {
   it('should return null if data is not present (undefined)', () => {
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: undefined,
+      data: undefined
     });
 
     const { container } = render(<MainPagesContent activeTab="all" />);
     expect(container.firstChild).toBeNull();
   });
 
-  it('should display only pages with allowed slugs ("about-us", "privacy-policy")', () => {
+  it('should display only pages with allowed slugs ("about-us", "privacy-policy", "research")', () => {
     const mockPages = [
       { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
       { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
-      { id: '3', slug: 'home', title: 'Home Page', coverImage: 'img3.png', updatedAt: '2026-06-23' },
-      { id: '4', slug: 'contact', title: 'Contact Us', coverImage: 'img4.png', updatedAt: '2026-06-23' },
+      { id: '3', slug: 'research', title: 'Research', coverImage: 'img3.png', updatedAt: '2026-06-23' },
+      { id: '4', slug: 'home', title: 'Home Page', coverImage: 'img4.png', updatedAt: '2026-06-23' },
+      { id: '5', slug: 'contact', title: 'Contact Us', coverImage: 'img5.png', updatedAt: '2026-06-23' }
     ];
 
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: mockPages },
+      data: { pages: mockPages }
     });
 
     render(<MainPagesContent activeTab="all" />);
 
     const cards = screen.getAllByTestId('mock-page-card');
-    expect(cards).toHaveLength(2);
+    expect(cards).toHaveLength(3);
 
     expect(screen.getByText('About Us')).toBeInTheDocument();
     expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
+    expect(screen.getByText('Research')).toBeInTheDocument();
 
     expect(screen.queryByText('Home Page')).not.toBeInTheDocument();
     expect(screen.queryByText('Contact Us')).not.toBeInTheDocument();
@@ -92,12 +94,12 @@ describe('MainPagesContent Component', () => {
 
   it('should render the PageHeader, CardsGrid, and PageCard with correct props', () => {
     const mockPages = [
-      { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
+      { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' }
     ];
 
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: mockPages },
+      data: { pages: mockPages }
     });
 
     render(<MainPagesContent activeTab={PageCategory.Foundation} />);
@@ -106,14 +108,14 @@ describe('MainPagesContent Component', () => {
     expect(header).toBeInTheDocument();
     expect(screen.getByText('Основні сторінки')).toBeInTheDocument();
     expect(header).toHaveAttribute('data-active-tab', 'foundation');
-    
+
     const tabsElement = screen.getByTestId('mock-tabs');
     expect(tabsElement).toBeInTheDocument();
     const tabsContent = JSON.parse(tabsElement.textContent);
     expect(tabsContent).toEqual([
       { value: 'all', label: 'Всі', href: '/main-page' },
       { value: 'foundation', label: 'Фундація', href: '/main-page/foundation' },
-      { value: 'other', label: 'Інші', href: '/main-page/other' },
+      { value: 'other', label: 'Інші', href: '/main-page/other' }
     ]);
 
     const grid = screen.getByTestId('mock-cards-grid');
@@ -130,7 +132,7 @@ describe('MainPagesContent Component', () => {
   it('should call useGetPagesQuery with correct variables', () => {
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: [] },
+      data: { pages: [] }
     });
 
     render(<MainPagesContent activeTab="all" />);
@@ -144,23 +146,25 @@ describe('MainPagesContent Component', () => {
     });
   });
 
-  it('should render PageCard with editHref always pointing to /slug', () => {
+  it('should render PageCard with correct editHref for standard pages and custom route for research', () => {
     const mockPages = [
       { id: '1', slug: 'about-us', title: 'About Us', coverImage: 'img1.png', updatedAt: '2026-06-23' },
       { id: '2', slug: 'privacy-policy', title: 'Privacy Policy', coverImage: 'img2.png', updatedAt: '2026-06-23' },
+      { id: '3', slug: 'research', title: 'Research', coverImage: 'img3.png', updatedAt: '2026-06-23' }
     ];
 
     (useGetPagesQuery as jest.Mock).mockReturnValue({
       loading: false,
-      data: { pages: mockPages },
+      data: { pages: mockPages }
     });
 
     render(<MainPagesContent activeTab="all" />);
 
     const cards = screen.getAllByTestId('mock-page-card');
-    expect(cards).toHaveLength(2);
+    expect(cards).toHaveLength(3);
 
     expect(screen.getByText('/about-us')).toBeInTheDocument();
     expect(screen.getByText('/privacy-policy')).toBeInTheDocument();
+    expect(screen.getByText('/research-page')).toBeInTheDocument();
   });
 });

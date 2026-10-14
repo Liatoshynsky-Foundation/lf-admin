@@ -3,7 +3,8 @@ export const PAGE_IDS = {
   PRIVACY_POLICY: 'privacy-policy',
   ARTISTRY: 'artistry',
   WAR_IN_UKRAINE: 'war-in-ukraine',
-  ARCHIVE: 'archive'
+  ARCHIVE: 'archive',
+  RESEARCH: 'research'
 };
 
 export const BLOCK_IDS = {
@@ -33,4 +34,5 @@ export const BLOCK_IDS = {
   YERMOLENKO_LINKS: 'YermolenkoLinks',
   VOLUNTEER_DONATION: 'VolunteerDonation',
   PAGE_CAPTION: 'PageCaption',
+  RESEARCH_HERO: 'HeroSection'
 } as const;
