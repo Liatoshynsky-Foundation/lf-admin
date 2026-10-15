@@ -19,10 +19,10 @@ jest.mock('~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlo
     onDescriptionChange: (value: JSONContent) => void;
   }) => (
     <div>
-      <button data-testid="trigger-source-change" onClick={() => onTitleChange(updatedJson)}>
+      <button data-testid="trigger-source-change" onClick={() => onDescriptionChange(updatedJson)}>
         Change source
       </button>
-      <button data-testid="trigger-text-change" onClick={() => onDescriptionChange(updatedJson)}>
+      <button data-testid="trigger-text-change" onClick={() => onTitleChange(updatedJson)}>
         Change text
       </button>
     </div>
@@ -37,26 +37,10 @@ const baseItem: QuoteContentItem = {
 };
 
 describe('QuoteContent', () => {
-  it('should update source on title change', () => {
+  it('should update text on title change', () => {
     const onChange = jest.fn();
 
     render(<QuoteContent item={baseItem} locale="uk" onChange={onChange} pageId="about-us" blockId="office" />);
-
-    fireEvent.click(screen.getByTestId('trigger-source-change'));
-
-    expect(onChange).toHaveBeenCalledWith({
-      ...baseItem,
-      source: {
-        ...baseItem.source,
-        uk: updatedJson
-      }
-    });
-  });
-
-  it('should update text on description change', () => {
-    const onChange = jest.fn();
-
-    render(<QuoteContent item={baseItem} locale="en" onChange={onChange} pageId="about-us" blockId="office" />);
 
     fireEvent.click(screen.getByTestId('trigger-text-change'));
 
@@ -64,6 +48,22 @@ describe('QuoteContent', () => {
       ...baseItem,
       text: {
         ...baseItem.text,
+        uk: updatedJson
+      }
+    });
+  });
+
+  it('should update source on description change', () => {
+    const onChange = jest.fn();
+
+    render(<QuoteContent item={baseItem} locale="en" onChange={onChange} pageId="about-us" blockId="office" />);
+
+    fireEvent.click(screen.getByTestId('trigger-source-change'));
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...baseItem,
+      source: {
+        ...baseItem.source,
         en: updatedJson
       }
     });

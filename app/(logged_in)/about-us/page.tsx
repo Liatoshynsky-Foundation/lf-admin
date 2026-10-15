@@ -3,10 +3,9 @@ import { DragEndEvent } from '@dnd-kit/core';
 
 import {
   foundationBlockConfig,
-  headerQuoteConfig,
   headerSectionListConfig,
-  missionBlockConfig
-} from '~/constants/blockSchemas';
+  missionBlockConfig,
+  officeQuoteConfig} from '~/constants/blockSchemas';
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import FoundationFoundersRedirect from '~/shared/components/about-us/foundation-founders-redirect/FoundationFoundersRedirect';
@@ -71,9 +70,9 @@ const LiatoshynskyOfficeBlockView = () => (
   <Block<LiatoshynskyOfficeBlock>
     pageId={PAGE_IDS.ABOUT_US}
     blockId={BLOCK_IDS.LIATOSHYNSKY_OFFICE}
-    config={headerQuoteConfig}
+    config={officeQuoteConfig}
     adapter={officeAdapter}
-    title="Кабінет Лятошинського"
+    title="Архів Лятошинського"
   />
 );
 
