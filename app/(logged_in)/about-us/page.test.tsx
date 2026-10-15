@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { editPagesCommonTests  } from '../__mocks__/edit-pages-factory';
+import { editPagesCommonTests } from '../__mocks__/edit-pages-factory';
 import Page from './page';
 import { PAGE_IDS } from '~/constants/pageBlocks';
 

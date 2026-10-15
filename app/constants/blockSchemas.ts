@@ -25,11 +25,8 @@ export const headerSectionListConfig: BlockConfig = {
   ]
 };
 
-export const headerQuoteConfig: BlockConfig = {
-  allowed: [
-    { type: CONTENT_TYPE.HEADER, required: true },
-    { type: CONTENT_TYPE.QUOTE, required: true }
-  ]
+export const officeQuoteConfig: BlockConfig = {
+  allowed: [{ type: CONTENT_TYPE.QUOTE, required: true }]
 };
 
 export const missionBlockConfig: BlockConfig = {
