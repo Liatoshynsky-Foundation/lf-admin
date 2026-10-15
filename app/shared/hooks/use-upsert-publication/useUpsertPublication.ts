@@ -98,7 +98,6 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     const { adminTitle, seoValue, publishDate } = form.latestDataRef.current;
 
-    const isTitleInvalid = !adminTitle.trim();
     const isPublishDateInvalid = Boolean(publishDate && !publishDate.isValid());
     const eventDatesValidation = validateEventDates(publicationType, seoValue.meta.uk.startDateTime, seoValue.meta.uk.endDateTime);
 
@@ -108,8 +107,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       hasUrlErrors
     } = validatePublicationSeo(seoValue, publicationType);
 
-    if (isTitleInvalid || hasMetaErrors || hasUrlErrors || isPublishDateInvalid || eventDatesValidation.isInvalid) {
-      if (isTitleInvalid) form.setAdminTitleError('Обов\'язкове поле');
+    if (hasMetaErrors || hasUrlErrors || isPublishDateInvalid || eventDatesValidation.isInvalid) {
       if (hasMetaErrors || hasUrlErrors || eventDatesValidation.isInvalid) {
         const eventSeoErrors = applyEventDateSeoErrors(nextSeoErrors, eventDatesValidation);
         form.setSeoErrors(eventSeoErrors);
