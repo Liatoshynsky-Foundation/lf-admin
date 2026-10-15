@@ -215,6 +215,8 @@ export function UploadView({
   const hasError = Boolean(error);
   const hasWarning = Boolean(warningFile);
   const message = error ?? (hasWarning ? IMAGE_UPLOAD_SIZE_WARNING : DROP_HINT);
+  const warningRole = hasWarning ? 'status' : undefined;
+  const messageRole = hasError ? 'alert' : warningRole;
 
   return (
     <Box data-testid="UploadView" sx={styles.root}>
@@ -241,7 +243,7 @@ export function UploadView({
           <Typography
             variant='bodyMd'
             id={messageId}
-            role={hasError ? 'alert' : hasWarning ? 'status' : undefined}
+            role={messageRole}
             sx={[styles.text, hasError && styles.textError, hasWarning && styles.textWarning]}
             data-testid="UploadView-text"
           >

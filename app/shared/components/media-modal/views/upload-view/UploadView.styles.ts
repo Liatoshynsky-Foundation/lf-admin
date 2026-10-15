@@ -55,14 +55,18 @@ export const styles = {
     textAlign: 'center'
   },
 
-  iconWrap: (hasError: boolean, hasWarning: boolean) => ({
-    color: hasError ? 'error.main' : hasWarning ? colors.yellow[500] : 'blue.300',
-    '& svg': {
-      width: '164px',
-      height: 'auto',
-      display: 'block'
-    }
-  }),
+  iconWrap: (hasError: boolean, hasWarning: boolean) => {
+    const defaultColor = hasWarning ? colors.yellow[500] : 'blue.300';
+
+    return {
+      color: hasError ? 'error.main' : defaultColor,
+      '& svg': {
+        width: '164px',
+        height: 'auto',
+        display: 'block'
+      }
+    };
+  },
 
   text: {
     fontWeight: 600,
