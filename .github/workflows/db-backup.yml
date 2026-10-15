@@ -88,7 +88,7 @@ jobs:
           done
 
       - name: Upload to GitHub Artifact (secondary)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}
           path: backup-${{ env.DB_SOURCE }}-${{ steps.set-date.outputs.date }}.tar.gz.enc
