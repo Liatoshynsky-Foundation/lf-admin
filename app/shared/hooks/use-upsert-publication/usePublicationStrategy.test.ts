@@ -214,6 +214,33 @@ describe('usePublicationStrategy', () => {
       });
       expect(res).toEqual({ id: MOCK_STRATEGY.existingEventId, slug: MOCK_STRATEGY.event.slug });
     });
+
+    it('should allow empty administrator notes when updating an event', async () => {
+      const { result } = renderHook(() => usePublicationStrategy('events', MOCK_STRATEGY.existingEventId));
+      const formLatestData = createMockFormData({ adminTitle: '' });
+      const commonInput = createMockBasePayload({ adminTitle: '' });
+
+      mockUpdateEvent.mockResolvedValue({
+        data: { updateEvent: { id: MOCK_STRATEGY.existingEventId, slug: MOCK_STRATEGY.event.slug } }
+      });
+
+      await act(async () => {
+        await result.current.saveDocument(
+          BaseContentStatuses.Published,
+          commonInput,
+          formLatestData,
+          MOCK_STRATEGY.existingEventId
+        );
+      });
+
+      expect(mockUpdateEvent).toHaveBeenCalledWith({
+        id: MOCK_STRATEGY.existingEventId,
+        input: expect.objectContaining({
+          adminTitle: '',
+          eventLink: ''
+        })
+      });
+    });
   });
 
   describe('Media Strategy', () => {
