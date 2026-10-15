@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { IMAGE_MAX_FILE_SIZE_BYTES } from '../MediaModal.constants';
 import type { MediaModalResult, UploadResult } from '../MediaModal.types';
 import { useUpload } from '~/hooks/use-upload/useUpload';
 import { AssetType } from '~/types/graphql/generated/graphql';
@@ -145,7 +146,8 @@ export function useMediaModalApply({
 
           const validationRules = JSON.stringify({
             allowedMimeTypes: [fileMime],
-            allowedExtensions: [fileExt]
+            allowedExtensions: [fileExt],
+            ...(backendFileType === AssetType.Image ? { maxSize: IMAGE_MAX_FILE_SIZE_BYTES } : {})
           });
 
           const finalDirectory = resolveUploadDirectory(directory, backendFileType);

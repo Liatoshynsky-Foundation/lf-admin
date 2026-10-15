@@ -1,6 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { MouseEventHandler, SVGProps } from 'react';
 
+import {
+  IMAGE_MAX_FILE_SIZE_BYTES,
+  IMAGE_RECOMMENDED_FILE_SIZE_BYTES,
+  IMAGE_UPLOAD_ERROR,
+  IMAGE_UPLOAD_SIZE_WARNING
+} from '../../MediaModal.constants';
 import { UploadView } from './UploadView';
 
 jest.mock('~/public/icons/cloud-upload.svg', () => ({
@@ -136,7 +143,7 @@ describe('UploadView', () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     expect(onPick).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent(/підтримуються лише зображення/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(IMAGE_UPLOAD_ERROR);
   });
 
   it('should call onPick for image file drop', async () => {
@@ -213,6 +220,61 @@ describe('UploadView', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
+  it('should reject an image exceeding the default 10 MB upload limit', () => {
+    const onPick = jest.fn();
+    renderView({ onPick });
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    const file = createSizedFile('too-large.jpg', 'image/jpeg', IMAGE_MAX_FILE_SIZE_BYTES + 1);
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(onPick).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(IMAGE_UPLOAD_ERROR);
+  });
+
+  it('should warn and allow continuing for an image between 5 MB and 10 MB', async () => {
+    const onPick = jest.fn();
+    renderView({ onPick });
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: undefined });
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    const file = createSizedFile('recommended-limit.jpg', 'image/jpeg', IMAGE_RECOMMENDED_FILE_SIZE_BYTES + 1);
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByTestId('UploadView-text')).toHaveTextContent(IMAGE_UPLOAD_SIZE_WARNING));
+    expect(onPick).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('UploadView-continueButton'));
+
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
+    expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'recommended-limit.jpg' });
+    expect(onPick.mock.calls[0]?.[0].file).toBe(file);
+  });
+
+  it.each(['{Enter}', ' '])('should continue upload with the keyboard using %p', async (key) => {
+    const user = userEvent.setup();
+    const onPick = jest.fn();
+    renderView({ onPick });
+    mockImageDimensions(1200, 800);
+
+    const input = screen.getByTestId('UploadView-fileInput');
+    const clickSpy = jest.spyOn(input, 'click').mockImplementation(() => undefined);
+    const file = createSizedFile('large.jpg', 'image/jpeg', IMAGE_RECOMMENDED_FILE_SIZE_BYTES + 1);
+
+    fireEvent.change(input, { target: { files: [file] } });
+    await user.tab();
+    await user.tab();
+    expect(screen.getByTestId('UploadView-continueButton')).toHaveFocus();
+
+    await user.keyboard(key);
+
+    expect(clickSpy).not.toHaveBeenCalled();
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
+    expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ file }));
+  });
+
   it('should handle custom validation and accept image by extension', async () => {
     const onPick = jest.fn();
     renderView({ onPick });
@@ -227,7 +289,7 @@ describe('UploadView', () => {
     expect(onPick.mock.calls[0]?.[0]).toMatchObject({ fileName: 'test.png' });
   });
 
-  it('should reject an image exceeding 6000px before picking it', async () => {
+  it('should accept an image exceeding 6000px when the file size is valid', async () => {
     const onPick = jest.fn();
     renderView({ onPick });
     mockImageDimensions(6001, 6000);
@@ -236,8 +298,7 @@ describe('UploadView', () => {
       target: { files: [createFile('large.png', 'image/png')] }
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Це зображення занадто велике');
-    expect(onPick).not.toHaveBeenCalled();
+    await waitFor(() => expect(onPick).toHaveBeenCalledTimes(1));
   });
 
   it('should reject an image that fails to decode', async () => {

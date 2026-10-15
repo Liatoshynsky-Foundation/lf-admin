@@ -4,6 +4,12 @@ import { Box, Typography } from '@mui/material';
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react';
 import { useCallback, useId, useRef, useState } from 'react';
 
+import {
+  IMAGE_MAX_FILE_SIZE_BYTES,
+  IMAGE_RECOMMENDED_FILE_SIZE_BYTES,
+  IMAGE_UPLOAD_ERROR,
+  IMAGE_UPLOAD_SIZE_WARNING
+} from '../../MediaModal.constants';
 import type { UploadMedia } from '../../MediaModal.types';
 import { isImageUploadFile } from '../../MediaModal.utils';
 import { styles } from './UploadView.styles';
@@ -22,17 +28,14 @@ export type Props = Readonly<{
 }>;
 
 const DROP_HINT = 'Перетягніть файл сюди або оберіть вручну';
-const ERROR_ONLY_IMAGES = 'Підтримуються лише зображення';
 const ERROR_FILE_TOO_LARGE = 'Файл перевищує максимально допустимий розмір';
-const ERROR_IMAGE_DIMENSIONS = 'Це зображення занадто велике';
 const ERROR_IMAGE_UNREADABLE = 'Не вдалося прочитати зображення';
-const MAX_IMAGE_DIMENSION = 6000;
 
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
 
-type ImageDimensionResult = 'valid' | 'too-large' | 'unreadable';
+type ImageReadResult = 'valid' | 'unreadable';
 
-const checkImageDimensions = (file: File): Promise<ImageDimensionResult> => {
+const checkImageReadable = (file: File): Promise<ImageReadResult> => {
   if (typeof Image === 'undefined' || typeof URL.createObjectURL !== 'function') {
     return Promise.resolve('valid');
   }
@@ -43,9 +46,7 @@ const checkImageDimensions = (file: File): Promise<ImageDimensionResult> => {
 
     image.onload = () => {
       URL.revokeObjectURL(objectUrl);
-      const withinBounds =
-        image.naturalWidth <= MAX_IMAGE_DIMENSION && image.naturalHeight <= MAX_IMAGE_DIMENSION;
-      resolve(withinBounds ? 'valid' : 'too-large');
+      resolve('valid');
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
@@ -58,7 +59,7 @@ const checkImageDimensions = (file: File): Promise<ImageDimensionResult> => {
 export function UploadView({
   onPick,
   accept = 'image/*',
-  invalidFileError = ERROR_ONLY_IMAGES,
+  invalidFileError = IMAGE_UPLOAD_ERROR,
   isAllowedFile = isImageUploadFile,
   ariaLabel = 'Upload image',
   maxSizeBytes,
@@ -68,40 +69,19 @@ export function UploadView({
   const messageId = useId();
 
   const [error, setError] = useState<string | null>(null);
+  const [warningFile, setWarningFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const openPicker = useCallback(() => {
     setError(null);
+    setWarningFile(null);
     inputRef.current?.click();
   }, []);
 
-  const pickFile = useCallback(
-    async (file: File) => {
-      if (!isAllowedFile(file)) {
-        setError(invalidFileError);
-        return;
-      }
-
-      if (maxSizeBytes && file.size > maxSizeBytes) {
-        setError(fileTooLargeError);
-        return;
-      }
-
-      if (isImageUploadFile(file)) {
-        const dimensionResult = await checkImageDimensions(file);
-
-        if (dimensionResult === 'too-large') {
-          setError(ERROR_IMAGE_DIMENSIONS);
-          return;
-        }
-
-        if (dimensionResult === 'unreadable') {
-          setError(ERROR_IMAGE_UNREADABLE);
-          return;
-        }
-      }
-
+  const acceptFile = useCallback(
+    (file: File) => {
       setError(null);
+      setWarningFile(null);
 
       onPick({
         kind: 'upload',
@@ -110,7 +90,45 @@ export function UploadView({
         file
       });
     },
-    [invalidFileError, isAllowedFile, onPick, maxSizeBytes, fileTooLargeError]
+    [onPick]
+  );
+
+  const pickFile = useCallback(
+    async (file: File, skipSizeWarning = false) => {
+      setWarningFile(null);
+
+      if (!isAllowedFile(file)) {
+        setError(invalidFileError);
+        return;
+      }
+
+      const isImageFile = isImageUploadFile(file);
+      const effectiveMaxSizeBytes = maxSizeBytes ?? (isImageFile ? IMAGE_MAX_FILE_SIZE_BYTES : undefined);
+      const effectiveFileTooLargeError = !maxSizeBytes && isImageFile ? IMAGE_UPLOAD_ERROR : fileTooLargeError;
+
+      if (effectiveMaxSizeBytes && file.size > effectiveMaxSizeBytes) {
+        setError(effectiveFileTooLargeError);
+        return;
+      }
+
+      if (isImageFile && !skipSizeWarning && file.size > IMAGE_RECOMMENDED_FILE_SIZE_BYTES) {
+        setError(null);
+        setWarningFile(file);
+        return;
+      }
+
+      if (isImageFile) {
+        const readResult = await checkImageReadable(file);
+
+        if (readResult === 'unreadable') {
+          setError(ERROR_IMAGE_UNREADABLE);
+          return;
+        }
+      }
+
+      acceptFile(file);
+    },
+    [acceptFile, invalidFileError, isAllowedFile, maxSizeBytes, fileTooLargeError]
   );
 
   const handleFileChange = useCallback(
@@ -130,6 +148,7 @@ export function UploadView({
     e.stopPropagation();
 
     setError(null);
+    setWarningFile(null);
     setIsDragging(true);
   }, []);
 
@@ -165,6 +184,8 @@ export function UploadView({
 
   const handleDropzoneKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget) return;
+
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         openPicker();
@@ -181,8 +202,19 @@ export function UploadView({
     [openPicker]
   );
 
+  const handleContinueClick = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      if (warningFile) {
+        void pickFile(warningFile, true);
+      }
+    },
+    [pickFile, warningFile]
+  );
+
   const hasError = Boolean(error);
-  const message = error ?? DROP_HINT;
+  const hasWarning = Boolean(warningFile);
+  const message = error ?? (hasWarning ? IMAGE_UPLOAD_SIZE_WARNING : DROP_HINT);
 
   return (
     <Box data-testid="UploadView" sx={styles.root}>
@@ -193,7 +225,7 @@ export function UploadView({
         tabIndex={0}
         aria-label={ariaLabel}
         aria-describedby={messageId}
-        sx={styles.dropzone(isDragging, hasError)}
+        sx={styles.dropzone(isDragging, hasError, hasWarning)}
         onClick={openPicker}
         onKeyDown={handleDropzoneKeyDown}
         onDragEnter={handleDragEnter}
@@ -202,27 +234,39 @@ export function UploadView({
         onDrop={handleDrop}
       >
         <Box sx={styles.center}>
-          <Box sx={styles.iconWrap(hasError)}>
+          <Box sx={styles.iconWrap(hasError, hasWarning)}>
             <CloudUploadIcon aria-hidden focusable={false} />
           </Box>
 
           <Typography
             variant='bodyMd'
             id={messageId}
-            role={hasError ? 'alert' : undefined}
-            sx={[styles.text, hasError && styles.textError]}
+            role={hasError ? 'alert' : hasWarning ? 'status' : undefined}
+            sx={[styles.text, hasError && styles.textError, hasWarning && styles.textWarning]}
             data-testid="UploadView-text"
           >
             {message}
           </Typography>
 
-          <Button
-            color="secondary"
-            variant="filled"
-            label="Обрати файл"
-            data-testid="UploadView-chooseFileButton"
-            onClick={handleChooseClick}
-          />
+          <Box sx={styles.actions}>
+            {hasWarning ? (
+              <Button
+                color="tertiary"
+                variant="filled"
+                label="Продовжити"
+                data-testid="UploadView-continueButton"
+                onClick={handleContinueClick}
+              />
+            ) : null}
+
+            <Button
+              color="secondary"
+              variant="filled"
+              label={hasWarning ? 'Обрати інший файл' : 'Обрати файл'}
+              data-testid="UploadView-chooseFileButton"
+              onClick={handleChooseClick}
+            />
+          </Box>
         </Box>
       </Box>
 
