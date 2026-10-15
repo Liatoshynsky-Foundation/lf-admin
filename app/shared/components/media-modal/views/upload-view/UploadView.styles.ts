@@ -10,7 +10,7 @@ export const styles = {
     pt: '24px'
   },
 
-  dropzone: (isDragging: boolean, hasError: boolean) => ({
+  dropzone: (isDragging: boolean, hasError: boolean, hasWarning: boolean) => ({
     all: 'unset',
     boxSizing: 'border-box',
 
@@ -39,6 +39,10 @@ export const styles = {
       borderColor: alpha(colors.red[500], 0.7)
     }),
 
+    ...(hasWarning && {
+      borderColor: alpha(colors.yellow[500], 0.85)
+    }),
+
     '&:focus-visible': {
       boxShadow: `0 0 0 3px ${alpha(colors.white, 0.16)}`
     }
@@ -51,14 +55,18 @@ export const styles = {
     textAlign: 'center'
   },
 
-  iconWrap: (hasError: boolean) => ({
-    color: hasError ? 'error.main' : 'blue.300',
-    '& svg': {
-      width: '164px',
-      height: 'auto',
-      display: 'block'
-    }
-  }),
+  iconWrap: (hasError: boolean, hasWarning: boolean) => {
+    const defaultColor = hasWarning ? colors.yellow[500] : 'blue.300';
+
+    return {
+      color: hasError ? 'error.main' : defaultColor,
+      '& svg': {
+        width: '164px',
+        height: 'auto',
+        display: 'block'
+      }
+    };
+  },
 
   text: {
     fontWeight: 600,
@@ -68,5 +76,16 @@ export const styles = {
 
   textError: {
     color: 'error.main'
+  },
+
+  textWarning: {
+    color: colors.yellow[500]
+  },
+
+  actions: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
   }
 };

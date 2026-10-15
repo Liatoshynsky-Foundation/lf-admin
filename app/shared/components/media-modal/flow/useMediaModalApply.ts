@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { IMAGE_MAX_FILE_SIZE_BYTES } from '../MediaModal.constants';
 import type { MediaModalResult, UploadResult } from '../MediaModal.types';
 import { useUpload } from '~/hooks/use-upload/useUpload';
 import { AssetType } from '~/types/graphql/generated/graphql';
@@ -43,6 +44,17 @@ const getFileTypeForBackend = (file: File): AssetType => {
     return AssetType.Archive;
 
   return AssetType.Document;
+};
+
+const buildUploadValidationRules = (file: File, backendFileType: AssetType): string => {
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+  const fileMime = file.type || 'application/octet-stream';
+
+  return JSON.stringify({
+    allowedMimeTypes: [fileMime],
+    allowedExtensions: [fileExt],
+    ...(backendFileType === AssetType.Image ? { maxSize: IMAGE_MAX_FILE_SIZE_BYTES } : {})
+  });
 };
 
 const resolveUploadDirectory = (explicitDirectory: string | undefined, backendFileType: string): string => {
@@ -140,13 +152,7 @@ export function useMediaModalApply({
         if (result.selected.kind === 'upload') {
           const backendFileType = getFileTypeForBackend(result.selected.file);
 
-          const fileExt = result.selected.file.name.split('.').pop()?.toLowerCase() || '';
-          const fileMime = result.selected.file.type || 'application/octet-stream';
-
-          const validationRules = JSON.stringify({
-            allowedMimeTypes: [fileMime],
-            allowedExtensions: [fileExt]
-          });
+          const validationRules = buildUploadValidationRules(result.selected.file, backendFileType);
 
           const finalDirectory = resolveUploadDirectory(directory, backendFileType);
 
