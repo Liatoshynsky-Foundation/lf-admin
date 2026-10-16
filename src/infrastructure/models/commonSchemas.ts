@@ -76,7 +76,7 @@ export const optionalTranslatedFieldSchema = new mongoose.Schema(
 export const baseContentSchemaFields = {
   adminTitle: {
     type: String,
-    required: true
+    required: false
   },
   title: {
     type: translatedFieldSchema,

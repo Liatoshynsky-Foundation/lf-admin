@@ -7,7 +7,7 @@ import { EventStatus } from '~/types/enums/common.enums';
 const eventSchema = new Schema<EventsEntity>(
   {
     ...baseContentSchemaFields,
-    eventLink: { type: String, required: true },
+    eventLink: { type: String, required: false, default: '' },
     content: {
       uk: { type: Object, required: true, default: {} },
       en: { type: Object, required: true, default: {} }

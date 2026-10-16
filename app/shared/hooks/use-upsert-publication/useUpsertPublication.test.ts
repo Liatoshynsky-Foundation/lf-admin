@@ -146,7 +146,7 @@ describe('useUpsertPublication', () => {
   });
 
   describe('handleSave', () => {
-    it('should return undefined and set errors if title is empty', async () => {
+    it('should save when administrator notes are empty', async () => {
       setupFormMockState('');
 
       const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
@@ -156,9 +156,9 @@ describe('useUpsertPublication', () => {
         res = await result.current.handleSave(BaseContentStatuses.Published);
       });
 
-      expect(res).toBeUndefined();
-      expect(mockSetAdminTitleError).toHaveBeenCalledWith('Обов\'язкове поле');
-      expect(mockSaveDocument).not.toHaveBeenCalled();
+      expect(res).toEqual({ id: undefined, slug: undefined });
+      expect(mockSetAdminTitleError).not.toHaveBeenCalled();
+      expect(mockSaveDocument).toHaveBeenCalled();
     });
 
     it('should set seo errors and force show errors when validatePublicationSeo returns hasMetaErrors', async () => {

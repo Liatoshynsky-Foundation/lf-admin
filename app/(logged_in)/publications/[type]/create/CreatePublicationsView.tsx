@@ -49,7 +49,6 @@ export default function CreatePublicationsView({
     adminTitle,
     setAdminTitle,
     adminTitleError,
-    setAdminTitleError,
     sourceUrlError,
     publishDate,
     setPublishDate,
@@ -223,7 +222,6 @@ export default function CreatePublicationsView({
             label={ADMIN_TITLE_LABELS[publicationType]}
             value={adminTitle}
             onChange={(e) => setAdminTitle(e.target.value.toUpperCase())}
-            onBlur={() => setAdminTitleError(adminTitle ? '' : 'Обов\'язкове поле')}
             error={Boolean(adminTitleError)}
             helperText={adminTitleError}
             sx={styles.textField}
