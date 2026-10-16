@@ -227,14 +227,13 @@ export const seoFormErrors = {
 };
 
 export const FoundationTeamErrors = {
-  MISSING_INTRO: 'Будь ласка, заповніть вступну секцію',
-  MISSING_INTRO_UK: 'Будь ласка, заповніть вступну секцію для української версії',
-  MISSING_INTRO_EN: 'Будь ласка, заповніть вступну секцію для англійської версії',
-  MISSING_MEMBER_UK:
-    'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) українською мовою для учасника.',
-  MISSING_MEMBER_EN:
-    'Будь ласка, заповніть всі обов\'язкові поля (Ім\'я, Опис, Alt-текст) англійською мовою для учасника.'
+  MISSING_ALT: 'Додайте альтернативний текст для зображення учасника.',
+  EMPTY_MEMBERS_REMOVED: (count: number): string =>
+    count === 1
+      ? 'Видалено 1 порожнього учасника перед збереженням.'
+      : `Видалено ${count} порожніх учасників перед збереженням.`
 };
+
 export const compositionMediaErrors = {
   ASSET_NAME_CONFLICT: (filename: string): string =>
     `Неможливо обрати файл «${filename}». Змініть назву або виберіть інший файл.`

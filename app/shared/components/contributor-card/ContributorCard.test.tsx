@@ -3,6 +3,7 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { ContributorCard } from './ContributorCard';
+import { FoundationTeamErrors } from '~/constants/errors';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CropResult } from '~/types/common';
 
@@ -17,6 +18,9 @@ interface MockImagePreviewBlockProps {
   readonly fileName: string;
   readonly onChangeImage: (url: string, crop?: CropResult | null) => void;
   readonly onChangeAltText: (text: string) => void;
+  readonly altTextError?: string;
+  readonly altTextErrorState?: boolean;
+  readonly alternativeTextRequired?: boolean;
 }
 
 interface MiniTextNode {
@@ -60,12 +64,22 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
 
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   __esModule: true,
-  ImagePreviewBlock: ({ imageUrl, fileName, onChangeImage, onChangeAltText }: MockImagePreviewBlockProps) => (
+  ImagePreviewBlock: ({
+    imageUrl,
+    fileName,
+    onChangeImage,
+    onChangeAltText,
+    altTextError,
+    altTextErrorState,
+    alternativeTextRequired
+  }: MockImagePreviewBlockProps) => (
     <div>
       <picture>
         <img src={imageUrl} alt="Preview" data-testid="preview-img" />
       </picture>
       <span data-testid="file-name">{fileName}</span>
+      {alternativeTextRequired && <span data-testid="alt-required-marker">*</span>}
+      {altTextErrorState && altTextError && <span data-testid="alt-text-error">{altTextError}</span>}
       <button
         data-testid="image-upload-trigger"
         onClick={() =>
@@ -85,6 +99,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
     </div>
   )
 }));
+
 
 jest.mock('~/lib/utils/prose', () => ({
   proseToText: (input: unknown) => {
@@ -188,7 +203,7 @@ describe('ContributorCard', () => {
     );
   });
 
-  it('should pass the raw target image URL path back as a localized value fallback string if the original alt object property field is empty', () => {
+  it('should keep existing empty alt when uploading an image instead of autofilling the url', () => {
     const emptyDoc: JSONContent = { type: 'doc', content: [] };
     const { onChangePhoto } = renderCard({
       photo: { generatedSrc: '', src: '', alt: { uk: emptyDoc, en: emptyDoc }, caption: { uk: emptyDoc, en: emptyDoc } }
@@ -198,10 +213,13 @@ describe('ContributorCard', () => {
 
     expect(onChangePhoto).toHaveBeenCalledWith(
       expect.objectContaining({
-        alt: { en: emptyDoc, uk: expect.objectContaining({ type: 'doc', content: expect.any(Array) }) }
+        src: 'new-image-url.png',
+        generatedSrc: 'new-image-url.png',
+        alt: { uk: emptyDoc, en: emptyDoc }
       })
     );
   });
+
 
   it('should handle onChangePhoto correctly when crop parameter is omitted or null', () => {
     const { onChangePhoto } = renderCard();
@@ -255,22 +273,43 @@ describe('ContributorCard', () => {
     );
   });
 
-  it('should pass error props to textfields and photo block when validation errors are shown and fields are empty', () => {
+  it.each([
+    {
+      scenario: 'no image',
+      imageUrl: '',
+      expectAltError: false
+    },
+    {
+      scenario: 'image with empty alt',
+      imageUrl: 'https://example.com/photo.png',
+      expectAltError: true
+    }
+  ])('should handle alt validation UI when $scenario', ({ imageUrl, expectAltError }) => {
     mockShowValidationErrors = true;
-
     const emptyDoc: JSONContent = { type: 'doc', content: [] };
-    const emptyContributor = {
+
+    renderCard({
       name: { uk: emptyDoc, en: emptyDoc },
       description: { uk: emptyDoc, en: emptyDoc },
       photo: {
-        generatedSrc: '',
-        src: '',
+        generatedSrc: imageUrl,
+        src: imageUrl,
         alt: { uk: emptyDoc, en: emptyDoc },
         caption: { uk: emptyDoc, en: emptyDoc }
       }
-    };
+    });
 
-    renderCard(emptyContributor);
     expect(screen.getAllByTestId(/textfield-json/)).toHaveLength(2);
+
+    if (expectAltError) {
+      expect(screen.getByTestId('preview-img')).toHaveAttribute('src', imageUrl);
+      expect(screen.getByTestId('alt-required-marker')).toBeInTheDocument();
+      expect(screen.getByTestId('alt-text-error')).toHaveTextContent(FoundationTeamErrors.MISSING_ALT);
+      return;
+    }
+
+    expect(screen.queryByTestId('alt-text-error')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('alt-required-marker')).not.toBeInTheDocument();
   });
 });
+

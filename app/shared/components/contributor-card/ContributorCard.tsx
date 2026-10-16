@@ -4,9 +4,11 @@ import { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { styles } from './ContributorCard.styles';
+import { FoundationTeamErrors } from '~/constants/errors';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { CROP_RATIOS } from '~/constants/publications';
 import { CustomTextField } from '~/ds-components/text-field/TextField';
+import { hasMemberImage } from '~/lib/utils/hasMemberImage';
 import { proseToText, textToProse } from '~/lib/utils/prose';
 import { ImagePreviewBlock } from '~/shared/components/design-system/photo-block/PhotoBlock';
 import { useStore } from '~/store';
@@ -32,20 +34,15 @@ export const ContributorCard = ({
   onChangePhoto
 }: ContributorCardProps) => {
   const showValidationErrors = useStore((state) => state.showValidationErrors);
-
-  const isNameEmpty = !proseToText(contributor.name[currentLocale] as ProseDoc)?.trim();
-  const isDescriptionEmpty = !proseToText(contributor.description[currentLocale] as ProseDoc)?.trim();
+  const hasImage = hasMemberImage(contributor.photo);
   const isAltEmpty = !proseToText(contributor.photo.alt[currentLocale] as ProseDoc)?.trim();
+  const showAltError = showValidationErrors && hasImage && isAltEmpty;
 
   const handleChangeImage = (url: string, crop?: CropResult | null) => {
     const updatedPhoto: Omit<ImageType, 'caption'> = {
       ...contributor.photo,
       src: url,
       generatedSrc: url,
-      alt: {
-        ...contributor.photo.alt,
-        [currentLocale]: isAltEmpty ? textToProse(url) : contributor.photo.alt[currentLocale]
-      },
       ...(crop ? { crop } : {})
     };
 
@@ -55,7 +52,8 @@ export const ContributorCard = ({
   return (
     <Stack sx={styles.cardContainer}>
       <ImagePreviewBlock
-        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || DEFAULT_IMAGE_PLACEHOLDER  }
+        key={currentLocale}
+        imageUrl={contributor.photo.generatedSrc || contributor.photo.src || DEFAULT_IMAGE_PLACEHOLDER}
         initialCrop={contributor.photo.crop}
         aspectRatio={CROP_RATIOS.TEAM_AVATAR}
         onChangeImage={handleChangeImage}
@@ -73,9 +71,11 @@ export const ContributorCard = ({
         buttonSpacing="8px"
         stackSpacing="30px"
         showAlternativeText={true}
-        altTextErrorState={showValidationErrors && isAltEmpty}
         elipse
-        imageFit={(!contributor.photo.generatedSrc && !contributor.photo.src) ? 'fill' : 'cover'}
+        imageFit={!contributor.photo.generatedSrc && !contributor.photo.src ? 'fill' : 'cover'}
+        altTextErrorState={showAltError}
+        altTextError={showAltError ? FoundationTeamErrors.MISSING_ALT : undefined}
+        alternativeTextRequired={hasImage}
       />
       <Stack sx={styles.textFieldsContainer}>
         <CustomTextField
@@ -83,14 +83,12 @@ export const ContributorCard = ({
           label="Ім`я"
           value={contributor.name[currentLocale]}
           onChange={(value) => onChangeName(value)}
-          error={showValidationErrors && isNameEmpty}
         />
         <CustomTextField
           fieldType="formatting"
           label="Опис"
           value={contributor.description[currentLocale]}
           onChange={(value) => onChangeDescription(value)}
-          error={showValidationErrors && isDescriptionEmpty}
         />
       </Stack>
     </Stack>

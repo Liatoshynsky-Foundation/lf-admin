@@ -31,6 +31,7 @@ export interface ConfigurableListProps<T extends ConfigurableListItem> {
   separator?: boolean;
   allowFirstItemDeletion?: boolean;
   addButtonSx?: SxProps<Theme>;
+  showAddButton?: boolean;
 }
 
 const ConfigurableList = <T extends ConfigurableListItem>({
@@ -45,7 +46,8 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   addBtnLabel,
   editable,
   allowFirstItemDeletion = false,
-  addButtonSx
+  addButtonSx,
+  showAddButton = true
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
@@ -89,15 +91,17 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   return (
     <Box sx={{ width: '100%', ...addButtonSx }}>
       <Box sx={styles.container}>{listContent}</Box>
-      <Button
-        sx={{ width: 'fit-content', mx: 'auto' }}
-        startIcon={<PlusIcon />}
-        variant="outlined"
-        color="primary"
-        onClick={onCreate}
-      >
-        {addBtnLabel}
-      </Button>
+      {showAddButton && (
+        <Button
+          sx={{ width: 'fit-content', mx: 'auto' }}
+          startIcon={<PlusIcon />}
+          variant="outlined"
+          color="primary"
+          onClick={onCreate}
+        >
+          {addBtnLabel}
+        </Button>
+      )}
     </Box>
   );
 };

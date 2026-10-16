@@ -93,11 +93,13 @@ export const ImagePreviewBlock = ({
   const altTextRef = useRef(altText);
   altTextRef.current = altText;
 
-  useEffect(() => {
-    setLocalAltText(altText || '');
-  }, [altText]);
+  const lastSentRef = useRef(altText || '');
 
-  const lastSentRef = useRef(altText);
+  useEffect(() => {
+    const next = altText || '';
+    setLocalAltText(next);
+    lastSentRef.current = next;
+  }, [altText]);
 
   const onChangeAltTextRef = useRef(onChangeAltText);
   onChangeAltTextRef.current = onChangeAltText;

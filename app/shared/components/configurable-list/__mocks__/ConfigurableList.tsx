@@ -13,6 +13,7 @@ interface MockConfigurableListProps<T> {
   readonly editable: boolean;
   readonly onChange: (item: T) => void;
   readonly onDelete: (id: string) => void;
+  readonly showAddButton?: boolean;
 }
 
 const ConfigurableList = <T extends { readonly id: string; readonly value: JSONContent }>({
@@ -22,7 +23,8 @@ const ConfigurableList = <T extends { readonly id: string; readonly value: JSONC
   renderItem,
   editable,
   onChange,
-  onDelete
+  onDelete,
+  showAddButton = true
 }: MockConfigurableListProps<T>) => (
     <div data-testid="configurable-list">
       <button
@@ -46,9 +48,11 @@ const ConfigurableList = <T extends { readonly id: string; readonly value: JSONC
           )}
         </div>
       ))}
-      <button data-testid="add-btn" onClick={onCreate}>
-        {addBtnLabel}
-      </button>
+      {showAddButton && (
+        <button data-testid="add-btn" onClick={onCreate}>
+          {addBtnLabel}
+        </button>
+      )}
     </div>
   );
 
