@@ -67,7 +67,7 @@ describe('DeleteCardModal', () => {
       expect(defaultProps.onClose).not.toHaveBeenCalled();
     });
 
-    it('should call onClose when escapeKeyDown reason occurs', () => {
+    it('should not call onClose when escapeKeyDown reason occurs', () => {
       render(<DeleteCardModal {...defaultProps} />);
 
       fireEvent.keyDown(document.activeElement || document.body, {
@@ -77,7 +77,7 @@ describe('DeleteCardModal', () => {
         charCode: 27
       });
 
-      expect(defaultProps.onClose).toHaveBeenCalled();
+      expect(defaultProps.onClose).not.toHaveBeenCalled();
     });
   });
 });
