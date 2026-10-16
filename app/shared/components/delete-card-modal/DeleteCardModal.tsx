@@ -24,7 +24,7 @@ const DeleteCardModal = ({
   cancelButtonText = 'Скасувати'
 }: DeleteCardModalProps) => {
   const handleDialogClose = (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
-    if (reason === 'backdropClick') {
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
       return;
     }
     onClose();
