@@ -327,6 +327,20 @@ describe('CreatePublicationsView Component', () => {
       expect(mockSetAdminTitle).toHaveBeenCalledWith(title.toUpperCase());
     });
 
+    it('should not validate administrator notes when the field loses focus', () => {
+      const mockSetAdminTitleError = jest.fn();
+      const mockData = createMockData({
+        publicationType: 'news',
+        setAdminTitleError: mockSetAdminTitleError
+      });
+
+      render(<CreatePublicationsView data={mockData} />);
+
+      fireEvent.blur(screen.getByLabelText('Нотатки адміністратора'));
+
+      expect(mockSetAdminTitleError).not.toHaveBeenCalled();
+    });
+
     it('should display an error message on the admin title field if adminTitleError is present', () => {
       const mockData = createMockData({
         publicationType: 'news',
