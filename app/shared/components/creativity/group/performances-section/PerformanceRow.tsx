@@ -1,4 +1,4 @@
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { Trash2 } from 'lucide-react';
 
 import { styles } from './GroupPerformancesSection.styles';
@@ -57,15 +57,21 @@ export const PerformanceRow = ({
           </Box>
         </Tooltip>
 
-        <CustomTextField
-          label="Підпис"
-          value={item.caption?.[langKey] || ''}
-          onChange={(e) => onUpdateCaption(item.id, e.target.value)}
-          fullWidth
-          error={showCaptionError}
-          helperText={showCaptionError ? captionError : ''}
-          inputProps={{ maxLength: OPUS_FIELD_LIMITS.caption.max }}
-        />
+        <Box>
+          <CustomTextField
+            label="Підпис"
+            value={item.caption?.[langKey] || ''}
+            onChange={(e) => onUpdateCaption(item.id, e.target.value)}
+            fullWidth
+            error={showCaptionError}
+            helperText={showCaptionError ? captionError : ''}
+            inputProps={{ maxLength: OPUS_FIELD_LIMITS.caption.max }}
+          />
+
+          <Typography variant="caption" sx={styles.charCounter}>
+            { (item.caption?.[langKey] || '').length }/{ OPUS_FIELD_LIMITS.caption.max }
+          </Typography>
+        </Box>
       </Box>
 
       <IconButton aria-label="Видалити" onClick={() => onDeleteRequest(item.id)} sx={styles.actionIcon}>
