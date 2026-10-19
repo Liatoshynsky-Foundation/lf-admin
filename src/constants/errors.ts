@@ -70,7 +70,7 @@ export const opusServiceErrors = {
 
   PERFORMANCES_TOO_MANY: 'You can add up to 5 performances.',
   PERFORMANCES_URL_REQUIRED: 'A URL link for the video is required.',
-  PERFORMANCES_TITLE_INVALID: 'The video caption is required and must contain between 2 and 250 characters.',
+  PERFORMANCES_TITLE_INVALID: 'The video caption must contain between 2 and 250 characters.',
 
   OPUS_NOT_FOUND: (id: string) => `Opus with id "${id}" not found`,
   FAILED_TO_DELETE: (id: string) => `Opus with id "${id}" not found or could not be deleted`,
