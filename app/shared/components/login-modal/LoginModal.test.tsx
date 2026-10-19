@@ -88,6 +88,56 @@ describe('LoginModal', () => {
     });
   });
 
+  it.each([' test@example.com', 'test@example.com '])(
+    'trims surrounding whitespace from a valid email before submitting',
+    (email) => {
+      render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
+
+      const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
+      const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+      const submitButton = screen.getByRole('button', { name: /увійти/i });
+
+      fireEvent.change(emailInput, { target: { value: email } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.click(submitButton);
+
+      expect(mockOnSubmit).toHaveBeenCalledWith({
+        login: 'test@example.com',
+        password: 'password123'
+      });
+    }
+  );
+
+  it.each(['   ', '\t'])('rejects an email containing only whitespace', (email) => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
+
+    const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    const submitButton = screen.getByRole('button', { name: /увійти/i });
+
+    fireEvent.change(emailInput, { target: { value: email } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
+
+    expect(screen.getByText(loginErrors.EMPTY_EMAIL)).toBeInTheDocument();
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('rejects an email with whitespace between address characters', () => {
+    render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
+
+    const emailInput = screen.getByPlaceholderText('Введіть електронну пошту');
+    const passwordInput = screen.getByPlaceholderText('Введіть пароль');
+    const submitButton = screen.getByRole('button', { name: /увійти/i });
+
+    fireEvent.change(emailInput, { target: { value: 'test @example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
+
+    expect(screen.getByText(loginErrors.INVALID_EMAIL)).toBeInTheDocument();
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
   it('clears password field when submitError changes', () => {
     const { rerender } = render(<LoginModal onSubmit={mockOnSubmit} submitError={null} loading={false} />);
 
