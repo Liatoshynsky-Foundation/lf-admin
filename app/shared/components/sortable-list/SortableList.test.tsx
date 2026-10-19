@@ -4,11 +4,15 @@ import React from 'react';
 import { SortableList } from './SortableList';
 
 jest.mock('../sortable-board/SortableBoard', () => ({
-  SortableBoard: ({ children }: any) => <div data-testid="mock-sortable-board">{children}</div>
+  SortableBoard: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-sortable-board">{children}</div>
+  )
 }));
 
 jest.mock('../sortable-container/SortableContainer', () => ({
-  SortableContainer: ({ children }: any) => <div data-testid="mock-sortable-container">{children}</div>
+  SortableContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-sortable-container">{children}</div>
+  )
 }));
 
 describe('SortableList', () => {

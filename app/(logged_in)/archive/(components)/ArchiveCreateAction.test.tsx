@@ -8,9 +8,14 @@ jest.mock('~/public/icons/plus.svg', () => ({
   default: () => <span data-testid="plus-icon" />
 }));
 
+interface MockButtonProps extends React.ComponentProps<'a'> {
+  startIcon?: React.ReactNode;
+  variant?: string;
+}
+
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
-  default: ({ children, startIcon, ...props }: any) => {
+  default: ({ children, startIcon, ...props }: MockButtonProps) => {
     return (
       <a data-testid="mock-button" {...props}>
         {startIcon && <span className="start-icon">{startIcon}</span>}

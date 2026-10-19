@@ -81,8 +81,8 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
     slotProps 
   }: { 
     label: string; 
-    value: any; 
-    onChange: (val: any) => void;
+    value: dayjs.Dayjs | null;
+    onChange: (val: dayjs.Dayjs) => void;
     slotProps?: {
       textField?: {
         error?: boolean;
@@ -149,8 +149,8 @@ type MockSeoBlockProps = {
     value: SeoBlockValue['meta']['uk'],
     onChange: (val: SeoBlockValue['meta']['uk']) => void
   ) => ReactNode;
-  value?: any;
-  onChange?: (val: any) => void;
+  value?: SeoBlockValue;
+  onChange?: (val: SeoBlockValue) => void;
 };
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
@@ -164,7 +164,7 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
         <div data-testid="seo-extra-fields">
           {extraFields && onChange
             ? extraFields('uk', dummyValue, (val) =>
-              onChange({
+              value && onChange({
                 ...value,
                 meta: {
                   ...value.meta,

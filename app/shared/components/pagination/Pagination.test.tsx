@@ -1,10 +1,29 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ElementType, MouseEvent, ReactNode } from 'react';
 
 import { Pagination, PaginationProps } from './Pagination';
+
+interface MockMuiPaginationProps {
+  page: number;
+  count: number;
+  hidePrevButton?: boolean;
+  hideNextButton?: boolean;
+  onChange: (event: MouseEvent<HTMLButtonElement>, page: number) => void;
+  renderItem: (item: { type: string }) => ReactNode;
+}
+
+interface MockPaginationItemProps {
+  type: string;
+  slots?: {
+    next?: ElementType;
+    previous?: ElementType;
+  };
+}
+
 jest.mock('@mui/material', () => ({
   __esModule: true,
-  Pagination: (props: any) => (<div data-testid="mock-pagination">
+  Pagination: (props: MockMuiPaginationProps) => (<div data-testid="mock-pagination">
     {
       !props.hidePrevButton && (
         <button data-testid='interactive-prev-page-btn' onClick={(e) => props.onChange(e, props.page - 1)} />
@@ -27,7 +46,7 @@ jest.mock('@mui/material', () => ({
     }
 
   </div>),
-  PaginationItem: (props: any) => <div data-testid={`item-slot-${props.type}`}>
+  PaginationItem: (props: MockPaginationItemProps) => <div data-testid={`item-slot-${props.type}`}>
     {props.slots?.next && <span data-testid="custom-next-icon" />}
     {props.slots?.previous && <span data-testid="custom-previous-icon" />}
   </div>,

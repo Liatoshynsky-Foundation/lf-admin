@@ -48,7 +48,7 @@ jest.mock('~/shared/hooks/use-save-page/UseSavePage', () => ({
 jest.mock('~/shared/components/editable-page-layout/EditablePageLayout');
 
 jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () => ({
-  SortableItemWrapper: ({ children }: any) => <div>{children}</div>,
+  SortableItemWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 interface EditPagesCommonTestsProps {

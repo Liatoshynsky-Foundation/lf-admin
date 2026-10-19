@@ -20,7 +20,7 @@ describe('readFileAsDataURL', () => {
       });
     }
 
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     const file = new File(['test'], 'test.png', { type: 'image/png' });
     const result = await readFileAsDataURL(file);

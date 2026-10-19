@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { ZodError } from 'zod';
 
 import { resetPassword } from './resetPassword';
+import { AdminRepository } from '~/domain/repositories/adminRepository';
 
 jest.mock('bcrypt');
 
@@ -12,7 +13,7 @@ const mockAdminRepository = {
   updatePasswordAndClearToken: jest.fn()
 };
 
-const useCase = resetPassword({ adminRepository: mockAdminRepository as any });
+const useCase = resetPassword({ adminRepository: mockAdminRepository as unknown as AdminRepository });
 
 describe('resetPassword', () => {
   beforeEach(() => {

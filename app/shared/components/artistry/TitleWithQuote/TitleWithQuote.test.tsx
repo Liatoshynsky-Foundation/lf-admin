@@ -19,8 +19,14 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
   default: ({ children }: { children: React.ReactNode }) => <div data-testid="collapsible-block">{children}</div>
 }));
 
+interface MockCustomTextFieldProps {
+  title: string;
+  value?: string;
+  onChange: (value: string) => void;
+}
+
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ value, onChange, title }: any) => (
+  CustomTextField: ({ value, onChange, title }: MockCustomTextFieldProps) => (
     <div data-testid="custom-text-field">
       <span>{title}</span>
       <input data-testid="title-input" value={value || ''} onChange={(e) => onChange(e.target.value)} />
@@ -28,8 +34,15 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
   )
 }));
 
+interface MockQuoteBlockProps {
+  title?: string;
+  description?: string;
+  onTitleChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+}
+
 jest.mock('~/shared/components/about-us/liatoshynsky-office/quote-block/QuoteBlock', () => ({
-  QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: any) => (
+  QuoteBlock: ({ title, description, onTitleChange, onDescriptionChange }: MockQuoteBlockProps) => (
     <div data-testid="quote-block">
       <input data-testid="source-input" value={title || ''} onChange={(e) => onTitleChange(e.target.value)} />
       <input
@@ -55,7 +68,7 @@ describe('TitleWithQuote Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseStore.mockImplementation((selector: any) => {
+    mockUseStore.mockImplementation((selector: (state: { locale: 'uk' | 'en'; setField: jest.Mock }) => unknown) => {
       return selector({
         locale: 'uk',
         setField: mockSetField

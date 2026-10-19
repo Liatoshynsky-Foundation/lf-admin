@@ -132,6 +132,7 @@ export const CroppedImageBlock = createReactBlockSpec(
 
     toExternalHTML: (props) => {
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={props.block.props.url}
           alt={props.block.props.fileName}

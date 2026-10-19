@@ -1,13 +1,20 @@
 import { generateUniqueSlug } from './slugGenerator';
 import { utilsErrors } from '~/back-constants/errors';
 
+interface SlugGenerationTestOptions {
+  checkExists?: jest.Mock;
+  slugifyOptions?: Parameters<typeof generateUniqueSlug>[1]['slugifyOptions'];
+  fallbackSlug?: string;
+  maxAttempts?: number;
+}
+
 describe('generateUniqueSlug', () => {
   const createMockCheckExists = (exists: boolean = false) => jest.fn().mockResolvedValue(exists);
 
   const expectSlugGeneration = async (
     title: string,
     expectedSlug: string,
-    options: { checkExists?: jest.Mock; slugifyOptions?: any; fallbackSlug?: string; maxAttempts?: number } = {}
+    options: SlugGenerationTestOptions = {}
   ) => {
     const checkExists = options.checkExists || createMockCheckExists();
     const slug = await generateUniqueSlug(title, { checkExists, ...options });

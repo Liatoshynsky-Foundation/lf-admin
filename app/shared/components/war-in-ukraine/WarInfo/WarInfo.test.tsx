@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { WarInfo } from './WarInfo';
@@ -13,9 +14,14 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
 }));
 
+interface MockCollapsibleBlockProps {
+  title: string;
+  children: React.ReactNode;
+}
+
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children }: any) => (
+  default: ({ title, children }: MockCollapsibleBlockProps) => (
     <div data-testid="collapsible-block">
       <span>{title}</span>
       {children}
@@ -23,8 +29,14 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
   )
 }));
 
+interface MockCustomTextFieldProps {
+  title: string;
+  value?: JSONContent | string;
+  onChange: (value: string | { target: { value: string } }) => void;
+}
+
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}

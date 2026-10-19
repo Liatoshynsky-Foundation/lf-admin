@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { CarouselImageData } from '../CarouselImageCard/CarouselImageCard';
 import { WarCarousel } from './WarCarousel';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -34,9 +35,16 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
 }));
 
+interface MockCollapsibleBlockProps {
+  title: string;
+  children: React.ReactNode;
+  hidden?: boolean;
+  onToggleVisibility?: () => void;
+}
+
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: any) => (
+  default: ({ title, children, hidden, onToggleVisibility }: MockCollapsibleBlockProps) => (
     <div data-testid="collapsible-block" data-hidden={hidden}>
       <span>{title}</span>
       <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
@@ -48,17 +56,28 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
 }));
 
 jest.mock('../CarouselImageCard/CarouselImageCard', () => ({
-  CarouselImageCard: ({ image }: any) => <div data-testid={`carousel-card-${image.id}`}>{image.src}</div>
+  CarouselImageCard: ({ image }: { image: CarouselImageData }) => (
+    <div data-testid={`carousel-card-${image.id}`}>{image.src}</div>
+  )
 }));
+
+interface MockConfigurableListProps {
+  items: CarouselImageData[];
+  addBtnLabel: string;
+  onCreate: () => void;
+  onChange: (item: CarouselImageData) => void;
+  onDelete: (id: CarouselImageData['id']) => void;
+  renderItem: (params: { item: CarouselImageData; index: number }) => React.ReactNode;
+}
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: any) => (
+  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: MockConfigurableListProps) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-image-btn" onClick={() => onCreate()}>
         {addBtnLabel}
       </button>
-      {items.map((item: any, index: number) => (
+      {items.map((item, index) => (
         <div key={item.id || index} data-testid={`image-row-${index}`}>
           {renderItem({ item, index })}
           <button

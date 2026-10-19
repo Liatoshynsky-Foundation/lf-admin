@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 
 import { useUnsavedChanges } from './useUnsavedChanges';
 import { useStore } from '~/store';
+import type { StoreState } from '~/store/types';
 
 jest.mock('~/store');
 jest.mock('next/navigation');
@@ -21,7 +22,7 @@ describe('useUnsavedChanges', () => {
     mockedUseStore.mockImplementation((selector) =>
       selector({
         setDirtyPath
-      } as any)
+      } as unknown as StoreState)
     );
   });
 

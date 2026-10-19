@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import type { ReadonlyURLSearchParams } from 'next/navigation';
 import * as nextNavigation from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -632,8 +633,8 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to edit page on handleBackClick if "from" param is "create"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('create') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      const mockSearchParams = { get: jest.fn().mockReturnValue('create') } as unknown as ReadonlyURLSearchParams;
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -790,7 +791,7 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, '');
+        result.current.handleFieldChange('titlePrefix', '');
       });
 
       await act(async () => {
@@ -893,7 +894,7 @@ describe('useGroupContent Hook', () => {
       });
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, 'sineop');
+        result.current.handleFieldChange('titlePrefix', 'sineop');
 
         result.current.handleFieldChange('compositions', [
           {
@@ -1071,7 +1072,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('genre', 'Pop', true);
       });
 
-      expect((result.current.groupData?.genre as any).uk).toBe('Pop');
+      expect(result.current.groupData?.genre?.uk).toBe('Pop');
     });
 
     it('should trigger validation error when groupTitle is too short', async () => {
@@ -1494,8 +1495,8 @@ describe('useGroupContent Hook', () => {
 
   describe('Navigation', () => {
     it('should navigate to edit page on handleBackClick if "from" param is "edit"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('edit') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      const mockSearchParams = { get: jest.fn().mockReturnValue('edit') } as unknown as ReadonlyURLSearchParams;
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1507,8 +1508,8 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to creativity page on handleBackClick if "from" param is absent', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue(null) };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      const mockSearchParams = { get: jest.fn().mockReturnValue(null) } as unknown as ReadonlyURLSearchParams;
+      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1522,10 +1523,12 @@ describe('useGroupContent Hook', () => {
   describe('Saving', () => {
     it('should forcefully trigger none handleSave', async () => {
       const originalSplit = String.prototype.split;
-      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+      type SplitSeparator = Parameters<typeof originalSplit>[0];
+      const mockSplit = function (this: string, separator: SplitSeparator, limit?: number) {
         if (this === 'trigger-empty-split') return [] as unknown as string[];
         return originalSplit.call(this, separator, limit);
-      });
+      };
+      jest.spyOn(String.prototype, 'split').mockImplementation(mockSplit);
 
       const edgeOpus = {
         ...mockFetchedOpus,

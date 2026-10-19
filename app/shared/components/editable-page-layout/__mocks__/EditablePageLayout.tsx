@@ -14,8 +14,8 @@ export const EditablePageLayout = ({
   headerTitle: string;
   children: React.ReactNode;
 }) => {
-  const setLocale = useStore((s: any) => s.setLocale);
-  const discardChanges = useStore((s: any) => s.discardChanges);
+  const setLocale = useStore((s) => s.setLocale);
+  const discardChanges = useStore((s) => s.discardChanges);
   const { preview, loading: editorLoading } = usePageEditor(pageSlug);
   const { save, loading: saveLoading } = useSavePageBlocks(pageSlug, undefined, headerTitle);
 

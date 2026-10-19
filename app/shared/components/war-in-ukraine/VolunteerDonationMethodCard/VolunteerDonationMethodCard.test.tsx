@@ -3,8 +3,14 @@ import React from 'react';
 
 import { VolunteerDonationMethodCard, VolunteerPaymentMethodData } from './VolunteerDonationMethodCard';
 
+interface MockCustomTextFieldProps {
+  title: string;
+  value?: string;
+  onChange: (value: string | { target: { value: string } }) => void;
+}
+
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}
@@ -72,7 +78,7 @@ describe('VolunteerDonationMethodCard', () => {
   it('handles missing label fields safely with default fallbacks', () => {
     const incompleteMethod: VolunteerPaymentMethodData = {
       id: '2',
-      label: {} as any,
+      label: {} as VolunteerPaymentMethodData['label'],
       value: ''
     };
 
@@ -134,7 +140,7 @@ describe('VolunteerDonationMethodCard', () => {
   it('falls back to empty strings when updating label for a method with no existing label object', () => {
     const methodWithoutLabel: VolunteerPaymentMethodData = {
       id: '3',
-      label: undefined as any,
+      label: undefined as unknown as VolunteerPaymentMethodData['label'],
       value: 'UA5555555'
     };
 
