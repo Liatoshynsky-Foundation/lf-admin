@@ -61,7 +61,7 @@ export const PerformanceRow = ({
           <CustomTextField
             label="Підпис"
             value={item.caption?.[langKey] || ''}
-            onChange={(e) => onUpdateCaption(item.id, e.target.value)}
+            onChange={(e) => onUpdateCaption(item.id, e.target.value.slice(0, OPUS_FIELD_LIMITS.caption.max))}
             fullWidth
             error={showCaptionError}
             helperText={showCaptionError ? captionError : ''}
