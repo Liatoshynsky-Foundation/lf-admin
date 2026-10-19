@@ -71,23 +71,11 @@ const validatePerformance = (
     newErrors[`performances[${perf.id}].url`] = OPUS_VALIDATION_MESSAGES.performanceUrl;
   }
 
-  if (!capUk || capUk.length < OPUS_FIELD_LIMITS.caption.min || capUk.length > OPUS_FIELD_LIMITS.caption.max) {
-    if (!capUk) {
-      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
-    } else if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
-      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
-    } else {
-      newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
-    }
+  if (capUk.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`performances[${perf.id}].caption.uk`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
     setCurrentLanguage('UA');
-  } else if (!capEn || capEn.length < OPUS_FIELD_LIMITS.caption.min || capEn.length > OPUS_FIELD_LIMITS.caption.max) {
-    if (!capEn) {
-      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.performanceSignature;
-    } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
-      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
-    } else {
-      newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.nameTooShort;
-    }
+  } else if (capEn.length > OPUS_FIELD_LIMITS.caption.max) {
+    newErrors[`performances[${perf.id}].caption.en`] = OPUS_VALIDATION_MESSAGES.captionTooLong;
     setCurrentLanguage('EN');
   }
 };

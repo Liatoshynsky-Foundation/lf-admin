@@ -5,7 +5,7 @@ import { PerformanceRow, PerformanceRowProps } from './PerformanceRow';
 import type { NormalizedGroupPerformance } from '~/constants/creativity';
 
 const LABELS = {
-  canonicalUrl: 'Canonical URL',
+  url: 'URL',
   caption: 'Підпис',
   deleteButton: 'Видалити'
 };
@@ -42,12 +42,13 @@ type MockCustomTextFieldProps = {
   label: string;
   value?: unknown;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onPaste?: (e: React.ClipboardEvent<HTMLDivElement>) => void;
   error?: boolean;
   helperText?: string;
 };
 
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ label, value, onChange, error, helperText }: MockCustomTextFieldProps) => (
+  CustomTextField: ({ label, value, onChange, onPaste, error, helperText }: MockCustomTextFieldProps) => (
     <div data-testid={`mock-field-wrapper-${label}`}>
       <label htmlFor={`input-${label}`}>{label}</label>
       <input
@@ -55,6 +56,7 @@ jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
         data-testid={`mock-input-${label}`}
         value={(value as string) || ''}
         onChange={onChange}
+        onPaste={onPaste as React.ClipboardEventHandler<HTMLInputElement>}
       />
       {error && <span data-testid={`error-text-${label}`}>{helperText}</span>}
     </div>
@@ -93,7 +95,7 @@ describe('PerformanceRow Component', () => {
   it('should render url and caption for the given langKey', () => {
     renderRow();
 
-    expect(screen.getByTestId(`mock-input-${LABELS.canonicalUrl}`)).toHaveValue(MOCK_URLS.base);
+    expect(screen.getByTestId(`mock-input-${LABELS.url}`)).toHaveValue(MOCK_URLS.base);
     expect(screen.getByTestId(`mock-input-${LABELS.caption}`)).toHaveValue(MOCK_CAPTIONS.uk);
   });
 
@@ -106,7 +108,7 @@ describe('PerformanceRow Component', () => {
   it('should call onUpdateUrl with item id and new value', () => {
     renderRow();
 
-    fireEvent.change(screen.getByTestId(`mock-input-${LABELS.canonicalUrl}`), {
+    fireEvent.change(screen.getByTestId(`mock-input-${LABELS.url}`), {
       target: { value: MOCK_URLS.new }
     });
 
@@ -137,7 +139,7 @@ describe('PerformanceRow Component', () => {
   it('should handle empty URL', () => {
     renderRow({ item: { ...baseItem, url: '' } });
 
-    expect(screen.getByTestId(`mock-input-${LABELS.canonicalUrl}`)).toHaveValue('');
+    expect(screen.getByTestId(`mock-input-${LABELS.url}`)).toHaveValue('');
   });
 
   it('should handle URL without HTTP protocol via renderLinkPreview call', () => {
@@ -161,7 +163,7 @@ describe('PerformanceRow Component', () => {
       }
     });
 
-    fireEvent.change(screen.getByTestId(`mock-input-${LABELS.canonicalUrl}`), {
+    fireEvent.change(screen.getByTestId(`mock-input-${LABELS.url}`), {
       target: { value: MOCK_URLS.testUndefinedNew }
     });
     fireEvent.change(screen.getByTestId(`mock-input-${LABELS.caption}`), {
@@ -172,6 +174,49 @@ describe('PerformanceRow Component', () => {
     expect(mockOnUpdateUrl).toHaveBeenCalledWith(undefined, MOCK_URLS.testUndefinedNew);
     expect(mockOnUpdateCaption).toHaveBeenCalledWith(undefined, MOCK_CAPTIONS.testUndefinedNew);
     expect(mockOnDeleteRequest).toHaveBeenCalledWith(undefined);
+  });
+
+  describe('Character counter', () => {
+    it('should display "0/250 символів" when caption is empty', () => {
+      renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
+
+      expect(screen.getByText('0/250 символів')).toBeInTheDocument();
+    });
+
+    it('should display the correct character count when caption has content', () => {
+      const caption = 'Тест підпис';
+      renderRow({ item: { ...baseItem, caption: { uk: caption, en: '' } } });
+
+      expect(screen.getByText(`${caption.length}/250 символів`)).toBeInTheDocument();
+    });
+  });
+
+  describe('Paste clamping', () => {
+    it('should clamp pasted text that would exceed the 250-char limit', () => {
+      const existing = 'a'.repeat(240);
+      renderRow({ item: { ...baseItem, caption: { uk: existing, en: '' } } });
+
+      const captionInput = screen.getByTestId(`mock-input-${LABELS.caption}`);
+      const pastedText = 'b'.repeat(20);
+
+      fireEvent.paste(captionInput, {
+        clipboardData: { getData: () => pastedText }
+      });
+
+      expect(mockOnUpdateCaption).toHaveBeenCalledWith(MOCK_IDS.base, existing + pastedText.slice(0, 10));
+    });
+
+    it('should NOT intercept paste when pasted text fits within the remaining characters', () => {
+      renderRow({ item: { ...baseItem, caption: { uk: 'ab', en: '' } } });
+
+      const captionInput = screen.getByTestId(`mock-input-${LABELS.caption}`);
+
+      fireEvent.paste(captionInput, {
+        clipboardData: { getData: () => 'short' }
+      });
+
+      expect(mockOnUpdateCaption).not.toHaveBeenCalled();
+    });
   });
 
   describe('Validation and Error States', () => {
@@ -186,7 +231,7 @@ describe('PerformanceRow Component', () => {
         captionError: 'Caption is too short'
       });
 
-      expect(screen.getByTestId(`error-text-${LABELS.canonicalUrl}`)).toHaveTextContent('URL is required');
+      expect(screen.getByTestId(`error-text-${LABELS.url}`)).toHaveTextContent('URL is required');
       expect(screen.getByTestId(`error-text-${LABELS.caption}`)).toHaveTextContent('Caption is too short');
     });
 
@@ -201,7 +246,7 @@ describe('PerformanceRow Component', () => {
         captionError: 'Caption is too short'
       });
 
-      expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`error-text-${LABELS.url}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
     });
 
@@ -214,7 +259,7 @@ describe('PerformanceRow Component', () => {
         }
       });
 
-      expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`error-text-${LABELS.url}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
     });
   });
