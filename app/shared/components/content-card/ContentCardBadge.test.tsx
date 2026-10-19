@@ -6,8 +6,8 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('../badge/Badge', () => ({
   __esModule: true,
-  default: ({ variant, localizations }: { variant: string; localizations?: string[] }) => (
-    <div data-testid="mock-badge" data-variant={variant} data-localizations={localizations?.join(',')}>
+  default: ({ variant }: { variant: string }) => (
+    <div data-testid="mock-badge" data-variant={variant} >
       Badge: {variant}
     </div>
   )
@@ -21,8 +21,7 @@ describe('ContentCard Component', () => {
       alt: { uk: 'Опис фото', en: 'Photo description' }
     },
     title: { uk: 'Український заголовок', en: 'English Title' },
-    status: 'published',
-    localizations: ['en', 'fr']
+    status: 'published'
   };
 
   beforeEach(() => {
