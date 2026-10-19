@@ -60,9 +60,11 @@ export const useSavePageBlocks = (slug: string, blockIdToPublish?: string, pageT
           publishedBlocksOrder = publishedBlocksOrder.filter((id: string) => id !== 'FoundationFounders');
         }
 
+        const currentBlocksById: Record<string, unknown> = current;
+
         blocksToPublish = {
           ...publishedBlocks,
-          [blockIdToPublish]: (current as Record<string, any>)[blockIdToPublish]
+          [blockIdToPublish]: currentBlocksById[blockIdToPublish]
         };
 
         blocksOrderToPublish = publishedBlocksOrder;
