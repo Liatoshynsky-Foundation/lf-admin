@@ -3,6 +3,7 @@ import React, { ChangeEvent } from 'react';
 
 import { PerformanceRow, PerformanceRowProps } from './PerformanceRow';
 import type { NormalizedGroupPerformance } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 
 const LABELS = {
   canonicalUrl: 'Canonical URL',
@@ -216,6 +217,32 @@ describe('PerformanceRow Component', () => {
 
       expect(screen.queryByTestId(`error-text-${LABELS.canonicalUrl}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Caption character limit', () => {
+    it('should show caption character counter for the current its langht', () => {
+      renderRow();
+
+      expect(
+        screen.getByText(`${MOCK_CAPTIONS.uk.length}/${OPUS_FIELD_LIMITS.caption.max}`)
+      ).toBeInTheDocument();
+    });
+
+    it('should show 0 in counter when caption is empty', () => {
+      renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
+
+      screen.getByText(`0/${OPUS_FIELD_LIMITS.caption.max}`);
+    });
+
+    it('should clamp pasted caption to max length', () => {
+      renderRow();
+
+      fireEvent.change(screen.getByTestId(`mock-input-${LABELS.caption}`), {
+        target: { value: 'q'.repeat(OPUS_FIELD_LIMITS.caption.max + 10) }
+      });
+
+      expect(mockOnUpdateCaption).toHaveBeenCalledWith(MOCK_IDS.base, 'q'.repeat(OPUS_FIELD_LIMITS.caption.max));
     });
   });
 });
