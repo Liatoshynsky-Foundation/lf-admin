@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { MockConfigurableListProps } from '../__mocks__/mockProps';
 import { ClickableButtonData,ConfigurableButtonList } from './ConfigurableButtonList';
 
 beforeAll(() => {
@@ -14,18 +15,16 @@ beforeAll(() => {
   }
 });
 
-interface MockConfigurableListProps {
-  items: ClickableButtonData[];
-  addBtnLabel: string;
-  onCreate: () => void;
-  onChange: (item: ClickableButtonData) => void;
-  onDelete: (id: ClickableButtonData['id']) => void;
-  renderItem: (params: { item: ClickableButtonData; index: number }) => React.ReactNode;
-}
-
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: MockConfigurableListProps) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem
+  }: MockConfigurableListProps<ClickableButtonData>) => (
     <div data-testid="configurable-list">
       <button type="button" data-testid="create-btn" onClick={() => onCreate()}>
         {addBtnLabel}

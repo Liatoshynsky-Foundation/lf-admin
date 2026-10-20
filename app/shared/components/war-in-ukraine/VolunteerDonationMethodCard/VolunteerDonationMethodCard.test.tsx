@@ -1,13 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { MockCustomTextFieldProps } from '../__mocks__/mockProps';
 import { VolunteerDonationMethodCard, VolunteerPaymentMethodData } from './VolunteerDonationMethodCard';
-
-interface MockCustomTextFieldProps {
-  title: string;
-  value?: string;
-  onChange: (value: string | { target: { value: string } }) => void;
-}
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
   CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
@@ -35,6 +30,10 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
     </div>
   )
 }));
+
+type MalformedPaymentMethodData = Omit<VolunteerPaymentMethodData, 'label'> & {
+  label?: Partial<VolunteerPaymentMethodData['label']>;
+};
 
 describe('VolunteerDonationMethodCard', () => {
   const mockMethod: VolunteerPaymentMethodData = {
@@ -76,15 +75,15 @@ describe('VolunteerDonationMethodCard', () => {
   });
 
   it('handles missing label fields safely with default fallbacks', () => {
-    const incompleteMethod: VolunteerPaymentMethodData = {
+    const incompleteMethod: MalformedPaymentMethodData = {
       id: '2',
-      label: {} as VolunteerPaymentMethodData['label'],
+      label: {},
       value: ''
     };
 
     render(
       <VolunteerDonationMethodCard
-        method={incompleteMethod}
+        method={incompleteMethod as VolunteerPaymentMethodData}
         currentLocale="uk"
         onChangeMethod={mockOnChange}
       />
@@ -138,15 +137,14 @@ describe('VolunteerDonationMethodCard', () => {
   });
 
   it('falls back to empty strings when updating label for a method with no existing label object', () => {
-    const methodWithoutLabel: VolunteerPaymentMethodData = {
+    const methodWithoutLabel: MalformedPaymentMethodData = {
       id: '3',
-      label: undefined as unknown as VolunteerPaymentMethodData['label'],
       value: 'UA5555555'
     };
 
     render(
       <VolunteerDonationMethodCard
-        method={methodWithoutLabel}
+        method={methodWithoutLabel as VolunteerPaymentMethodData}
         currentLocale="uk"
         onChangeMethod={mockOnChange}
       />

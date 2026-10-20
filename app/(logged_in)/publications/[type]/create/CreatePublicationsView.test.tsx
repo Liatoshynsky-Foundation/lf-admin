@@ -155,7 +155,13 @@ type MockSeoBlockProps = {
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
   return function MockSeoCollapsibleBlock({ children, extraFields, value, onChange }: MockSeoBlockProps) {
-    const dummyValue = value?.meta?.uk || { title: '', description: '', keywords: '' };
+    const emptyLocaleMeta = { title: '', description: '', keywords: '' };
+    const seoValue: SeoBlockValue = value ?? {
+      meta: { uk: emptyLocaleMeta, en: emptyLocaleMeta },
+      ogImage: null,
+      allowIndexing: { uk: true, en: true }
+    };
+    const dummyValue = seoValue.meta.uk;
 
     return (
       <div data-testid="mock-seo-collapsible-block">
@@ -164,10 +170,10 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
         <div data-testid="seo-extra-fields">
           {extraFields && onChange
             ? extraFields('uk', dummyValue, (val) =>
-              value && onChange({
-                ...value,
+              onChange({
+                ...seoValue,
                 meta: {
-                  ...value.meta,
+                  ...seoValue.meta,
                   uk: val
                 }
               })

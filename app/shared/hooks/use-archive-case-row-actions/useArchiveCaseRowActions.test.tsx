@@ -73,12 +73,14 @@ const TestHarness = ({
   caseItem,
   onCaseChanged,
   fundStatus,
+  initialCase,
 }: {
   caseItem: ArchiveCase;
   onCaseChanged?: () => Promise<unknown>;
   fundStatus?: BaseContentStatuses;
+  initialCase?: ArchiveCase;
 }) => {
-  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
+  const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged, initialCase);
   const row = getCaseRow(caseItem, fundStatus);
 
   return (
@@ -190,6 +192,59 @@ describe('useArchiveCaseRowActions', () => {
 
       await user.click(screen.getByTestId('edit-action'));
       await user.click(screen.getByTestId('edit-case-save'));
+
+      expect(screen.queryByTestId('mock-edit-case-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Initial Case Flow', () => {
+    const renderWithInitialCase = (initialCase?: ArchiveCase) =>
+      render(<TestHarness caseItem={buildCase()} initialCase={initialCase} />);
+
+    const expectEditModalFor = (caseItem: ArchiveCase) => {
+      expect(screen.getByTestId('mock-edit-case-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('edit-case-case-id')).toHaveTextContent(caseItem.id);
+      expect(screen.getByTestId('edit-case-fund-id')).toHaveTextContent(caseItem.fundId);
+    };
+
+    const closeEditModal = () => userEvent.setup().click(screen.getByTestId('edit-case-close'));
+
+    it('should open the edit modal for the initial case on first render', () => {
+      const initialCase = buildCase({ id: 'case-a', fundId: 'fund-a' });
+      renderWithInitialCase(initialCase);
+
+      expectEditModalFor(initialCase);
+    });
+
+    it('should reopen the edit modal with the new case data when initialCase id changes', async () => {
+      const nextCase = buildCase({ id: 'case-b', fundId: 'fund-b' });
+      const { rerender } = renderWithInitialCase(buildCase({ id: 'case-a', fundId: 'fund-a' }));
+
+      await closeEditModal();
+      expect(screen.queryByTestId('mock-edit-case-modal')).not.toBeInTheDocument();
+
+      rerender(<TestHarness caseItem={buildCase()} initialCase={nextCase} />);
+
+      expectEditModalFor(nextCase);
+    });
+
+    it('should reopen the same case when initialCase is cleared and set again', async () => {
+      const initialCase = buildCase({ id: 'case-a', fundId: 'fund-a' });
+      const { rerender } = renderWithInitialCase(initialCase);
+
+      await closeEditModal();
+      rerender(<TestHarness caseItem={buildCase()} />);
+      rerender(<TestHarness caseItem={buildCase()} initialCase={{ ...initialCase }} />);
+
+      expectEditModalFor(initialCase);
+    });
+
+    it('should not reopen the closed modal when initialCase is re-created with the same id', async () => {
+      const initialCase = buildCase({ id: 'case-a', fundId: 'fund-a' });
+      const { rerender } = renderWithInitialCase(initialCase);
+
+      await closeEditModal();
+      rerender(<TestHarness caseItem={buildCase()} initialCase={{ ...initialCase, name: 'Оновлена справа' }} />);
 
       expect(screen.queryByTestId('mock-edit-case-modal')).not.toBeInTheDocument();
     });

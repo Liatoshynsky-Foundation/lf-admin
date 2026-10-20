@@ -1,8 +1,11 @@
+import type { DragEndEvent } from '@dnd-kit/core';
 import React, { MouseEvent, ReactNode } from 'react';
+
+import { createDragEndEvent } from '~/__mocks__/utils';
 
 interface SortableListMockProps {
   children: ReactNode;
-  onDragEnd?: (event: { active: { id: string }; over: { id: string } }) => void;
+  onDragEnd?: (event: DragEndEvent) => void;
   items?: string[];
 }
 
@@ -14,12 +17,9 @@ export const SortableList = ({ children, onDragEnd, items }: SortableListMockPro
         if(!onDragEnd) return;
         
         const activeId = e.activeId || (items && items.length >= 2 ? items[0] : '');
-        const overId = e.overId || (items && items.length >= 2 ? items[1] : '');
+        const overId = e.overId || (items && items.length >= 2 ? items[1] : null);
 
-        onDragEnd({
-          active: { id: activeId },
-          over: { id: overId }
-        });
+        onDragEnd(createDragEndEvent(activeId, overId));
       }}
     >
       {children}

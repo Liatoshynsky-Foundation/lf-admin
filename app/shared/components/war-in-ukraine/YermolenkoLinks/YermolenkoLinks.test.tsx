@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import type { ClickableButtonData } from '../ConfigurableButtonList/ConfigurableButtonList';
+import type {
+  MockCollapsibleBlockProps,
+  MockConfigurableButtonListProps,
+  MockCustomTextFieldProps
+} from '../__mocks__/mockProps';
 import { YermolenkoLinks } from './YermolenkoLinks';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -14,13 +18,6 @@ jest.mock('~/store');
 jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
 }));
-
-interface MockCollapsibleBlockProps {
-  title: string;
-  children: React.ReactNode;
-  hidden?: boolean;
-  onToggleVisibility?: () => void;
-}
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
@@ -35,11 +32,6 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
   )
 }));
 
-interface MockConfigurableButtonListProps {
-  buttons: Partial<ClickableButtonData>[];
-  onChange: (buttons: Partial<ClickableButtonData>[]) => void;
-}
-
 jest.mock('../ConfigurableButtonList/ConfigurableButtonList', () => ({
   ConfigurableButtonList: ({ buttons, onChange }: MockConfigurableButtonListProps) => (
     <div data-testid="configurable-button-list" data-count={buttons.length}>
@@ -50,14 +42,8 @@ jest.mock('../ConfigurableButtonList/ConfigurableButtonList', () => ({
   )
 }));
 
-interface MockCustomTextFieldProps {
-  title: string;
-  value?: JSONContent | string;
-  onChange: (value: string | { target: { value: string } }) => void;
-}
-
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps<JSONContent | string>) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}

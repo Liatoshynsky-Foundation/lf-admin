@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type {
+  MockCollapsibleBlockProps,
+  MockConfigurableListProps,
+  MockCustomTextFieldProps
+} from '../__mocks__/mockProps';
 import type { VolunteerPaymentMethodData } from '../VolunteerDonationMethodCard/VolunteerDonationMethodCard';
 import { VolunteerDonation } from './VolunteerDonation';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
@@ -25,13 +30,6 @@ jest.mock('~/store');
 jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
 }));
-
-interface MockCollapsibleBlockProps {
-  title: string;
-  children: React.ReactNode;
-  hidden?: boolean;
-  onToggleVisibility?: () => void;
-}
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
@@ -65,12 +63,6 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
   )
 }));
 
-interface MockCustomTextFieldProps {
-  title: string;
-  value?: string;
-  onChange: (value: string | { target: { value: string } }) => void;
-}
-
 jest.mock('~/ds-components/text-field/TextField', () => ({
   CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`field-${title}`}>
@@ -98,18 +90,16 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
   )
 }));
 
-interface MockConfigurableListProps {
-  items: VolunteerPaymentMethodData[];
-  addBtnLabel: string;
-  onCreate: () => void;
-  onChange: (item: VolunteerPaymentMethodData) => void;
-  onDelete: (id: VolunteerPaymentMethodData['id']) => void;
-  renderItem?: (params: { item: VolunteerPaymentMethodData; index: number }) => React.ReactNode;
-}
-
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: MockConfigurableListProps) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem
+  }: MockConfigurableListProps<VolunteerPaymentMethodData>) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-method-btn" onClick={() => onCreate()}>
         {addBtnLabel}

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { MockCollapsibleBlockProps, MockConfigurableListProps } from '../__mocks__/mockProps';
 import type { CarouselImageData } from '../CarouselImageCard/CarouselImageCard';
 import { WarCarousel } from './WarCarousel';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
@@ -35,13 +36,6 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
   EditBlockSkeleton: () => <div data-testid="edit-block-skeleton" />
 }));
 
-interface MockCollapsibleBlockProps {
-  title: string;
-  children: React.ReactNode;
-  hidden?: boolean;
-  onToggleVisibility?: () => void;
-}
-
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
   default: ({ title, children, hidden, onToggleVisibility }: MockCollapsibleBlockProps) => (
@@ -61,18 +55,16 @@ jest.mock('../CarouselImageCard/CarouselImageCard', () => ({
   )
 }));
 
-interface MockConfigurableListProps {
-  items: CarouselImageData[];
-  addBtnLabel: string;
-  onCreate: () => void;
-  onChange: (item: CarouselImageData) => void;
-  onDelete: (id: CarouselImageData['id']) => void;
-  renderItem: (params: { item: CarouselImageData; index: number }) => React.ReactNode;
-}
-
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: MockConfigurableListProps) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem
+  }: MockConfigurableListProps<CarouselImageData>) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-image-btn" onClick={() => onCreate()}>
         {addBtnLabel}
