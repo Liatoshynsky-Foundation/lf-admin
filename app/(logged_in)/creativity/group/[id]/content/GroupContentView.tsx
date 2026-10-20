@@ -120,7 +120,7 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
       );
     case 'performances':
       return (
-        <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded grip>
+        <CollapsibleBlock title="Виконання опису" defaultExpanded grip>
           <GroupPerformancesSection
             currentLanguage={currentLanguage}
             performances={groupData.performances}
