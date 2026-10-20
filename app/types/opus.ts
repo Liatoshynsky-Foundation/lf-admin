@@ -109,7 +109,6 @@ export interface FetchedOpusData {
     altText?: { uk?: string | null; en?: string | null } | null;
     crop?: { x?: number; y?: number; width?: number; height?: number } | null;
   }> | null;
-  performancesTitle?: { uk?: string | null; en?: string | null } | null;
   performances?: Array<{
     id: string;
     title?: { uk?: string | null; en?: string | null } | null;

@@ -9,8 +9,6 @@ import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 const MOCK_UUID = 'mock-uuid-1234';
 
 const MOCK_TEXTS = {
-  sectionTitle: 'Тестовий заголовок виступів',
-  newSectionTitle: 'Нова назва секції',
   updatedCaption: 'updated caption',
   updatedUrl: 'updated-url'
 };
@@ -70,28 +68,6 @@ jest.mock('~/shared/components/sortable-item-wrapper/SortableItemWrapper', () =>
   )
 }));
 
-jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({
-    label,
-    value,
-    onChange
-  }: {
-    label: string;
-    value?: unknown;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <div data-testid={`mock-field-wrapper-${label}`}>
-      <label htmlFor={`input-${label}`}>{label}</label>
-      <input
-        id={`input-${label}`}
-        data-testid={`mock-input-${label}`}
-        value={(value as string) || ''}
-        onChange={onChange}
-      />
-    </div>
-  )
-}));
-
 jest.mock('~/shared/components/design-system/button/Button', () => ({
   __esModule: true,
   default: ({ children, onClick }: { children: ReactNode; onClick: () => void }) => (
@@ -129,17 +105,14 @@ jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
   handleSortableDragEnd: jest.fn()
 }));
 
-const mockOnChangeSectionTitle = jest.fn();
 const mockOnChangePerformances = jest.fn();
 
 const defaultProps = {
   currentLanguage: 'UA' as const,
-  sectionTitle: MOCK_TEXTS.sectionTitle,
   performances: [
     { id: '1', url: MOCK_URLS.youtube, caption: { uk: 'Перший виступ', en: 'First performance' } },
     { id: '2', url: MOCK_URLS.example, caption: { uk: 'Другий виступ', en: 'Second performance' } }
   ],
-  onChangeSectionTitle: mockOnChangeSectionTitle,
   onChangePerformances: mockOnChangePerformances
 };
 
@@ -150,23 +123,11 @@ describe('GroupPerformancesSection Component', () => {
     capturedOnDragEnd = null;
   });
 
-  it('should render section title and a row for each performance', () => {
+  it('should render a row for each performance', () => {
     render(<GroupPerformancesSection {...defaultProps} />);
 
-    expect(screen.getByTestId('mock-input-Заголовок секції')).toHaveValue(MOCK_TEXTS.sectionTitle);
     expect(screen.getByTestId('mock-performance-row-1')).toBeInTheDocument();
     expect(screen.getByTestId('mock-performance-row-2')).toBeInTheDocument();
-  });
-
-  it('should call onChangeSectionTitle when section title input changes', () => {
-    render(<GroupPerformancesSection {...defaultProps} />);
-
-    fireEvent.change(screen.getByTestId('mock-input-Заголовок секції'), {
-      target: { value: MOCK_TEXTS.newSectionTitle }
-    });
-
-    expect(mockOnChangeSectionTitle).toHaveBeenCalledTimes(1);
-    expect(mockOnChangeSectionTitle).toHaveBeenCalledWith(MOCK_TEXTS.newSectionTitle);
   });
 
   it('should add a new performance when "Додати пункт" is clicked', () => {

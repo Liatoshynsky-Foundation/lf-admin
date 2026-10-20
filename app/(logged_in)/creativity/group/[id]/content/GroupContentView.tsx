@@ -123,10 +123,8 @@ export const GroupContentView = ({ id }: GroupContentViewProps) => {
         <CollapsibleBlock title="Всі версії виконання опису" defaultExpanded grip>
           <GroupPerformancesSection
             currentLanguage={currentLanguage}
-            sectionTitle={groupData.performancesTitle}
             performances={groupData.performances}
             errors={errors}
-            onChangeSectionTitle={(newTitle) => handleFieldChange('performancesTitle', newTitle)}
             onChangePerformances={(newPerformances) => handleFieldChange('performances', newPerformances)}
           />
         </CollapsibleBlock>
