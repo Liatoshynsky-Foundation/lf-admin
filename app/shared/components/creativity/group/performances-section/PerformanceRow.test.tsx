@@ -231,8 +231,10 @@ describe('PerformanceRow Component', () => {
 
     it('should show 0 in counter when caption is empty', () => {
       renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
-
-      screen.getByText(`0/${OPUS_FIELD_LIMITS.caption.max}`);
+      
+      expect(
+        screen.getByText(`0/${OPUS_FIELD_LIMITS.caption.max}`)
+      ).toBeInTheDocument();
     });
 
     it('should clamp pasted caption to max length', () => {
