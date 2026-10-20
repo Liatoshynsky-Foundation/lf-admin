@@ -58,7 +58,6 @@ const CroppedImageRenderer = ({ props }: { props: CroppedImageRendererProps }) =
       {props.block.props.showPreview ? (
         <Box sx={[styles.imageStateContainer, { width: currentWidth }]} contentEditable={false}>
           <Box sx={{ ...cropStyles.container, width: currentWidth, height: currentHeight }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               draggable={false}
               src={props.block.props.url}
@@ -132,7 +131,6 @@ export const CroppedImageBlock = createReactBlockSpec(
 
     toExternalHTML: (props) => {
       return (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={props.block.props.url}
           alt={props.block.props.fileName}

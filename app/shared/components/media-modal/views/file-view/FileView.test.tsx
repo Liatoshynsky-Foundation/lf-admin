@@ -3,12 +3,6 @@ import React from 'react';
 
 import { FileView } from './FileView';
 
-jest.mock('next/image', () => ({
-  __esModule: true,
-  // eslint-disable-next-line @next/next/no-img-element
-  default: (props: React.ComponentProps<'img'>) => <img alt="" {...props} />
-}));
-
 const createFile = (name: string, type: string) => new File(['dummy content'], name, { type });
 
 describe('FileView', () => {

@@ -55,6 +55,12 @@ const eslintConfig = [
       ],
       'simple-import-sort/exports': 'error'
     }
+  },
+  {
+    files: ['app/shared/components/content-editor/cropped-image-block/CroppedImageBlock.tsx'],
+    rules: {
+      '@next/next/no-img-element': 'off'
+    }
   }
 ];
 
