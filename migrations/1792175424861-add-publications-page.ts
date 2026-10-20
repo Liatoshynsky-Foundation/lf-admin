@@ -6,6 +6,13 @@ const SLUG = 'publications';
 const COLLECTION = 'pages';
 const MIGRATION_ID = '1792175424861-add-publications-page';
 
+const seoFields = {
+  description: { uk: 'publications', en: 'publications' },
+  keywords: { uk: '', en: '' },
+  canonicalUrl: { uk: '', en: '' },
+  allowIndexation: { uk: true, en: true }
+};
+
 export async function up(db: Db): Promise<void> {
   const baseStorageUrl = process.env.STORAGE_BASE_URL;
 
@@ -41,10 +48,7 @@ export async function up(db: Db): Promise<void> {
       }
     },
     blocksOrder: ['PublicationsIntro'],
-    description: { uk: 'publications', en: 'publications' },
-    keywords: { uk: '', en: '' },
-    canonicalUrl: { uk: '', en: '' },
-    allowIndexation: { uk: true, en: true },
+    ...seoFields,
     _migrationId: MIGRATION_ID,
     createdAt: now,
     updatedAt: now
