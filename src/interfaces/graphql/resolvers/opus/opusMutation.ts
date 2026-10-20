@@ -187,13 +187,10 @@ const normalizeDatesNote = (
   value?: LocalizedString | null,
   existing?: LocalizedString | null
 ): LocalizedString | null => {
-  if (value === null) return null;
   if (!value) return null;
-  const existingEn = existing?.en;
-  const enValue = value.en !== undefined ? value.en : (existingEn ?? value.uk ?? '');
   return {
     uk: value.uk ?? '',
-    en: enValue ?? ''
+    en: value.en ?? existing?.en ?? value.uk ?? ''
   };
 };
 
