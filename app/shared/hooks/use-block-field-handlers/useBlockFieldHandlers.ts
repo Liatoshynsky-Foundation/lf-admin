@@ -33,14 +33,14 @@ export const useBlockFieldHandlers = (
       });
     };
 
-  const handleDescriptionChange = (val: JSONContent) => {
-    const descData = data?.description as Record<'uk' | 'en', JSONContent> | undefined;
+  const handleLocalizedContentChange = (field: string) => (val: JSONContent) => {
+    const fieldData = data?.[field] as Record<'uk' | 'en', JSONContent> | undefined;
 
-    (setField as SetFieldFn)(pageId, blockId, 'description', {
-      ...(descData),
+    (setField as SetFieldFn)(pageId, blockId, field, {
+      ...(fieldData),
       [currentLocale]: val
     });
   };
 
-  return { handleLocalizedTextChange, handleDescriptionChange };
+  return { handleLocalizedTextChange, handleLocalizedContentChange };
 };

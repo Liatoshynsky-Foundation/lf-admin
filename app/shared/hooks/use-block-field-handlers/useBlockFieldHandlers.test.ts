@@ -60,7 +60,7 @@ describe('useBlockFieldHandlers', () => {
     });
   });
 
-  describe('handleDescriptionChange', () => {
+  describe('handleLocalizedContentChange', () => {
     it('should correctly update the TipTap description for the current locale', () => {
       const currentLocale = 'uk';
       const blockData = {
@@ -74,7 +74,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [{ type: 'text', text: 'Новий опис' }] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
@@ -92,7 +92,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {

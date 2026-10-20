@@ -20,7 +20,7 @@ export const WarInfo = () => {
 
   const currentLocale = useStore((state) => state.locale) as 'uk' | 'en';
 
-  const { handleLocalizedTextChange, handleDescriptionChange } = useBlockFieldHandlers(
+  const { handleLocalizedTextChange, handleLocalizedContentChange } = useBlockFieldHandlers(
     pageId,
     blockId,
     currentLocale,
@@ -46,7 +46,7 @@ export const WarInfo = () => {
           title="Опис блоку"
           label="Текст опису"
           value={block.description?.[currentLocale]}
-          onChange={handleDescriptionChange}
+          onChange={handleLocalizedContentChange('description')}
         />
       </Box>
     </CollapsibleBlock>
