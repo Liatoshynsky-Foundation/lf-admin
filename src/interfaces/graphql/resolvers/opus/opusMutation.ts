@@ -60,7 +60,7 @@ export type CreateOpusGQLInput = {
   additionalText?: string;
   creationYear: string;
   endYear?: string;
-  datesNote?: string;
+  datesNote?: LocalizedString | null;
   genre?: LocalizedString;
   compositions?: GQLComposition[];
   adminTitle?: string;
@@ -183,6 +183,19 @@ const preserveEnglish = (
   ...value,
   en: value.en?.trim() || existing?.en || value.uk
 });
+const normalizeDatesNote = (
+  value?: LocalizedString | null,
+  existing?: LocalizedString | null
+): LocalizedString | null => {
+  if (value === null) return null;
+  if (!value) return null;
+  const existingEn = existing?.en;
+  const enValue = value.en !== undefined ? value.en : (existingEn ?? value.uk ?? '');
+  return {
+    uk: value.uk ?? '',
+    en: enValue ?? ''
+  };
+};
 
 const validateCreationYear = (year?: string): void => {
   if (year === undefined) return;
@@ -215,7 +228,9 @@ const validateOpusFields = (input: Partial<CreateOpusGQLInput> | UpdateOpusGQLIn
     });
   }
 
-  if (input.datesNote && input.datesNote.length > 40) {
+  const datesNoteUk = input.datesNote?.uk?.trim();
+  const datesNoteEn = input.datesNote?.en?.trim();
+  if ((datesNoteUk && datesNoteUk.length > 40) || (datesNoteEn && datesNoteEn.length > 40)) {
     throw new GraphQLError(opusServiceErrors.DATES_NOTE_TOO_LONG, {
       extensions: { code: 'BAD_USER_INPUT' }
     });
@@ -503,7 +518,9 @@ const buildPreviewMainFields = (
   additionalText: truncateForPreviewSuffix(previewAdditionalText),
   creationYear: input.creationYear?.trim() || sourceOpus.creationYear || '',
   endYear: input.endYear ?? sourceOpus.endYear ?? null,
-  datesNote: input.datesNote ?? sourceOpus.datesNote ?? null,
+  datesNote: input.datesNote !== undefined
+    ? normalizeDatesNote(input.datesNote, sourceOpus.datesNote)
+    : (sourceOpus.datesNote ?? null),
   genre: input.genre ?? sourceOpus.genre ?? null
 });
 
@@ -607,7 +624,9 @@ export const OpusMutation = {
         additionalText: formattedAdditionalText(input.additionalText) ?? null,
         creationYear: input.creationYear,
         endYear: input.endYear ?? null,
-        datesNote: input.datesNote ?? null,
+        datesNote: input.datesNote !== undefined
+          ? normalizeDatesNote(input.datesNote, null)
+          : null,
         genre: input.genre ?? null,
         adminTitle: input.adminTitle ?? null,
         slug,
@@ -686,6 +705,9 @@ export const OpusMutation = {
       name: preserveEnglish(rawInput.name, existingOpus.name),
       genre: rawInput.genre
         ? preserveEnglish(rawInput.genre, existingOpus.genre)
+        : undefined,
+      datesNote: rawInput.datesNote !== undefined
+        ? normalizeDatesNote(rawInput.datesNote, existingOpus.datesNote)
         : undefined
     };
 

@@ -174,7 +174,7 @@ export const useUpsertOpus = ({ id }: UseUpsertOpusProps = {}): UseUpsertOpusRes
       additionalText: fetched.additionalText ?? '',
       creationYear: fetched.creationYear ?? '',
       endYear: fetched.endYear ?? '',
-      datesNote: fetched.datesNote ?? '',
+      datesNote: (typeof fetched.datesNote === 'string' ? fetched.datesNote : fetched.datesNote?.uk) ?? '',
       genre: fetched.genre?.uk ?? '',
       compositions: (fetched.compositions ?? []).map((composition) => ({
         id: composition.id,

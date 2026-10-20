@@ -1026,7 +1026,7 @@ describe('useGroupContent Hook', () => {
       const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
 
       expect(calledInput.endYear).toBe('2025');
-      expect(calledInput.datesNote).toBe('Important note');
+      expect(calledInput.datesNote).toEqual({ uk: 'Important note', en: 'Important note' });
       expect(calledInput.compositions).toEqual([]);
       expect(calledInput.performances).toEqual([]);
       expect(calledInput.introDescription.uk).toBe('""');
@@ -1115,7 +1115,7 @@ describe('useGroupContent Hook', () => {
       act(() => {
         result.current.handleFieldChange('genre', '   Pop   ', true);
         result.current.handleFieldChange('additionalText', '   Some text   ');
-        result.current.handleFieldChange('dateAdditionalText', '  Note  ');
+        result.current.handleFieldChange('dateAdditionalText', '  Note  ', true);
       });
 
       await act(async () => {
@@ -1126,9 +1126,58 @@ describe('useGroupContent Hook', () => {
 
       expect(calledInput.genre.uk).toBe('Pop');
       expect(calledInput.additionalText).toBe('Some text');
-      expect(calledInput.datesNote).toBe('Note');
+      expect(calledInput.datesNote).toEqual({ uk: 'Note', en: '' });
     });
 
+    it('should edit datesNote in Ukrainian and English independently without overwriting', async () => {
+      (useOpusById as jest.Mock).mockReturnValue({
+        data: {
+          opusById: {
+            ...mockFetchedOpus,
+            datesNote: { uk: 'Нотатка UA', en: 'Note EN' }
+          }
+        },
+        loading: false
+      });
+      mockUpdateOpus.mockResolvedValue({ data: { updateOpus: { id: 'test-id' } } });
+
+      const { result } = renderHook(() => useGroupContent('test-id'));
+
+      await waitFor(() => {
+        expect(result.current.groupData).not.toBeNull();
+      });
+
+      expect(result.current.groupData?.dateAdditionalText).toEqual({
+        uk: 'Нотатка UA',
+        en: 'Note EN'
+      });
+
+      act(() => {
+        result.current.handleFieldChange('dateAdditionalText', 'Оновлена нотатка UA', true);
+      });
+      expect(result.current.groupData?.dateAdditionalText.uk).toBe('Оновлена нотатка UA');
+      expect(result.current.groupData?.dateAdditionalText.en).toBe('Note EN');
+
+      act(() => {
+        result.current.setCurrentLanguage('EN');
+      });
+
+      act(() => {
+        result.current.handleFieldChange('dateAdditionalText', 'Updated Note EN', true);
+      });
+      expect(result.current.groupData?.dateAdditionalText.uk).toBe('Оновлена нотатка UA');
+      expect(result.current.groupData?.dateAdditionalText.en).toBe('Updated Note EN');
+
+      await act(async () => {
+        await result.current.handlePublishClick();
+      });
+
+      const calledInput = mockUpdateOpus.mock.calls[0][0].variables.input;
+      expect(calledInput.datesNote).toEqual({
+        uk: 'Оновлена нотатка UA',
+        en: 'Updated Note EN'
+      });
+    });
     it('should trigger validation errors only when performance caption exceeds the max length', async () => {
       const longText = 'a'.repeat(251);
 

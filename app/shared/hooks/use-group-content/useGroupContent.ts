@@ -204,7 +204,10 @@ export const useGroupContent = (id: string) => {
         },
         creationYear: fetchedOpus.creationYear ? String(fetchedOpus.creationYear) : '',
         endYear: fetchedOpus.endYear ? String(fetchedOpus.endYear) : '',
-        dateAdditionalText: fetchedOpus.datesNote ?? '',
+        dateAdditionalText: {
+          uk: typeof fetchedOpus.datesNote === 'string' ? fetchedOpus.datesNote : (fetchedOpus.datesNote?.uk ?? ''),
+          en: typeof fetchedOpus.datesNote === 'string' ? fetchedOpus.datesNote : (fetchedOpus.datesNote?.en ?? '')
+        },
         status: fetchedOpus.status || 'draft',
         parts: {
           uk: fetchedOpus.parts?.uk ?? '',

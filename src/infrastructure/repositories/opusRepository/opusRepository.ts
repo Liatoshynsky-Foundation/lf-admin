@@ -33,7 +33,7 @@ export type DbOpus = {
   additionalText?: string | null;
   creationYear: string;
   endYear?: string | null;
-  datesNote?: string | null;
+  datesNote?: LocalizedString | string | null;
   genre?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string | null;
@@ -70,7 +70,12 @@ const toEntity = (doc: DbOpus): Opus =>
     additionalText: doc.additionalText ?? undefined,
     creationYear: doc.creationYear ?? '',
     endYear: doc.endYear ?? undefined,
-    datesNote: doc.datesNote ?? undefined,
+    datesNote:
+      typeof doc.datesNote === 'string'
+        ? { uk: doc.datesNote, en: doc.datesNote }
+        : doc.datesNote
+          ? { uk: doc.datesNote.uk ?? '', en: doc.datesNote.en ?? '' }
+          : undefined,
     genre: doc.genre ?? undefined,
     adminTitle: doc.adminTitle ?? undefined,
     slug: doc.slug ?? undefined,

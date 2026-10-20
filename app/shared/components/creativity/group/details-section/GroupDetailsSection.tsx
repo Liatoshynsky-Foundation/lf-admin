@@ -24,7 +24,7 @@ type GroupDetailsSectionProps = {
     groupTitle: MultilingualText;
     creationYear: string;
     endYear: string;
-    dateAdditionalText: string;
+    dateAdditionalText: MultilingualText;
     genre: MultilingualText;
   };
   currentLanguage: EditorLanguage;
@@ -180,11 +180,23 @@ export const GroupDetailsSection = ({ data, currentLanguage, errors, onChange }:
         <Box sx={{ flex: 2.5 }}>
           <CustomTextField
             label={OPUS_DETAILS_LABELS.datesNote}
-            value={data.dateAdditionalText}
-            onChange={(e) => onChange('dateAdditionalText', e.target.value)}
-            onBlur={() => onChange('dateAdditionalText', (data.dateAdditionalText || '').trim())}
+            value={data.dateAdditionalText?.[langKey] ?? ''}
+            onChange={(e) => onChange('dateAdditionalText', e.target.value, true)}
+            onBlur={() => {
+              if (!data.dateAdditionalText) {
+                onChange('dateAdditionalText', '', true);
+                return;
+              }
+              const currentVal = data.dateAdditionalText[langKey] ?? '';
+              const trimmedValue = currentVal.trim();
+              if (trimmedValue !== currentVal) {
+                onChange('dateAdditionalText', trimmedValue, true);
+              }
+            }}
             fullWidth
             inputProps={{ 'data-testid': 'mock-input-dateAdditionalText', maxLength: OPUS_FIELD_LIMITS.datesNote }}
+            error={!!errors.dateAdditionalText}
+            helperText={errors.dateAdditionalText}
           />
         </Box>
 
