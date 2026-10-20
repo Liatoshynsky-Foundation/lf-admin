@@ -1129,7 +1129,7 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.datesNote).toBe('Note');
     });
 
-    it('should trigger validation errors when performance caption is too long or EN is invalid', async () => {
+    it('should trigger validation errors only when performance caption exceeds the max length', async () => {
       const longText = 'a'.repeat(251);
 
       const customOpus = {
@@ -1156,12 +1156,15 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
+      // Only perf-1 (uk too long) and perf-4 (en too long) should produce caption errors.
+      // Empty and short-but-valid captions are allowed since caption is now optional.
       expect(result.current.errors['performances[perf-1].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['performances[perf-2].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.performanceSignature);
-      expect(result.current.errors['performances[perf-3].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
       expect(result.current.errors['performances[perf-4].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['performances[perf-5].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.performanceSignature);
-      expect(result.current.errors['performances[perf-6].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+
+      expect(result.current.errors['performances[perf-2].caption.en']).toBeUndefined();
+      expect(result.current.errors['performances[perf-3].caption.en']).toBeUndefined();
+      expect(result.current.errors['performances[perf-5].caption.uk']).toBeUndefined();
+      expect(result.current.errors['performances[perf-6].caption.uk']).toBeUndefined();
     });
 
     it('should trigger validation errors for photos altText and caption length', async () => {
