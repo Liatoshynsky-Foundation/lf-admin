@@ -5,6 +5,7 @@ import React, { MouseEvent } from 'react';
 import { EditPublicationsView, EditPublicationsViewProps } from './EditPublicationsView';
 import { EditorLanguage, MenuActionId } from '~/constants/publications';
 import { SerializedContent } from '~/shared/components/content-editor';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({
@@ -93,7 +94,7 @@ describe('EditPublicationsView Component', () => {
   const defaultProps: EditPublicationsViewProps = {
     type: 'news',
     isLoading: false,
-    currentData: { adminTitle: 'Test News Title' },
+    currentData: { adminTitle: 'Test News Title', status: BaseContentStatuses.Draft },
     editedContent: {
       uk: { content: { blocks: [], version: '1', lastModified: '' } },
       en: { content: { blocks: [], version: '1', lastModified: '' } }
@@ -169,6 +170,17 @@ describe('EditPublicationsView Component', () => {
     expect(screen.getByTestId('mock-title-dropdown')).toHaveTextContent('Test News Title');
     expect(screen.getByTestId('mock-content-editor')).toBeInTheDocument();
     expect(screen.getByText('Чернетка')).toBeInTheDocument();
+  });
+
+  it('should hide the draft label for published publications', () => {
+    render(
+      <EditPublicationsView
+        {...defaultProps}
+        currentData={{ adminTitle: 'Published News Title', status: BaseContentStatuses.Published }}
+      />
+    );
+
+    expect(screen.queryByText('Чернетка')).not.toBeInTheDocument();
   });
 
   it('should render the layout correctly for media (no editor)', () => {
