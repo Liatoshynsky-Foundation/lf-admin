@@ -7,7 +7,7 @@ const COLLECTION = 'pages';
 const MIGRATION_ID = '1792175424861-add-publications-page';
 
 const seoFields = {
-  description: { uk: 'publications', en: 'publications' },
+  description: { uk: '', en: '' },
   keywords: { uk: '', en: '' },
   canonicalUrl: { uk: '', en: '' },
   allowIndexation: { uk: true, en: true }
