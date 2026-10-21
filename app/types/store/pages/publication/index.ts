@@ -3,7 +3,7 @@ export * from './blocks/publications-intro';
 import { PublicationsIntroBlock } from './blocks/publications-intro';
 
 export interface PublicationsBlocksMap {
-    PublicationsIntro: PublicationsIntroBlock
+  PublicationsIntro: PublicationsIntroBlock;
 }
 
 export interface PublicationsPage {

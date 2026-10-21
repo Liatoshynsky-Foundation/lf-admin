@@ -1,6 +1,6 @@
-import type { JSONContent } from '@tiptap/react';
+import { LocalizedJSON } from '~/types/common';
 
 export interface PublicationsIntroBlock {
-    publicationsIntro: Record<'uk' | 'en', JSONContent>;
-    publicationsOutro: Record<'uk' | 'en', JSONContent>;
+    publicationsIntro: LocalizedJSON;
+    publicationsOutro: LocalizedJSON;
 }
