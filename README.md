@@ -639,7 +639,7 @@ sequenceDiagram
 [![@OleksiiStrotskyi](https://avatars.githubusercontent.com/u/290760136?v=4&size=250)](https://github.com/OleksiiStrotskyi)
 [![@03102909](https://avatars.githubusercontent.com/u/204791636?v=4&size=250)](https://github.com/03102909)
 [![@Ann00012](https://avatars.githubusercontent.com/u/173189440?v=4&size=250)](https://github.com/Ann00012)
-[![@yarl1k](https://avatars.githubusercontent.com/u/207349912?v=4&size=250)](https://github.com/yarl1k)
+<a href="https://github.com/yarl1k"><img src="https://avatars.githubusercontent.com/u/207349912?v=4" width="250" alt="@yarl1k"></a>
 
 ### DevOps team
 
