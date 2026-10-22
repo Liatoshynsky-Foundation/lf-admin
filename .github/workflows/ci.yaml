@@ -19,7 +19,7 @@ jobs:
     with:
       project-name: lf-admin
       node-version: "22"
-      mongodb-version: "8"
+      mongodb-version: "8.2"
       run-build: true
       run-tests: true
       run-graphql-generate: true
