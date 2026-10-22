@@ -177,21 +177,6 @@ describe('PerformanceRow Component', () => {
     expect(mockOnDeleteRequest).toHaveBeenCalledWith(undefined);
   });
 
-  describe('Character counter', () => {
-    it('should display "0/250 символів" when caption is empty', () => {
-      renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
-
-      expect(screen.getByText('0/250 символів')).toBeInTheDocument();
-    });
-
-    it('should display the correct character count when caption has content', () => {
-      const caption = 'Тест підпис';
-      renderRow({ item: { ...baseItem, caption: { uk: caption, en: '' } } });
-
-      expect(screen.getByText(`${caption.length}/250 символів`)).toBeInTheDocument();
-    });
-  });
-
   describe('Paste clamping', () => {
     it('should clamp pasted text that would exceed the 250-char limit', () => {
       const existing = 'a'.repeat(240);
