@@ -13,19 +13,18 @@ import {
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import YearPicker from '~/shared/components/forms/opus-details-block/year-picker/YearPicker';
-
-type MultilingualText = { uk: string; en: string };
+import { LocalizedString } from '~/types/common';
 
 type GroupDetailsSectionProps = {
   data: {
     titlePrefix: string;
     groupNumber: string;
     additionalText: string;
-    groupTitle: MultilingualText;
+    groupTitle: LocalizedString;
     creationYear: string;
     endYear: string;
-    dateAdditionalText: MultilingualText;
-    genre: MultilingualText;
+    dateAdditionalText: LocalizedString;
+    genre: LocalizedString;
   };
   currentLanguage: EditorLanguage;
   errors: Record<string, string>;

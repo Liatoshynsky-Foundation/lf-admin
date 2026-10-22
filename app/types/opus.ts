@@ -1,3 +1,4 @@
+import { NullableLocalizedString } from '~/types/common';
 import { OpusStatus } from '~/types/enums/common.enums';
 
 export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
@@ -65,7 +66,7 @@ export interface OpusCompositionInput {
 
 export interface OpusCompositionSuggestion {
   id?: string;
-  name?: { uk?: string | null; en?: string | null } | null;
+  name?: NullableLocalizedString | null;
   genre?: string | null;
   year?: number | null;
   sheetMusic?: Array<{
@@ -83,41 +84,41 @@ export interface FetchedOpusData {
   id: string;
   numberKind?: OpusNumberKind | null;
   number: number;
-  name?: { uk?: string | null; en?: string | null } | null;
+  name?: NullableLocalizedString | null;
   additionalText?: string | null;
   creationYear?: string | null;
   endYear?: string | null;
-  datesNote?: { uk?: string | null; en?: string | null } | string | null;
-  genre?: { uk?: string | null; en?: string | null } | null;
+  datesNote?: NullableLocalizedString | string | null;
+  genre?: NullableLocalizedString | null;
   status?: OpusStatus | null;
   blocksOrder?: string[] | null;
-  title?: { uk?: string | null; en?: string | null } | null;
-  description?: { uk?: string | null; en?: string | null } | null;
-  introDescription?: { uk?: string | null; en?: string | null } | null;
-  parts?: { uk?: string | null; en?: string | null } | null;
-  keywords?: { uk?: string | null; en?: string | null } | null;
+  title?: NullableLocalizedString | null;
+  description?: NullableLocalizedString | null;
+  introDescription?: NullableLocalizedString | null;
+  parts?: NullableLocalizedString | null;
+  keywords?: NullableLocalizedString | null;
   allowIndexation?: { uk?: boolean | null; en?: boolean | null } | null;
   coverImage?: {
     src?: string | null;
-    alt?: { uk?: string | null; en?: string | null } | null;
+    alt?: NullableLocalizedString | null;
     crop?: { x: number; y: number; width: number; height: number } | null;
   } | null;
   gallery?: Array<{
     id?: string;
     src?: string | null;
-    description?: { uk?: string | null; en?: string | null } | null;
-    altText?: { uk?: string | null; en?: string | null } | null;
+    description?: NullableLocalizedString | null;
+    altText?: NullableLocalizedString | null;
     crop?: { x?: number; y?: number; width?: number; height?: number } | null;
   }> | null;
-  performancesTitle?: { uk?: string | null; en?: string | null } | null;
+  performancesTitle?: NullableLocalizedString | null;
   performances?: Array<{
     id: string;
-    title?: { uk?: string | null; en?: string | null } | null;
+    title?: NullableLocalizedString | null;
     videoUrl?: string | null;
   }> | null;
   compositions?: Array<{
     id: string;
-    name?: { uk?: string | null; en?: string | null } | null;
+    name?: NullableLocalizedString | null;
     genre?: string | null;
     year?: number | null;
     audioAvailable?: boolean | null;

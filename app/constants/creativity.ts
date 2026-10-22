@@ -1,5 +1,6 @@
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
+import { LocalizedString } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { OpusCompositionData } from '~/types/opus';
 
@@ -106,7 +107,7 @@ export interface GroupPhoto {
 export interface GroupPerformance {
   id?: string;
   url?: string;
-  caption?: { uk: string; en: string };
+  caption?: LocalizedString;
 }
 
 export type NormalizedGroupPerformance = GroupPerformance & { id: string };
@@ -114,13 +115,13 @@ export type NormalizedGroupPerformance = GroupPerformance & { id: string };
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;
-  genre: { uk: string; en: string };
+  genre: LocalizedString;
   additionalText: string;
-  groupTitle: { uk: string; en: string };
+  groupTitle: LocalizedString;
   creationYear: string;
   endYear: string;
-  dateAdditionalText: { uk: string; en: string };
-  parts: { uk: string; en: string };
+  dateAdditionalText: LocalizedString;
+  parts: LocalizedString;
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
   compositions: OpusCompositionData[];
