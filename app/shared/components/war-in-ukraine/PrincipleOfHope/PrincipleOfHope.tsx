@@ -23,7 +23,7 @@ export const PrincipleOfHope = () => {
   const currentLocale = useStore((state) => state.locale) as 'uk' | 'en';
   const setField = useStore((state) => state.setField);
 
-  const { handleLocalizedTextChange, handleDescriptionChange } = useBlockFieldHandlers(
+  const { handleLocalizedTextChange, handleLocalizedContentChange } = useBlockFieldHandlers(
     pageId,
     blockId,
     currentLocale,
@@ -52,7 +52,7 @@ export const PrincipleOfHope = () => {
           title="Опис"
           label="Текст опису"
           value={block.description?.[currentLocale]}
-          onChange={handleDescriptionChange}
+          onChange={handleLocalizedContentChange('description')}
         />
 
         <CustomTextField

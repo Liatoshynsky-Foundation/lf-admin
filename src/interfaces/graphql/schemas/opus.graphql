@@ -59,7 +59,6 @@ type Opus {
   coverImage: LocalizedImage
 
   gallery: [OpusGalleryItem!]
-  performancesTitle: LocalizedString
   performances: [OpusPerformance!]
 
   allowIndexation: LocalizedBoolean
@@ -118,7 +117,6 @@ input CreateOpusInput {
   introDescription: JSON
   parts: JSON
   gallery: [OpusGalleryItemInput!]
-  performancesTitle: JSON
   performances: JSON
   keywords: JSON
   allowIndexation: JSON
@@ -144,7 +142,6 @@ input UpdateOpusInput {
   introDescription: JSON
   parts: JSON
   gallery: [OpusGalleryItemInput!]
-  performancesTitle: JSON
   performances: JSON
   keywords: JSON
   allowIndexation: JSON

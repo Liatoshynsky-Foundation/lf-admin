@@ -12,16 +12,13 @@ import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
 import PlusIcon from '~/public/icons/plus.svg';
 import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import Button from '~/shared/components/design-system/button/Button';
-import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
 import { SortableList } from '~/shared/components/sortable-list/SortableList';
 
 type GroupPerformancesSectionProps = {
   currentLanguage: EditorLanguage;
-  sectionTitle: string;
   performances: GroupPerformance[];
   errors?: Record<string, string>;
-  onChangeSectionTitle: (title: string) => void;
   onChangePerformances: (performances: GroupPerformance[]) => void;
 };
 
@@ -67,10 +64,8 @@ const MAX_PERFORMANCES = OPUS_FIELD_LIMITS.maxPerformances;
 
 export const GroupPerformancesSection = ({
   currentLanguage,
-  sectionTitle,
   performances,
   errors,
-  onChangeSectionTitle,
   onChangePerformances
 }: GroupPerformancesSectionProps) => {
   const langKey = currentLanguage === 'UA' ? 'uk' : 'en';
@@ -138,12 +133,6 @@ export const GroupPerformancesSection = ({
   return (
     <>
       <Box sx={styles.mainContainer}>
-        <CustomTextField
-          label="Заголовок секції"
-          value={sectionTitle}
-          onChange={(e) => onChangeSectionTitle(e.target.value)}
-          fullWidth
-        />
         <Box sx={styles.headerRow}>
           <Typography variant="body2" color="text.secondary" sx={styles.typographyTitle}>
             Пункти секції:

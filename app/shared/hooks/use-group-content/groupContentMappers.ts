@@ -146,16 +146,12 @@ const buildGroupMediaInput = (
   groupData: GroupData
 ): Pick<
   UpdateOpusMutationVariables['input'],
-  'compositions' | 'gallery' | 'performancesTitle' | 'performances'
+  'compositions' | 'gallery' | 'performances'
 > => ({
   compositions: (groupData.compositions || []).map((composition, index) =>
     mapCompositionInput(composition, index)
   ),
   gallery: (groupData.photos || []).map(mapGalleryInput),
-  performancesTitle: {
-    uk: String(groupData.performancesTitle || ''),
-    en: String(groupData.performancesTitle || '')
-  },
   performances: (groupData.performances || [])
     .map(mapPerformanceInput)
     .filter((perf) => perf.videoUrl || perf.title.uk || perf.title.en)

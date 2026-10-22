@@ -220,21 +220,21 @@ export const useUpsertFund = (fundId?: string) => {
     errors: FundDetailsErrors;
   };
 
-  const validate = useCallback((): ValidationResult => {
+  const validate = useCallback((data: FundDetailsValue): ValidationResult => {
     const newErrors: FundDetailsErrors = {};
     let isValid = true;
 
-    if (!details.fundNumber) {
+    if (!data.fundNumber) {
       newErrors.fundNumber = 'Номер фонду є обов’язковим.';
       isValid = false;
-    } else if (!/^\d+$/.test(details.fundNumber) || Number(details.fundNumber) <= 0) {
+    } else if (!/^\d+$/.test(data.fundNumber) || Number(data.fundNumber) <= 0) {
       newErrors.fundNumber = 'Номер фонду має бути цілим позитивним числом.';
       isValid = false;
     }
 
     newErrors.name = {};
     for (const locale of ['uk', 'en'] as const) {
-      const name = details.name?.[locale].trim() || '';
+      const name = data.name?.[locale].trim() || '';
 
       if (!name) {
         newErrors.name[locale] = FUND_VALIDATION_MESSAGES.nameLocaleRequired[locale];
@@ -245,7 +245,7 @@ export const useUpsertFund = (fundId?: string) => {
       }
     }
 
-    const docDate = details.documentCreationDate || '';
+    const docDate = data.documentCreationDate || '';
 
     if (!docDate.trim()) {
       newErrors.documentCreationDate = 'Дати утворення документів є обов’язковими.';
@@ -255,21 +255,21 @@ export const useUpsertFund = (fundId?: string) => {
       isValid = false;
     }
 
-    const chrono = details.chronologicalBoundaries || '';
+    const chrono = data.chronologicalBoundaries || '';
 
     if (chrono.trim() && chrono.length > 150) {
       newErrors.chronologicalBoundaries = 'Значення не може перевищувати 150 символів.';
       isValid = false;
     }
 
-    const orgFormUk = details.organizationForm?.uk || '';
+    const orgFormUk = data.organizationForm?.uk || '';
 
     if (orgFormUk.trim() && orgFormUk.length > 150) {
       newErrors.organizationForm = 'Значення не може перевищувати 150 символів.';
       isValid = false;
     }
 
-    const rawDescription = resolveLocalizedText(details.description?.uk);
+    const rawDescription = resolveLocalizedText(data.description?.uk);
     if (rawDescription && rawDescription.length > 1000) {
       newErrors.description = 'Опис не може перевищувати 1000 символів.';
       isValid = false;
@@ -279,7 +279,7 @@ export const useUpsertFund = (fundId?: string) => {
       isValid,
       errors: newErrors
     };
-  }, [details]);
+  }, []);
 
   const saveFund = useCallback(
     async (payload: CreateFundInput): Promise<string | undefined> => {
@@ -298,11 +298,29 @@ export const useUpsertFund = (fundId?: string) => {
     [mode, id, createFund, updateFund]
   );
 
+  const handleSetDetails = useCallback(
+    (updater: SetStateAction<FundDetailsValue>) => {
+      setDetails((prev) => {
+        const nextDetails = typeof updater === 'function' ? updater(prev) : updater;
+
+        if (forceShowErrors) {
+          const { errors: newErrors } = validate(nextDetails);
+          setErrors(newErrors);
+        }
+
+        return nextDetails;
+      });
+    },
+    [forceShowErrors, validate]
+  );
+
   const handleSave = useCallback(
     async (status: BaseContentStatuses): Promise<string | null> => {
       setForceShowErrors(true);
 
-      const validation = validate();
+      const validation = validate(details);
+      setErrors(validation.errors);
+
       if (!validation.isValid) {
         if (validation.errors.name?.uk) setLocale('uk');
         else if (validation.errors.name?.en) setLocale('en');
@@ -338,7 +356,7 @@ export const useUpsertFund = (fundId?: string) => {
 
   return {
     details,
-    setDetails,
+    setDetails: handleSetDetails,
     errors,
     forceShowErrors,
     isSaved,

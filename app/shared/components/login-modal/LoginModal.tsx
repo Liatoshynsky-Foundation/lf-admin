@@ -27,12 +27,12 @@ const LoginModal = ({ onSubmit, submitError, loading }: LoginModalProps) => {
     }
   }, [submitError]);
 
-  const validateUsername = () => {
-    if (!username.trim()) {
+  const validateUsername = (trimmedUsername: string) => {
+    if (!trimmedUsername) {
       setUsernameError(loginErrors.EMPTY_EMAIL);
       return false;
     }
-    const error = validateEmail(username);
+    const error = validateEmail(trimmedUsername);
     if (error) {
       setUsernameError(loginErrors.INVALID_EMAIL);
       return false;
@@ -63,11 +63,12 @@ const LoginModal = ({ onSubmit, submitError, loading }: LoginModalProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const isUsernameValid = validateUsername();
+    const trimmedUsername = username.trim();
+    const isUsernameValid = validateUsername(trimmedUsername);
     const isPasswordValid = validatePassword();
 
     if (isUsernameValid && isPasswordValid) {
-      onSubmit({ login: username, password });
+      onSubmit({ login: trimmedUsername, password });
     }
   };
 

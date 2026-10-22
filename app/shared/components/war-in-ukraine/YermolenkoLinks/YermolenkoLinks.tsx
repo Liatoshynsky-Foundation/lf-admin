@@ -23,7 +23,7 @@ export const YermolenkoLinks = () => {
   const setField = useStore((state) => state.setField);
   const toggleBlockVisibility = useStore((state) => state.toggleBlockVisibility);
 
-  const { handleLocalizedTextChange, handleDescriptionChange } = useBlockFieldHandlers(
+  const { handleLocalizedTextChange, handleLocalizedContentChange } = useBlockFieldHandlers(
     pageId, 
     blockId, 
     currentLocale, 
@@ -48,7 +48,7 @@ export const YermolenkoLinks = () => {
           title="Опис"
           label="Текст опису"
           value={block.description?.[currentLocale]}
-          onChange={handleDescriptionChange}
+          onChange={handleLocalizedContentChange('description')}
         />
 
         <CustomTextField

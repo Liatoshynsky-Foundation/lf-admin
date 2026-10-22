@@ -186,7 +186,12 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
         crop={crop?.uk ?? null}
-        onChangeCrop={(newUkCrop) => onChangeCrop?.({ uk: newUkCrop, en: newUkCrop })}
+        onChangeCrop={(newUkCrop) =>
+          onChangeCrop?.({
+            uk: newUkCrop,
+            en: crop?.en ?? null
+          })
+        }
         labels={labels?.uk}
         extraFields={
           showTicketUrl || extraFields
@@ -208,7 +213,12 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
         crop={crop?.en ?? null}
-        onChangeCrop={(newEnCrop) => onChangeCrop?.({ uk: newEnCrop, en: newEnCrop })}
+        onChangeCrop={(newEnCrop) =>
+          onChangeCrop?.({
+            uk: crop?.uk ?? null,
+            en: newEnCrop
+          })
+        }
         labels={labels?.en}
         extraFields={
           showTicketUrl || extraFields
