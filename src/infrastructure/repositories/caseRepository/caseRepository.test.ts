@@ -65,7 +65,7 @@ describe('caseRepository', () => {
     order: 0
   };
 
-  const mockAndFetchCase = async (overrides: any, cipher?: string, reqDesc = 1, reqCase = 1) => {
+  const mockAndFetchCase = async (overrides: Partial<DbCase>, cipher?: string, reqDesc = 1, reqCase = 1) => {
     const doc = { ...createMockCaseDoc(overrides), ...(cipher !== undefined && { cipher }) };
     findOneMock.mockResolvedValue({ toObject: () => doc });
     return await repository.findByFundAndNumbers(mockFundId, reqDesc, reqCase);
@@ -282,14 +282,13 @@ describe('caseRepository', () => {
   });
 
   describe('countDistinctDescriptionNumbers', () => {
-    it('should return the number of distinct descriptions with a detailed description', async () => {
+    it('should count distinct series numbers without filtering by detailed description or status', async () => {
       distinctMock.mockResolvedValue([1, 2, 3]);
 
       const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
       expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', {
-        fundId: mockFundId,
-        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+        fundId: mockFundId
       });
       expect(result).toBe(3);
     });
