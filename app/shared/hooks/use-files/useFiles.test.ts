@@ -21,7 +21,7 @@ describe('useFiles', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     if (!globalThis.fetch) {
-      globalThis.fetch = jest.fn() as unknown as typeof fetch;
+      globalThis.fetch = jest.fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>();
     }
 
     fetchSpy = jest.spyOn(globalThis, 'fetch');

@@ -1,5 +1,4 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import type { ReadonlyURLSearchParams } from 'next/navigation';
 import * as nextNavigation from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -43,6 +42,13 @@ jest.mock('next/navigation', () => ({
     get: jest.fn().mockReturnValue(null)
   }))
 }));
+
+const { ReadonlyURLSearchParams } = jest.requireActual<typeof nextNavigation>('next/navigation');
+
+const mockFromSearchParam = (from: string | null) =>
+  jest
+    .mocked(nextNavigation.useSearchParams)
+    .mockReturnValue(new ReadonlyURLSearchParams(from === null ? undefined : { from }));
 
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
@@ -632,8 +638,7 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to edit page on handleBackClick if "from" param is "create"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('create') } as unknown as ReadonlyURLSearchParams;
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
+      mockFromSearchParam('create');
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1484,8 +1489,7 @@ describe('useGroupContent Hook', () => {
 
   describe('Navigation', () => {
     it('should navigate to edit page on handleBackClick if "from" param is "edit"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('edit') } as unknown as ReadonlyURLSearchParams;
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
+      mockFromSearchParam('edit');
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1497,8 +1501,7 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to creativity page on handleBackClick if "from" param is absent', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue(null) } as unknown as ReadonlyURLSearchParams;
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams);
+      mockFromSearchParam(null);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 

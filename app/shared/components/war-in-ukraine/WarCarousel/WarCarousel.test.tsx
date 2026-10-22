@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import type { MockCollapsibleBlockProps, MockConfigurableListProps } from '../__mocks__/mockProps';
+import { MockCollapsibleBlock } from '../__mocks__/mockComponents';
+import type { MockConfigurableListProps } from '../__mocks__/mockProps';
 import type { CarouselImageData } from '../CarouselImageCard/CarouselImageCard';
 import { WarCarousel } from './WarCarousel';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
@@ -38,15 +39,7 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: MockCollapsibleBlockProps) => (
-    <div data-testid="collapsible-block" data-hidden={hidden}>
-      <span>{title}</span>
-      <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
-        Toggle Visibility
-      </button>
-      {children}
-    </div>
-  )
+  default: MockCollapsibleBlock
 }));
 
 jest.mock('../CarouselImageCard/CarouselImageCard', () => ({

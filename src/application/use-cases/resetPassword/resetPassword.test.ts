@@ -2,18 +2,27 @@ import bcrypt from 'bcrypt';
 import { ZodError } from 'zod';
 
 import { resetPassword } from './resetPassword';
-import { AdminRepository } from '~/domain/repositories/adminRepository';
+import type { Admin } from '~/domain/entities/Admin';
+import type { AdminRepository } from '~/domain/repositories/adminRepository';
 
 jest.mock('bcrypt');
 
-const mockAdminRepository = {
+const mockAdminRepository: jest.Mocked<AdminRepository> = {
   findByEmail: jest.fn(),
   setResetToken: jest.fn(),
   findByResetToken: jest.fn(),
   updatePasswordAndClearToken: jest.fn()
 };
 
-const useCase = resetPassword({ adminRepository: mockAdminRepository as unknown as AdminRepository });
+const buildAdmin = (overrides: Partial<Admin> = {}): Admin => ({
+  id: 'admin-123',
+  type: 'admin',
+  email: 'admin@example.com',
+  password: 'hashed-old-password',
+  ...overrides
+});
+
+const useCase = resetPassword({ adminRepository: mockAdminRepository });
 
 describe('resetPassword', () => {
   beforeEach(() => {
@@ -25,10 +34,7 @@ describe('resetPassword', () => {
 
   it('should successfully hash new password and clear token if everything is valid', async () => {
     const futureDate = new Date(Date.now() + 3600000);
-    mockAdminRepository.findByResetToken.mockResolvedValue({
-      id: 'admin-123',
-      resetPasswordExpires: futureDate
-    });
+    mockAdminRepository.findByResetToken.mockResolvedValue(buildAdmin({ resetPasswordExpires: futureDate }));
 
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
@@ -50,10 +56,7 @@ describe('resetPassword', () => {
 
   it('should throw Error if token is expired', async () => {
     const pastDate = new Date(Date.now() - 3600000);
-    mockAdminRepository.findByResetToken.mockResolvedValue({
-      id: 'admin-123',
-      resetPasswordExpires: pastDate
-    });
+    mockAdminRepository.findByResetToken.mockResolvedValue(buildAdmin({ resetPasswordExpires: pastDate }));
 
     await expect(useCase.execute(validToken, validPassword)).rejects.toThrow(
       'Посилання для відновлення пароля вже було використано або втратило чинність'

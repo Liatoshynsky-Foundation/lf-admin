@@ -82,7 +82,7 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
   }: { 
     label: string; 
     value: dayjs.Dayjs | null;
-    onChange: (val: dayjs.Dayjs) => void;
+    onChange: (val: dayjs.Dayjs | null) => void;
     slotProps?: {
       textField?: {
         error?: boolean;

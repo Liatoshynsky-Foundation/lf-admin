@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
-import type {
-  MockCollapsibleBlockProps,
-  MockConfigurableButtonListProps,
-  MockCustomTextFieldProps
-} from '../__mocks__/mockProps';
+import {
+  MOCK_UPDATED_BUTTONS,
+  MockCollapsibleBlock,
+  MockConfigurableButtonList,
+  mockLocalizedTextField
+} from '../__mocks__/mockComponents';
 import { PrincipleOfHope } from './PrincipleOfHope';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -21,55 +21,15 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: MockCollapsibleBlockProps) => (
-    <div data-testid="collapsible-block" data-hidden={hidden}>
-      <span>{title}</span>
-      <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
-        Toggle Visibility
-      </button>
-      {children}
-    </div>
-  )
+  default: MockCollapsibleBlock
 }));
 
 jest.mock('../ConfigurableButtonList/ConfigurableButtonList', () => ({
-  ConfigurableButtonList: ({ buttons, onChange }: MockConfigurableButtonListProps) => (
-    <div data-testid="configurable-button-list" data-count={buttons.length}>
-      <button
-        type="button"
-        data-testid="trigger-buttons-change"
-        onClick={() => onChange([{ id: 'btn-1', link: 'https://test.com' }])}
-      >
-        Change Buttons List
-      </button>
-    </div>
-  )
+  ConfigurableButtonList: MockConfigurableButtonList
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps<JSONContent | string>) => (
-    <div data-testid={`field-${title}`}>
-      <input
-        aria-label={title}
-        value={typeof value === 'object' && value !== null ? JSON.stringify(value) : (value || '')}
-        onChange={(e) => {
-          if (title === 'Опис') {
-            onChange(e.target.value);
-          } else {
-            onChange(e);
-          }
-        }}
-        data-testid={`input-${title}`}
-      />
-      <button
-        type="button"
-        data-testid={`direct-string-btn-${title}`}
-        onClick={() => onChange('Пряме значення рядком')}
-      >
-        Set Direct String
-      </button>
-    </div>
-  )
+  CustomTextField: mockLocalizedTextField('Опис', 'Пряме значення рядком')
 }));
 
 describe('PrincipleOfHope', () => {
@@ -316,7 +276,7 @@ describe('PrincipleOfHope', () => {
       'war-in-ukraine',
       expectedBlockId,
       'buttons',
-      [{ id: 'btn-1', link: 'https://test.com' }]
+      MOCK_UPDATED_BUTTONS
     );
   });
 });

@@ -27,5 +27,5 @@ export interface MockConfigurableListProps<TItem extends { id: string | number }
 
 export interface MockConfigurableButtonListProps {
   buttons: Partial<ClickableButtonData>[];
-  onChange: (buttons: Partial<ClickableButtonData>[]) => void;
+  onChange: (buttons: ClickableButtonData[]) => void;
 }

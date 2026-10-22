@@ -19,11 +19,9 @@ describe('useUnsavedChanges', () => {
 
     mockedUsePathname.mockReturnValue('/publications');
 
-    mockedUseStore.mockImplementation((selector) =>
-      selector({
-        setDirtyPath
-      } as unknown as StoreState)
-    );
+    const storeState: Pick<StoreState, 'setDirtyPath'> = { setDirtyPath };
+
+    mockedUseStore.mockImplementation((selector) => selector(storeState as StoreState));
   });
 
   it('should set dirty path on mount', () => {

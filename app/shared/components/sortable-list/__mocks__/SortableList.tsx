@@ -1,5 +1,5 @@
 import type { DragEndEvent } from '@dnd-kit/core';
-import React, { MouseEvent, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { createDragEndEvent } from '~/__mocks__/utils';
 
@@ -13,13 +13,12 @@ export const SortableList = ({ children, onDragEnd, items }: SortableListMockPro
   return (
     <div // NOSONAR - was explicitly added to avoid triggering sonarqube(typescript:S6848) & sonarqube(typescript:S1082)
       data-testid="mock-sortable-list"
-      onClick={(e: MouseEvent<HTMLDivElement> & { activeId?: string; overId?: string }) => {
-        if(!onDragEnd) return;
-        
-        const activeId = e.activeId || (items && items.length >= 2 ? items[0] : '');
-        const overId = e.overId || (items && items.length >= 2 ? items[1] : null);
+      onClick={() => {
+        if (!onDragEnd) return;
 
-        onDragEnd(createDragEndEvent(activeId, overId));
+        const hasPair = items !== undefined && items.length >= 2;
+
+        onDragEnd(createDragEndEvent(hasPair ? items[0] : '', hasPair ? items[1] : null));
       }}
     >
       {children}
