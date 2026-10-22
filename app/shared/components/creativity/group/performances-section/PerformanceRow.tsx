@@ -73,14 +73,14 @@ export const PerformanceRow = ({
           </Box>
         </Tooltip>
 
-        <Box>
+        <Box sx={styles.captionWrapper}>
           <CustomTextField
             label="Підпис"
             value={captionValue}
             onChange={(e) => onUpdateCaption(item.id, e.target.value.slice(0, OPUS_FIELD_LIMITS.caption.max))}
             fullWidth
             error={showCaptionError}
-            helperText={showCaptionError ? captionError : ''}
+            helperText={showCaptionError ? captionError : ' '}
             inputProps={{ maxLength: CAPTION_MAX }}
             onPaste={handleCaptionPaste}
           />
