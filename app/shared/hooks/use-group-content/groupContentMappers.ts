@@ -125,7 +125,7 @@ const buildGroupDetailsInput = (
   },
   creationYear: String(groupData.creationYear || '').trim(),
   endYear: groupData.endYear ? String(groupData.endYear) : null,
-  datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null
+  datesNote: mapLocalizedTrimmedValue(groupData.dateAdditionalText)
 });
 
 const buildGroupRichContentInput = (

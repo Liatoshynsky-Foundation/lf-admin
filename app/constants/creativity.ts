@@ -119,7 +119,7 @@ export interface GroupData {
   groupTitle: { uk: string; en: string };
   creationYear: string;
   endYear: string;
-  dateAdditionalText: string;
+  dateAdditionalText: { uk: string; en: string };
   parts: { uk: string; en: string };
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];

@@ -426,7 +426,10 @@ describe('OpusMutation Resolvers', () => {
       it('should throw error if datesNote is too long', async () => {
         const longText = 'a'.repeat(41);
         await expect(
-          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, datesNote: longText } }, adminContext)
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, datesNote: { uk: longText, en: '' } } }, adminContext)
+        ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
+        await expect(
+          OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, datesNote: { uk: '', en: longText } } }, adminContext)
         ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
       });
 
@@ -960,7 +963,14 @@ describe('OpusMutation Resolvers', () => {
         await expect(
           OpusMutation.updateOpus(
             {},
-            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, datesNote: longText } },
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, datesNote: { uk: longText, en: '' } } },
+            adminContext
+          )
+        ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
+        await expect(
+          OpusMutation.updateOpus(
+            {},
+            { id: OPUS_ID, input: { ...BASE_UPDATE_INPUT, datesNote: { uk: '', en: longText } } },
             adminContext
           )
         ).rejects.toThrow(opusServiceErrors.DATES_NOTE_TOO_LONG);
