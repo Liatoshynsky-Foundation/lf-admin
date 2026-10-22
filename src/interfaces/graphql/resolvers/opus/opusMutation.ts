@@ -69,7 +69,6 @@ export type CreateOpusGQLInput = {
   introDescription?: OpusDescription;
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
-  performancesTitle?: LocalizedString;
   performances?: OpusPerformance[];
   keywords?: LocalizedString;
   allowIndexation?: LocalizedBoolean;
@@ -417,7 +416,6 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
     introDescription: input.introDescription,
     parts: input.parts,
     gallery: input.gallery,
-    performancesTitle: input.performancesTitle,
     performances: input.performances,
     compositions: compositionIds,
     blocksOrder: input.blocksOrder
@@ -519,11 +517,10 @@ const buildPreviewContentFields = (
   previewCompositionIds: string[]
 ): Pick<
   PreviewOpusInput,
-  'compositions' | 'gallery' | 'performancesTitle' | 'performances' | 'blocksOrder'
+  'compositions' | 'gallery' | 'performances' | 'blocksOrder'
 > => ({
   compositions: previewCompositionIds.length > 0 ? previewCompositionIds : sourceOpus.compositions || [],
   gallery: sanitizePreviewGallery(input.gallery),
-  performancesTitle: input.performancesTitle ?? sourceOpus.performancesTitle ?? null,
   performances: sanitizePreviewPerformances(input.performances),
   blocksOrder: input.blocksOrder ?? sourceOpus.blocksOrder ?? null
 });
@@ -617,7 +614,6 @@ export const OpusMutation = {
         meta: { views: 0 },
         compositions: compositionIds,
         gallery: input.gallery,
-        performancesTitle: input.performancesTitle,
         performances: input.performances,
         blocksOrder: input.blocksOrder ?? null
       };

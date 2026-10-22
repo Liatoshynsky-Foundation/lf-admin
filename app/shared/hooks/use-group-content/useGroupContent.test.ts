@@ -84,7 +84,6 @@ const mockFetchedOpus = {
       crop: { x: 0, y: 0, width: 100, height: 100 }
     }
   ],
-  performancesTitle: { uk: 'Performances', en: 'Performances EN' },
   performances: [
     {
       id: 'perf-1',
@@ -881,7 +880,6 @@ describe('useGroupContent Hook', () => {
     it('should cover all edge-case fallbacks (null arrays, sparse crops, Bo. prefix, empty strings)', async () => {
       const sparseData = {
         ...mockFetchedOpus,
-        performancesTitle: { uk: null, en: 'EN Only' },
         performances: null,
         gallery: [
           {
@@ -933,17 +931,6 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
-    });
-
-    it('should cover completely missing performancesTitle (fallback to empty string)', async () => {
-      (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: { ...mockFetchedOpus, performancesTitle: null } },
-        loading: false
-      });
-      const { result } = renderHook(() => useGroupContent('test-id'));
-      await waitFor(() => {
-        expect(result.current.groupData?.performancesTitle).toBe('');
-      });
     });
 
     it('should successfully delete opus, show toast, close modal and navigate on handleConfirmDelete', async () => {
@@ -1030,7 +1017,6 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('description', { uk: null, en: null });
         result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
-        result.current.handleFieldChange('performancesTitle', '');
         result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
@@ -1144,7 +1130,7 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.datesNote).toBe('Note');
     });
 
-    it('should trigger validation errors when performance caption is too long or EN is invalid', async () => {
+    it('should trigger validation errors only when performance caption exceeds the max length', async () => {
       const longText = 'a'.repeat(251);
       const performances = [
         { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
@@ -1155,6 +1141,8 @@ describe('useGroupContent Hook', () => {
 
       const result = await renderAndPublishWithPerformances(performances);
 
+      // Only perf-1 (uk too long) and perf-4 (en too long) should produce caption errors.
+      // Empty and short-but-valid captions are allowed since caption is now optional.
       expect(result.current.errors['performances[perf-1].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
       expect(result.current.errors['performances[perf-2].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
       expect(result.current.errors['performances[perf-3].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);

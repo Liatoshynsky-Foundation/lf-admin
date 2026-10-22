@@ -18,12 +18,14 @@ import DividedHeader from '~/shared/components/divided-header/DividedHeader';
 import HeaderRightActions from '~/shared/components/divided-header/header-right-actions/HeaderRightActions';
 import { TitleDropdown } from '~/shared/components/divided-header/title-dropdown/TitleDropdown';
 import ActionMenu from '~/shared/components/dropdown-menu/ActionMenu';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 type AnchorId = 'navigation' | 'publish';
 type MenuAnchor = Record<AnchorId, HTMLButtonElement | null>;
 
 export type PublicationViewData = {
   adminTitle?: string | null;
+  status?: string | null;
 };
 
 export type EditPublicationsViewProps = {
@@ -105,7 +107,7 @@ export function EditPublicationsView({
           />
         )}
         <Badge variant={type} label={PublicationsChipLabels[type]} />
-        <Badge variant="draft" />
+        {currentData?.status !== BaseContentStatuses.Published && <Badge variant="draft" />}
       </DividedHeader>
 
       <Box sx={styles.mainContent}>

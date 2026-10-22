@@ -52,7 +52,6 @@ export type Opus = {
 
   gallery?: OpusGalleryItem[];
 
-  performancesTitle?: LocalizedString | null;
   performances?: OpusPerformance[];
 
   status: OpusStatus;

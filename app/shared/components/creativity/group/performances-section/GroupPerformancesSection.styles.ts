@@ -15,10 +15,5 @@ export const styles = {
   actionIcon: { color: 'black', width: '34px', height: '34px' },
   addBtnWrapper: { display: 'flex', justifyContent: 'center', mt: 1 },
   addBtn: { borderRadius: '20px', textTransform: 'none' },
-  charCounter: {
-    display: 'block',
-    textAlign: 'right',
-    mt: '4px',
-    color: 'text.secondary'
-  }
+  charCounter: { display: 'block', textAlign: 'right', mt: '4px', color: 'text.secondary' },
 } satisfies Record<string, SxProps<Theme>>;

@@ -49,9 +49,6 @@ const ContentCard = ({
   editHref,
   onClick
 }: ContentCardProps) => {
-  const localizedKeys = Object.entries(title)
-    .filter(([, value]) => Boolean(value?.trim()))
-    .map(([key]) => key);
   const titleText = title.uk || title.en || '';
   const altText = coverImage.alt.uk || coverImage.alt.en || titleText;
 
@@ -66,7 +63,7 @@ const ContentCard = ({
 
   const titleNode = <TitleWithTooltip text={titleText} />;
 
-  const badgeNode = <ContentCardBadge type={type} status={status} localizations={localizedKeys} />;
+  const badgeNode = <ContentCardBadge type={type} status={status} />;
 
   const infoNode = (
     <Typography variant="caption" sx={infoText}>

@@ -4,7 +4,8 @@ export const PAGE_IDS = {
   ARTISTRY: 'artistry',
   WAR_IN_UKRAINE: 'war-in-ukraine',
   ARCHIVE: 'archive',
-  RESEARCH: 'research'
+  RESEARCH: 'research',
+  PUBLICATIONS: 'publications'
 };
 
 export const BLOCK_IDS = {
@@ -34,5 +35,6 @@ export const BLOCK_IDS = {
   YERMOLENKO_LINKS: 'YermolenkoLinks',
   VOLUNTEER_DONATION: 'VolunteerDonation',
   PAGE_CAPTION: 'PageCaption',
-  RESEARCH_HERO: 'HeroSection'
+  RESEARCH_HERO: 'HeroSection',
+  PUBLICATIONS_INTRO: 'PublicationsIntro'
 } as const;

@@ -225,12 +225,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: { x: 10 }
+      en: null
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
+      uk: { x: 1, y: 1, width: 10, height: 10 },
       en: { x: 10 }
     });
   });
@@ -245,12 +245,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: { x: 10 }
+      en: { x: 2, y: 2, width: 20, height: 20 }
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
+      uk: { x: 1, y: 1, width: 10, height: 10 },
       en: { x: 10 }
     });
   });
@@ -262,12 +262,12 @@ describe('SeoMetadataBlock', () => {
     clickButton('crop-uk');
     expect(onChangeCropMock).toHaveBeenCalledWith({
       uk: { x: 10 },
-      en: { x: 10 }
+      en: null
     });
 
     clickButton('crop-en');
     expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
+      uk: null,
       en: { x: 10 }
     });
   });

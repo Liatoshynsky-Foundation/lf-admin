@@ -250,7 +250,6 @@ export const useGroupContent = (id: string) => {
             crop: mappedCrop
           };
         }),
-        performancesTitle: fetchedOpus.performancesTitle?.uk ?? fetchedOpus.performancesTitle?.en ?? '',
         performances: (fetchedOpus.performances || []).map((perf) => ({
           id: perf.id,
           url: perf.videoUrl ?? '',

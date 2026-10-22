@@ -17,7 +17,7 @@ export const PageCaption = () => {
   const { block } = usePageBlock(pageId, blockId);
   const currentLocale = useStore((state) => state.locale) as 'uk' | 'en';
 
-  const { handleDescriptionChange } = useBlockFieldHandlers(
+  const { handleLocalizedContentChange } = useBlockFieldHandlers(
     pageId,
     blockId,
     currentLocale,
@@ -33,7 +33,7 @@ export const PageCaption = () => {
           fieldType="formatting"
           label="Вступне слово"
           value={block.description?.[currentLocale] ?? undefined}
-          onChange={handleDescriptionChange}
+          onChange={handleLocalizedContentChange('description')}
         />
       </Box>
     </CollapsibleBlock>
