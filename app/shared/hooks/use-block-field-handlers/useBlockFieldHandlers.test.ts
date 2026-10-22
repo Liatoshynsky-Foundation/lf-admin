@@ -3,9 +3,14 @@ import { act, renderHook } from '@testing-library/react';
 import { useBlockFieldHandlers } from './useBlockFieldHandlers';
 import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { useStore } from '~/store';
+import { LocalizedJSON } from '~/types/common';
 
 jest.mock('~/store');
 jest.mock('~/src/shared/utils/formHelpers');
+
+type TestBlockData = {
+  description?: Partial<LocalizedJSON>;
+};
 
 describe('useBlockFieldHandlers', () => {
   const mockSetField = jest.fn();
@@ -60,10 +65,10 @@ describe('useBlockFieldHandlers', () => {
     });
   });
 
-  describe('handleDescriptionChange', () => {
+  describe('handleLocalizedContentChange', () => {
     it('should correctly update the TipTap description for the current locale', () => {
       const currentLocale = 'uk';
-      const blockData = {
+      const blockData: TestBlockData = {
         description: {
           en: { type: 'doc', content: [{ type: 'paragraph', content: [] }] }
         }
@@ -74,25 +79,25 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [{ type: 'text', text: 'Новий опис' }] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
-        en: blockData.description.en,
+        en: blockData.description?.en,
         uk: newTipTapContent
       });
     });
 
     it('should handle missing description object gracefully', () => {
       const currentLocale = 'en';
-      const blockData = {};
+      const blockData: TestBlockData = {};
 
       const { result } = renderHook(() => useBlockFieldHandlers(pageId, blockId, currentLocale, blockData));
 
       const newTipTapContent = { type: 'doc', content: [] };
 
       act(() => {
-        result.current.handleDescriptionChange(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
