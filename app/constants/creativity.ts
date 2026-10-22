@@ -124,7 +124,6 @@ export interface GroupData {
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
   compositions: OpusCompositionData[];
-  performancesTitle: string;
   performances: GroupPerformance[];
   status: string;
   blocksOrder?: string[];

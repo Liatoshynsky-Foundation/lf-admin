@@ -90,7 +90,6 @@ const mockFetchedOpus = {
       crop: { x: 0, y: 0, width: 100, height: 100 }
     }
   ],
-  performancesTitle: { uk: 'Performances', en: 'Performances EN' },
   performances: [
     {
       id: 'perf-1',
@@ -866,7 +865,6 @@ describe('useGroupContent Hook', () => {
     it('should cover all edge-case fallbacks (null arrays, sparse crops, Bo. prefix, empty strings)', async () => {
       const sparseData = {
         ...mockFetchedOpus,
-        performancesTitle: { uk: null, en: 'EN Only' },
         performances: null,
         gallery: [
           {
@@ -918,17 +916,6 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
-    });
-
-    it('should cover completely missing performancesTitle (fallback to empty string)', async () => {
-      (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: { ...mockFetchedOpus, performancesTitle: null } },
-        loading: false
-      });
-      const { result } = renderHook(() => useGroupContent('test-id'));
-      await waitFor(() => {
-        expect(result.current.groupData?.performancesTitle).toBe('');
-      });
     });
 
     it('should successfully delete opus, show toast, close modal and navigate on handleConfirmDelete', async () => {
@@ -1015,7 +1002,6 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('description', { uk: null, en: null });
         result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
-        result.current.handleFieldChange('performancesTitle', '');
         result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
