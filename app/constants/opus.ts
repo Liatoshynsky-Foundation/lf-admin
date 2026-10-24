@@ -66,7 +66,6 @@ export const OPUS_VALIDATION_MESSAGES = {
   photoAltText: 'Введіть Alt текст зображення',
   photoTextTooShort: 'Введіть щонайменше 2 символи.',
   performanceUrl: 'Вкажіть URL.',
-  performanceSignature: 'Введіть підпис.',
   captionTooLong: 'Текст має містити менше 250 символів.'
 } as const;
 

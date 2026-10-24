@@ -14,18 +14,13 @@ import {
 } from '~/constants/opus';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import {
-  useDeleteOpus,
-  useOpusById,
-  useUpdateOpus,
-  useUpsertOpusPreview
-} from '~/shared/hooks/use-opuses/useOpuses';
+import { useDeleteOpus, useOpusById, useUpdateOpus, useUpsertOpusPreview } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import type {
   DeleteOpusMutationVariables,
+  OpusPerformance,
   UpdateOpusMutationVariables,
-  UpsertOpusPreviewMutationVariables
-} from '~/types/graphql/generated/graphql';
+  UpsertOpusPreviewMutationVariables} from '~/types/graphql/generated/graphql';
 import { OpusCompositionData } from '~/types/opus';
 
 const mockNavigate = jest.fn();
@@ -74,7 +69,6 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useDeleteOpus: jest.fn()
 }));
 
-
 const mockFetchedOpus = {
   id: 'test-id',
   numberKind: 'op',
@@ -116,6 +110,27 @@ const mockFetchedOpus = {
       sheetMusic: []
     }
   ]
+};
+
+const renderAndPublishWithPerformances = async (performances: Array<OpusPerformance>) => {
+  const customOpus = {
+    ...mockFetchedOpus,
+    performances
+  };
+
+  (useOpusById as jest.Mock).mockReturnValue({
+    data: { opusById: customOpus },
+    loading: false
+  });
+
+  const { result } = renderHook(() => useGroupContent('test-id'));
+
+  await waitFor(() => expect(result.current.groupData).not.toBeNull());
+  await act(async () => {
+    await result.current.handlePublishClick();
+  });
+
+  return result;
 };
 
 describe('useGroupContent Hook', () => {
@@ -1123,40 +1138,29 @@ describe('useGroupContent Hook', () => {
 
     it('should trigger validation errors only when performance caption exceeds the max length', async () => {
       const longText = 'a'.repeat(251);
+      const performances = [
+        { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
+        { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: 'a' } },
+        { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: longText } },
+        { id: 'perf-4', videoUrl: 'url4', title: { uk: 'a', en: 'Valid EN' } }
+      ];
 
-      const customOpus = {
-        ...mockFetchedOpus,
-        performances: [
-          { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
-          { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: '' } },
-          { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: 'a' } },
-          { id: 'perf-4', videoUrl: 'url4', title: { uk: 'Valid UK', en: longText } },
-          { id: 'perf-5', videoUrl: 'url5', title: { uk: '', en: 'Valid EN' } },
-          { id: 'perf-6', videoUrl: 'url6', title: { uk: 'a', en: 'Valid EN' } }
-        ]
-      };
-
-      (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: customOpus },
-        loading: false
-      });
-
-      const { result } = renderHook(() => useGroupContent('test-id'));
-
-      await waitFor(() => expect(result.current.groupData).not.toBeNull());
-      await act(async () => {
-        await result.current.handlePublishClick();
-      });
+      const result = await renderAndPublishWithPerformances(performances);
 
       // Only perf-1 (uk too long) and perf-4 (en too long) should produce caption errors.
       // Empty and short-but-valid captions are allowed since caption is now optional.
       expect(result.current.errors['performances[perf-1].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['performances[perf-4].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-2].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+      expect(result.current.errors['performances[perf-3].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-4].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+    });
 
-      expect(result.current.errors['performances[perf-2].caption.en']).toBeUndefined();
-      expect(result.current.errors['performances[perf-3].caption.en']).toBeUndefined();
-      expect(result.current.errors['performances[perf-5].caption.uk']).toBeUndefined();
-      expect(result.current.errors['performances[perf-6].caption.uk']).toBeUndefined();
+    it('should not trigger caption errors when performance has URL but empty captions', async () => {
+      const result = await renderAndPublishWithPerformances([{ id: 'perf-1', videoUrl: 'url1', title: { uk: '', en: '' } }]);
+
+      expect(Object.keys(result.current.errors)).not.toContain('performances[perf-1].caption.uk');
+      expect(Object.keys(result.current.errors)).not.toContain('performances[perf-1].caption.en');
+      expect(mockUpdateOpus).toHaveBeenCalled();
     });
 
     it('should trigger validation errors for photos altText and caption length', async () => {
@@ -1305,8 +1309,12 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe(
+        OPUS_VALIDATION_MESSAGES.captionTooLong
+      );
+      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe(
+        OPUS_VALIDATION_MESSAGES.captionTooLong
+      );
       expect(result.current.currentLanguage).toBe('EN');
     });
 
@@ -1345,7 +1353,9 @@ describe('useGroupContent Hook', () => {
         await emptyResult.result.current.handlePublishClick();
       });
       expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
-      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe(COMPOSITION_VALIDATION_MESSAGES.titleRequired);
+      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe(
+        COMPOSITION_VALIDATION_MESSAGES.titleRequired
+      );
     });
 
     it('should trigger validation error when performance URL is missing but row is not empty', async () => {

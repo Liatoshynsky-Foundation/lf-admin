@@ -15,5 +15,6 @@ export const styles = {
   actionIcon: { color: 'black', width: '34px', height: '34px' },
   addBtnWrapper: { display: 'flex', justifyContent: 'center', mt: 1 },
   addBtn: { borderRadius: '20px', textTransform: 'none' },
-  charCounter: { display: 'block', textAlign: 'right', mt: '4px', color: 'text.secondary' },
+  captionWrapper: { position: 'relative', '& .MuiFormHelperText-root': { mr: '64px' } },
+  charCounter: { position: 'absolute', right: 0, bottom: 0, lineHeight: 1.66, color: 'text.secondary' }
 } satisfies Record<string, SxProps<Theme>>;
