@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
@@ -27,6 +27,20 @@ export interface CaseRowFields {
   menuActions: { menuItems: ActionMenuGroups; menuTriggerLabel: string };
 }
 
+const buildEditCaseState = (item: ArchiveCase): { item: ArchiveCase; data: ArchiveCaseInitialData } => ({
+  item,
+  data: {
+    descriptionNumber: String(item.descriptionNumber),
+    caseNumber: String(item.caseNumber),
+    sheetsNumber: String(item.sheetsNumber),
+    caseDate: item.editCaseDate,
+    caseName: item.name,
+    caseDescriptions: item.editCaseDescriptions,
+    detailedCaseDescription: item.detailedCaseDescription,
+    currentPdfFile: item.pdfFile
+  }
+});
+
 export const useArchiveCaseRowActions = (
   onCaseChanged?: () => Promise<unknown>,
   initialCase?: ArchiveCase
@@ -35,27 +49,20 @@ export const useArchiveCaseRowActions = (
   const [updateCase] = useUpdateCase();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
+  const initialCaseId = initialCase?.id;
+  const previousInitialCaseIdRef = useRef<string | undefined>(undefined);
   const openEditCase = (item: ArchiveCase) => {
-    setEditCase({
-      item,
-      data: {
-        descriptionNumber: String(item.descriptionNumber),
-        caseNumber: String(item.caseNumber),
-        sheetsNumber: String(item.sheetsNumber),
-        caseDate: item.editCaseDate,
-        caseName: item.name,
-        caseDescriptions: item.editCaseDescriptions,
-        detailedCaseDescription: item.detailedCaseDescription,
-        currentPdfFile: item.pdfFile
-      }
-    });
+    setEditCase(buildEditCaseState(item));
   };
 
   useEffect(() => {
-    if (initialCase && editCase?.item.id !== initialCase.id) {
-      openEditCase(initialCase);
-    }
-  }, [initialCase?.id]);
+    if (previousInitialCaseIdRef.current === initialCaseId) return;
+
+    previousInitialCaseIdRef.current = initialCaseId;
+    if (!initialCase) return;
+
+    setEditCase((current) => (current?.item.id === initialCase.id ? current : buildEditCaseState(initialCase)));
+  }, [initialCase, initialCaseId]);
 
   const getCaseRow = (item: ArchiveCase, fundStatus?: BaseContentStatuses): CaseRowFields => {
 

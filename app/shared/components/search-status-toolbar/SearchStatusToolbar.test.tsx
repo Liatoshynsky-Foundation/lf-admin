@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import { SearchStatusToolbar } from './SearchStatusToolbar';
 
 jest.mock('../control-panel', () => ({
-  ControlPanel: ({ dataTestId }: any) => (
+  ControlPanel: ({ dataTestId }: { dataTestId?: string }) => (
     <div data-testid={dataTestId || 'control-panel'}>
       <div data-testid="search" />
       <div data-testid="status-dropdown" />

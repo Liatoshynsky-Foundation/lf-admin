@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { MockCollapsibleBlock } from '../__mocks__/mockComponents';
+import type { MockConfigurableListProps, MockCustomTextFieldProps } from '../__mocks__/mockProps';
+import type { VolunteerPaymentMethodData } from '../VolunteerDonationMethodCard/VolunteerDonationMethodCard';
 import { VolunteerDonation } from './VolunteerDonation';
 import { DEFAULT_IMAGE_PLACEHOLDER } from '~/constants/files';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
@@ -27,19 +30,16 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children, hidden, onToggleVisibility }: any) => (
-    <div data-testid="collapsible-block" data-hidden={hidden}>
-      <span>{title}</span>
-      <button type="button" data-testid="toggle-visibility-btn" onClick={onToggleVisibility}>
-        Toggle Visibility
-      </button>
-      {children}
-    </div>
-  )
+  default: MockCollapsibleBlock
 }));
 
+interface MockImagePreviewBlockProps {
+  imageUrl: string;
+  onChangeImage: (url: string) => void;
+}
+
 jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
-  ImagePreviewBlock: ({ imageUrl, onChangeImage }: any) => (
+  ImagePreviewBlock: ({ imageUrl, onChangeImage }: MockImagePreviewBlockProps) => (
     <div data-testid="image-preview-block" data-url={imageUrl}>
       <button 
         type="button" 
@@ -53,7 +53,7 @@ jest.mock('~/shared/components/design-system/photo-block/PhotoBlock', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`field-${title}`}>
       <input
         aria-label={title}
@@ -81,12 +81,19 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => ({
   __esModule: true,
-  default: ({ items, addBtnLabel, onCreate, onChange, onDelete, renderItem }: any) => (
+  default: ({
+    items,
+    addBtnLabel,
+    onCreate,
+    onChange,
+    onDelete,
+    renderItem
+  }: MockConfigurableListProps<VolunteerPaymentMethodData>) => (
     <div data-testid="configurable-list" data-count={items.length}>
       <button type="button" data-testid="create-method-btn" onClick={() => onCreate()}>
         {addBtnLabel}
       </button>
-      {items.map((item: any, index: number) => (
+      {items.map((item, index) => (
         <div key={item.id || index} data-testid={`method-row-${index}`}>
 
           {renderItem && renderItem({ item, index })}
@@ -115,7 +122,7 @@ jest.mock('~/components/configurable-list/ConfigurableList', () => ({
 }));
 
 jest.mock('../VolunteerDonationMethodCard/VolunteerDonationMethodCard', () => ({
-  VolunteerDonationMethodCard: ({ method }: any) => (
+  VolunteerDonationMethodCard: ({ method }: { method: VolunteerPaymentMethodData }) => (
     <div data-testid="donation-method-card">{method.value}</div>
   )
 }));

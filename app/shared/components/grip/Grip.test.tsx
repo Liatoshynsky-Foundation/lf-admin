@@ -6,7 +6,7 @@ import { Grip } from './Grip';
 import { styles } from './Grip.styles';
 
 jest.mock('~/public/icons/grip-vertical.svg', () => {
-  return function MockGripVertical(props: any) {
+  return function MockGripVertical(props: React.SVGProps<SVGSVGElement>) {
     return <svg data-testid="grip-vertical-svg" {...props} />;
   };
 });

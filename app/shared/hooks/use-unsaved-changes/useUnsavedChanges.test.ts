@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 
 import { useUnsavedChanges } from './useUnsavedChanges';
 import { useStore } from '~/store';
+import type { StoreState } from '~/store/types';
 
 jest.mock('~/store');
 jest.mock('next/navigation');
@@ -18,11 +19,9 @@ describe('useUnsavedChanges', () => {
 
     mockedUsePathname.mockReturnValue('/publications');
 
-    mockedUseStore.mockImplementation((selector) =>
-      selector({
-        setDirtyPath
-      } as any)
-    );
+    const storeState: Pick<StoreState, 'setDirtyPath'> = { setDirtyPath };
+
+    mockedUseStore.mockImplementation((selector) => selector(storeState as StoreState));
   });
 
   it('should set dirty path on mount', () => {

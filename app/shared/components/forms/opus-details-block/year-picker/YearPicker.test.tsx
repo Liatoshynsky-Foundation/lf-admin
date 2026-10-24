@@ -1,5 +1,5 @@
 import { createEvent, fireEvent, render, screen } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { KeyboardEvent, ReactElement, ReactNode } from 'react';
 
 import YearPicker from './YearPicker';
 
@@ -7,8 +7,35 @@ jest.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
   LocalizationProvider: ({ children }: { children: ReactNode }) => <>{children}</>
 }));
 
+interface MockYearValue {
+  year: () => number;
+  isValid: () => boolean;
+}
+
+interface MockIconButtonProps {
+  onClick?: () => void;
+}
+
+interface MockDatePickerProps {
+  label?: string;
+  value: MockYearValue | null;
+  open?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onChange: (value: MockYearValue | null) => void;
+  slotProps?: {
+    textField?: {
+      onClick?: () => void;
+      onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void;
+      InputProps?: {
+        startAdornment?: ReactElement<{ children?: ReactElement<MockIconButtonProps> }>;
+      };
+    };
+  };
+}
+
 jest.mock('@mui/x-date-pickers/DatePicker', () => ({
-  DatePicker: (props: any) => {
+  DatePicker: (props: MockDatePickerProps) => {
     const { onOpen, onClose, onChange, slotProps, value, open } = props;
     const textField = slotProps?.textField;
     const iconButton = textField?.InputProps?.startAdornment?.props?.children;
@@ -27,7 +54,7 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
         <button onClick={onClose}>onClose</button>
 
         <button onClick={textField?.onClick}>tf-click</button>
-        <button onKeyDown={(e) => textField?.onKeyDown(e)}>tf-keydown</button>
+        <button onKeyDown={(e) => textField?.onKeyDown?.(e)}>tf-keydown</button>
 
         <button onClick={iconButton?.props?.onClick}>icon-click</button>
       </div>

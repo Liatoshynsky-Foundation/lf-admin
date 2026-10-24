@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
+import type { ChangeEvent } from 'react';
 
 import { useBlockFieldHandlers } from './useBlockFieldHandlers';
+import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import { getEventValue } from '~/src/shared/utils/formHelpers';
 import { useStore } from '~/store';
 import { LocalizedJSON } from '~/types/common';
@@ -15,8 +17,8 @@ type TestBlockData = {
 describe('useBlockFieldHandlers', () => {
   const mockSetField = jest.fn();
 
-  const pageId = 'test-page' as any;
-  const blockId = 'test-block' as any;
+  const pageId = PAGE_IDS.WAR_IN_UKRAINE;
+  const blockId = BLOCK_IDS.WAR_INFO;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,7 +57,9 @@ describe('useBlockFieldHandlers', () => {
       const { result } = renderHook(() => useBlockFieldHandlers(pageId, blockId, currentLocale, blockData));
 
       act(() => {
-        result.current.handleLocalizedTextChange('buttonText')({ target: { value: 'New english text' } } as any);
+        result.current.handleLocalizedTextChange('buttonText')({
+          target: { value: 'New english text' }
+        } as ChangeEvent<HTMLInputElement>);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'buttonText', {
@@ -79,7 +83,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [{ type: 'text', text: 'Новий опис' }] };
 
       act(() => {
-        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
@@ -97,7 +101,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [] };
 
       act(() => {
-        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {

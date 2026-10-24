@@ -97,7 +97,7 @@ describe('processNewsContent', () => {
 
     expect(mockRemoveTmpFlagsRecursively).toHaveBeenCalledWith(input);
     expect(result).toBe(cleaned);
-    expect((result.content.uk as any).content[0].attrs.src).toBe(imageSrc);
+    expect((result.content.uk as { content: { attrs: { src: string } }[] }).content[0].attrs.src).toBe(imageSrc);
   });
 
   it('deduplicates image sources before deciding to clean tmp flags', async () => {

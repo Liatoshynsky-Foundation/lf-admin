@@ -73,7 +73,7 @@ describe('ImagePreviewModal', () => {
     wheelHandler = null;
     wheelOptions = undefined;
 
-    addSpy = jest.spyOn(globalThis, 'addEventListener').mockImplementation((type: any, listener: any, options: any) => {
+    addSpy = jest.spyOn(globalThis, 'addEventListener').mockImplementation((type, listener, options) => {
       if (type === 'wheel') {
         wheelHandler = listener as (e: WheelEvent) => void;
         wheelOptions = options;
