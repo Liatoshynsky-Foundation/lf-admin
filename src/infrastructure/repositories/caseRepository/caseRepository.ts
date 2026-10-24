@@ -114,8 +114,7 @@ export const CaseRepository = ({ CaseModel }: CaseRepoDeps): ICaseRepository => 
       await dbConnect();
 
       const distinctDescriptionNumbers = await CaseModel.distinct('descriptionNumber', {
-        fundId,
-        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+        fundId
       });
       return distinctDescriptionNumbers.length;
     },
