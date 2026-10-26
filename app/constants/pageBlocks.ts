@@ -5,7 +5,7 @@ export const PAGE_IDS = {
   WAR_IN_UKRAINE: 'war-in-ukraine',
   ARCHIVE: 'archive',
   RESEARCH: 'research',
-  PUBLICATIONS: 'publications'
+  PUBLICATIONS: 'news'
 };
 
 export const BLOCK_IDS = {

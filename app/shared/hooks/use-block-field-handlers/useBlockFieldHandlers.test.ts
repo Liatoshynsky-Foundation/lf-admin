@@ -79,7 +79,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [{ type: 'text', text: 'Новий опис' }] };
 
       act(() => {
-        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
@@ -97,7 +97,7 @@ describe('useBlockFieldHandlers', () => {
       const newTipTapContent = { type: 'doc', content: [] };
 
       act(() => {
-        result.current.handleLocalizedContentChange('description')(newTipTapContent as any);
+        result.current.handleLocalizedContentChange('description')(newTipTapContent);
       });
 
       expect(mockSetField).toHaveBeenCalledWith(pageId, blockId, 'description', {
