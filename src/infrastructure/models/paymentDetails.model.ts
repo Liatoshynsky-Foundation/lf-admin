@@ -11,14 +11,11 @@ const paymentDetailsPdfFileSchema = new Schema(
   { _id: false }
 );
 
-const paymentDetailsTabSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    content: { type: Schema.Types.Mixed, required: true },
-    order: { type: Number, required: true }
-  },
-  { _id: false }
-);
+const paymentDetailsTabSchema = new Schema({
+  name: { type: String, required: true },
+  content: { type: Schema.Types.Mixed, required: true },
+  order: { type: Number, required: true }
+});
 
 const paymentDetailsSchema = new Schema(
   {

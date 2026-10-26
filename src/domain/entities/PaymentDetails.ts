@@ -6,6 +6,7 @@ export type PaymentDetailsPdfFile = {
   mimeType: string;
 };
 export type PaymentDetailsTab = {
+  id: string;
   name: string;
   content: JSONContent;
   order: number;
