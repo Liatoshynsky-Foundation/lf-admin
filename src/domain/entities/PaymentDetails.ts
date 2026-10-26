@@ -1,21 +1,20 @@
 import { JSONContent } from '@tiptap/react';
 
-export type paymentDetailsPdfFile = {
+export type PaymentDetailsPdfFile = {
   filename: string;
   url: string;
   mimeType: string;
 };
-export type paymentDetailsTab = {
-  id: string;
+export type PaymentDetailsTab = {
   name: string;
   content: JSONContent;
   order: number;
 };
-export type paymentDetails = {
+export interface PaymentDetails {
   id: string;
   slug: string;
-  tabs: paymentDetailsTab[];
-  pdfFile: paymentDetailsPdfFile;
+  tabs: PaymentDetailsTab[];
+  pdfFile?: PaymentDetailsPdfFile | null;
   createdAt: string;
   updatedAt: string;
-};
+}
