@@ -48,7 +48,6 @@ export const CustomFormattingField = ({
   onBlur
 }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
-  const lastSentRef = useRef<string | undefined>(undefined);
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -88,7 +87,6 @@ export const CustomFormattingField = ({
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
-      lastSentRef.current = JSON.stringify(json);
       pendingUpdateRef.current = json;
 
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -131,14 +129,10 @@ export const CustomFormattingField = ({
     }
 
     const valueStr = JSON.stringify(value);
-    if (valueStr === lastSentRef.current) {
-      return;
-    }
 
     const currentContent = editor.getJSON();
-    const isNotEqual = JSON.stringify(currentContent) !== valueStr;
 
-    if (isNotEqual) {
+    if (JSON.stringify(currentContent) !== valueStr) {
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
