@@ -10,12 +10,13 @@ import { syncAltAcrossLocales } from './syncAltAcrossLocales';
 import { seoFormErrors } from '~/constants/errors';
 import { TICKET_URL_PLACEHOLDER } from '~/constants/publications';
 import { LocalizedCropRect } from '~/types/common';
+import type { LocalizedString } from '~/types/localization';
 
 export interface SeoBlockValue {
   meta: { uk: LocalizedMeta; en: LocalizedMeta };
   ogImage: string | null;
   allowIndexing: { uk: boolean; en: boolean };
-  ticketUrl?: { uk: string; en: string };
+  ticketUrl?: LocalizedString;
 }
 
 export type SeoBlockErrors = {
@@ -23,7 +24,7 @@ export type SeoBlockErrors = {
     uk: Partial<Record<keyof LocalizedMeta, string>>;
     en: Partial<Record<keyof LocalizedMeta, string>>;
   };
-  ticketUrl?: Partial<{ uk: string; en: string }>;
+  ticketUrl?: Partial<LocalizedString>;
 };
 
 const defaultValue: SeoBlockValue = {
@@ -71,7 +72,7 @@ export default function SeoMetadataBlock({
 }: SeoMetadataBlockProps) {
   const [internalValue, setInternalValue] = useState<SeoBlockValue>(defaultValue);
   const [ticketUrlTouched, setTicketUrlTouched] = useState<{ uk: boolean; en: boolean }>({ uk: false, en: false });
-  const [ticketUrlError, setTicketUrlError] = useState<{ uk: string; en: string }>({ uk: '', en: '' });
+  const [ticketUrlError, setTicketUrlError] = useState<LocalizedString>({ uk: '', en: '' });
   const isExternalValidation = errors !== undefined;
   const [displayTicketErrors, setDisplayTicketErrors] = useState(errors?.ticketUrl);
   const isControlled = externalValue !== undefined && externalOnChange !== undefined;

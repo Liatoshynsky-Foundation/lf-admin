@@ -11,7 +11,7 @@ import { LocalizedString } from '~/types/common';
 import { formatDate } from '~/utils/formatDate';
 
 interface PageCardProps {
-  coverImage: { src: string; alt: { uk: string; en: string } };
+  coverImage: { src: string; alt: LocalizedString };
   title: Partial<LocalizedString>;
   updatedAt?: string;
   editHref: string;

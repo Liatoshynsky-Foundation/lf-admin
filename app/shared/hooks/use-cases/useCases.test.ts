@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import type { CaseFiltersInput, CaseStatus } from '~/types/graphql/generated/graphql';
+import type { LocalizedString } from '~/types/localization';
 
 const mockUseAllCasesQuery = jest.fn();
 
@@ -18,9 +19,9 @@ const createMockAllCasesNode = (
     fundId: string;
     descriptionNumber: number;
     caseNumber: number;
-    caseName: { uk: string; en: string };
-    caseDate: { uk: string; en: string };
-    caseDescriptions: { uk: string; en: string };
+    caseName: LocalizedString;
+    caseDate: LocalizedString;
+    caseDescriptions: LocalizedString;
     sheetsNumber: number;
     status: string;
     updatedAt: string;

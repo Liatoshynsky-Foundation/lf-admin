@@ -18,7 +18,7 @@ const positiveIntSchema = (requiredMessage: string, invalidMessage: string) =>
     })
     .positive({ message: invalidMessage });
 
-const requiredLocalizedField = (requiredMessage: string, maxLength: number, maxLengthMessage: string) =>
+const requiredLocalizedString = (requiredMessage: string, maxLength: number, maxLengthMessage: string) =>
   z.object({
     uk: z.string().trim().min(1, { message: requiredMessage }).max(maxLength, { message: maxLengthMessage }),
     en: z.string().trim().min(1, { message: requiredMessage }).max(maxLength, { message: maxLengthMessage })
@@ -30,10 +30,9 @@ const pdfFileSchema = z
     url: z.string().trim().min(1),
     mimeType: z.string().trim().min(1)
   })
-  .refine(
-    (file) => file.mimeType === 'application/pdf' && file.filename.toLowerCase().endsWith('.pdf'),
-    { message: CASE_VALIDATION_MESSAGES.pdfInvalidType }
-  );
+  .refine((file) => file.mimeType === 'application/pdf' && file.filename.toLowerCase().endsWith('.pdf'), {
+    message: CASE_VALIDATION_MESSAGES.pdfInvalidType
+  });
 
 export const zCaseSchema = z.object({
   fundId: z.string().trim().min(1, { message: CASE_VALIDATION_MESSAGES.fundIdRequired }),
@@ -48,13 +47,13 @@ export const zCaseSchema = z.object({
     CASE_VALIDATION_MESSAGES.caseNumberInvalid
   ),
 
-  caseName: requiredLocalizedField(
+  caseName: requiredLocalizedString(
     CASE_VALIDATION_MESSAGES.caseNameRequired,
     150,
     CASE_VALIDATION_MESSAGES.caseNameMaxLength
   ),
 
-  caseDate: requiredLocalizedField(
+  caseDate: requiredLocalizedString(
     CASE_VALIDATION_MESSAGES.caseDateRequired,
     150,
     CASE_VALIDATION_MESSAGES.caseDateMaxLength
@@ -65,7 +64,7 @@ export const zCaseSchema = z.object({
     CASE_VALIDATION_MESSAGES.sheetsNumberInvalid
   ),
 
-  caseDescriptions: requiredLocalizedField(
+  caseDescriptions: requiredLocalizedString(
     CASE_VALIDATION_MESSAGES.caseDescriptionsRequired,
     300,
     CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength
