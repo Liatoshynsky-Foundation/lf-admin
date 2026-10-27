@@ -1,8 +1,8 @@
 import { CropRect } from '~/types/common';
+import type { LocalizedString } from '~/types/localization';
 
-import type { LocalizedString, StringOrLocalizedString } from '~/types/localization';
-
-export type { LocalizedString, StringOrLocalizedString };
+export type { LocalizedString };
+export type { StringOrLocalizedString } from '~/types/localization';
 
 export type LocalizedBoolean = {
   uk: boolean;

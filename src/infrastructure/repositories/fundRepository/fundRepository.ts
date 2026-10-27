@@ -172,9 +172,9 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
         organizationForm: input.organizationForm,
         characterAndContent: input.description
           ? {
-              uk: parseJsonContent(input.description.uk),
-              en: parseJsonContent(input.description.en)
-            }
+            uk: parseJsonContent(input.description.uk),
+            en: parseJsonContent(input.description.en)
+          }
           : undefined,
         status: input.status || BaseContentStatuses.Hidden,
         numberOfCases: 0,

@@ -1,7 +1,7 @@
 import { Composition } from './Composition';
 import { LocalizedBoolean, LocalizedImage } from '~/domain/entities/BaseContent';
-import type { LocalizedString } from '~/types/localization';
 import { OpusStatus } from '~/types/graphql/generated/graphql';
+import type { LocalizedString } from '~/types/localization';
 
 export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
 
