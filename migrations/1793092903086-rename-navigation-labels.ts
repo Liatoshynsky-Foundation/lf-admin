@@ -22,23 +22,11 @@ export async function up(db: Db): Promise<void> {
   const navigation = db.collection(COLLECTION);
 
   const document = await navigation.findOne({
-    'links.href': { $in: [RESEARCH_HREF, ARTISTRY_HREF] }
+    'links.href': { $all: [RESEARCH_HREF, ARTISTRY_HREF] }
   });
 
   if (!document) {
     throw new Error('Navigation document containing the target links was not found');
-  }
-
-  const researchLink = document.links?.find((link: { href?: string }) => link.href === RESEARCH_HREF);
-
-  const artistryLink = document.links?.find((link: { href?: string }) => link.href === ARTISTRY_HREF);
-
-  if (!researchLink) {
-    throw new Error(`Navigation link ${RESEARCH_HREF} was not found`);
-  }
-
-  if (!artistryLink) {
-    throw new Error(`Navigation link ${ARTISTRY_HREF} was not found`);
   }
 
   const result = await navigation.updateOne(
