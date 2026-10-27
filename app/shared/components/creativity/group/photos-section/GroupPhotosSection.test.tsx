@@ -6,7 +6,6 @@ import { GroupPhotosSection } from './GroupPhotosSection';
 import { useGroupPhotos } from './useGroupPhotos';
 import { GroupPhoto } from '~/constants/creativity';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
-import type { LocalizedString } from '~/types/localization';
 
 type MockButtonProps = {
   children: ReactNode;
@@ -212,14 +211,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should render the list of photos with correct indices', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     expect(screen.getByText('Зображення 1')).toBeInTheDocument();
     expect(screen.getByText('Зображення 2')).toBeInTheDocument();
@@ -247,28 +239,14 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call handleAddPhoto when the add button is clicked', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     fireEvent.click(screen.getByTestId('mock-button-add'));
     expect(mockHandleAddPhoto).toHaveBeenCalledTimes(1);
   });
 
   it('should call handleUpdatePhoto when typing in the caption text field', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
     fireEvent.change(captionInputs[0], { target: { value: 'Updated Caption' } });
@@ -279,14 +257,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call handleUpdatePhoto when alt text is updated from ImagePreviewBlock', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     fireEvent.click(screen.getByTestId('trigger-alt-img1.jpg'));
     expect(mockHandleUpdatePhoto).toHaveBeenCalledWith('1', {
@@ -295,14 +266,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call handleUpdatePhoto when src and crop are updated from ImagePreviewBlock', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     fireEvent.click(screen.getByTestId('trigger-img-img1.jpg'));
 
@@ -313,14 +277,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call setPhotoIdToDelete when trash icon is clicked', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     const trashButtons = screen.getAllByTestId('delete-photo-btn');
     fireEvent.click(trashButtons[0]);
@@ -338,14 +295,7 @@ describe('GroupPhotosSection UI Component', () => {
       handleConfirmDelete: mockHandleConfirmDelete
     });
 
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('modal-confirm'));
@@ -363,14 +313,7 @@ describe('GroupPhotosSection UI Component', () => {
       handleConfirmDelete: mockHandleConfirmDelete
     });
 
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
     expect(screen.getByTestId('mock-delete-modal')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('modal-cancel'));
@@ -378,14 +321,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should render correctly when currentLanguage is EN', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="EN"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="EN" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
     expect(captionInputs[0]).toHaveValue('Cap 1 EN');
@@ -397,20 +333,13 @@ describe('GroupPhotosSection UI Component', () => {
         id: undefined as unknown as string,
         src: undefined as unknown as string,
         fileName: 'empty.jpg',
-        caption: undefined as unknown as LocalizedString,
-        altText: undefined as unknown as LocalizedString,
+        caption: undefined as unknown as { uk: string; en: string },
+        altText: undefined as unknown as { uk: string; en: string },
         crop: null
       }
     ];
 
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={photosWithMissingData}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={photosWithMissingData} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     const captionInput = screen.getByTestId('mock-input-Підпис до зображення');
     expect(captionInput).toHaveValue('');
@@ -436,14 +365,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call handleUpdatePhoto and trim spaces on blur of caption input', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
     const captionInputs = screen.getAllByTestId(/mock-input-Підпис/);
 
     fireEvent.blur(captionInputs[0]);
@@ -457,14 +379,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should call handleUpdatePhoto and trim spaces on blur of alt text in ImagePreviewBlock', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     fireEvent.click(screen.getByTestId('trigger-blur-alt-img1.jpg'));
 
@@ -504,13 +419,7 @@ describe('GroupPhotosSection UI Component', () => {
     };
 
     render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={photosWithError}
-        errors={errors}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
+      <GroupPhotosSection currentLanguage="UA" photos={photosWithError} errors={errors} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />
     );
 
     expect(screen.getByTestId('alt-error-img.jpg')).toHaveTextContent('Alt text error');
@@ -521,14 +430,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should handle onChangeImage when crop parameter is omitted or undefined', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="UA"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="UA" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     fireEvent.click(screen.getByTestId('trigger-img-no-crop-img1.jpg'));
 
@@ -539,14 +441,7 @@ describe('GroupPhotosSection UI Component', () => {
   });
 
   it('should update caption and altText in EN language', () => {
-    render(
-      <GroupPhotosSection
-        currentLanguage="EN"
-        photos={defaultPhotos}
-        onChange={mockOnChange}
-        onBlurPhotoAltText={mockonBlurPhotoAltText}
-      />
-    );
+    render(<GroupPhotosSection currentLanguage="EN" photos={defaultPhotos} onChange={mockOnChange} onBlurPhotoAltText={mockonBlurPhotoAltText} />);
 
     const captionInputs = screen.getAllByTestId('mock-input-Підпис до зображення');
     fireEvent.change(captionInputs[0], { target: { value: 'New EN Caption' } });
