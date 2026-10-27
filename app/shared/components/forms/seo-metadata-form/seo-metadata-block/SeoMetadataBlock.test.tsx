@@ -5,6 +5,7 @@ import React from 'react';
 
 import SeoMetadataBlock, { SeoBlockValue } from './SeoMetadataBlock';
 import { seoFormErrors } from '~/constants/errors';
+import type { LocalizedString } from '~/types/localization';
 
 jest.mock('../SeoMetadataForm', () => ({
   __esModule: true,
@@ -438,7 +439,7 @@ describe('SeoMetadataBlock', () => {
         meta: controlledValue.meta,
         ogImage: null,
         allowIndexing: { uk: true, en: true },
-        ticketUrl: { uk: 'https://valid-uk.com' } as { uk: string; en: string }
+        ticketUrl: { uk: 'https://valid-uk.com' } as LocalizedString
       }
     });
     expect(screen.queryByText(seoFormErrors.en.required)).not.toBeInTheDocument();
@@ -451,7 +452,7 @@ describe('SeoMetadataBlock', () => {
         meta: controlledValue.meta,
         ogImage: null,
         allowIndexing: { uk: true, en: true },
-        ticketUrl: { en: 'https://valid-en.com' } as { uk: string; en: string }
+        ticketUrl: { en: 'https://valid-en.com' } as LocalizedString
       }
     });
     expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument();

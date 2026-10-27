@@ -13,8 +13,9 @@ import {
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import YearPicker from '~/shared/components/forms/opus-details-block/year-picker/YearPicker';
+import type { LocalizedString } from '~/types/localization';
 
-type MultilingualText = { uk: string; en: string };
+type MultilingualText = LocalizedString;
 
 type GroupDetailsSectionProps = {
   data: {

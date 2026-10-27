@@ -9,6 +9,7 @@ import { DEFAULT_COVER_IMAGE } from '~/src/infrastructure/repositories/pageRepos
 import type { BlockData } from '~/store/types';
 import { PageCategories, PageStatus } from '~/types/enums/common.enums';
 import { Scalars } from '~/types/graphql/generated/graphql';
+import type { LocalizedString } from '~/types/localization';
 
 jest.mock('mongoose', () => ({
   Types: {
@@ -252,7 +253,7 @@ describe('PageMutation', () => {
       mockRepo.getPublishedBySlug.mockResolvedValue(null);
       mockRepo.getDraftBySlug.mockResolvedValue({
         ...mockBasePage,
-        title: undefined as unknown as { uk: string; en: string },
+        title: undefined as unknown as LocalizedString,
         pageType: 'AboutUsPage'
       });
 
