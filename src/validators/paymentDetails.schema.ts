@@ -1,13 +1,19 @@
 import z from 'zod';
 
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
+import { TipTapDocSchema } from '~/validators/tiptap.schema';
 
 const paymentDetailsTabSchema = z.object({
-  name: z.string().trim().min(1).max(40), // add validation messages
-  content: z.unknown() // replace with tiptap content schema tomorrow
+  name: z
+    .string()
+    .trim()
+    .min(1, PAYMENT_DETAILS_MESSAGES.tabNameRequired)
+    .max(40, PAYMENT_DETAILS_MESSAGES.tabNameTooLong),
+  content: TipTapDocSchema,
+  order: z.number().int().min(0)
 });
 
-const pdfFieSchema = z
+const pdfFileSchema = z
   .object({
     filename: z.string().trim().min(1),
     url: z.string().trim().min(1),
@@ -17,7 +23,21 @@ const pdfFieSchema = z
     message: PAYMENT_DETAILS_MESSAGES.pdfInvalidType
   });
 
-export const zPaymentDetailsSchema = z.object({
-  tabs: z.array(paymentDetailsTabSchema).min(1),
-  pdfFile: pdfFieSchema.optional().nullable()
-});
+export const zPaymentDetailsSchema = z
+  .object({
+    tabs: z.array(paymentDetailsTabSchema).min(1, PAYMENT_DETAILS_MESSAGES.atLeastOneTabRequired),
+    pdfFile: pdfFileSchema.optional().nullable()
+  })
+  .superRefine(({ tabs }, ctx) => {
+    const tabNames = tabs.map((tab) => tab.name.toLowerCase());
+
+    if (new Set(tabNames).size !== tabNames.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['tabs'],
+        message: PAYMENT_DETAILS_MESSAGES.duplicateTabNames
+      });
+    }
+  });
+
+export const paymentDetailsTabInputSchema = paymentDetailsTabSchema.omit({ order: true });

@@ -12,7 +12,7 @@ const paymentDetailsPdfFileSchema = new Schema(
 );
 
 const paymentDetailsTabSchema = new Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, trim: true },
   content: { type: Schema.Types.Mixed, required: true },
   order: { type: Number, required: true }
 });
@@ -20,7 +20,7 @@ const paymentDetailsTabSchema = new Schema({
 const paymentDetailsSchema = new Schema(
   {
     slug: { type: String, required: true, unique: true },
-    tabs: { type: [paymentDetailsTabSchema], minLength: 1, required: true },
+    tabs: { type: [paymentDetailsTabSchema], required: true },
     pdfFile: { type: paymentDetailsPdfFileSchema, default: null }
   },
   {
