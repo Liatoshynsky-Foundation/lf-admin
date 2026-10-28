@@ -72,8 +72,8 @@ export const zCaseSchema = z.object({
 
   detailedCaseDescription: z
     .object({
-      uk: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
-      en: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
+      uk: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
+      en: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
     })
     .optional(),
   pdfFile: pdfFileSchema.nullable().optional(),
@@ -87,8 +87,8 @@ export const zCaseUpdateSchema = zCaseSchema
   .extend({
     detailedCaseDescription: z
       .object({
-        uk: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
-        en: z.string().trim().max(1000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
+        uk: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
+        en: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
       })
       .optional(),
     pdfFile: pdfFileSchema.nullable().optional(),

@@ -185,7 +185,7 @@ export const ArchiveCaseModalView = ({
               rows={7}
               value={detailedCaseDescription}
               onChange={(e) => setDetailedCaseDescription(e.target.value)}
-              inputProps={{ maxLength: 1000 }}
+              inputProps={{ maxLength: 5000 }}
               error={Boolean(fieldErrors.detailedCaseDescription)}
               helperText={fieldErrors.detailedCaseDescription}
               fullWidth

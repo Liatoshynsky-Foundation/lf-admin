@@ -42,7 +42,7 @@ export const CASE_VALIDATION_MESSAGES = {
   caseDescriptionsRequired: 'Поле «Склад і зміст документів справи» є обов’язковим.',
   caseDescriptionsMaxLength: 'Значення не може перевищувати 300 символів.',
 
-  detailedCaseDescriptionMaxLength: 'Опис не може перевищувати 1000 символів.',
+  detailedCaseDescriptionMaxLength: 'Опис не може перевищувати 5000 символів.',
 
   pdfInvalidType: 'Можна прикріпити лише PDF-файл.',
 
