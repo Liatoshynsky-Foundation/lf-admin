@@ -1,6 +1,7 @@
 import { News } from '~/domain/entities/News';
-import {FiltersInput, IBaseRepository} from '~/domain/repositories/baseRepository';
-import {NewsStatus} from '~/types/enums/common.enums';
+import { FiltersInput, IBaseRepository } from '~/domain/repositories/baseRepository';
+import { NewsStatus } from '~/types/enums/common.enums';
+import { LocalizedString } from '~/types/localization';
 
 export type CreateNewsInput = Omit<News, 'id' | 'createdAt' | 'updatedAt' | 'meta'> & {
   meta?: Partial<News['meta']>;
@@ -17,4 +18,5 @@ export type NewsFilters = FiltersInput & {
 export interface INewsRepository extends IBaseRepository<News, NewsFilters> {
   create(input: CreateNewsInput): Promise<News>;
   incrementViews(id: string): Promise<News | null>;
+  updateCoverImageAlt(id: string, alt: LocalizedString): Promise<News | null>;
 }

@@ -373,6 +373,25 @@ describe('NewsRepository Comprehensive Tests', () => {
       );
     });
 
+    it('should update only cover image alt text', async () => {
+      const alt = { uk: 'а', en: 'a' };
+      findByIdAndUpdateMock.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(createMockNewsDoc({ coverImage: { src: 'img.jpg', alt } }))
+      });
+
+      const result = await repository.updateCoverImageAlt(mockId, alt);
+
+      expect(result?.coverImage.alt).toEqual(alt);
+      expect(findByIdAndUpdateMock).toHaveBeenCalledWith(mockId, { $set: { 'coverImage.alt': alt } }, { new: true });
+    });
+
+    it('should return null without updating for an invalid cover image alt ID', async () => {
+      const result = await repository.updateCoverImageAlt('invalid-id', { uk: 'а', en: 'a' });
+
+      expect(result).toBeNull();
+      expect(findByIdAndUpdateMock).not.toHaveBeenCalled();
+    });
+
     it('should delete news and return true', async () => {
       findByIdAndDeleteMock.mockResolvedValue(createMockNewsDoc());
       const result = await repository.delete(mockId);
