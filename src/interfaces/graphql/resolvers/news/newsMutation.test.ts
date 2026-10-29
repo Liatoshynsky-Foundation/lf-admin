@@ -109,9 +109,9 @@ describe('NewsMutation Resolvers', () => {
       );
     });
 
-    it('should throw GraphQLError with BAD_USER_INPUT if title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if title.uk exceeds 300 characters (lf-manual-tests#469)', async () => {
       expect.assertions(3);
-      const invalidInput = { ...baseInput, title: { uk: 'а'.repeat(151), en: 'Valid title' } };
+      const invalidInput = { ...baseInput, title: { uk: 'а'.repeat(301), en: 'Valid title' } };
 
       try {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
@@ -195,9 +195,9 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
 
-    it('should throw GraphQLError with BAD_USER_INPUT if title.en exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if title.en exceeds 300 characters (lf-manual-tests#469)', async () => {
       expect.assertions(3);
-      const invalidInput = { ...baseInput, title: { uk: 'Валідний заголовок', en: 'a'.repeat(151) } };
+      const invalidInput = { ...baseInput, title: { uk: 'Валідний заголовок', en: 'a'.repeat(301) } };
 
       try {
         await NewsMutation.createNews({}, { input: invalidInput }, adminContext);
@@ -208,24 +208,24 @@ describe('NewsMutation Resolvers', () => {
       }
     });
 
-    it('should accept a title exactly 150 characters long', async () => {
+    it('should accept a title exactly 300 characters long', async () => {
       mockAction('findBySlug', null);
       mockAction('create', createMockNews({ id: 'new-id' }));
-      const validInput = { ...baseInput, title: { uk: 'а'.repeat(150), en: 'a'.repeat(150) } };
+      const validInput = { ...baseInput, title: { uk: 'а'.repeat(300), en: 'a'.repeat(300) } };
 
       await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
       expect(mockRepo.create).toHaveBeenCalled();
     });
 
-    it('should accept and trim a title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+    it('should accept and trim a title with 300 meaningful characters plus a trailing space (review feedback)', async () => {
       mockAction('findBySlug', null);
       mockAction('create', createMockNews({ id: 'new-id' }));
-      const validInput = { ...baseInput, title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } };
+      const validInput = { ...baseInput, title: { uk: `${'a'.repeat(300)} `, en: 'Valid title' } };
 
       await expect(NewsMutation.createNews({}, { input: validInput }, adminContext)).resolves.toBeDefined();
 
       const createCallArg = (mockRepo.create as jest.Mock).mock.calls[0][0];
-      expect(createCallArg.title.uk).toBe('a'.repeat(150));
+      expect(createCallArg.title.uk).toBe('a'.repeat(300));
     });
 
     it('should throw GraphQLError for createNews if user is unauthenticated', async () => {
@@ -437,14 +437,14 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should throw GraphQLError with BAD_USER_INPUT if updated title.uk exceeds 150 characters (lf-manual-tests#469)', async () => {
+    it('should throw GraphQLError with BAD_USER_INPUT if updated title.uk exceeds 300 characters (lf-manual-tests#469)', async () => {
       expect.assertions(4);
       mockAction('findById', createMockNews({ id }));
 
       try {
         await NewsMutation.updateNews(
           {},
-          { id, input: { title: { uk: 'а'.repeat(151), en: 'Valid title' } } },
+          { id, input: { title: { uk: 'а'.repeat(301), en: 'Valid title' } } },
           adminContext
         );
       } catch (error) {
@@ -456,18 +456,18 @@ describe('NewsMutation Resolvers', () => {
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
-    it('should accept and trim an updated title with 150 meaningful characters plus a trailing space (review feedback)', async () => {
+    it('should accept and trim an updated title with 300 meaningful characters plus a trailing space (review feedback)', async () => {
       mockAction('findById', createMockNews({ id }));
       mockAction('update', createMockNews({ id }));
 
       await NewsMutation.updateNews(
         {},
-        { id, input: { title: { uk: `${'a'.repeat(150)} `, en: 'Valid title' } } },
+        { id, input: { title: { uk: `${'a'.repeat(300)} `, en: 'Valid title' } } },
         adminContext
       );
 
       const updateCallArg = (mockRepo.update as jest.Mock).mock.calls[0][1];
-      expect(updateCallArg.title.uk).toBe('a'.repeat(150));
+      expect(updateCallArg.title.uk).toBe('a'.repeat(300));
     });
 
     it('should fall back to empty content object structure during processContentFields execution if content property is missing', async () => {

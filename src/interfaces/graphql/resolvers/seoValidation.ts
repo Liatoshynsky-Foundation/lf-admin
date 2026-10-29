@@ -5,7 +5,7 @@ import { seoValidationErrors } from '~/src/constants/errors';
 const LOCALES = ['uk', 'en'] as const;
 
 const SEO_LENGTH_LIMITS = {
-  title: { min: 2, max: 150 },
+  title: { min: 2, max: 300 },
   description: { min: 2, max: 250 },
   keywords: { min: 2, max: 250 },
   altText: { min: 2, max: 250 }

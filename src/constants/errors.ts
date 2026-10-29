@@ -37,7 +37,7 @@ export const newsServiceErrors = {
 };
 
 export const seoValidationErrors = {
-  TITLE_LENGTH_INVALID: 'Title must contain from 2 to 150 characters',
+  TITLE_LENGTH_INVALID: 'Title must contain from 2 to 300 characters',
   DESCRIPTION_LENGTH_INVALID: 'Description must contain from 2 to 250 characters',
   KEYWORDS_LENGTH_INVALID: 'Keywords must contain from 2 to 250 characters',
   ALT_TEXT_LENGTH_INVALID: 'Alt text must contain from 2 to 250 characters'
