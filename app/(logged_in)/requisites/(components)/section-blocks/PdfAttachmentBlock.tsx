@@ -6,13 +6,13 @@ import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './PdfAttachmentBlock.styles';
-import { type RequisitePdfFile, REQUISITES_MESSAGES } from '~/constants/requisites';
+import { type PaymentDetailsPdfFile, REQUISITES_MESSAGES } from '~/constants/requisites';
 import Button from '~/ds-components/button/Button';
 import PdfIcon from '~/public/icons/type-pdf.svg';
 
 interface PdfAttachmentBlockProps {
-  file?: RequisitePdfFile | null;
-  onFileChange: (file: RequisitePdfFile | null) => void;
+  file?: PaymentDetailsPdfFile | null;
+  onFileChange: (file: PaymentDetailsPdfFile | null) => void;
   disabled?: boolean;
 }
 
@@ -38,11 +38,10 @@ export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
       return;
     }
 
-    const newPdfFile: RequisitePdfFile = {
-      id: `pdf-${Date.now()}`,
-      name: selectedFile.name,
+    const newPdfFile: PaymentDetailsPdfFile = {
+      filename: selectedFile.name,
       url: URL.createObjectURL(selectedFile),
-      size: selectedFile.size
+      mimeType: selectedFile.type || 'application/pdf'
     };
 
     onFileChange(newPdfFile);
@@ -88,8 +87,8 @@ export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
             <Box sx={styles.pdfBadge}>
               <PdfBadgeIcon />
             </Box>
-            <Typography sx={styles.fileName} title={file.name}>
-              {file.name}
+            <Typography sx={styles.fileName} title={file.filename}>
+              {file.filename}
             </Typography>
           </Box>
           <IconButton

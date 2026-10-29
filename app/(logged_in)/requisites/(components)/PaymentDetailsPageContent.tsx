@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
+import type { JSONContent } from '@tiptap/react';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -11,24 +12,22 @@ import { CurrencyTabs } from './section-blocks/CurrencyTabs';
 import { PdfAttachmentBlock } from './section-blocks/PdfAttachmentBlock';
 import { RequisitesContentEditor } from './section-blocks/RequisitesContentEditor';
 import {
-  type RequisiteItem,
-  type RequisitePdfFile,
+  type PaymentDetailsPdfFile,
+  type PaymentDetailsTab,
   REQUISITES_MESSAGES
 } from '~/constants/requisites';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
 
 const PaymentDetailsPageContent = () => {
-  const [items, setItems] = useState<RequisiteItem[]>(INITIAL_REQUISITES_DATA.items);
-  const [activeTabId, setActiveTabId] = useState(
-    INITIAL_REQUISITES_DATA.items[0]?.id ?? ''
-  );
+  const [tabs, setTabs] = useState<PaymentDetailsTab[]>(INITIAL_REQUISITES_DATA.items);
+  const [activeTabId, setActiveTabId] = useState(INITIAL_REQUISITES_DATA.items[0]?.id ?? '');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const activeItem = useMemo(() => {
-    return items.find((item) => item.id === activeTabId) ?? items[0];
-  }, [items, activeTabId]);
+  const activeTab = useMemo(() => {
+    return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
+  }, [tabs, activeTabId]);
 
   const handleSelectTab = (id: string) => {
     setActiveTabId(id);
@@ -37,32 +36,32 @@ const PaymentDetailsPageContent = () => {
 
   const handleAddTab = () => {
     const newId = `req-${Date.now()}`;
-    const newItem: RequisiteItem = {
+    const newTab: PaymentDetailsTab = {
       id: newId,
-      currency: REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY,
-      content: '',
+      name: REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY,
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
       pdfFile: null,
-      order: items.length
+      order: tabs.length
     };
-    setItems((prev) => [...prev, newItem]);
+    setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newId);
     setEditingTabId(newId);
   };
 
-  const handleUpdateCurrency = (id: string, newCurrency: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, currency: newCurrency } : item))
+  const handleUpdateTabName = (id: string, newName: string) => {
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
     );
   };
 
   const handleDeleteTab = (id: string) => {
-    if (items.length <= 1) {
+    if (tabs.length <= 1) {
       toast.error('Неможливо видалити останню вкладку');
       return;
     }
 
-    setItems((prev) => {
-      const filtered = prev.filter((item) => item.id !== id);
+    setTabs((prev) => {
+      const filtered = prev.filter((tab) => tab.id !== id);
       if (activeTabId === id) {
         setActiveTabId(filtered[0]?.id ?? '');
       }
@@ -71,17 +70,17 @@ const PaymentDetailsPageContent = () => {
     setEditingTabId(null);
   };
 
-  const handleContentChange = (newContent: string) => {
-    if (!activeItem) return;
-    setItems((prev) =>
-      prev.map((item) => (item.id === activeItem.id ? { ...item, content: newContent } : item))
+  const handleContentChange = (newContent: JSONContent) => {
+    if (!activeTab) return;
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === activeTab.id ? { ...tab, content: newContent } : tab))
     );
   };
 
-  const handlePdfChange = (file: RequisitePdfFile | null) => {
-    if (!activeItem) return;
-    setItems((prev) =>
-      prev.map((item) => (item.id === activeItem.id ? { ...item, pdfFile: file } : item))
+  const handlePdfChange = (file: PaymentDetailsPdfFile | null) => {
+    if (!activeTab) return;
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === activeTab.id ? { ...tab, pdfFile: file } : tab))
     );
   };
 
@@ -108,26 +107,27 @@ const PaymentDetailsPageContent = () => {
       <CollapsibleBlock title={REQUISITES_MESSAGES.BLOCK_TITLE} defaultExpanded>
         <Box sx={styles.content}>
           <CurrencyTabs
-            items={items}
-            activeId={activeItem ? activeItem.id : ''}
+            items={tabs}
+            activeId={activeTab ? activeTab.id : ''}
             editingId={editingTabId}
             onSelectTab={handleSelectTab}
             onAddTab={handleAddTab}
-            onUpdateCurrency={handleUpdateCurrency}
+            onUpdateCurrency={handleUpdateTabName}
             onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
           />
 
-          {activeItem && (
+          {activeTab && (
             <>
               <RequisitesContentEditor
-                value={activeItem.content}
+                key={activeTab.id}
+                value={activeTab.content}
                 onChange={handleContentChange}
                 disabled={saving}
               />
 
               <PdfAttachmentBlock
-                file={activeItem.pdfFile}
+                file={activeTab.pdfFile ?? null}
                 onFileChange={handlePdfChange}
                 disabled={saving}
               />

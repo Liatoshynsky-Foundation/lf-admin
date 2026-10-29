@@ -1,39 +1,29 @@
 'use client';
 
-import { Box, TextField } from '@mui/material';
+import { Box } from '@mui/material';
+import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { styles } from './RequisitesContentEditor.styles';
 import { REQUISITES_MESSAGES } from '~/constants/requisites';
+import { CustomFormattingField } from '~/shared/components/custom-formatting-field/CustomFormattingField';
 
 interface RequisitesContentEditorProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: JSONContent;
+  onChange: (value: JSONContent) => void;
   disabled?: boolean;
 }
 
 export const RequisitesContentEditor: React.FC<RequisitesContentEditorProps> = ({
   value,
-  onChange,
-  disabled = false
+  onChange
 }) => {
   return (
     <Box sx={styles.container}>
-      <TextField
+      <CustomFormattingField
         label={REQUISITES_MESSAGES.CONTENT_LABEL}
-        multiline
-        minRows={1}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={REQUISITES_MESSAGES.CONTENT_PLACEHOLDER}
-        disabled={disabled}
-        fullWidth
-        slotProps={{
-          inputLabel: {
-            shrink: true
-          }
-        }}
-        sx={styles.textField}
+        onChange={onChange}
       />
     </Box>
   );

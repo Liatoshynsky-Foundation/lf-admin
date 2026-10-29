@@ -27,6 +27,37 @@ jest.mock('react-hot-toast', () => ({
   }
 }));
 
+jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', () => ({
+  __esModule: true,
+  CustomFormattingField: ({
+    label,
+    value,
+    onChange
+  }: {
+    label?: string;
+    value?: { content?: Array<{ content?: Array<{ text?: string }> }> };
+    onChange: (value: unknown) => void;
+  }) => (
+    <div data-testid="custom-formatting-field">
+      <span>{label}</span>
+      <span data-testid="editor-preview">
+        {value?.content?.[0]?.content?.[0]?.text ?? ''}
+      </span>
+      <button
+        data-testid="change-editor-btn"
+        onClick={() =>
+          onChange({
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Новий IBAN: UA123456789' }] }]
+          })
+        }
+      >
+        Change
+      </button>
+    </div>
+  )
+}));
+
 describe('PaymentDetailsPageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,22 +72,24 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByText('EUR')).toBeInTheDocument();
     expect(screen.getByText('GBP')).toBeInTheDocument();
 
-    const textarea = screen.getByLabelText(/текст реквізитів/i) as HTMLTextAreaElement;
-    expect(textarea.value).toContain('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
     expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
   });
 
-  it('switches between currency tabs', () => {
+  it('switches between currency tabs and changes attached file accordingly', () => {
     render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('USD'));
 
-    const textarea = screen.getByLabelText(/текст реквізитів/i) as HTMLTextAreaElement;
-    expect(textarea.value).toContain('SWIFT: UKSIUA2X');
-
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
     expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('UAH'));
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
   });
 
   it('adds a new tab when clicking "Додати реквізити"', () => {
@@ -95,16 +128,16 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.queryByDisplayValue('CZK')).not.toBeInTheDocument();
   });
 
-  it('edits content in textarea', () => {
+  it('edits content in editor', () => {
     render(<PaymentDetailsPageContent />);
 
-    const textarea = screen.getByLabelText(/текст реквізитів/i);
-    fireEvent.change(textarea, { target: { value: 'Новий IBAN: UA123456789' } });
+    const changeBtn = screen.getByTestId('change-editor-btn');
+    fireEvent.click(changeBtn);
 
-    expect(textarea).toHaveValue('Новий IBAN: UA123456789');
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Новий IBAN: UA123456789');
   });
 
-  it('removes attached PDF file', () => {
+  it('removes attached PDF file for the active tab', () => {
     render(<PaymentDetailsPageContent />);
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();

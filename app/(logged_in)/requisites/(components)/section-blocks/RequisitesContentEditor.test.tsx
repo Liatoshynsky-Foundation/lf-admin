@@ -2,31 +2,60 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { RequisitesContentEditor } from './RequisitesContentEditor';
 
+jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', () => ({
+  __esModule: true,
+  CustomFormattingField: ({
+    label,
+    onChange
+  }: {
+    label?: string;
+    value?: unknown;
+    onChange: (value: unknown) => void;
+  }) => (
+    <div data-testid="custom-formatting-field">
+      <span>{label}</span>
+      <button
+        onClick={() =>
+          onChange({
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Details' }] }]
+          })
+        }
+      >
+        Change Content
+      </button>
+    </div>
+  )
+}));
+
 describe('RequisitesContentEditor', () => {
-  it('renders content label and value', () => {
+  it('renders CustomFormattingField with label', () => {
     const handleChange = jest.fn();
-    render(<RequisitesContentEditor value="Test Content" onChange={handleChange} />);
+    render(
+      <RequisitesContentEditor
+        value={{ type: 'doc', content: [{ type: 'paragraph' }] }}
+        onChange={handleChange}
+      />
+    );
 
-    const textarea = screen.getByLabelText(/текст реквізитів/i);
-    expect(textarea).toBeInTheDocument();
-    expect(textarea).toHaveValue('Test Content');
+    expect(screen.getByTestId('custom-formatting-field')).toBeInTheDocument();
+    expect(screen.getByText('Текст реквізитів')).toBeInTheDocument();
   });
 
-  it('calls onChange when user types', () => {
+  it('calls onChange with TipTap doc when changed', () => {
     const handleChange = jest.fn();
-    render(<RequisitesContentEditor value="" onChange={handleChange} />);
+    render(
+      <RequisitesContentEditor
+        value={{ type: 'doc', content: [{ type: 'paragraph' }] }}
+        onChange={handleChange}
+      />
+    );
 
-    const textarea = screen.getByLabelText(/текст реквізитів/i);
-    fireEvent.change(textarea, { target: { value: 'Updated Details' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Change Content' }));
 
-    expect(handleChange).toHaveBeenCalledWith('Updated Details');
-  });
-
-  it('disables input when disabled prop is true', () => {
-    const handleChange = jest.fn();
-    render(<RequisitesContentEditor value="Value" onChange={handleChange} disabled />);
-
-    const textarea = screen.getByLabelText(/текст реквізитів/i);
-    expect(textarea).toBeDisabled();
+    expect(handleChange).toHaveBeenCalledWith({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Details' }] }]
+    });
   });
 });

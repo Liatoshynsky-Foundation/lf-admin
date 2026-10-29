@@ -11,17 +11,17 @@ import React, {
 } from 'react';
 
 import { styles } from './CurrencyTabs.styles';
-import { type RequisiteItem, REQUISITES_MESSAGES } from '~/constants/requisites';
+import { type PaymentDetailsTab, REQUISITES_MESSAGES } from '~/constants/requisites';
 import Button from '~/ds-components/button/Button';
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 
 interface CurrencyTabsProps {
-  items: RequisiteItem[];
+  items: PaymentDetailsTab[];
   activeId: string;
   editingId: string | null;
   onSelectTab: (id: string) => void;
   onAddTab: () => void;
-  onUpdateCurrency: (id: string, currency: string) => void;
+  onUpdateCurrency: (id: string, name: string) => void;
   onDeleteTab: (id: string) => void;
   setEditingId: (id: string | null) => void;
 }
@@ -95,7 +95,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   useEffect(() => {
     if (editingId) {
       const activeItem = items.find((item) => item.id === editingId);
-      setEditingValue(activeItem ? activeItem.currency : '');
+      setEditingValue(activeItem ? activeItem.name : '');
       const timer = setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -120,7 +120,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   const handleStartRename = () => {
     if (menuTargetId) {
       const targetItem = items.find((item) => item.id === menuTargetId);
-      setEditingValue(targetItem ? targetItem.currency : '');
+      setEditingValue(targetItem ? targetItem.name : '');
       setEditingId(menuTargetId);
     }
     handleCloseMenu();
@@ -233,7 +233,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span>{item.currency}</span>
+                  <span>{item.name}</span>
                 )}
 
                 {isActive && !isEditing && (

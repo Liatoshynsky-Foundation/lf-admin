@@ -1,28 +1,28 @@
-export interface RequisitePdfFile {
-  id: string;
-  name: string;
-  url: string;
-  size?: number;
-}
+import type { JSONContent } from '@tiptap/react';
 
-export interface RequisiteItem {
-  id: string;
-  currency: string;
-  content: string;
-  pdfFile?: RequisitePdfFile | null;
-  order?: number;
-}
+import type {
+  PaymentDetails,
+  PaymentDetailsPdfFile,
+  PaymentDetailsTab as DomainPaymentDetailsTab
+} from '~/domain/entities/PaymentDetails';
+import type { UpdatePaymentDetailsInput } from '~/domain/repositories/PaymentDetailsRepository';
+
+export type PaymentDetailsTab = DomainPaymentDetailsTab & {
+  pdfFile?: PaymentDetailsPdfFile | null;
+};
+
+export type {
+  JSONContent,
+  PaymentDetails,
+  PaymentDetailsPdfFile,
+  UpdatePaymentDetailsInput
+};
+
+export type RequisiteItem = PaymentDetailsTab;
+export type RequisitePdfFile = PaymentDetailsPdfFile;
 
 export interface RequisitesData {
-  items: RequisiteItem[];
-}
-
-export interface RequisitesDbRecord {
-  _id: string;
-  slug: 'requisites' | 'payment-details';
-  items: RequisiteItem[];
-  createdAt: string;
-  updatedAt: string;
+  items: PaymentDetailsTab[];
 }
 
 export const REQUISITES_MESSAGES = {

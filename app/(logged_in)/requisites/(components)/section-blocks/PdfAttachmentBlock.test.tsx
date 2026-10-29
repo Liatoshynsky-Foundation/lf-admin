@@ -24,9 +24,9 @@ describe('PdfAttachmentBlock', () => {
 
   it('renders attached PDF card when file prop is present', () => {
     const mockFile = {
-      id: 'pdf-1',
-      name: 'requisites-info.pdf',
-      url: 'https://example.com/sample.pdf'
+      filename: 'requisites-info.pdf',
+      url: 'https://example.com/sample.pdf',
+      mimeType: 'application/pdf'
     };
 
     render(<PdfAttachmentBlock file={mockFile} onFileChange={jest.fn()} />);
@@ -38,9 +38,9 @@ describe('PdfAttachmentBlock', () => {
   it('calls onFileChange with null when delete button is clicked', () => {
     const handleFileChange = jest.fn();
     const mockFile = {
-      id: 'pdf-1',
-      name: 'requisites-info.pdf',
-      url: 'https://example.com/sample.pdf'
+      filename: 'requisites-info.pdf',
+      url: 'https://example.com/sample.pdf',
+      mimeType: 'application/pdf'
     };
 
     render(<PdfAttachmentBlock file={mockFile} onFileChange={handleFileChange} />);
@@ -64,7 +64,7 @@ describe('PdfAttachmentBlock', () => {
 
     expect(handleFileChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'test-upload.pdf',
+        filename: 'test-upload.pdf',
         url: 'blob:http://localhost/test-blob'
       })
     );

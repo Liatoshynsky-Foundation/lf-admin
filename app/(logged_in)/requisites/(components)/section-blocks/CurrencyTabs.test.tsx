@@ -1,12 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { CurrencyTabs } from './CurrencyTabs';
-import { RequisiteItem } from '~/constants/requisites';
+import { PaymentDetailsTab } from '~/constants/requisites';
 
 describe('CurrencyTabs', () => {
-  const mockItems: RequisiteItem[] = [
-    { id: '1', currency: 'UAH', content: 'UAH text' },
-    { id: '2', currency: 'USD', content: 'USD text' }
+  const mockItems: PaymentDetailsTab[] = [
+    {
+      id: '1',
+      name: 'UAH',
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      order: 0
+    },
+    {
+      id: '2',
+      name: 'USD',
+      content: { type: 'doc', content: [{ type: 'paragraph' }] },
+      order: 1
+    }
   ];
 
   it('renders all currency tabs and active tab indicator', () => {
@@ -55,7 +65,7 @@ describe('CurrencyTabs', () => {
     expect(handleSelect).toHaveBeenCalledWith('2');
   });
 
-  it('calls onAddTab when Add button is clicked', () => {
+  it('calls onAddTab when "Додати реквізити" button is clicked', () => {
     const handleAdd = jest.fn();
     render(
       <CurrencyTabs
@@ -70,7 +80,8 @@ describe('CurrencyTabs', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /додати реквізити/i }));
+    const addButton = screen.getByRole('button', { name: /додати реквізити/i });
+    fireEvent.click(addButton);
     expect(handleAdd).toHaveBeenCalledTimes(1);
   });
 
