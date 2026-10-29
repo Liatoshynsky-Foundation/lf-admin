@@ -11,6 +11,7 @@ import {
   usePaginatedEvents,
   usePublishedEvents,
   useUpdateEvent,
+  useUpdateEventCoverImageAlt,
   useUpdateEventStatus} from './useEvents';
 import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
@@ -39,6 +40,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     jest.fn(),
     { loading: false, data: { updateEvent: { status: 'Published' } } }
   ]),
+  useUpdateEventCoverImageAltMutation: jest.fn(() => [jest.fn(), { loading: false, error: null }]),
   useDeleteEventMutation: jest.fn(() => [jest.fn(), { loading: false }]),
   useIncrementEventViewsMutation: jest.fn(() => [jest.fn(), { loading: false }])
 }));
@@ -204,6 +206,33 @@ describe('useEvents hooks', () => {
         EventsErrors.NETWORK_ERROR_UPDATE,
         EventsErrors.FAILED_TO_UPDATE
       );
+    });
+  });
+
+  describe('useUpdateEventCoverImageAlt', () => {
+    it('ignores stale cover alt save results', async () => {
+      const firstResult = Promise.resolve({ data: { updateEventCoverImageAlt: { id: '1' } } });
+      const secondResult = Promise.resolve({ data: { updateEventCoverImageAlt: { id: '2' } } });
+      const mockMutate = jest.fn();
+      (graphqlHooks.useUpdateEventCoverImageAltMutation as jest.Mock).mockReturnValue([
+        mockMutate,
+        { loading: false, error: null }
+      ]);
+      (safeMutate as jest.Mock).mockReturnValueOnce(firstResult).mockReturnValueOnce(secondResult);
+
+      const { result } = renderHook(() => useUpdateEventCoverImageAlt());
+      const [save] = result.current;
+      let firstSave: Promise<unknown>;
+      let secondSave: Promise<unknown>;
+
+      await act(async () => {
+        firstSave = save('1', { uk: 'аа', en: 'aa' });
+        secondSave = save('2', { uk: 'аа', en: 'aa' });
+        await Promise.all([firstSave, secondSave]);
+      });
+
+      expect(await firstSave!).toBeUndefined();
+      expect(await secondSave!).toBe(await secondResult);
     });
   });
 

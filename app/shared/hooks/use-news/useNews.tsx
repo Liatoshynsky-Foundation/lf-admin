@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { buildStatusUpdater } from '../buildStatusUpdater';
 import { newsErrors } from '~/constants/errors';
@@ -13,6 +13,8 @@ import {
   type DeleteNewsMutationVariables,
   NewsFiltersInput,
   NewsStatus,
+  type UpdateNewsCoverImageAltMutation,
+  type UpdateNewsCoverImageAltMutationVariables,
   type UpdateNewsMutation,
   type UpdateNewsMutationVariables,
   useAllNewsQuery,
@@ -23,7 +25,9 @@ import {
   useNewsCountQuery,
   usePaginatedNewsQuery,
   usePublishedNewsQuery,
-  useUpdateNewsMutation} from '~/types/graphql/generated/graphql';
+  useUpdateNewsCoverImageAltMutation,
+  useUpdateNewsMutation
+} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -71,6 +75,39 @@ export const useUpdateNews = () => {
     [mutate]
   );
   return [updateNews, meta] as const;
+};
+
+export const useUpdateNewsCoverImageAlt = () => {
+  const [mutate, { loading, error }] = useUpdateNewsCoverImageAltMutation();
+  const sequenceRef = useRef(0);
+
+  const save = useCallback(
+    async (id: string, alt: UpdateNewsCoverImageAltMutationVariables['input']['alt']) => {
+      const sequence = ++sequenceRef.current;
+
+      try {
+        const result = await safeMutate<
+          UpdateNewsCoverImageAltMutation,
+          UpdateNewsCoverImageAltMutationVariables
+        >(
+          mutate,
+          { id, input: { alt } },
+          newsErrors.NETWORK_ERROR_UPDATE,
+          newsErrors.FAILED_TO_UPDATE
+        );
+
+        return sequence === sequenceRef.current ? result : undefined;
+      } catch (saveError) {
+        if (sequence === sequenceRef.current) {
+          throw saveError;
+        }
+        return undefined;
+      }
+    },
+    [mutate]
+  );
+
+  return [save, { loading, error }] as const;
 };
 
 export const useUpdateNewsStatus = () => {

@@ -7,6 +7,8 @@ import { usePublicationStrategy } from './usePublicationStrategy';
 import { useUpsertPublication } from './useUpsertPublication';
 import { publicationErrors } from '~/constants/errors';
 import { initialSeoValue, PublicationsItemType } from '~/constants/publications';
+import { useUpdateEventCoverImageAlt } from '~/shared/hooks/use-events/useEvents';
+import { useUpdateNewsCoverImageAlt } from '~/shared/hooks/use-news/useNews';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -21,6 +23,8 @@ jest.mock('./usePublicationForm', () => ({
   validatePublicationSeo: jest.fn()
 }));
 jest.mock('./usePublicationStrategy');
+jest.mock('~/shared/hooks/use-events/useEvents');
+jest.mock('~/shared/hooks/use-news/useNews');
 jest.mock('~/shared/hooks/use-system-preview/useSystemPreview');
 
 const MOCK_PUBLICATION = {
@@ -47,8 +51,12 @@ const createMockSeoValue = (overrides?: Partial<typeof initialSeoValue>) => ({
 describe('useUpsertPublication', () => {
   const mockBuildCommonInput = jest.fn();
   const mockSaveDocument = jest.fn();
+  const mockSaveNewsCoverImageAlt = jest.fn();
+  const mockSaveEventCoverImageAlt = jest.fn();
   const mockExtractDate = jest.fn();
   const mockFindSystemPreviewDocument = jest.fn();
+  const mockUseUpdateEventCoverImageAlt = useUpdateEventCoverImageAlt as jest.Mock;
+  const mockUseUpdateNewsCoverImageAlt = useUpdateNewsCoverImageAlt as jest.Mock;
 
   const mockSetAdminTitle = jest.fn();
   const mockSetPublishDate = jest.fn();
@@ -99,6 +107,10 @@ describe('useUpsertPublication', () => {
     (useSystemPreview as jest.Mock).mockReturnValue({
       findSystemPreviewDocument: mockFindSystemPreviewDocument
     });
+    mockUseUpdateEventCoverImageAlt.mockReturnValue([mockSaveEventCoverImageAlt, { loading: false, error: undefined }]);
+    mockUseUpdateNewsCoverImageAlt.mockReturnValue([mockSaveNewsCoverImageAlt, { loading: false, error: undefined }]);
+    mockSaveEventCoverImageAlt.mockResolvedValue({ data: {} });
+    mockSaveNewsCoverImageAlt.mockResolvedValue({ data: {} });
 
     setupFormMockState();
 
@@ -142,6 +154,54 @@ describe('useUpsertPublication', () => {
           })
         })
       );
+    });
+  });
+
+  describe('cover image alt autosave', () => {
+    it('updates both locale baselines after a successful autosave', async () => {
+      const alt = { uk: 'aa', en: 'aa' };
+      const initialState = {
+        adminTitle: MOCK_PUBLICATION.adminTitle,
+        publishDate: null,
+        seoValue: createMockSeoValue(),
+        crop: null
+      };
+      let updatedState = initialState;
+
+      mockSetInitialState.mockImplementationOnce(
+        (update: (state: typeof initialState) => typeof initialState) => {
+          updatedState = update(initialState);
+        }
+      );
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: MOCK_PUBLICATION.newsId }));
+
+      await act(async () => {
+        await result.current.handleCoverImageAltChange(alt);
+      });
+
+      expect(mockSaveNewsCoverImageAlt).toHaveBeenCalledWith(
+        MOCK_PUBLICATION.newsId,
+        alt
+      );
+      expect(updatedState.seoValue.meta.uk.altText).toEqual(alt);
+      expect(updatedState.seoValue.meta.en.altText).toEqual(alt);
+    });
+
+    it('shows a toast and allows retry after a failed save', async () => {
+      mockSaveNewsCoverImageAlt
+        .mockRejectedValueOnce(new Error('Save failed'))
+        .mockResolvedValueOnce({ data: {} });
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news', id: MOCK_PUBLICATION.newsId }));
+      const alt = { uk: 'aa', en: 'aa' };
+
+      await act(async () => {
+        await result.current.handleCoverImageAltChange(alt);
+        await result.current.handleCoverImageAltChange(alt);
+      });
+
+      expect(toast.error).toHaveBeenCalledWith('Save failed');
+      expect(mockSaveNewsCoverImageAlt).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -17,6 +17,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   useNewsCountQuery: jest.fn(),
   useCreateNewsMutation: jest.fn(),
   useUpdateNewsMutation: jest.fn(),
+  useUpdateNewsCoverImageAltMutation: jest.fn(),
   useDeleteNewsMutation: jest.fn(),
   useIncrementNewsViewsMutation: jest.fn()
 }));
@@ -35,6 +36,7 @@ const mockUsePaginatedNewsQuery = graphqlModule.usePaginatedNewsQuery as jest.Mo
 const mockUseNewsCountQuery = graphqlModule.useNewsCountQuery as jest.Mock;
 const mockUseCreateNewsMutation = graphqlModule.useCreateNewsMutation as jest.Mock;
 const mockUseUpdateNewsMutation = graphqlModule.useUpdateNewsMutation as jest.Mock;
+const mockUseUpdateNewsCoverImageAltMutation = graphqlModule.useUpdateNewsCoverImageAltMutation as jest.Mock;
 const mockUseDeleteNewsMutation = graphqlModule.useDeleteNewsMutation as jest.Mock;
 const mockUseIncrementNewsViewsMutation = graphqlModule.useIncrementNewsViewsMutation as jest.Mock;
 const mockSafeMutate = safeMutate as jest.Mock;
@@ -49,6 +51,7 @@ import {
   usePaginatedNews,
   usePublishedNews,
   useUpdateNews,
+  useUpdateNewsCoverImageAlt,
   useUpdateNewsStatus
 } from './useNews';
 
@@ -63,6 +66,7 @@ describe('useNews hooks', () => {
     mockUseNewsCountQuery.mockReturnValue({ data: null });
     mockUseCreateNewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockUseUpdateNewsMutation.mockReturnValue([jest.fn(), { loading: false, data: null, error: null }]);
+    mockUseUpdateNewsCoverImageAltMutation.mockReturnValue([jest.fn(), { loading: false, error: null }]);
     mockUseDeleteNewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockUseIncrementNewsViewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockSafeMutate.mockResolvedValue({ success: true });
@@ -150,6 +154,28 @@ describe('useNews hooks', () => {
       newsErrors.NETWORK_ERROR_UPDATE,
       newsErrors.FAILED_TO_UPDATE
     );
+  });
+
+  it('ignores stale cover alt save results', async () => {
+    const mutate = jest.fn();
+    const firstResult = Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'news-1' } } });
+    const secondResult = Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'news-2' } } });
+    mockUseUpdateNewsCoverImageAltMutation.mockReturnValue([mutate, { loading: false, error: null }]);
+    mockSafeMutate.mockReturnValueOnce(firstResult).mockReturnValueOnce(secondResult);
+
+    const { result } = renderHook(() => useUpdateNewsCoverImageAlt());
+    const [save] = result.current;
+    let firstSave: Promise<unknown>;
+    let secondSave: Promise<unknown>;
+
+    await act(async () => {
+      firstSave = save('news-1', { uk: 'аа', en: 'aa' });
+      secondSave = save('news-2', { uk: 'аа', en: 'aa' });
+      await Promise.all([firstSave, secondSave]);
+    });
+
+    expect(await firstSave!).toBeUndefined();
+    expect(await secondSave!).toBe(await secondResult);
   });
 
   it('exposes status updater helpers and uses the update mutation', async () => {
