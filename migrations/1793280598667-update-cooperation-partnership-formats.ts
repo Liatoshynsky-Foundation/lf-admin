@@ -88,43 +88,47 @@ const SLUG = 'cooperation';
 export async function up(db: Db): Promise<void> {
   const now = new Date();
 
-  for (const collectionName of TARGET_COLLECTIONS) {
-    await db.collection(collectionName).updateOne(
-      { slug: SLUG },
-      {
-        $set: {
-          'blocks.partnershipFormats.title': NEW_PARTNERSHIP_FORMATS.title,
-          'blocks.partnershipFormats.actionButtonText': NEW_PARTNERSHIP_FORMATS.actionButtonText,
-          'blocks.partnershipFormats.firstRowFirstCard.title': NEW_PARTNERSHIP_FORMATS.firstRowFirstCard.title,
-          'blocks.partnershipFormats.firstRowFirstCard.list': NEW_PARTNERSHIP_FORMATS.firstRowFirstCard.list,
-          'blocks.partnershipFormats.firstRowSecondCard.title': NEW_PARTNERSHIP_FORMATS.firstRowSecondCard.title,
-          'blocks.partnershipFormats.firstRowSecondCard.list': NEW_PARTNERSHIP_FORMATS.firstRowSecondCard.list,
-          'blocks.partnershipFormats.secondRowFirstCard.title': NEW_PARTNERSHIP_FORMATS.secondRowFirstCard.title,
-          'blocks.partnershipFormats.secondRowFirstCard.list': NEW_PARTNERSHIP_FORMATS.secondRowFirstCard.list,
-          'blocks.partnershipFormats.secondRowSecondCard.title': NEW_PARTNERSHIP_FORMATS.secondRowSecondCard.title,
-          'blocks.partnershipFormats.secondRowSecondCard.list': NEW_PARTNERSHIP_FORMATS.secondRowSecondCard.list,
-          updatedAt: now
+  await Promise.all(
+    TARGET_COLLECTIONS.map((collectionName) =>
+      db.collection(collectionName).updateOne(
+        { slug: SLUG },
+        {
+          $set: {
+            'blocks.partnershipFormats.title': NEW_PARTNERSHIP_FORMATS.title,
+            'blocks.partnershipFormats.actionButtonText': NEW_PARTNERSHIP_FORMATS.actionButtonText,
+            'blocks.partnershipFormats.firstRowFirstCard.title': NEW_PARTNERSHIP_FORMATS.firstRowFirstCard.title,
+            'blocks.partnershipFormats.firstRowFirstCard.list': NEW_PARTNERSHIP_FORMATS.firstRowFirstCard.list,
+            'blocks.partnershipFormats.firstRowSecondCard.title': NEW_PARTNERSHIP_FORMATS.firstRowSecondCard.title,
+            'blocks.partnershipFormats.firstRowSecondCard.list': NEW_PARTNERSHIP_FORMATS.firstRowSecondCard.list,
+            'blocks.partnershipFormats.secondRowFirstCard.title': NEW_PARTNERSHIP_FORMATS.secondRowFirstCard.title,
+            'blocks.partnershipFormats.secondRowFirstCard.list': NEW_PARTNERSHIP_FORMATS.secondRowFirstCard.list,
+            'blocks.partnershipFormats.secondRowSecondCard.title': NEW_PARTNERSHIP_FORMATS.secondRowSecondCard.title,
+            'blocks.partnershipFormats.secondRowSecondCard.list': NEW_PARTNERSHIP_FORMATS.secondRowSecondCard.list,
+            updatedAt: now
+          }
         }
-      }
-    );
-  }
+      )
+    )
+  );
 }
 
 export async function down(db: Db): Promise<void> {
   const now = new Date();
 
-  for (const collectionName of TARGET_COLLECTIONS) {
-    await db.collection(collectionName).updateOne(
-      { slug: SLUG },
-      {
-        $set: {
-          'blocks.partnershipFormats.title': OLD_PARTNERSHIP_FORMATS.title,
-          'blocks.partnershipFormats.actionButtonText': OLD_PARTNERSHIP_FORMATS.actionButtonText,
-          'blocks.partnershipFormats.firstRowFirstCard.title': OLD_PARTNERSHIP_FORMATS.firstRowFirstCard.title,
-          'blocks.partnershipFormats.firstRowFirstCard.list': OLD_PARTNERSHIP_FORMATS.firstRowFirstCard.list,
-          updatedAt: now
+  await Promise.all(
+    TARGET_COLLECTIONS.map((collectionName) =>
+      db.collection(collectionName).updateOne(
+        { slug: SLUG },
+        {
+          $set: {
+            'blocks.partnershipFormats.title': OLD_PARTNERSHIP_FORMATS.title,
+            'blocks.partnershipFormats.actionButtonText': OLD_PARTNERSHIP_FORMATS.actionButtonText,
+            'blocks.partnershipFormats.firstRowFirstCard.title': OLD_PARTNERSHIP_FORMATS.firstRowFirstCard.title,
+            'blocks.partnershipFormats.firstRowFirstCard.list': OLD_PARTNERSHIP_FORMATS.firstRowFirstCard.list,
+            updatedAt: now
+          }
         }
-      }
-    );
-  }
+      )
+    )
+  );
 }
