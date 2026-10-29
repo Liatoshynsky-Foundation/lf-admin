@@ -1,13 +1,10 @@
 import { Model, Types } from 'mongoose';
 
 import dbConnect from '~/infrastructure/db/connect';
-import type { PaymentDetails, PaymentDetailsPdfFile,PaymentDetailsTab } from '~/src/domain/entities/PaymentDetails';
+import type { PaymentDetails, PaymentDetailsPdfFile, PaymentDetailsTab } from '~/src/domain/entities/PaymentDetails';
 import {
-  CreatePaymentDetailsTabInput,
   IPaymentDetailsRepository,
-  ReorderPaymentDetailsTabsInput,
-  UpdatePaymentDetailsTabInput
-} from '~/src/domain/repositories/PaymentDetailsRepository';
+  UpdatePaymentDetailsInput} from '~/src/domain/repositories/PaymentDetailsRepository';
 
 type PaymentDetailsRepoDeps = Readonly<{
   PaymentDetailsModel: Model<DbPaymentDetails>;
@@ -49,164 +46,62 @@ const toEntity = (doc: DbPaymentDetails): PaymentDetails => ({
 
 const PAYMENT_DETAILS_SLUG = 'payment-details';
 
-const updatePdfFile = async (PaymentDetailsModel: Model<DbPaymentDetails>, pdfFile: PaymentDetailsPdfFile | null) => {
-  const updated = await PaymentDetailsModel.findOneAndUpdate(
-    { slug: PAYMENT_DETAILS_SLUG },
-    { $set: { pdfFile } },
-    { new: true, runValidators: true }
-  )
-    .lean<DbPaymentDetails>()
-    .exec();
-  if (!updated) {
-    throw new Error(`Payment details not found: slug="${PAYMENT_DETAILS_SLUG}"`);
-  }
-  return toEntity(updated);
+const getBySlug = async (model: Model<DbPaymentDetails>, slug: string): Promise<PaymentDetails | null> => {
+  await dbConnect();
+  const doc = await model.findOne({ slug }).lean<DbPaymentDetails>().exec();
+  return doc ? toEntity(doc) : null;
 };
 
 export const PaymentDetailsRepository = ({
   PaymentDetailsModel
 }: PaymentDetailsRepoDeps): IPaymentDetailsRepository => ({
   getPaymentDetails: async (): Promise<PaymentDetails | null> => {
-    await dbConnect();
-
-    const doc = await PaymentDetailsModel.findOne({ slug: PAYMENT_DETAILS_SLUG }).lean<DbPaymentDetails>().exec();
-
-    if (!doc) return null;
-
-    return toEntity(doc);
+    return getBySlug(PaymentDetailsModel, PAYMENT_DETAILS_SLUG);
   },
-  addPaymentDetailsTab: async (input: CreatePaymentDetailsTabInput): Promise<PaymentDetails> => {
+  updatePaymentDetails: async (input: UpdatePaymentDetailsInput): Promise<PaymentDetails> => {
     await dbConnect();
 
-    const paymentDetails = await PaymentDetailsModel.findOne({ slug: PAYMENT_DETAILS_SLUG }).exec();
-
-    if (!paymentDetails) {
-      const created = await PaymentDetailsModel.create({
-        slug: PAYMENT_DETAILS_SLUG,
-        tabs: [
-          {
-            _id: new Types.ObjectId(),
-            name: input.name,
-            content: input.content,
-            order: 0
-          }
-        ],
-        pdfFile: null
-      });
-      return toEntity(created.toObject() as unknown as DbPaymentDetails);
-    }
-    const nextOrder = paymentDetails.tabs.length > 0 ? Math.max(...paymentDetails.tabs.map((tab) => tab.order)) + 1 : 0;
-    const newTab: DbPaymentDetailsTab = {
-      _id: new Types.ObjectId(),
-      name: input.name,
-      content: input.content,
-      order: nextOrder
-    };
-    paymentDetails.tabs.push(newTab);
-
-    const updated = await paymentDetails.save();
-    return toEntity(updated.toObject() as unknown as DbPaymentDetails);
-  },
-
-  updatePaymentDetailsTab: async (tabId: string, input: UpdatePaymentDetailsTabInput): Promise<PaymentDetails> => {
-    await dbConnect();
-    if (!Types.ObjectId.isValid(tabId)) {
-      throw new Error(`Invalid payment details tabId: "${tabId}"`);
+    if (input.tabs.length === 0) {
+      throw new Error('Payment details must contain at least one tab');
     }
 
-    const $set: Record<string, unknown> = {};
-    if (input.name !== undefined) {
-      $set['tabs.$.name'] = input.name;
+    const existingIds = input.tabs.map((tab) => tab.id).filter((id): id is string => id !== undefined);
+
+    if (existingIds.some((id) => !Types.ObjectId.isValid(id))) {
+      throw new Error('Payment details contains an invalid tab ID');
     }
-    if (input.content !== undefined) {
-      $set['tabs.$.content'] = input.content;
+
+    if (new Set(existingIds).size !== existingIds.length) {
+      throw new Error('Payment details contains duplicate tab IDs');
     }
-    if (Object.keys($set).length === 0) {
-      const existing = await PaymentDetailsModel.findOne({ slug: PAYMENT_DETAILS_SLUG })
-        .lean<DbPaymentDetails>()
-        .exec();
-      if (!existing) {
-        throw new Error(`Payment details not found: slug="${PAYMENT_DETAILS_SLUG}"`);
-      }
-      return toEntity(existing);
-    }
+
+    const tabs: DbPaymentDetailsTab[] = input.tabs.map((tab, order) => ({
+      _id: tab.id ? new Types.ObjectId(tab.id) : new Types.ObjectId(),
+      name: tab.name,
+      content: tab.content,
+      order
+    }));
 
     const updated = await PaymentDetailsModel.findOneAndUpdate(
-      { slug: PAYMENT_DETAILS_SLUG, 'tabs._id': new Types.ObjectId(tabId) },
-      { $set },
-      { new: true, runValidators: true }
+      { slug: PAYMENT_DETAILS_SLUG },
+      {
+        $set: {
+          tabs,
+          pdfFile: input.pdfFile
+        }
+      },
+      {
+        new: true,
+        runValidators: true
+      }
     )
       .lean<DbPaymentDetails>()
       .exec();
+
     if (!updated) {
-      throw new Error(`Payment details tab not found: tabId="${tabId}"`);
+      throw new Error(`Payment details not found: slug="${PAYMENT_DETAILS_SLUG}"`);
     }
 
     return toEntity(updated);
-  },
-  removePaymentDetailsTab: async (tabId: string): Promise<PaymentDetails> => {
-    await dbConnect();
-    if (!Types.ObjectId.isValid(tabId)) {
-      throw new Error(`Invalid payment details tabId: "${tabId}"`);
-    }
-
-    const paymentDetails = await PaymentDetailsModel.findOne({ slug: PAYMENT_DETAILS_SLUG }).exec();
-    if (!paymentDetails) {
-      throw new Error(`Payment details not found: slug="${PAYMENT_DETAILS_SLUG}"`);
-    }
-
-    const tabIndex = paymentDetails.tabs.findIndex((tab) => tab._id.toString() === tabId);
-    if (tabIndex === -1) {
-      throw new Error(`Payment details tab not found: tabId="${tabId}"`);
-    }
-    if (paymentDetails.tabs.length === 1) {
-      throw new Error(`Cannot delete the last payment details tab: tabId="${tabId}"`);
-    }
-    paymentDetails.tabs.splice(tabIndex, 1);
-
-    paymentDetails.tabs.forEach((tab, index) => {
-      tab.order = index;
-    });
-
-    const updated = await paymentDetails.save();
-    return toEntity(updated.toObject() as unknown as DbPaymentDetails);
-  },
-  reorderPaymentDetailsTabs: async (input: ReorderPaymentDetailsTabsInput): Promise<PaymentDetails> => {
-    await dbConnect();
-
-    const paymentDetails = await PaymentDetailsModel.findOne({ slug: PAYMENT_DETAILS_SLUG }).exec();
-
-    if (!paymentDetails) {
-      throw new Error(`Payment details not found: slug="${PAYMENT_DETAILS_SLUG}"`);
-    }
-
-    const existingTabIds = paymentDetails.tabs.map((tab) => tab._id.toString());
-    const existingTabIdSet = new Set(existingTabIds);
-    const orderedTabIdSet = new Set(input.orderedTabIds);
-
-    const isValidOrder =
-      input.orderedTabIds.length === existingTabIds.length &&
-      orderedTabIdSet.size === existingTabIdSet.size &&
-      [...existingTabIdSet].every((id) => orderedTabIdSet.has(id));
-
-    if (!isValidOrder) {
-      throw new Error('Invalid orderedTabIds: must contain all existing tab IDs exactly once');
-    }
-
-    paymentDetails.tabs.forEach((tab) => {
-      tab.order = input.orderedTabIds.indexOf(tab._id.toString());
-    });
-
-    const updated = await paymentDetails.save();
-    return toEntity(updated.toObject() as unknown as DbPaymentDetails);
-  },
-  addPaymentDetailsPdfFile: async (pdfFile: PaymentDetailsPdfFile): Promise<PaymentDetails> => {
-    await dbConnect();
-    return await updatePdfFile(PaymentDetailsModel, pdfFile);
-  },
-
-  removePaymentDetailsPdfFile: async (): Promise<PaymentDetails> => {
-    await dbConnect();
-    return await updatePdfFile(PaymentDetailsModel, null);
   }
 });
