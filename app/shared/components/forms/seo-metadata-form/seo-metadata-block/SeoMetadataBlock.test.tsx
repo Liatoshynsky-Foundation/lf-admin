@@ -216,61 +216,38 @@ describe('SeoMetadataBlock', () => {
     expect(screen.getByText(seoFormErrors.en.invalidUrl)).toBeInTheDocument();
   });
 
-  it('handles onChangeCrop when only one locale crop is provided in prop', () => {
+  it.each([
+    {
+      description: 'only one locale crop is provided in prop',
+      crop: { uk: { x: 1, y: 1, width: 10, height: 10 } }
+    },
+    {
+      description: 'both uk and en locale crops are provided in prop',
+      crop: {
+        uk: { x: 1, y: 1, width: 10, height: 10 },
+        en: { x: 2, y: 2, width: 20, height: 20 }
+      }
+    },
+    {
+      description: 'crop prop is omitted or undefined',
+      crop: undefined
+    }
+  ])('synchronizes crop across both locales when $description', ({ crop }) => {
     const onChangeCropMock = jest.fn();
-    renderBlock({
-      crop: { uk: { x: 1, y: 1, width: 10, height: 10 } },
-      onChangeCrop: onChangeCropMock
-    });
+    renderBlock({ crop, onChangeCrop: onChangeCropMock });
+
+    const expectedCrop = {
+      uk: { x: 10 },
+      en: { x: 10 }
+    };
 
     clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: null
-    });
+    expect(onChangeCropMock).toHaveBeenCalledWith(expectedCrop);
+
+    onChangeCropMock.mockClear();
 
     clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
-      en: { x: 10 }
-    });
-  });
-
-  it('handles onChangeCrop for uk and en locales when crop prop is provided', () => {
-    const onChangeCropMock = jest.fn();
-    renderBlock({
-      crop: { uk: { x: 1, y: 1, width: 10, height: 10 }, en: { x: 2, y: 2, width: 20, height: 20 } },
-      onChangeCrop: onChangeCropMock
-    });
-
-    clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: { x: 2, y: 2, width: 20, height: 20 }
-    });
-
-    clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
-      en: { x: 10 }
-    });
-  });
-
-  it('handles onChangeCrop when crop prop is omitted or null', () => {
-    const onChangeCropMock = jest.fn();
-    renderBlock({ onChangeCrop: onChangeCropMock });
-
-    clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: null
-    });
-
-    clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: null,
-      en: { x: 10 }
-    });
+    expect(onChangeCropMock).toHaveBeenCalledWith(expectedCrop);
   });
 
   it('handles ticketUrl change when ticketUrl object is initial undefined', async () => {
