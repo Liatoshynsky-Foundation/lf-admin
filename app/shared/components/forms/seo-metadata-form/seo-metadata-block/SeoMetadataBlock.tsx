@@ -186,11 +186,11 @@ export default function SeoMetadataBlock({
         required={isLocaleRequired('uk')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
-        crop={crop?.uk ?? null}
+        crop={crop?.uk ?? crop?.en ?? null}
         onChangeCrop={(newUkCrop) =>
           onChangeCrop?.({
             uk: newUkCrop,
-            en: crop?.en ?? null
+            en: newUkCrop
           })
         }
         labels={labels?.uk}
@@ -213,10 +213,10 @@ export default function SeoMetadataBlock({
         required={isLocaleRequired('en')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
-        crop={crop?.en ?? null}
+        crop={crop?.en ?? crop?.uk ?? null}
         onChangeCrop={(newEnCrop) =>
           onChangeCrop?.({
-            uk: crop?.uk ?? null,
+            uk: newEnCrop,
             en: newEnCrop
           })
         }
