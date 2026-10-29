@@ -4,35 +4,26 @@ import { buttonGroupColors } from '~/shared/theme/colors';
 
 export const styles = {
   wrapper: {
-    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
-    minHeight: '40px'
-  },
-  dividerLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    height: '1px',
-    backgroundColor: 'adminBlue.200',
-    zIndex: 0
+    minHeight: '40px',
+    gap: 2
   },
   tabsContainer: {
     display: 'flex',
     alignItems: 'center',
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: 'background.default',
-    paddingRight: 2
+    maxWidth: 'calc(100% - 180px)',
+    minWidth: 0,
+    flexShrink: 1
   },
   groupCapsule: {
     display: 'inline-flex',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    borderRadius: '9999px',
+    rowGap: '4px',
+    borderRadius: '24px',
     padding: '2px',
     backgroundColor: buttonGroupColors.primary.groupBackground,
     color: 'adminBlue.800',
@@ -44,11 +35,10 @@ export const styles = {
   },
   indicator: {
     position: 'absolute',
-    top: 3,
-    height: 'calc(100% - 6px)',
     borderRadius: '9999px',
     backgroundColor: buttonGroupColors.primary.selectedButton,
-    transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition:
+      'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), top 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     zIndex: 0,
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)'
   },
@@ -107,16 +97,19 @@ export const styles = {
       opacity: 0.75
     }
   },
+  dividerLine: {
+    flexGrow: 1,
+    height: '1px',
+    backgroundColor: 'adminBlue.200',
+    minWidth: '24px'
+  },
   actionButtonWrapper: {
-    position: 'relative',
-    zIndex: 1,
-    backgroundColor: 'background.default',
-    paddingLeft: 2,
-    marginLeft: 'auto',
+    flexShrink: 0
   },
   addButton: {
     borderRadius: '24px',
     textTransform: 'none',
-    fontWeight: 500
+    fontWeight: 500,
+    whiteSpace: 'nowrap'
   }
 } satisfies Record<string, SxProps<Theme>>;

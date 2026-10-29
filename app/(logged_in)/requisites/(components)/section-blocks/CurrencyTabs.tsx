@@ -46,11 +46,15 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;
+    top: number | string;
     width: number;
+    height: number | string;
     opacity: number;
   }>({
     left: 0,
+    top: 3,
     width: 0,
+    height: 'calc(100% - 6px)',
     opacity: 0
   });
 
@@ -65,9 +69,11 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
     const containerRect = container.getBoundingClientRect();
     const tabRect = currentTab.getBoundingClientRect();
     const left = tabRect.left - containerRect.left;
+    const top = tabRect.height > 0 ? tabRect.top - containerRect.top : 3;
     const width = tabRect.width;
+    const height = tabRect.height > 0 ? tabRect.height : 'calc(100% - 6px)';
 
-    setIndicatorStyle({ left, width, opacity: 1 });
+    setIndicatorStyle({ left, top, width, height, opacity: 1 });
   }, [activeId]);
 
   useLayoutEffect(() => {
@@ -174,8 +180,6 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
 
   return (
     <Box sx={styles.wrapper}>
-      <Box sx={styles.dividerLine} />
-
       <Box sx={styles.tabsContainer}>
         <Box sx={styles.groupCapsule} ref={containerRef}>
           <Box
@@ -184,7 +188,9 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
             sx={{
               ...styles.indicator,
               left: indicatorStyle.left,
+              top: indicatorStyle.top,
               width: indicatorStyle.width,
+              height: indicatorStyle.height,
               opacity: indicatorStyle.opacity
             }}
           />
@@ -247,6 +253,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
           })}
         </Box>
       </Box>
+
+      <Box sx={styles.dividerLine} />
 
       <Box sx={styles.actionButtonWrapper}>
         <Button
