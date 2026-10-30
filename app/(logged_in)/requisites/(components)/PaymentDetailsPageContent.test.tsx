@@ -158,4 +158,85 @@ describe('PaymentDetailsPageContent', () => {
       expect(toast.success).toHaveBeenCalledWith('Реквізити успішно збережено');
     });
   });
+
+  it('deletes active tab and selects next available tab', () => {
+    render(<PaymentDetailsPageContent />);
+
+    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
+    fireEvent.click(optionsButton);
+
+    const deleteItem = screen.getByText('Видалити реквізит');
+    fireEvent.click(deleteItem);
+
+    expect(screen.queryByText('UAH')).not.toBeInTheDocument();
+    expect(screen.getByText('USD')).toBeInTheDocument();
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
+  });
+
+  it('prevents deleting the last remaining tab', () => {
+    render(<PaymentDetailsPageContent />);
+
+    for (let i = 0; i < 3; i++) {
+      const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
+      fireEvent.click(optionsButton);
+      const deleteItem = screen.getByText('Видалити реквізит');
+      fireEvent.click(deleteItem);
+    }
+
+    expect(screen.getByText('GBP')).toBeInTheDocument();
+
+    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
+    fireEvent.click(optionsButton);
+    const deleteItem = screen.getByText('Видалити реквізит');
+    fireEvent.click(deleteItem);
+
+    expect(toast.error).toHaveBeenCalledWith('Неможливо видалити останню вкладку');
+    expect(screen.getByText('GBP')).toBeInTheDocument();
+  });
+
+  it('shows error toast when saving throws an error', async () => {
+    (toast.success as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Save error');
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Помилка під час збереження');
+    });
+  });
+
+  it('attaches a new PDF file for active tab', () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByText('USD'));
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+
+    const fileInput = screen.getByTestId('pdf-file-input');
+    const file = new File(['dummy'], 'new-usd.pdf', { type: 'application/pdf' });
+    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/new-usd');
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
+    expect(screen.getByText('new-usd.pdf')).toBeInTheDocument();
+  });
+
+  it('cancels editing tab id when clicking on another tab', () => {
+    render(<PaymentDetailsPageContent />);
+
+    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
+    fireEvent.click(optionsButton);
+
+    const renameItem = screen.getByText('Редагувати назву');
+    fireEvent.click(renameItem);
+
+    expect(screen.getByDisplayValue('UAH')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('USD'));
+    expect(screen.queryByDisplayValue('UAH')).not.toBeInTheDocument();
+  });
 });

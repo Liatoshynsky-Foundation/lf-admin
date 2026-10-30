@@ -24,7 +24,6 @@ export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTriggerFileInput = () => {
-    if (disabled) return;
     fileInputRef.current?.click();
   };
 
@@ -49,7 +48,6 @@ export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
   };
 
   const handleDeleteFile = () => {
-    if (disabled) return;
     onFileChange(null);
   };
 

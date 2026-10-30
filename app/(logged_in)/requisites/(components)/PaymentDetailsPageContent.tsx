@@ -21,7 +21,7 @@ import { ContentPageLayout } from '~/shared/components/content-page-layout/Conte
 
 const PaymentDetailsPageContent = () => {
   const [tabs, setTabs] = useState<PaymentDetailsTab[]>(INITIAL_REQUISITES_DATA.items);
-  const [activeTabId, setActiveTabId] = useState(INITIAL_REQUISITES_DATA.items[0]?.id ?? '');
+  const [activeTabId, setActiveTabId] = useState(INITIAL_REQUISITES_DATA.items[0].id);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -31,7 +31,7 @@ const PaymentDetailsPageContent = () => {
 
   const handleSelectTab = (id: string) => {
     setActiveTabId(id);
-    setEditingTabId((prev) => (prev === id ? prev : null));
+    setEditingTabId(null);
   };
 
   const handleAddTab = () => {
@@ -63,7 +63,7 @@ const PaymentDetailsPageContent = () => {
     setTabs((prev) => {
       const filtered = prev.filter((tab) => tab.id !== id);
       if (activeTabId === id) {
-        setActiveTabId(filtered[0]?.id ?? '');
+        setActiveTabId(filtered[0].id);
       }
       return filtered;
     });
@@ -71,16 +71,14 @@ const PaymentDetailsPageContent = () => {
   };
 
   const handleContentChange = (newContent: JSONContent) => {
-    if (!activeTab) return;
     setTabs((prev) =>
-      prev.map((tab) => (tab.id === activeTab.id ? { ...tab, content: newContent } : tab))
+      prev.map((tab) => (tab.id === activeTabId ? { ...tab, content: newContent } : tab))
     );
   };
 
   const handlePdfChange = (file: PaymentDetailsPdfFile | null) => {
-    if (!activeTab) return;
     setTabs((prev) =>
-      prev.map((tab) => (tab.id === activeTab.id ? { ...tab, pdfFile: file } : tab))
+      prev.map((tab) => (tab.id === activeTabId ? { ...tab, pdfFile: file } : tab))
     );
   };
 
@@ -108,7 +106,7 @@ const PaymentDetailsPageContent = () => {
         <Box sx={styles.content}>
           <CurrencyTabs
             items={tabs}
-            activeId={activeTab ? activeTab.id : ''}
+            activeId={activeTabId}
             editingId={editingTabId}
             onSelectTab={handleSelectTab}
             onAddTab={handleAddTab}
@@ -117,22 +115,18 @@ const PaymentDetailsPageContent = () => {
             setEditingId={setEditingTabId}
           />
 
-          {activeTab && (
-            <>
-              <RequisitesContentEditor
-                key={activeTab.id}
-                value={activeTab.content}
-                onChange={handleContentChange}
-                disabled={saving}
-              />
+          <RequisitesContentEditor
+            key={activeTab.id}
+            value={activeTab.content}
+            onChange={handleContentChange}
+            disabled={saving}
+          />
 
-              <PdfAttachmentBlock
-                file={activeTab.pdfFile ?? null}
-                onFileChange={handlePdfChange}
-                disabled={saving}
-              />
-            </>
-          )}
+          <PdfAttachmentBlock
+            file={activeTab.pdfFile ?? null}
+            onFileChange={handlePdfChange}
+            disabled={saving}
+          />
         </Box>
       </CollapsibleBlock>
     </ContentPageLayout>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { CONTACT_INFORMATION, CONTACT_LOCALES, CONTACTS_DATA, SOCIAL_NETWORKS } from '../__mocks__/contacts';
@@ -176,7 +176,7 @@ describe('ContactsPageContent', () => {
     });
   });
 
-  it('saves contacts successfully', () => {
+  it('saves contacts successfully', async () => {
     mockUseContacts.mockReturnValue({ data: CONTACTS_DATA, loading: false });
     mockUpdateContacts.mockResolvedValue({ data: { updateContacts: CONTACTS_DATA } });
 
@@ -185,5 +185,6 @@ describe('ContactsPageContent', () => {
     fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
     expect(mockUpdateContacts).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockUpdateContacts).toHaveBeenCalled());
   });
 });
