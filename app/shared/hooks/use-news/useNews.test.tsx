@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { addCoverImageAltAutosaveTests } from '../use-upsert-publication/coverImageAltTestHelpers';
 import { newsErrors } from '~/constants/errors';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
@@ -156,26 +157,13 @@ describe('useNews hooks', () => {
     );
   });
 
-  it('ignores stale cover alt save results', async () => {
-    const mutate = jest.fn();
-    const firstResult = Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'news-1' } } });
-    const secondResult = Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'news-2' } } });
-    mockUseUpdateNewsCoverImageAltMutation.mockReturnValue([mutate, { loading: false, error: null }]);
-    mockSafeMutate.mockReturnValueOnce(firstResult).mockReturnValueOnce(secondResult);
-
-    const { result } = renderHook(() => useUpdateNewsCoverImageAlt());
-    const [save] = result.current;
-    let firstSave: Promise<unknown>;
-    let secondSave: Promise<unknown>;
-
-    await act(async () => {
-      firstSave = save('news-1', { uk: 'аа', en: 'aa' });
-      secondSave = save('news-2', { uk: 'аа', en: 'aa' });
-      await Promise.all([firstSave, secondSave]);
+  describe('useUpdateNewsCoverImageAlt', () => {
+    addCoverImageAltAutosaveTests({
+      useSaveHook: useUpdateNewsCoverImageAlt,
+      mockSafeMutate,
+      staleResult: Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'id1' } } }),
+      latestResult: Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'id2' } } })
     });
-
-    expect(await firstSave!).toBeUndefined();
-    expect(await secondSave!).toBe(await secondResult);
   });
 
   it('exposes status updater helpers and uses the update mutation', async () => {

@@ -1,6 +1,7 @@
 import { act,renderHook } from '@testing-library/react';
 
 import { buildStatusUpdater } from '../buildStatusUpdater';
+import { addCoverImageAltAutosaveTests } from '../use-upsert-publication/coverImageAltTestHelpers';
 import {
   useAllEvents,
   useCreateEvent,
@@ -210,29 +211,11 @@ describe('useEvents hooks', () => {
   });
 
   describe('useUpdateEventCoverImageAlt', () => {
-    it('ignores stale cover alt save results', async () => {
-      const firstResult = Promise.resolve({ data: { updateEventCoverImageAlt: { id: '1' } } });
-      const secondResult = Promise.resolve({ data: { updateEventCoverImageAlt: { id: '2' } } });
-      const mockMutate = jest.fn();
-      (graphqlHooks.useUpdateEventCoverImageAltMutation as jest.Mock).mockReturnValue([
-        mockMutate,
-        { loading: false, error: null }
-      ]);
-      (safeMutate as jest.Mock).mockReturnValueOnce(firstResult).mockReturnValueOnce(secondResult);
-
-      const { result } = renderHook(() => useUpdateEventCoverImageAlt());
-      const [save] = result.current;
-      let firstSave: Promise<unknown>;
-      let secondSave: Promise<unknown>;
-
-      await act(async () => {
-        firstSave = save('1', { uk: 'аа', en: 'aa' });
-        secondSave = save('2', { uk: 'аа', en: 'aa' });
-        await Promise.all([firstSave, secondSave]);
-      });
-
-      expect(await firstSave!).toBeUndefined();
-      expect(await secondSave!).toBe(await secondResult);
+    addCoverImageAltAutosaveTests({
+      useSaveHook: useUpdateEventCoverImageAlt,
+      mockSafeMutate: safeMutate as jest.Mock,
+      staleResult: Promise.resolve({ data: { updateEventCoverImageAlt: { id: 'id1' } } }),
+      latestResult: Promise.resolve({ data: { updateEventCoverImageAlt: { id: 'id2' } } })
     });
   });
 
