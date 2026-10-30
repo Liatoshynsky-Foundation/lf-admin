@@ -12,18 +12,17 @@ import {
 import { ImageCropData, initialSeoValue } from '~/constants/publications';
 import type { SeoBlockValue } from '~/shared/components/forms/seo-metadata-form/seo-metadata-block/SeoMetadataBlock';
 import type { LocalizedMeta } from '~/shared/components/forms/seo-metadata-form/SeoMetadataForm';
+import type { LocalizedString } from '~/types/localization';
 
 const DEFAULT_ALT_TEXT = { uk: 'Альт зображення', en: 'Image alt' };
 const EMPTY_LOCALIZED = { uk: '', en: '' };
 
-type LocalizedField = { uk: string; en: string };
-
 type BilingualMetaFields = {
-  title?: LocalizedField;
-  description?: LocalizedField;
-  keywords?: LocalizedField;
-  altText?: LocalizedField;
-  sourceUrl?: LocalizedField;
+  title?: LocalizedString;
+  description?: LocalizedString;
+  keywords?: LocalizedString;
+  altText?: LocalizedString;
+  sourceUrl?: LocalizedString;
 };
 
 const createBilingualMeta = ({
@@ -55,7 +54,7 @@ const createMockSeoValue = (overrides?: Partial<SeoBlockValue>): SeoBlockValue =
   ...overrides
 });
 
-const createSimpleMetaWithAlt = (altText: LocalizedField = EMPTY_LOCALIZED) =>
+const createSimpleMetaWithAlt = (altText: LocalizedString = EMPTY_LOCALIZED) =>
   createBilingualMeta({
     title: { uk: 'Заголовок', en: 'Title' },
     description: { uk: 'Опис', en: 'Desc' },
@@ -89,7 +88,7 @@ describe('usePublicationForm', () => {
       [undefined, null],
       ['', null],
       ['   ', null],
-      ['invalid-date-string', null],
+      ['invalid-date-string', null]
     ])('should return null for invalid input %p', (input, expected) => {
       expect(parseDate(input)).toBe(expected);
     });
@@ -141,10 +140,7 @@ describe('usePublicationForm', () => {
     });
 
     it('should return altText errors when cover image exists and alt is empty', () => {
-      const result = validatePublicationSeo(
-        createMockSeoValue({ meta: createSimpleMetaWithAlt() }),
-        'news'
-      );
+      const result = validatePublicationSeo(createMockSeoValue({ meta: createSimpleMetaWithAlt() }), 'news');
       expect(result.hasMetaErrors).toBe(true);
       expect(result.seoErrors.meta.uk.altText).not.toBe('');
       expect(result.seoErrors.meta.en.altText).not.toBe('');

@@ -3,6 +3,7 @@ import React, { ChangeEvent } from 'react';
 
 import { PerformanceRow, PerformanceRowProps } from './PerformanceRow';
 import type { NormalizedGroupPerformance } from '~/constants/creativity';
+import { OPUS_FIELD_LIMITS } from '~/constants/opus';
 
 const LABELS = {
   url: 'URL',
@@ -176,21 +177,6 @@ describe('PerformanceRow Component', () => {
     expect(mockOnDeleteRequest).toHaveBeenCalledWith(undefined);
   });
 
-  describe('Character counter', () => {
-    it('should display "0/250 символів" when caption is empty', () => {
-      renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
-
-      expect(screen.getByText('0/250 символів')).toBeInTheDocument();
-    });
-
-    it('should display the correct character count when caption has content', () => {
-      const caption = 'Тест підпис';
-      renderRow({ item: { ...baseItem, caption: { uk: caption, en: '' } } });
-
-      expect(screen.getByText(`${caption.length}/250 символів`)).toBeInTheDocument();
-    });
-  });
-
   describe('Paste clamping', () => {
     it('should clamp pasted text that would exceed the 250-char limit', () => {
       const existing = 'a'.repeat(240);
@@ -261,6 +247,34 @@ describe('PerformanceRow Component', () => {
 
       expect(screen.queryByTestId(`error-text-${LABELS.url}`)).not.toBeInTheDocument();
       expect(screen.queryByTestId(`error-text-${LABELS.caption}`)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Caption character limit', () => {
+    it('should show caption character counter for the current its langht', () => {
+      renderRow();
+
+      expect(
+        screen.getByText(`${MOCK_CAPTIONS.uk.length}/${OPUS_FIELD_LIMITS.caption.max}`)
+      ).toBeInTheDocument();
+    });
+
+    it('should show 0 in counter when caption is empty', () => {
+      renderRow({ item: { ...baseItem, caption: { uk: '', en: '' } } });
+      
+      expect(
+        screen.getByText(`0/${OPUS_FIELD_LIMITS.caption.max}`)
+      ).toBeInTheDocument();
+    });
+
+    it('should clamp pasted caption to max length', () => {
+      renderRow();
+
+      fireEvent.change(screen.getByTestId(`mock-input-${LABELS.caption}`), {
+        target: { value: 'q'.repeat(OPUS_FIELD_LIMITS.caption.max + 10) }
+      });
+
+      expect(mockOnUpdateCaption).toHaveBeenCalledWith(MOCK_IDS.base, 'q'.repeat(OPUS_FIELD_LIMITS.caption.max));
     });
   });
 });

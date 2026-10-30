@@ -517,6 +517,23 @@ describe('OpusMutation Resolvers', () => {
         ).rejects.toThrow(opusServiceErrors.PERFORMANCES_URL_REQUIRED);
       });
 
+      it('create new opus if performance title is empty', async () => {
+        mockOpusRepo.findByComplexKey.mockResolvedValue(null);
+        mockedGenerateUniqueSlug.mockResolvedValue(SLUG_VALUE);
+        mockOpusRepo.create.mockResolvedValue(MOCK_OPUS_ENTITY);
+
+        const performances = [
+          { id: 'performance-0', videoUrl: 'https://youtube.com', title: { uk: '', en: '' } }
+        ];
+
+        await OpusMutation.createOpus({}, { input: { ...BASE_CREATE_INPUT, performances } }, adminContext);
+
+        expect(mockOpusRepo.create).toHaveBeenCalledWith(
+          expect.objectContaining({ performances }),
+          expect.anything()
+        );
+      });
+
       it('should throw error if performance title is too short', async () => {
         const performances = [
           { id: 'performance-1', videoUrl: 'https://youtube.com', title: { uk: 'a', en: 'valid title' } }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import type { MockCustomTextFieldProps } from '../__mocks__/mockProps';
 import { ClickableButtonData } from '../ConfigurableButtonList/ConfigurableButtonList';
 import { PrincipleHopeButtonCard } from './PrincipleHopeButtonCard';
 
@@ -11,7 +12,7 @@ jest.mock('./PrincipleHopeButtonCard.styles', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
+  CustomTextField: ({ title, value, onChange }: MockCustomTextFieldProps) => (
     <div data-testid={`textfield-${title}`}>
       <label>{title}</label>
       <input
@@ -29,6 +30,11 @@ jest.mock('~/ds-components/text-field/TextField', () => ({
     </div>
   )
 }));
+
+type MalformedClickableButtonData = Omit<ClickableButtonData, 'shortText' | 'fullText'> & {
+  shortText: Partial<ClickableButtonData['shortText']>;
+  fullText: Partial<ClickableButtonData['fullText']>;
+};
 
 describe('PrincipleHopeButtonCard', () => {
   const mockButton: ClickableButtonData = {
@@ -73,16 +79,16 @@ describe('PrincipleHopeButtonCard', () => {
   });
 
   it('renders with empty values when shortText/fullText/link are missing', () => {
-    const bareButton: ClickableButtonData = {
+    const bareButton: MalformedClickableButtonData = {
       id: 'btn-2',
-      shortText: {} as any,
-      fullText: {} as any,
+      shortText: {},
+      fullText: {},
       link: ''
     };
 
     render(
       <PrincipleHopeButtonCard
-        button={bareButton}
+        button={bareButton as ClickableButtonData}
         currentLocale="uk"
         onChangeButton={mockOnChangeButton}
       />
@@ -178,16 +184,16 @@ describe('PrincipleHopeButtonCard', () => {
   });
 
   it('falls back to empty strings when updating shortText/fullText for a button with no existing localized values', () => {
-    const bareButton: ClickableButtonData = {
+    const bareButton: MalformedClickableButtonData = {
       id: 'btn-3',
-      shortText: {} as any,
-      fullText: {} as any,
+      shortText: {},
+      fullText: {},
       link: ''
     };
 
     render(
       <PrincipleHopeButtonCard
-        button={bareButton}
+        button={bareButton as ClickableButtonData}
         currentLocale="uk"
         onChangeButton={mockOnChangeButton}
       />

@@ -4,6 +4,9 @@ const IMAGE_EXTENSION = /\.(png|jpe?g|gif|webp|bmp|svg)$/i;
 const AUDIO_EXTENSION = /\.(mp3|wav|ogg|oga|m4a|aac|flac)$/i;
 const PDF_EXTENSION = /\.pdf$/i;
 
+const ALLOWED_EXTENSIONS: readonly string[] = FILES_UPLOAD_ALLOWED_EXTENSIONS;
+const ALLOWED_MIME_TYPES: readonly string[] = FILES_UPLOAD_ALLOWED_MIME_TYPES;
+
 const matchesStorageFile = (
   mimeType: string,
   filename: string,
@@ -27,16 +30,16 @@ export const isAudioUploadFile = (file: File): boolean => matchesAudio(file.type
 export const isPdfUploadFile = (file: File): boolean => matchesPdf(file.type, file.name);
 
 export const isAnyAllowedFile = (file: File): boolean => {
-  const extension = file.name.split('.').pop()?.toLowerCase() as any;
+  const extension = file.name.split('.').pop()?.toLowerCase();
 
-  const isValidExtension = FILES_UPLOAD_ALLOWED_EXTENSIONS.includes(extension);
+  const isValidExtension = extension !== undefined && ALLOWED_EXTENSIONS.includes(extension);
 
   if (extension === 'rar') {
     return isValidExtension;
   }
 
   const isValidMimeType =
-    FILES_UPLOAD_ALLOWED_MIME_TYPES.includes(file.type as any) ||
+    ALLOWED_MIME_TYPES.includes(file.type) ||
     file.type === '' ||
     file.type === 'application/octet-stream';
 

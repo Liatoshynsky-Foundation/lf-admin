@@ -16,6 +16,7 @@ import { ImagePreviewBlock as PhotoBlock } from '~/shared/components/design-syst
 import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
 import { fileNameFromUrl } from '~/src/shared/utils/assets/assetFilename';
 import { CropRect, CropResult } from '~/types/common';
+import type { LocalizedString } from '~/types/localization';
 
 export type { SeoFieldsRequired };
 
@@ -26,7 +27,7 @@ export interface LocalizedMeta {
   sourceUrl?: string;
   startDateTime?: string;
   endDateTime?: string;
-  altText?: { uk: string; en: string };
+  altText?: LocalizedString;
 }
 
 export type SeoFormLabels = {
@@ -103,8 +104,7 @@ const shouldShowAltFieldError = ({
   altValue: string;
   nextError: string;
   altRequired: boolean;
-}): boolean =>
-  forceShowErrors || touched || Boolean(altValue && nextError) || (altRequired && !altValue.trim());
+}): boolean => forceShowErrors || touched || Boolean(altValue && nextError) || (altRequired && !altValue.trim());
 
 export default function SeoMetadataForm({
   value,
@@ -193,7 +193,9 @@ export default function SeoMetadataForm({
     setTouched((prev) => (prev.altText ? prev : { ...prev, altText: true }));
 
     if (isExternalValidation) {
-      setDisplayErrors((previous) => (previous?.altText === nextError ? previous : { ...previous, altText: nextError }));
+      setDisplayErrors((previous) =>
+        previous?.altText === nextError ? previous : { ...previous, altText: nextError }
+      );
     } else {
       setLocalErrors((prev) => (prev.altText === nextError ? prev : { ...prev, altText: nextError }));
     }

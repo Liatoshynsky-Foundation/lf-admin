@@ -17,16 +17,18 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 export type DbFund = {
   _id: { toString(): string };
   id: number;
-  title: { uk: string; en: string };
+  title: LocalizedString;
   numberOfDescriptions: number;
   numberOfCases: number;
-  organizationForm?: string | { uk: string; en: string };
+  organizationForm?: string | LocalizedString;
   documentCreationDate: string;
   chronologicalBoundaries?: string;
-  characterAndContent?: string | {
-    uk: Record<string, unknown> | string;
-    en: Record<string, unknown> | string;
-  };
+  characterAndContent?:
+    | string
+    | {
+        uk: Record<string, unknown> | string;
+        en: Record<string, unknown> | string;
+      };
   status?: string;
   createdAt: string;
   updatedAt: string;
@@ -131,7 +133,7 @@ export const FundRepository = ({ FundModel }: FundRepoDeps): IFundRepository => 
 
         if (statuses.includes(BaseContentStatuses.Hidden)) {
           return {
-            $and: [query, { $or: [matchesRequestedStatus, { status: { $nin: VALID_STATUS_VALUES } } ] }]
+            $and: [query, { $or: [matchesRequestedStatus, { status: { $nin: VALID_STATUS_VALUES } }] }]
           } as FilterQuery<DbFund>;
         }
 

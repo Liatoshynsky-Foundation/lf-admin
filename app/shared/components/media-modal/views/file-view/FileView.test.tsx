@@ -3,11 +3,6 @@ import React from 'react';
 
 import { FileView } from './FileView';
 
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props: any) => <img alt="" {...props} />
-}));
-
 const createFile = (name: string, type: string) => new File(['dummy content'], name, { type });
 
 describe('FileView', () => {

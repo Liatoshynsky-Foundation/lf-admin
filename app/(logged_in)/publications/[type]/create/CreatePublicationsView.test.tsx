@@ -81,8 +81,8 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
     slotProps 
   }: { 
     label: string; 
-    value: any; 
-    onChange: (val: any) => void;
+    value: dayjs.Dayjs | null;
+    onChange: (val: dayjs.Dayjs | null) => void;
     slotProps?: {
       textField?: {
         error?: boolean;
@@ -149,13 +149,19 @@ type MockSeoBlockProps = {
     value: SeoBlockValue['meta']['uk'],
     onChange: (val: SeoBlockValue['meta']['uk']) => void
   ) => ReactNode;
-  value?: any;
-  onChange?: (val: any) => void;
+  value?: SeoBlockValue;
+  onChange?: (val: SeoBlockValue) => void;
 };
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
   return function MockSeoCollapsibleBlock({ children, extraFields, value, onChange }: MockSeoBlockProps) {
-    const dummyValue = value?.meta?.uk || { title: '', description: '', keywords: '' };
+    const emptyLocaleMeta = { title: '', description: '', keywords: '' };
+    const seoValue: SeoBlockValue = value ?? {
+      meta: { uk: emptyLocaleMeta, en: emptyLocaleMeta },
+      ogImage: null,
+      allowIndexing: { uk: true, en: true }
+    };
+    const dummyValue = seoValue.meta.uk;
 
     return (
       <div data-testid="mock-seo-collapsible-block">
@@ -165,9 +171,9 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
           {extraFields && onChange
             ? extraFields('uk', dummyValue, (val) =>
               onChange({
-                ...value,
+                ...seoValue,
                 meta: {
-                  ...value.meta,
+                  ...seoValue.meta,
                   uk: val
                 }
               })

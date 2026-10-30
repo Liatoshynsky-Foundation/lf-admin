@@ -1,6 +1,7 @@
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 import type { FilterOption } from '~/shared/components/selector/FilterSelect';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import type { LocalizedString } from '~/types/localization';
 import { OpusCompositionData } from '~/types/opus';
 
 export const WORKS_TABS_NAMES = {
@@ -88,25 +89,25 @@ export const WORKS_PUBLISH_RESTRICTION_MESSAGE =
 export interface GroupWork {
   id: string;
   name: string;
-  genre?: { uk: string; en: string };
+  genre?: LocalizedString;
 }
 
 export interface GroupPhoto {
   id?: string;
   src?: string;
   fileName?: string;
-  caption: { uk: string; en: string };
-  altText: { uk: string; en: string };
+  caption: LocalizedString;
+  altText: LocalizedString;
   crop?: MediaModalResult['crop'] | null;
 
   url?: string;
-  description?: { uk: string; en: string };
+  description?: LocalizedString;
 }
 
 export interface GroupPerformance {
   id?: string;
   url?: string;
-  caption?: { uk: string; en: string };
+  caption?: LocalizedString;
 }
 
 export type NormalizedGroupPerformance = GroupPerformance & { id: string };
@@ -114,13 +115,13 @@ export type NormalizedGroupPerformance = GroupPerformance & { id: string };
 export interface GroupData {
   titlePrefix: string;
   groupNumber: string;
-  genre: { uk: string; en: string };
+  genre: LocalizedString;
   additionalText: string;
-  groupTitle: { uk: string; en: string };
+  groupTitle: LocalizedString;
   creationYear: string;
   endYear: string;
   dateAdditionalText: string;
-  parts: { uk: string; en: string };
+  parts: LocalizedString;
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];
   compositions: OpusCompositionData[];

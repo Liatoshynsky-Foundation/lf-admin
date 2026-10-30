@@ -91,7 +91,7 @@ const validateCaseForm = (
   if (!caseDescriptions.trim()) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
   else if (caseDescriptions.length > 300) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
 
-  if (detailedCaseDescription.length > 1000) {
+  if (detailedCaseDescription.length > 5000) {
     errors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
   }
 

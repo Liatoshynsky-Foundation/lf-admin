@@ -1,9 +1,8 @@
 import { CropRect } from '~/types/common';
+import type { LocalizedString } from '~/types/localization';
 
-export type LocalizedString = {
-  uk: string;
-  en: string;
-};
+export type { LocalizedString };
+export type { StringOrLocalizedString } from '~/types/localization';
 
 export type LocalizedBoolean = {
   uk: boolean;
@@ -28,13 +27,11 @@ export type LocalizedImage = {
 export type BaseContentFields = {
   adminTitle: string;
   title: LocalizedString;
-  description: {
-    uk: string;
-    en: string;
+  description: LocalizedString & {
     meta?: {
-      description?: { uk: string; en: string };
-      canonicalUrl?: { uk: string; en: string };
-      metaTitle?: { uk: string; en: string };
+      description?: LocalizedString;
+      canonicalUrl?: LocalizedString;
+      metaTitle?: LocalizedString;
     };
   };
   keywords?: LocalizedString;

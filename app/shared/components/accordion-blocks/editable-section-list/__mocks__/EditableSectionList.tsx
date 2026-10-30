@@ -1,6 +1,7 @@
+import type { DragEndEvent } from '@dnd-kit/core';
 import { JSONContent } from '@tiptap/react';
 
-import { createDocNode } from '~/__mocks__/utils';
+import { createDocNode, createDragEndEvent } from '~/__mocks__/utils';
 
 export interface MockSectionListItem {
   readonly id: string;
@@ -19,7 +20,7 @@ export interface MockEditableSectionListProps {
   readonly onCreateItem: () => { readonly id: string };
   readonly onDeleteItem: (id: string) => void;
   readonly sectionLabel: string;
-  readonly onDragEnd?: (event: any) => void;
+  readonly onDragEnd?: (event: DragEndEvent) => void;
 }
 
 export const EditableSectionList = ({
@@ -55,7 +56,7 @@ export const EditableSectionList = ({
     {onDragEnd && (
       <button
         data-testid="trigger-drag-end"
-        onClick={() => onDragEnd({ active: { id: '1' }, over: { id: '2' } })}
+        onClick={() => onDragEnd(createDragEndEvent('1', '2'))}
       >
         Drag End
       </button>

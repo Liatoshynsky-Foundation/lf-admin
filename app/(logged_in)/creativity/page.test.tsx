@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import CreativityPage from './page';
+import type { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { usePaginatedWorks } from '~/shared/hooks/use-opuses/useOpuses';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -159,12 +160,12 @@ jest.mock('~/shared/hooks/use-share/useShare', () => ({
 
 jest.mock('~/shared/components/dropdown-menu/ActionMenu', () => ({
   __esModule: true,
-  default: ({ anchorEl, menuItems }: { anchorEl: HTMLElement | null; menuItems: any[] }) => {
+  default: ({ anchorEl, menuItems }: { anchorEl: HTMLElement | null; menuItems: ActionMenuGroups }) => {
     if (!anchorEl) return null;
     return (
       <div data-testid="dropdown-menu">
         {menuItems.flatMap((section) =>
-          section.items.map((item: any) =>
+          section.items.map((item) =>
             item.href ? (
               <a key={item.id} role="menuitem" href={item.href}>
                 {item.text.name}

@@ -30,7 +30,7 @@ jest.mock('~/components/grip/Grip');
 
 const MOCK_UUID = 'uuid-1';
 
-let originalCrypto: any;
+let originalCrypto: Crypto | undefined;
 beforeAll(() => {
   originalCrypto = globalThis.crypto;
 
@@ -50,6 +50,6 @@ afterAll(() => {
       configurable: true
     });
   } else {
-    delete (globalThis as any).crypto;
+    Reflect.deleteProperty(globalThis, 'crypto');
   }
 });

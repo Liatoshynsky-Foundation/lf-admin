@@ -1,10 +1,9 @@
 import type { FetchedPublicationData, ImageCropData, PublicationsItemType } from '~/constants/publications';
 import { normalizeFetchedCrop } from '~/lib/utils/CropperHelper';
 import type { LocalizedCropRect } from '~/types/common';
+import { LocalizedString } from '~/types/localization';
 
-export const syncLocalizedStringPair = (
-  value?: { uk?: string | null; en?: string | null } | null
-): { uk: string; en: string } => {
+export const syncLocalizedStringPair = (value?: { uk?: string | null; en?: string | null } | null): LocalizedString => {
   const shared = value?.uk || value?.en || '';
   return { uk: shared, en: shared };
 };
@@ -18,12 +17,12 @@ export const syncLocalizedCrop = (crop: ImageCropData): LocalizedCropRect | null
   return { uk: shared, en: shared };
 };
 
-export const resolveSharedLocalizedFields = (
+export const resolveSharedLocalizedStrings = (
   type: PublicationsItemType,
   fetched: FetchedPublicationData
 ): {
-  altText: { uk: string; en: string };
-  ticketUrl: { uk: string; en: string };
+  altText: LocalizedString;
+  ticketUrl: LocalizedString;
   crop: ImageCropData;
 } => {
   if (type === 'events') {

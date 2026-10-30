@@ -291,12 +291,8 @@ const validatePerformances = (performances?: OpusPerformance[] | null): void => 
     }
 
     if (
-      !titleUk ||
-      titleUk.length < 2 ||
-      titleUk.length > 250 ||
-      !titleEn ||
-      titleEn.length < 2 ||
-      titleEn.length > 250
+      (titleUk && (titleUk.length < 2 || titleUk.length > 250)) ||
+      (titleEn && (titleEn.length < 2 || titleEn.length > 250))   
     ) {
       throw new GraphQLError(opusServiceErrors.PERFORMANCES_TITLE_INVALID, {
         extensions: { code: 'BAD_USER_INPUT' }

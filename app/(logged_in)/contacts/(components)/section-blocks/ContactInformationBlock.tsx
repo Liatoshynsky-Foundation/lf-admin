@@ -30,7 +30,7 @@ export const ContactInformationBlock = ({
 }: ContactInformationBlockProps) => {
   const { formatPhoneNumber } = usePhoneInput();
 
-  const updateLocalizedField = (field: 'foundationName' | 'address', value: string) => {
+  const updateLocalizedString = (field: 'foundationName' | 'address', value: string) => {
     onChange({ ...data, [field]: mergeLocalizedValue(data[field], locale, value) });
     onFieldChange?.(field, locale);
   };
@@ -47,7 +47,7 @@ export const ContactInformationBlock = ({
         <CustomTextField
           label="Назва"
           value={data.foundationName[locale]}
-          onChange={(event) => updateLocalizedField('foundationName', event.target.value)}
+          onChange={(event) => updateLocalizedString('foundationName', event.target.value)}
           error={Boolean(errors?.[`foundationName.${locale}`])}
           helperText={errors?.[`foundationName.${locale}`]}
           onBlur={() => onFieldBlur?.('foundationName', locale)}
@@ -57,7 +57,7 @@ export const ContactInformationBlock = ({
         <CustomTextField
           label="Локація"
           value={data.address[locale]}
-          onChange={(event) => updateLocalizedField('address', event.target.value)}
+          onChange={(event) => updateLocalizedString('address', event.target.value)}
           error={Boolean(errors?.[`address.${locale}`])}
           helperText={errors?.[`address.${locale}`]}
           onBlur={() => onFieldBlur?.('address', locale)}

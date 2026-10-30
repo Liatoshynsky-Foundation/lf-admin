@@ -105,7 +105,7 @@ describe('EventsMutation Resolvers', () => {
 
     it.each([
       { caseName: 'title is shorter than 2 characters', overrides: { title: { uk: 'П', en: 'E' } }, fields: ['title.uk', 'title.en'] },
-      { caseName: 'title exceeds 150 characters', overrides: { title: { uk: tooLong(150), en: 'Event' } }, fields: ['title.uk'] },
+      { caseName: 'title exceeds 300 characters', overrides: { title: { uk: tooLong(300), en: 'Event' } }, fields: ['title.uk'] },
       {
         caseName: 'description exceeds 250 characters',
         overrides: { description: { uk: tooLong(250), en: 'Desc' } },
