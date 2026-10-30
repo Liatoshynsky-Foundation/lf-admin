@@ -7,19 +7,18 @@ export enum PageCategories {
   BorysLiatoshynsky = 'borys_liatoshynsky',
   Foundation = 'foundation',
   Cooperation = 'cooperation',
-  Archive = 'archive', 
+  Archive = 'archive',
   Other = 'other'
 }
-export type PageCategory = PageCategories
+export type PageCategory = PageCategories;
 export const PageCategory = PageCategories;
-
 
 export enum BaseContentStatuses {
   Draft = 'draft',
   Published = 'published',
   Hidden = 'hidden',
   Archived = 'archived',
-  Editing = 'editing',
+  Editing = 'editing'
 }
 
 export const NewsStatus = BaseContentStatuses;
@@ -44,4 +43,24 @@ export enum SortByDate {
   UpdatedAt = 'updatedAt',
   PublishedAt = 'publishedAt',
   AdminTitle = 'adminTitle'
+}
+
+export enum TipTapNodeTypes {
+  doc = 'doc',
+  heading = 'heading',
+  paragraph = 'paragraph',
+  text = 'text'
+}
+
+export enum TipTapMarkType {
+  bold = 'bold',
+  italic = 'italic',
+  underline = 'underline'
+}
+
+export enum TipTapTableNodeTypes {
+  table = 'table',
+  tableRow = 'tableRow',
+  tableCell = 'tableCell',
+  tableHeader = 'tableHeader'
 }
