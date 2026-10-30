@@ -38,9 +38,6 @@ export async function up(db: Db): Promise<void> {
   );
 }
 
-export async function down(db: Db): Promise<void> {
-  await db.collection(COLLECTION).deleteOne({
-    slug: PAYMENT_DETAILS_SLUG,
-    _migrationId: MIGRATION_ID
-  });
+export async function down(_db: Db): Promise<void> {
+  // made no-op for safety
 }
