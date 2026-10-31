@@ -33,7 +33,7 @@ export type DbOpus = {
   additionalText?: string | null;
   creationYear: string;
   endYear?: string | null;
-  datesNote?: string | null;
+  datesNote?: LocalizedString | string | null;
   genre?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string | null;
@@ -60,6 +60,15 @@ type OpusRepoDeps = Readonly<{
 
 const systemPreviewSlugPattern = new RegExp(`^${OPUS_PREVIEW_SLUG_PREFIX}`);
 
+const mapDatesNote = (datesNote: DbOpus['datesNote']): LocalizedString | undefined => {
+  if (typeof datesNote === 'string') {
+    return { uk: datesNote, en: datesNote };
+  }
+  if (!datesNote) {
+    return undefined;
+  }
+  return { uk: datesNote.uk ?? '', en: datesNote.en ?? '' };
+};
 const toEntity = (doc: DbOpus): Opus =>
   createToEntity<Opus, DbOpus>(doc, {
     number: doc.number,
@@ -69,7 +78,7 @@ const toEntity = (doc: DbOpus): Opus =>
     additionalText: doc.additionalText ?? undefined,
     creationYear: doc.creationYear ?? '',
     endYear: doc.endYear ?? undefined,
-    datesNote: doc.datesNote ?? undefined,
+    datesNote: mapDatesNote(doc.datesNote),
     genre: doc.genre ?? undefined,
     adminTitle: doc.adminTitle ?? undefined,
     slug: doc.slug ?? undefined,

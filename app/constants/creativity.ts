@@ -120,7 +120,7 @@ export interface GroupData {
   groupTitle: LocalizedString;
   creationYear: string;
   endYear: string;
-  dateAdditionalText: string;
+  dateAdditionalText: LocalizedString;
   parts: LocalizedString;
   description: { uk: Record<string, unknown>; en: Record<string, unknown> };
   photos: GroupPhoto[];

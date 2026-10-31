@@ -15,7 +15,10 @@ query OpusById($id: ID!) {
     additionalText
     creationYear
     endYear
-    datesNote
+    datesNote {
+      uk
+      en
+    }
     genre {
       uk
       en
