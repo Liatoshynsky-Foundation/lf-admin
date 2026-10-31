@@ -3,41 +3,40 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { CurrencyTabs } from './CurrencyTabs';
 import { PaymentDetailsTab } from '~/constants/requisites';
 
+const mockItems: PaymentDetailsTab[] = [
+  {
+    id: '1',
+    name: 'UAH',
+    content: { type: 'doc', content: [{ type: 'paragraph' }] },
+    order: 0
+  },
+  {
+    id: '2',
+    name: 'USD',
+    content: { type: 'doc', content: [{ type: 'paragraph' }] },
+    order: 1
+  }
+];
+
+const renderCurrencyTabs = (props: Partial<React.ComponentProps<typeof CurrencyTabs>> = {}) => {
+  return render(
+    <CurrencyTabs
+      items={mockItems}
+      activeId="1"
+      editingId={null}
+      onSelectTab={jest.fn()}
+      onAddTab={jest.fn()}
+      onUpdateCurrency={jest.fn()}
+      onDeleteTab={jest.fn()}
+      setEditingId={jest.fn()}
+      {...props}
+    />
+  );
+};
+
 describe('CurrencyTabs', () => {
-  const mockItems: PaymentDetailsTab[] = [
-    {
-      id: '1',
-      name: 'UAH',
-      content: { type: 'doc', content: [{ type: 'paragraph' }] },
-      order: 0
-    },
-    {
-      id: '2',
-      name: 'USD',
-      content: { type: 'doc', content: [{ type: 'paragraph' }] },
-      order: 1
-    }
-  ];
-
   it('renders all currency tabs and active tab indicator', () => {
-    const handleSelect = jest.fn();
-    const handleAdd = jest.fn();
-    const handleUpdate = jest.fn();
-    const handleDelete = jest.fn();
-    const setEditingId = jest.fn();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={handleSelect}
-        onAddTab={handleAdd}
-        onUpdateCurrency={handleUpdate}
-        onDeleteTab={handleDelete}
-        setEditingId={setEditingId}
-      />
-    );
+    renderCurrencyTabs();
 
     expect(screen.getByText('UAH')).toBeInTheDocument();
     expect(screen.getByText('USD')).toBeInTheDocument();
@@ -48,18 +47,7 @@ describe('CurrencyTabs', () => {
 
   it('calls onSelectTab when an inactive tab is clicked', () => {
     const handleSelect = jest.fn();
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={handleSelect}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ onSelectTab: handleSelect });
 
     fireEvent.click(screen.getByText('USD'));
     expect(handleSelect).toHaveBeenCalledWith('2');
@@ -67,18 +55,7 @@ describe('CurrencyTabs', () => {
 
   it('calls onAddTab when "Додати реквізити" button is clicked', () => {
     const handleAdd = jest.fn();
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={handleAdd}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ onAddTab: handleAdd });
 
     const addButton = screen.getByRole('button', { name: /додати реквізити/i });
     fireEvent.click(addButton);
@@ -87,18 +64,7 @@ describe('CurrencyTabs', () => {
 
   it('opens menu on 3-dots click and handles rename action', () => {
     const setEditingId = jest.fn();
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={setEditingId}
-      />
-    );
+    renderCurrencyTabs({ setEditingId });
 
     const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
     fireEvent.click(optionsButton);
@@ -112,18 +78,7 @@ describe('CurrencyTabs', () => {
 
   it('opens menu on 3-dots click and handles delete action', () => {
     const handleDelete = jest.fn();
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={handleDelete}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ onDeleteTab: handleDelete });
 
     const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
     fireEvent.click(optionsButton);
@@ -138,19 +93,7 @@ describe('CurrencyTabs', () => {
   it('renders input when editingId matches tab id and commits on Enter', () => {
     const handleUpdate = jest.fn();
     const setEditingId = jest.fn();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="1"
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={handleUpdate}
-        onDeleteTab={jest.fn()}
-        setEditingId={setEditingId}
-      />
-    );
+    renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
 
     const input = screen.getByDisplayValue('UAH');
     fireEvent.change(input, { target: { value: 'EUR' } });
@@ -163,19 +106,7 @@ describe('CurrencyTabs', () => {
   it('cancels editing on Escape key without updating', () => {
     const handleUpdate = jest.fn();
     const setEditingId = jest.fn();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="1"
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={handleUpdate}
-        onDeleteTab={jest.fn()}
-        setEditingId={setEditingId}
-      />
-    );
+    renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
 
     const input = screen.getByDisplayValue('UAH');
     fireEvent.change(input, { target: { value: 'CHANGED' } });
@@ -189,19 +120,7 @@ describe('CurrencyTabs', () => {
   it('commits default currency name on Enter when input is empty', () => {
     const handleUpdate = jest.fn();
     const setEditingId = jest.fn();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="1"
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={handleUpdate}
-        onDeleteTab={jest.fn()}
-        setEditingId={setEditingId}
-      />
-    );
+    renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
 
     const input = screen.getByDisplayValue('UAH');
     fireEvent.change(input, { target: { value: '   ' } });
@@ -213,19 +132,7 @@ describe('CurrencyTabs', () => {
 
   it('stops propagation when clicking on input while editing', () => {
     const handleSelect = jest.fn();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="1"
-        onSelectTab={handleSelect}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ editingId: '1', onSelectTab: handleSelect });
 
     const input = screen.getByDisplayValue('UAH');
     fireEvent.click(input);
@@ -245,18 +152,7 @@ describe('CurrencyTabs', () => {
     const originalObserver = global.ResizeObserver;
     global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
-    const { unmount } = render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    const { unmount } = renderCurrencyTabs();
 
     expect(observerCallback).toBeDefined();
     act(() => {
@@ -269,19 +165,7 @@ describe('CurrencyTabs', () => {
 
   it('focuses and selects input after timeout when editingId is set', () => {
     jest.useFakeTimers();
-
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="1"
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ editingId: '1' });
 
     act(() => {
       jest.advanceTimersByTime(100);
@@ -290,18 +174,7 @@ describe('CurrencyTabs', () => {
   });
 
   it('handles missing tab ref gracefully', () => {
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="non-existent"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ activeId: 'non-existent' });
 
     const indicator = screen.getByTestId('tab-indicator');
     expect(indicator).toHaveStyle({ opacity: 0 });
@@ -322,18 +195,7 @@ describe('CurrencyTabs', () => {
       };
     });
 
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId={null}
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs();
 
     const indicator = screen.getByTestId('tab-indicator');
     expect(indicator).toBeInTheDocument();
@@ -342,18 +204,7 @@ describe('CurrencyTabs', () => {
   });
 
   it('handles editingId for non-existent item gracefully', () => {
-    render(
-      <CurrencyTabs
-        items={mockItems}
-        activeId="1"
-        editingId="non-existent"
-        onSelectTab={jest.fn()}
-        onAddTab={jest.fn()}
-        onUpdateCurrency={jest.fn()}
-        onDeleteTab={jest.fn()}
-        setEditingId={jest.fn()}
-      />
-    );
+    renderCurrencyTabs({ editingId: 'non-existent' });
 
     expect(screen.queryByPlaceholderText('Без назви')).not.toBeInTheDocument();
   });
