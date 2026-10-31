@@ -34,6 +34,10 @@ const renderCurrencyTabs = (props: Partial<React.ComponentProps<typeof CurrencyT
   );
 };
 
+const openActionMenu = () => {
+  fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+};
+
 describe('CurrencyTabs', () => {
   it('renders all currency tabs and active tab indicator', () => {
     renderCurrencyTabs();
@@ -57,8 +61,7 @@ describe('CurrencyTabs', () => {
     const handleAdd = jest.fn();
     renderCurrencyTabs({ onAddTab: handleAdd });
 
-    const addButton = screen.getByRole('button', { name: /додати реквізити/i });
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole('button', { name: /додати реквізити/i }));
     expect(handleAdd).toHaveBeenCalledTimes(1);
   });
 
@@ -66,13 +69,8 @@ describe('CurrencyTabs', () => {
     const setEditingId = jest.fn();
     renderCurrencyTabs({ setEditingId });
 
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-
-    const renameItem = screen.getByText('Редагувати назву');
-    expect(renameItem).toBeInTheDocument();
-
-    fireEvent.click(renameItem);
+    openActionMenu();
+    fireEvent.click(screen.getByText('Редагувати назву'));
     expect(setEditingId).toHaveBeenCalledWith('1');
   });
 
@@ -80,26 +78,24 @@ describe('CurrencyTabs', () => {
     const handleDelete = jest.fn();
     renderCurrencyTabs({ onDeleteTab: handleDelete });
 
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-
-    const deleteItem = screen.getByText('Видалити реквізит');
-    expect(deleteItem).toBeInTheDocument();
-
-    fireEvent.click(deleteItem);
+    openActionMenu();
+    fireEvent.click(screen.getByText('Видалити реквізит'));
     expect(handleDelete).toHaveBeenCalledWith('1');
   });
 
-  it('renders input when editingId matches tab id and commits on Enter', () => {
+  it.each([
+    { value: 'EUR', expected: 'EUR' },
+    { value: '   ', expected: 'Без назви' }
+  ])('commits currency on Enter ($value -> $expected)', ({ value, expected }) => {
     const handleUpdate = jest.fn();
     const setEditingId = jest.fn();
     renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
 
     const input = screen.getByDisplayValue('UAH');
-    fireEvent.change(input, { target: { value: 'EUR' } });
+    fireEvent.change(input, { target: { value } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    expect(handleUpdate).toHaveBeenCalledWith('1', 'EUR');
+    expect(handleUpdate).toHaveBeenCalledWith('1', expected);
     expect(setEditingId).toHaveBeenCalledWith(null);
   });
 
@@ -117,25 +113,11 @@ describe('CurrencyTabs', () => {
     expect(handleUpdate).not.toHaveBeenCalled();
   });
 
-  it('commits default currency name on Enter when input is empty', () => {
-    const handleUpdate = jest.fn();
-    const setEditingId = jest.fn();
-    renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
-
-    const input = screen.getByDisplayValue('UAH');
-    fireEvent.change(input, { target: { value: '   ' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-
-    expect(handleUpdate).toHaveBeenCalledWith('1', 'Без назви');
-    expect(setEditingId).toHaveBeenCalledWith(null);
-  });
-
   it('stops propagation when clicking on input while editing', () => {
     const handleSelect = jest.fn();
     renderCurrencyTabs({ editingId: '1', onSelectTab: handleSelect });
 
-    const input = screen.getByDisplayValue('UAH');
-    fireEvent.click(input);
+    fireEvent.click(screen.getByDisplayValue('UAH'));
     expect(handleSelect).not.toHaveBeenCalled();
   });
 

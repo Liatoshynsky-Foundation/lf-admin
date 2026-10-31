@@ -63,44 +63,28 @@ describe('PdfAttachmentBlock', () => {
     const handleFileChange = jest.fn();
     renderPdfBlock({ file: mockPdfFile, onFileChange: handleFileChange });
 
-    const deleteButton = screen.getByTestId('delete-pdf-button');
-    fireEvent.click(deleteButton);
+    fireEvent.click(screen.getByTestId('delete-pdf-button'));
 
     expect(handleFileChange).toHaveBeenCalledWith(null);
   });
 
-  it('handles native file selection', () => {
+  it.each([
+    { filename: 'test-upload.pdf', type: 'application/pdf', blobUrl: 'blob:http://localhost/test-blob' },
+    { filename: 'document.pdf', type: '', blobUrl: 'blob:http://localhost/doc-blob' }
+  ])('handles file upload ($filename)', ({ filename, type, blobUrl }) => {
     const handleFileChange = jest.fn();
     renderPdfBlock({ onFileChange: handleFileChange });
 
-    const fileInput = screen.getByTestId('pdf-file-input');
-    const file = new File(['dummy content'], 'test-upload.pdf', { type: 'application/pdf' });
-    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/test-blob');
+    const file = new File(['dummy content'], filename, { type });
+    global.URL.createObjectURL = jest.fn(() => blobUrl);
 
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(handleFileChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filename: 'test-upload.pdf',
-        url: 'blob:http://localhost/test-blob'
-      })
-    );
-  });
-
-  it('handles file upload when mime type is empty but filename ends with .pdf', () => {
-    const handleFileChange = jest.fn();
-    renderPdfBlock({ onFileChange: handleFileChange });
-
-    const fileInput = screen.getByTestId('pdf-file-input');
-    const file = new File(['dummy content'], 'document.pdf', { type: '' });
-    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/doc-blob');
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(screen.getByTestId('pdf-file-input'), { target: { files: [file] } });
 
     expect(handleFileChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        filename: 'document.pdf',
-        mimeType: 'application/pdf'
+        filename,
+        mimeType: 'application/pdf',
+        url: blobUrl
       })
     );
   });
@@ -109,10 +93,8 @@ describe('PdfAttachmentBlock', () => {
     const handleFileChange = jest.fn();
     renderPdfBlock({ onFileChange: handleFileChange });
 
-    const fileInput = screen.getByTestId('pdf-file-input');
     const file = new File(['dummy content'], 'test.png', { type: 'image/png' });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
+    fireEvent.change(screen.getByTestId('pdf-file-input'), { target: { files: [file] } });
 
     expect(toast.error).toHaveBeenCalledWith('Дозволено завантажувати лише файли у форматі PDF');
     expect(handleFileChange).not.toHaveBeenCalled();
@@ -125,8 +107,7 @@ describe('PdfAttachmentBlock', () => {
     const fileInput = screen.getByTestId('pdf-file-input');
     const clickSpy = jest.spyOn(fileInput, 'click');
 
-    const addButton = screen.getByRole('button', { name: 'Додати файл' });
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Додати файл' }));
     expect(clickSpy).not.toHaveBeenCalled();
 
     rerender(
@@ -136,8 +117,7 @@ describe('PdfAttachmentBlock', () => {
         disabled
       />
     );
-    const deleteButton = screen.getByTestId('delete-pdf-button');
-    fireEvent.click(deleteButton);
+    fireEvent.click(screen.getByTestId('delete-pdf-button'));
     expect(handleFileChange).not.toHaveBeenCalled();
   });
 
@@ -145,8 +125,7 @@ describe('PdfAttachmentBlock', () => {
     const handleFileChange = jest.fn();
     renderPdfBlock({ onFileChange: handleFileChange });
 
-    const fileInput = screen.getByTestId('pdf-file-input');
-    fireEvent.change(fileInput, { target: { files: [] } });
+    fireEvent.change(screen.getByTestId('pdf-file-input'), { target: { files: [] } });
 
     expect(handleFileChange).not.toHaveBeenCalled();
   });
