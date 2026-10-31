@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-import { validateSeoLengths } from './seoValidation';
+import { trimLocalizedString, validateCoverImageAltLength, validateSeoLengths } from './seoValidation';
 import type { LocalizedImage } from '~/domain/entities/BaseContent';
 import { seoValidationErrors } from '~/src/constants/errors';
 
@@ -109,5 +109,22 @@ describe('validateSeoLengths', () => {
         }),
       ['altText.uk', 'altText.en']
     );
+  });
+});
+
+describe('cover image alt validation helpers', () => {
+  it('trims both localized values while preserving partial input', () => {
+    expect(trimLocalizedString({ uk: '  а  ', en: '  a  ' })).toEqual({ uk: 'а', en: 'a' });
+    expect(trimLocalizedString({ uk: '  а  ' } as { uk: string; en: string })).toEqual({ uk: 'а' });
+  });
+
+  it('rejects cover alt values longer than 250 characters', () => {
+    expect(() => validateCoverImageAltLength({ uk: 'a'.repeat(251), en: 'a' })).toThrow(
+      seoValidationErrors.ALT_TEXT_LENGTH_INVALID
+    );
+  });
+
+  it('allows cover alt values up to 250 characters', () => {
+    expect(() => validateCoverImageAltLength({ uk: 'a'.repeat(250), en: 'aa' })).not.toThrow();
   });
 });

@@ -87,6 +87,10 @@ input PublishNewsInput {
   publishedAt: String
 }
 
+input UpdateNewsCoverImageAltInput {
+  alt: LocalizedStringInput!
+}
+
 extend type Query {
   newsById(id: ID!): News
   newsBySlug(slug: String!): News
@@ -100,6 +104,7 @@ extend type Query {
 extend type Mutation {
   createNews(input: CreateNewsInput!): News!
   updateNews(id: ID!, input: UpdateNewsInput!): News!
+  updateNewsCoverImageAlt(id: ID!, input: UpdateNewsCoverImageAltInput!): News!
   deleteNews(id: ID!): Boolean!
   incrementNewsViews(id: ID!): News!
 }

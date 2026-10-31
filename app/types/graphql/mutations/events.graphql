@@ -25,6 +25,15 @@ mutation UpdateEvent($id: ID!, $input: UpdateEventInput!) {
     }
 }
 
+mutation UpdateEventCoverImageAlt($id: ID!, $input: UpdateEventCoverImageAltInput!) {
+    updateEventCoverImageAlt(id: $id, input: $input) {
+        id
+        coverImage {
+            alt { uk en }
+        }
+    }
+}
+
 mutation IncrementEventViews($id: ID!) {
     incrementEventViews(id: $id) {
         id

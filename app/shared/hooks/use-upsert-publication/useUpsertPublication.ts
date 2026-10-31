@@ -1,13 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
-import { getDateIsoString, parseDate, usePublicationForm, validatePublicationSeo } from './usePublicationForm';
+import {
+  getDateIsoString,
+  parseDate,
+  type PublicationFormState,
+  usePublicationForm,
+  validatePublicationSeo
+} from './usePublicationForm';
 import { usePublicationStrategy } from './usePublicationStrategy';
 import { applyEventDateSeoErrors, validateEventDates } from './validateEventDates';
 import { publicationErrors } from '~/constants/errors';
 import { PAGE_TITLES, PUBLICATIONS_TYPES, PublicationsItemType } from '~/constants/publications';
+import { useUpdateEventCoverImageAlt } from '~/shared/hooks/use-events/useEvents';
+import { useUpdateNewsCoverImageAlt } from '~/shared/hooks/use-news/useNews';
 import { useSystemPreview } from '~/shared/hooks/use-system-preview/useSystemPreview';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import type { LocalizedString } from '~/types/localization';
 
 const getErrorConfig = (locale: 'uk' | 'en') => [
   {
@@ -26,6 +35,25 @@ interface UseUpsertPublicationProps {
   id?: string;
 }
 
+const updateInitialAltText = (
+  state: PublicationFormState | null,
+  alt: LocalizedString
+): PublicationFormState | null => {
+  if (!state) return state;
+
+  return {
+    ...state,
+    seoValue: {
+      ...state.seoValue,
+      meta: {
+        ...state.seoValue.meta,
+        uk: { ...state.seoValue.meta.uk, altText: alt },
+        en: { ...state.seoValue.meta.en, altText: alt }
+      }
+    }
+  };
+};
+
 export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) => {
   const isEditing = Boolean(id);
   const isValidType = PUBLICATIONS_TYPES.includes(type);
@@ -37,6 +65,9 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
   const strategy = usePublicationStrategy(type, id);
   const form = usePublicationForm();
+  const [saveNewsCoverImageAlt] = useUpdateNewsCoverImageAlt();
+  const [saveEventCoverImageAlt] = useUpdateEventCoverImageAlt();
+  const lastCoverImageAltRef = useRef<LocalizedString | null>(null);
 
   const isInitializedRef = useRef(false);
 
@@ -92,6 +123,37 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
 
     isInitializedRef.current = true;
   }, [isEditing, type, strategy, form]);
+
+  const handleCoverImageAltChange = useCallback(
+    async (alt: LocalizedString) => {
+      if (!id || (type !== 'news' && type !== 'events')) return;
+
+      if (lastCoverImageAltRef.current?.uk === alt.uk && lastCoverImageAltRef.current?.en === alt.en) return;
+
+      try {
+        let result;
+        switch (type) {
+        case 'news':
+          result = await saveNewsCoverImageAlt(id, alt);
+          break;
+        case 'events':
+          result = await saveEventCoverImageAlt(id, alt);
+          break;
+        default:
+          return;
+        }
+
+        if (!result) return;
+
+        lastCoverImageAltRef.current = alt;
+        form.setInitialState((previous) => updateInitialAltText(previous, alt));
+      } catch (error) {
+        lastCoverImageAltRef.current = null;
+        toast.error(error instanceof Error ? error.message : publicationErrors.uk.genericError);
+      }
+    },
+    [form, id, saveEventCoverImageAlt, saveNewsCoverImageAlt, type]
+  );
 
   const handleSave = async (status: BaseContentStatuses, locale: 'uk' | 'en' = 'uk') => {
     if (!isValidType) return;
@@ -181,6 +243,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     publicationType,
     pageTitle,
     ...form,
+    handleCoverImageAltChange,
     handleSave,
     handlePreviewSave
   };

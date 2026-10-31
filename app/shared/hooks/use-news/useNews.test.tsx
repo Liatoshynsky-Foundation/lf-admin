@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { addCoverImageAltAutosaveTests } from '../use-upsert-publication/coverImageAltTestHelpers';
 import { newsErrors } from '~/constants/errors';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
@@ -17,6 +18,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   useNewsCountQuery: jest.fn(),
   useCreateNewsMutation: jest.fn(),
   useUpdateNewsMutation: jest.fn(),
+  useUpdateNewsCoverImageAltMutation: jest.fn(),
   useDeleteNewsMutation: jest.fn(),
   useIncrementNewsViewsMutation: jest.fn()
 }));
@@ -35,6 +37,7 @@ const mockUsePaginatedNewsQuery = graphqlModule.usePaginatedNewsQuery as jest.Mo
 const mockUseNewsCountQuery = graphqlModule.useNewsCountQuery as jest.Mock;
 const mockUseCreateNewsMutation = graphqlModule.useCreateNewsMutation as jest.Mock;
 const mockUseUpdateNewsMutation = graphqlModule.useUpdateNewsMutation as jest.Mock;
+const mockUseUpdateNewsCoverImageAltMutation = graphqlModule.useUpdateNewsCoverImageAltMutation as jest.Mock;
 const mockUseDeleteNewsMutation = graphqlModule.useDeleteNewsMutation as jest.Mock;
 const mockUseIncrementNewsViewsMutation = graphqlModule.useIncrementNewsViewsMutation as jest.Mock;
 const mockSafeMutate = safeMutate as jest.Mock;
@@ -49,6 +52,7 @@ import {
   usePaginatedNews,
   usePublishedNews,
   useUpdateNews,
+  useUpdateNewsCoverImageAlt,
   useUpdateNewsStatus
 } from './useNews';
 
@@ -63,6 +67,7 @@ describe('useNews hooks', () => {
     mockUseNewsCountQuery.mockReturnValue({ data: null });
     mockUseCreateNewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockUseUpdateNewsMutation.mockReturnValue([jest.fn(), { loading: false, data: null, error: null }]);
+    mockUseUpdateNewsCoverImageAltMutation.mockReturnValue([jest.fn(), { loading: false, error: null }]);
     mockUseDeleteNewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockUseIncrementNewsViewsMutation.mockReturnValue([jest.fn(), { loading: false }]);
     mockSafeMutate.mockResolvedValue({ success: true });
@@ -150,6 +155,15 @@ describe('useNews hooks', () => {
       newsErrors.NETWORK_ERROR_UPDATE,
       newsErrors.FAILED_TO_UPDATE
     );
+  });
+
+  describe('useUpdateNewsCoverImageAlt', () => {
+    addCoverImageAltAutosaveTests({
+      useSaveHook: useUpdateNewsCoverImageAlt,
+      mockSafeMutate,
+      staleResult: Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'id1' } } }),
+      latestResult: Promise.resolve({ data: { updateNewsCoverImageAlt: { id: 'id2' } } })
+    });
   });
 
   it('exposes status updater helpers and uses the update mutation', async () => {

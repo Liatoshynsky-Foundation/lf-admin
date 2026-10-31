@@ -2,13 +2,14 @@ import { GraphQLError } from 'graphql';
 
 import { validateEventStartDate } from '../eventValidation';
 import { endpointRepositoryHandler, syncImagesCrops } from '../helpers';
-import { validateSeoLengths } from '../seoValidation';
+import { trimLocalizedString, validateCoverImageAltLength, validateSeoLengths } from '../seoValidation';
 import { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, UpdateEventInput } from '~/domain/repositories/eventsRepository';
 import { generateUniqueSlug } from '~/src/shared/utils/slugGenerator/slugGenerator';
 import { EventStatus } from '~/types/enums/common.enums';
+import { LocalizedString } from '~/types/localization';
 
 export interface CreateEventArgs {
   input: Omit<CreateEventInput, 'slug'> & { slug?: string };
@@ -20,6 +21,10 @@ interface UpdateEventArgs {
 }
 
 interface IncrementViewsArgs { id: string }
+interface UpdateEventCoverImageAltArgs {
+  id: string;
+  input: { alt: LocalizedString };
+}
 
 const endpointHandler = endpointRepositoryHandler('eventsRepository');
 
@@ -102,6 +107,28 @@ export const EventsMutation = {
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
     }
+
+    return res;
+  },
+
+  updateEventCoverImageAlt: async (
+    _: unknown,
+    { id, input }: UpdateEventCoverImageAltArgs,
+    context: GraphQLContext
+  ): Promise<EventsEntity> => {
+    if (!context.admin) {
+      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+      });
+    }
+
+    const alt = trimLocalizedString(input.alt) ?? input.alt;
+    validateCoverImageAltLength(alt);
+
+    const repo = context.requestContainer.cradle.eventsRepository;
+    const res = await repo.updateCoverImageAlt(id, alt);
+
+    if (!res) throw new GraphQLError('EVENT_NOT_FOUND', { extensions: { code: 'EVENT_NOT_FOUND' } });
 
     return res;
   },

@@ -43,7 +43,8 @@ describe('NewsMutation Resolvers', () => {
     delete: jest.fn(),
     findById: jest.fn(),
     findBySlug: jest.fn(),
-    incrementViews: jest.fn()
+    incrementViews: jest.fn(),
+    updateCoverImageAlt: jest.fn()
   };
 
   const id = 'news-123';
@@ -553,6 +554,20 @@ describe('NewsMutation Resolvers', () => {
   });
 
   describe('Repository Passthrough Operations', () => {
+    it('updateNewsCoverImageAlt: should call the dedicated repository method', async () => {
+      const news = createMockNews({ id });
+      mockAction('updateCoverImageAlt', news);
+
+      const result = await NewsMutation.updateNewsCoverImageAlt(
+        {},
+        { id, input: { alt: { uk: 'аа', en: 'aa' } } },
+        adminContext
+      );
+
+      expect(mockRepo.updateCoverImageAlt).toHaveBeenCalledWith(id, { uk: 'аа', en: 'aa' });
+      expect(result).toBe(news);
+    });
+
     it('deleteNews: should call delete and return boolean', async () => {
       mockAction('delete', true);
       const result = await NewsMutation.deleteNews({}, { id: '1' }, adminContext);
