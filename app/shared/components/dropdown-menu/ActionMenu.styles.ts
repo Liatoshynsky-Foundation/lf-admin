@@ -29,7 +29,7 @@ const styles: Record<string, SxProps<Theme>> = {
   },
   menuContent: {
     display: 'flex',
-    alignItems: 'start',
+    alignItems: 'center',
     gap: '12px',
     width: '100%',
     minWidth: '100px',
@@ -37,7 +37,7 @@ const styles: Record<string, SxProps<Theme>> = {
   },
   menuItemContent: {
     display: 'flex',
-    alignItems: 'start',
+    alignItems: 'center',
     gap: '12px',
   },
   menuItemIcon: {
