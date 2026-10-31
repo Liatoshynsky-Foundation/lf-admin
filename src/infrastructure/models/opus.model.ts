@@ -57,7 +57,6 @@ const opusSchema = new Schema(
     keywords: { type: optionalTranslatedFieldSchema, default: null },
     allowIndexation: { type: translatedBooleanSchema, default: null },
     coverImage: { type: localizedImageSchema, default: null },
-    performancesTitle: { type: optionalTranslatedFieldSchema, default: null },
     gallery: [
       {
         src: { type: String, required: true },

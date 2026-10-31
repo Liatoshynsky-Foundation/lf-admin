@@ -7,6 +7,7 @@ import FundView from './FundView';
 import { ARCHIVE_BASE_PATH } from '~/constants/archive';
 import { FundErrors } from '~/constants/errors';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
+import type { LocalizedString } from '~/types/localization';
 
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -18,8 +19,7 @@ const mockSetLocale = jest.fn();
 const mockUseStore = jest.fn();
 jest.mock('~/store', () => ({
   __esModule: true,
-  useStore: (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) =>
-    mockUseStore(selector)
+  useStore: (selector: (state: { locale: string; setLocale: (l: string) => void }) => unknown) => mockUseStore(selector)
 }));
 
 const mockNavigateBack = jest.fn();
@@ -54,7 +54,11 @@ let capturedOnPublish: (() => void) | undefined;
 let capturedOnMenuOpen: ((e: { currentTarget: HTMLButtonElement }) => void) | undefined;
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => ({
   __esModule: true,
-  default: ({ onPublish, onMenuOpen, showPublish = true }: {
+  default: ({
+    onPublish,
+    onMenuOpen,
+    showPublish = true
+  }: {
     onPublish: () => void;
     onMenuOpen: (e: { currentTarget: HTMLButtonElement }) => void;
     showPublish?: boolean;
@@ -152,23 +156,25 @@ jest.mock('../(components)/publish-empty-fund-dialog/PublishEmptyFundDialog', ()
 
 type MockFundDetails = {
   fundNumber: string;
-  name: { uk: string; en: string };
+  name: LocalizedString;
   documentCreationDate: string;
   chronologicalBoundaries: string;
-  organizationForm: { uk: string; en: string };
+  organizationForm: LocalizedString;
   description: { uk: { type: string; content: never[] }; en: { type: string; content: never[] } };
   casesCount: number;
   descriptionsCount: number;
 };
 
-const buildData = (overrides: Partial<{
-  isSaved: boolean;
-  hasUnsavedChanges: boolean;
-  handleSave: jest.Mock;
-  currentStatus: BaseContentStatuses | undefined;
-  fundId?: string;
-  details: Partial<MockFundDetails>;
-}> = {}) => ({
+const buildData = (
+  overrides: Partial<{
+    isSaved: boolean;
+    hasUnsavedChanges: boolean;
+    handleSave: jest.Mock;
+    currentStatus: BaseContentStatuses | undefined;
+    fundId?: string;
+    details: Partial<MockFundDetails>;
+  }> = {}
+) => ({
   details: {
     fundNumber: '1',
     name: { uk: 'Назва', en: 'Name' },
@@ -268,7 +274,12 @@ describe('FundView', () => {
     const handleSave = jest.fn().mockResolvedValue('id-1');
     render(
       <FundView
-        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 1 } })}
+        data={buildData({
+          handleSave,
+          fundId: 'fund-1',
+          currentStatus: BaseContentStatuses.Hidden,
+          details: { casesCount: 1 }
+        })}
         mode="edit"
       />
     );
@@ -307,7 +318,12 @@ describe('FundView', () => {
 
     render(
       <FundView
-        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 2 } })}
+        data={buildData({
+          handleSave,
+          fundId: 'fund-1',
+          currentStatus: BaseContentStatuses.Hidden,
+          details: { casesCount: 2 }
+        })}
         mode="edit"
       />
     );
@@ -325,7 +341,12 @@ describe('FundView', () => {
 
     render(
       <FundView
-        data={buildData({ handleSave, fundId: 'fund-1', currentStatus: BaseContentStatuses.Hidden, details: { casesCount: 2 } })}
+        data={buildData({
+          handleSave,
+          fundId: 'fund-1',
+          currentStatus: BaseContentStatuses.Hidden,
+          details: { casesCount: 2 }
+        })}
         mode="edit"
       />
     );

@@ -64,7 +64,6 @@ const createMockOpusDoc = (overrides: Partial<DbOpus> = {}): DbOpus => ({
   description: { uk: 'Опис', en: 'Desc' },
   introDescription: { uk: '', en: '' },
   parts: { uk: '', en: '' },
-  performancesTitle: null,
   keywords: { uk: 'к', en: 'k' },
   allowIndexation: { uk: true, en: true },
   publishedAt: null,

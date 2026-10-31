@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { EditablePageLayout } from './EditablePageLayout';
@@ -19,26 +20,25 @@ const defaultStoreState = {
   setIsSaving: mockSetIsSaving,
   isChanged: false,
   invalidFields: {},
+  locale: 'uk' as 'uk' | 'en'
 };
 
 let mockStoreState = { ...defaultStoreState };
 
 jest.mock('~/store', () => ({
-  useStore: jest.fn((selector) =>
-    selector(mockStoreState)
-  ),
+  useStore: jest.fn((selector) => selector(mockStoreState))
 }));
 
 jest.mock('~/shared/hooks/use-page-editor/usePageEditor', () => ({
-  usePageEditor: jest.fn(),
+  usePageEditor: jest.fn()
 }));
 
 jest.mock('~/shared/hooks/use-save-page/UseSavePage', () => ({
-  useSavePageBlocks: jest.fn(),
+  useSavePageBlocks: jest.fn()
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  useGetPageQuery: jest.fn(),
+  useGetPageQuery: jest.fn()
 }));
 
 jest.mock('~/shared/components/header/Header');
@@ -46,9 +46,35 @@ jest.mock('~/shared/components/page-sections/PageSectionsEditor', () => ({
   PageSectionsEditor: () => <div data-testid="page-sections-editor" />
 }));
 jest.mock('~/shared/components/language-switcher/LanguageSwitcher', () => {
-  const MockLanguageSwitcher = () => <div data-testid="language-switcher" />;
+  const MockLanguageSwitcher = ({ languageSwitcher }: { languageSwitcher: (locale: 'uk' | 'en') => void }) => (
+    <div data-testid="language-switcher">
+      <button onClick={() => languageSwitcher('en')}>EN</button>
+      <button onClick={() => languageSwitcher('uk')}>UK</button>
+    </div>
+  );
   MockLanguageSwitcher.displayName = 'MockLanguageSwitcher';
   return MockLanguageSwitcher;
+});
+
+jest.mock('~/shared/components/design-system/discard-changes-modal/DiscardChangesModal', () => {
+  const MockDiscardChangesModal = ({
+    open,
+    handleSubmit,
+    handleClose
+  }: {
+    open: boolean;
+    handleSubmit: () => void;
+    handleClose: () => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Підтвердження відмови від змін">
+        <button onClick={handleSubmit}>Підтвердити</button>
+        <button onClick={handleClose}>Повернутись</button>
+      </div>
+    ) : null;
+
+  MockDiscardChangesModal.displayName = 'MockDiscardChangesModal';
+  return MockDiscardChangesModal;
 });
 
 const pageSlug = 'test-page';
@@ -60,7 +86,7 @@ const runSimulation = ({
   title = headerTitle,
   childrenText: textVal = childrenText,
   variant,
-  validateBeforeSave,
+  validateBeforeSave
 }: {
   slug?: string;
   title?: string;
@@ -69,12 +95,7 @@ const runSimulation = ({
   validateBeforeSave?: () => boolean | 'uk' | 'en';
 } = {}) => {
   return render(
-    <EditablePageLayout
-      pageSlug={slug}
-      headerTitle={title}
-      variant={variant}
-      validateBeforeSave={validateBeforeSave}
-    >
+    <EditablePageLayout pageSlug={slug} headerTitle={title} variant={variant} validateBeforeSave={validateBeforeSave}>
       <div data-testid="child-content">{textVal}</div>
     </EditablePageLayout>
   );
@@ -91,17 +112,17 @@ describe('EditablePageLayout', () => {
 
     (useGetPageQuery as jest.Mock).mockReturnValue({
       data: null,
-      loading: false,
+      loading: false
     });
 
     (usePageEditor as jest.Mock).mockReturnValue({
       preview: mockPreview,
-      loading: false,
+      loading: false
     });
 
     (useSavePageBlocks as jest.Mock).mockReturnValue({
       save: mockSave,
-      loading: false,
+      loading: false
     });
   });
 
@@ -109,7 +130,7 @@ describe('EditablePageLayout', () => {
     it('should render Header and skeletons when page query is loading', () => {
       (useGetPageQuery as jest.Mock).mockReturnValue({
         data: null,
-        loading: true,
+        loading: true
       });
 
       runSimulation();
@@ -135,7 +156,7 @@ describe('EditablePageLayout', () => {
       runSimulation();
 
       expect(useGetPageQuery).toHaveBeenCalledWith({
-        variables: { slug: pageSlug },
+        variables: { slug: pageSlug }
       });
     });
 
@@ -147,26 +168,21 @@ describe('EditablePageLayout', () => {
         data: {
           pageBlocks: {
             blocks: mockBlocks,
-            blocksOrder: mockBlocksOrder,
-          },
+            blocksOrder: mockBlocksOrder
+          }
         },
-        loading: false,
+        loading: false
       });
 
       runSimulation();
 
-      expect(mockSetPageData).toHaveBeenCalledWith(
-        pageSlug,
-        mockBlocks,
-        mockBlocksOrder,
-        true
-      );
+      expect(mockSetPageData).toHaveBeenCalledWith(pageSlug, mockBlocks, mockBlocksOrder, true);
     });
 
     it('should not call setPageData if data has no pageBlocks', () => {
       (useGetPageQuery as jest.Mock).mockReturnValue({
         data: null,
-        loading: false,
+        loading: false
       });
 
       runSimulation();
@@ -179,7 +195,7 @@ describe('EditablePageLayout', () => {
     it('should pass isSaving as true if editorLoading is true', () => {
       (usePageEditor as jest.Mock).mockReturnValue({
         preview: mockPreview,
-        loading: true,
+        loading: true
       });
 
       runSimulation();
@@ -190,7 +206,7 @@ describe('EditablePageLayout', () => {
     it('should pass isSaving as true if saveLoading is true', () => {
       (useSavePageBlocks as jest.Mock).mockReturnValue({
         save: mockSave,
-        loading: true,
+        loading: true
       });
 
       runSimulation();
@@ -215,21 +231,23 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('actions-disabled-flag')).toHaveTextContent('false');
     });
 
-    it('should trigger preview, save, cancel and language change callbacks when header controls are clicked and isChanged is true', () => {
+    it('should trigger preview, save and discard callbacks when header controls are clicked and there are unsaved changes', async () => {
+      const user = userEvent.setup();
       mockStoreState.isChanged = true;
       runSimulation();
 
-      fireEvent.click(screen.getByTestId('preview-btn'));
+      await user.click(screen.getByTestId('preview-btn'));
       expect(mockPreview).toHaveBeenCalled();
 
-      fireEvent.click(screen.getByTestId('save-btn'));
+      await user.click(screen.getByTestId('save-btn'));
       expect(mockSave).toHaveBeenCalled();
 
-      fireEvent.click(screen.getByTestId('cancel-btn'));
+      await user.click(screen.getByTestId('cancel-btn'));
       expect(mockDiscardChanges).toHaveBeenCalledWith(pageSlug);
 
-      fireEvent.click(screen.getByTestId('lang-en'));
-      expect(mockSetLocale).toHaveBeenCalledWith('en');
+      await user.click(screen.getByTestId('lang-en'));
+      expect(screen.getByRole('dialog', { name: 'Підтвердження відмови від змін' })).toBeInTheDocument();
+      expect(mockSetLocale).not.toHaveBeenCalled();
     });
   });
 
@@ -250,7 +268,7 @@ describe('EditablePageLayout', () => {
     it('should push isSaving=true into the store when a save is in progress', () => {
       (useSavePageBlocks as jest.Mock).mockReturnValue({
         save: mockSave,
-        loading: true,
+        loading: true
       });
 
       runSimulation();
@@ -261,7 +279,7 @@ describe('EditablePageLayout', () => {
     it('should push isSaving=true into the store when the editor/preview is loading', () => {
       (usePageEditor as jest.Mock).mockReturnValue({
         preview: mockPreview,
-        loading: true,
+        loading: true
       });
 
       runSimulation();
@@ -277,35 +295,38 @@ describe('EditablePageLayout', () => {
   });
 
   describe('validateBeforeSave logic', () => {
-    it('should not call save if validateBeforeSave returns false', () => {
+    it('should not call save if validateBeforeSave returns false', async () => {
+      const user = userEvent.setup();
       mockStoreState.isChanged = true;
       const validateBeforeSave = jest.fn(() => false);
       runSimulation({ validateBeforeSave });
 
-      fireEvent.click(screen.getByTestId('save-btn'));
+      await user.click(screen.getByTestId('save-btn'));
 
       expect(validateBeforeSave).toHaveBeenCalled();
       expect(mockSave).not.toHaveBeenCalled();
     });
 
-    it('should call setLocale and not call save if validateBeforeSave returns a string', () => {
+    it('should call setLocale and not call save if validateBeforeSave returns a string', async () => {
+      const user = userEvent.setup();
       mockStoreState.isChanged = true;
       const validateBeforeSave = jest.fn(() => 'en' as const);
       runSimulation({ validateBeforeSave });
 
-      fireEvent.click(screen.getByTestId('save-btn'));
+      await user.click(screen.getByTestId('save-btn'));
 
       expect(validateBeforeSave).toHaveBeenCalled();
       expect(mockSetLocale).toHaveBeenCalledWith('en');
       expect(mockSave).not.toHaveBeenCalled();
     });
 
-    it('should call save if validateBeforeSave returns true', () => {
+    it('should call save if validateBeforeSave returns true', async () => {
+      const user = userEvent.setup();
       mockStoreState.isChanged = true;
       const validateBeforeSave = jest.fn(() => true);
       runSimulation({ validateBeforeSave });
 
-      fireEvent.click(screen.getByTestId('save-btn'));
+      await user.click(screen.getByTestId('save-btn'));
 
       expect(validateBeforeSave).toHaveBeenCalled();
       expect(mockSave).toHaveBeenCalled();
@@ -322,11 +343,12 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('page-sections-editor')).toBeInTheDocument();
     });
 
-    it('should call handleSave when save button is clicked in simple-layout', () => {
+    it('should call handleSave when save button is clicked in simple-layout', async () => {
+      const user = userEvent.setup();
       mockStoreState.isChanged = true;
       runSimulation({ variant: 'simple-layout' });
 
-      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+      await user.click(screen.getByRole('button', { name: 'Зберегти' }));
 
       expect(mockSave).toHaveBeenCalled();
     });
@@ -347,8 +369,9 @@ describe('EditablePageLayout', () => {
           <div data-testid="child-content">{childrenText}</div>
         </EditablePageLayout>
       );
-      expect(screen.getByRole('button')).toBeDisabled();
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+      const progressbar = screen.getByRole('progressbar');
+      expect(progressbar.closest('button')).toBeDisabled();
+      expect(progressbar).toBeInTheDocument();
     });
 
     it('should render loading skeleton content when query is loading in simple-layout', () => {
@@ -357,6 +380,67 @@ describe('EditablePageLayout', () => {
 
       expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
       expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Locale change confirmation', () => {
+    it('should change locale immediately when there are no unsaved changes', async () => {
+      const user = userEvent.setup();
+      mockStoreState.isChanged = false;
+      runSimulation();
+
+      await user.click(screen.getByTestId('lang-en'));
+      expect(mockSetLocale).toHaveBeenCalledWith('en');
+      expect(screen.queryByRole('dialog', { name: 'Підтвердження відмови від змін' })).not.toBeInTheDocument();
+    });
+
+    it('should open confirmation modal when changing locale with unsaved changes', async () => {
+      const user = userEvent.setup();
+      mockStoreState.isChanged = true;
+      runSimulation();
+
+      await user.click(screen.getByTestId('lang-en'));
+      expect(screen.getByRole('dialog', { name: 'Підтвердження відмови від змін' })).toBeInTheDocument();
+      expect(mockSetLocale).not.toHaveBeenCalled();
+      expect(mockDiscardChanges).not.toHaveBeenCalled();
+    });
+
+    it('should discard changes and change locale when confirmation is accepted', async () => {
+      const user = userEvent.setup();
+      mockStoreState.isChanged = true;
+      runSimulation();
+
+      await user.click(screen.getByTestId('lang-en'));
+      await user.click(screen.getByRole('button', { name: 'Підтвердити' }));
+
+      expect(mockDiscardChanges).toHaveBeenCalledWith(pageSlug);
+      expect(mockSetLocale).toHaveBeenCalledWith('en');
+      expect(screen.queryByRole('dialog', { name: 'Підтвердження відмови від змін' })).not.toBeInTheDocument();
+    });
+
+    it('should close modal without discarding changes when confirmation is cancelled', async () => {
+      const user = userEvent.setup();
+      mockStoreState.isChanged = true;
+      runSimulation();
+
+      await user.click(screen.getByTestId('lang-en'));
+      await user.click(screen.getByRole('button', { name: 'Повернутись' }));
+
+      expect(mockDiscardChanges).not.toHaveBeenCalled();
+      expect(mockSetLocale).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog', { name: 'Підтвердження відмови від змін' })).not.toBeInTheDocument();
+    });
+
+    it('should not open modal when selecting the current locale', async () => {
+      const user = userEvent.setup();
+      mockStoreState.isChanged = true;
+      mockStoreState.locale = 'en';
+      runSimulation();
+
+      await user.click(screen.getByTestId('lang-en'));
+      expect(mockSetLocale).not.toHaveBeenCalled();
+      expect(mockDiscardChanges).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog', { name: 'Підтвердження відмови від змін' })).not.toBeInTheDocument();
     });
   });
 });

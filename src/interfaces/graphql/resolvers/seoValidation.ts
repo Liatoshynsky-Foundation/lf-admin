@@ -5,7 +5,7 @@ import { seoValidationErrors } from '~/src/constants/errors';
 const LOCALES = ['uk', 'en'] as const;
 
 const SEO_LENGTH_LIMITS = {
-  title: { min: 2, max: 150 },
+  title: { min: 2, max: 300 },
   description: { min: 2, max: 250 },
   keywords: { min: 2, max: 250 },
   altText: { min: 2, max: 250 }
@@ -26,7 +26,7 @@ const EMPTY_LOCALIZED_STRING: LocalizedString = { uk: '', en: '' };
 
 const hasCoverImageSrc = (coverImage?: LocalizedImage): boolean => Boolean(coverImage?.src?.trim());
 
-const getInvalidLocalizedFields = (
+const getInvalidLocalizedStrings = (
   value: LocalizedString | undefined,
   field: SeoLengthField,
   requiredLocales: readonly Locale[]
@@ -53,29 +53,24 @@ const DESCRIPTION_REQUIRED_LOCALES = ['uk'] as const;
 const NO_REQUIRED_LOCALES = [] as const;
 const ALT_REQUIRED_LOCALES = LOCALES;
 
-export const validateSeoLengths = ({
-  title,
-  description,
-  keywords,
-  coverImage
-}: SeoLengthValidationInput): void => {
+export const validateSeoLengths = ({ title, description, keywords, coverImage }: SeoLengthValidationInput): void => {
   throwBadUserInput(
     seoValidationErrors.TITLE_LENGTH_INVALID,
-    getInvalidLocalizedFields(title, 'title', TITLE_REQUIRED_LOCALES)
+    getInvalidLocalizedStrings(title, 'title', TITLE_REQUIRED_LOCALES)
   );
   throwBadUserInput(
     seoValidationErrors.DESCRIPTION_LENGTH_INVALID,
-    getInvalidLocalizedFields(description, 'description', DESCRIPTION_REQUIRED_LOCALES)
+    getInvalidLocalizedStrings(description, 'description', DESCRIPTION_REQUIRED_LOCALES)
   );
   throwBadUserInput(
     seoValidationErrors.KEYWORDS_LENGTH_INVALID,
-    getInvalidLocalizedFields(keywords, 'keywords', NO_REQUIRED_LOCALES)
+    getInvalidLocalizedStrings(keywords, 'keywords', NO_REQUIRED_LOCALES)
   );
 
   const altRequiredLocales = hasCoverImageSrc(coverImage) ? ALT_REQUIRED_LOCALES : NO_REQUIRED_LOCALES;
 
   throwBadUserInput(
     seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
-    getInvalidLocalizedFields(coverImage?.alt ?? EMPTY_LOCALIZED_STRING, 'altText', altRequiredLocales)
+    getInvalidLocalizedStrings(coverImage?.alt ?? EMPTY_LOCALIZED_STRING, 'altText', altRequiredLocales)
   );
 };

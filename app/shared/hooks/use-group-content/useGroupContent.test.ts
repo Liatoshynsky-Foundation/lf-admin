@@ -14,18 +14,13 @@ import {
 } from '~/constants/opus';
 import { fetchPreview } from '~/lib/utils/fetchPreview';
 import { useNavigationGuard } from '~/shared/hooks/use-navigation-guard/useNavigationGuard';
-import {
-  useDeleteOpus,
-  useOpusById,
-  useUpdateOpus,
-  useUpsertOpusPreview
-} from '~/shared/hooks/use-opuses/useOpuses';
+import { useDeleteOpus, useOpusById, useUpdateOpus, useUpsertOpusPreview } from '~/shared/hooks/use-opuses/useOpuses';
 import { useUnsavedChanges } from '~/shared/hooks/use-unsaved-changes/useUnsavedChanges';
 import type {
   DeleteOpusMutationVariables,
+  OpusPerformance,
   UpdateOpusMutationVariables,
-  UpsertOpusPreviewMutationVariables
-} from '~/types/graphql/generated/graphql';
+  UpsertOpusPreviewMutationVariables} from '~/types/graphql/generated/graphql';
 import { OpusCompositionData } from '~/types/opus';
 
 const mockNavigate = jest.fn();
@@ -42,6 +37,13 @@ jest.mock('next/navigation', () => ({
     get: jest.fn().mockReturnValue(null)
   }))
 }));
+
+const { ReadonlyURLSearchParams } = jest.requireActual<typeof nextNavigation>('next/navigation');
+
+const mockFromSearchParam = (from: string | null) =>
+  jest
+    .mocked(nextNavigation.useSearchParams)
+    .mockReturnValue(new ReadonlyURLSearchParams(from === null ? undefined : { from }));
 
 jest.mock('react-hot-toast', () => ({
   success: jest.fn(),
@@ -67,7 +69,6 @@ jest.mock('~/shared/hooks/use-opuses/useOpuses', () => ({
   useDeleteOpus: jest.fn()
 }));
 
-
 const mockFetchedOpus = {
   id: 'test-id',
   numberKind: 'op',
@@ -90,7 +91,6 @@ const mockFetchedOpus = {
       crop: { x: 0, y: 0, width: 100, height: 100 }
     }
   ],
-  performancesTitle: { uk: 'Performances', en: 'Performances EN' },
   performances: [
     {
       id: 'perf-1',
@@ -110,6 +110,27 @@ const mockFetchedOpus = {
       sheetMusic: []
     }
   ]
+};
+
+const renderAndPublishWithPerformances = async (performances: Array<OpusPerformance>) => {
+  const customOpus = {
+    ...mockFetchedOpus,
+    performances
+  };
+
+  (useOpusById as jest.Mock).mockReturnValue({
+    data: { opusById: customOpus },
+    loading: false
+  });
+
+  const { result } = renderHook(() => useGroupContent('test-id'));
+
+  await waitFor(() => expect(result.current.groupData).not.toBeNull());
+  await act(async () => {
+    await result.current.handlePublishClick();
+  });
+
+  return result;
 };
 
 describe('useGroupContent Hook', () => {
@@ -632,8 +653,7 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to edit page on handleBackClick if "from" param is "create"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('create') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      mockFromSearchParam('create');
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -790,7 +810,7 @@ describe('useGroupContent Hook', () => {
       const { result } = renderHook(() => useGroupContent('test-id'));
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, '');
+        result.current.handleFieldChange('titlePrefix', '');
       });
 
       await act(async () => {
@@ -866,7 +886,6 @@ describe('useGroupContent Hook', () => {
     it('should cover all edge-case fallbacks (null arrays, sparse crops, Bo. prefix, empty strings)', async () => {
       const sparseData = {
         ...mockFetchedOpus,
-        performancesTitle: { uk: null, en: 'EN Only' },
         performances: null,
         gallery: [
           {
@@ -893,7 +912,7 @@ describe('useGroupContent Hook', () => {
       });
 
       act(() => {
-        result.current.handleFieldChange('titlePrefix' as any, 'sineop');
+        result.current.handleFieldChange('titlePrefix', 'sineop');
 
         result.current.handleFieldChange('compositions', [
           {
@@ -918,17 +937,6 @@ describe('useGroupContent Hook', () => {
       expect(calledInput.additionalText).toBe('');
       expect(calledInput.gallery).toEqual([]);
       expect(calledInput.compositions[0].audios).toEqual([]);
-    });
-
-    it('should cover completely missing performancesTitle (fallback to empty string)', async () => {
-      (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: { ...mockFetchedOpus, performancesTitle: null } },
-        loading: false
-      });
-      const { result } = renderHook(() => useGroupContent('test-id'));
-      await waitFor(() => {
-        expect(result.current.groupData?.performancesTitle).toBe('');
-      });
     });
 
     it('should successfully delete opus, show toast, close modal and navigate on handleConfirmDelete', async () => {
@@ -1015,7 +1023,6 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('description', { uk: null, en: null });
         result.current.handleFieldChange('compositions', null);
         result.current.handleFieldChange('performances', null);
-        result.current.handleFieldChange('performancesTitle', '');
         result.current.handleFieldChange('groupTitle', { uk: 'Valid UK Title', en: 'Valid EN Title' });
       });
 
@@ -1071,7 +1078,7 @@ describe('useGroupContent Hook', () => {
         result.current.handleFieldChange('genre', 'Pop', true);
       });
 
-      expect((result.current.groupData?.genre as any).uk).toBe('Pop');
+      expect(result.current.groupData?.genre?.uk).toBe('Pop');
     });
 
     it('should trigger validation error when groupTitle is too short', async () => {
@@ -1180,40 +1187,29 @@ describe('useGroupContent Hook', () => {
     });
     it('should trigger validation errors only when performance caption exceeds the max length', async () => {
       const longText = 'a'.repeat(251);
+      const performances = [
+        { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
+        { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: 'a' } },
+        { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: longText } },
+        { id: 'perf-4', videoUrl: 'url4', title: { uk: 'a', en: 'Valid EN' } }
+      ];
 
-      const customOpus = {
-        ...mockFetchedOpus,
-        performances: [
-          { id: 'perf-1', videoUrl: 'url1', title: { uk: longText, en: 'Valid EN' } },
-          { id: 'perf-2', videoUrl: 'url2', title: { uk: 'Valid UK', en: '' } },
-          { id: 'perf-3', videoUrl: 'url3', title: { uk: 'Valid UK', en: 'a' } },
-          { id: 'perf-4', videoUrl: 'url4', title: { uk: 'Valid UK', en: longText } },
-          { id: 'perf-5', videoUrl: 'url5', title: { uk: '', en: 'Valid EN' } },
-          { id: 'perf-6', videoUrl: 'url6', title: { uk: 'a', en: 'Valid EN' } }
-        ]
-      };
-
-      (useOpusById as jest.Mock).mockReturnValue({
-        data: { opusById: customOpus },
-        loading: false
-      });
-
-      const { result } = renderHook(() => useGroupContent('test-id'));
-
-      await waitFor(() => expect(result.current.groupData).not.toBeNull());
-      await act(async () => {
-        await result.current.handlePublishClick();
-      });
+      const result = await renderAndPublishWithPerformances(performances);
 
       // Only perf-1 (uk too long) and perf-4 (en too long) should produce caption errors.
       // Empty and short-but-valid captions are allowed since caption is now optional.
       expect(result.current.errors['performances[perf-1].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['performances[perf-4].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-2].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+      expect(result.current.errors['performances[perf-3].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['performances[perf-4].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.nameTooShort);
+    });
 
-      expect(result.current.errors['performances[perf-2].caption.en']).toBeUndefined();
-      expect(result.current.errors['performances[perf-3].caption.en']).toBeUndefined();
-      expect(result.current.errors['performances[perf-5].caption.uk']).toBeUndefined();
-      expect(result.current.errors['performances[perf-6].caption.uk']).toBeUndefined();
+    it('should not trigger caption errors when performance has URL but empty captions', async () => {
+      const result = await renderAndPublishWithPerformances([{ id: 'perf-1', videoUrl: 'url1', title: { uk: '', en: '' } }]);
+
+      expect(Object.keys(result.current.errors)).not.toContain('performances[perf-1].caption.uk');
+      expect(Object.keys(result.current.errors)).not.toContain('performances[perf-1].caption.en');
+      expect(mockUpdateOpus).toHaveBeenCalled();
     });
 
     it('should trigger validation errors for photos altText and caption length', async () => {
@@ -1362,8 +1358,12 @@ describe('useGroupContent Hook', () => {
         await result.current.handlePublishClick();
       });
 
-      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
-      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe(OPUS_VALIDATION_MESSAGES.captionTooLong);
+      expect(result.current.errors['photos[photo-uk-caption].caption.uk']).toBe(
+        OPUS_VALIDATION_MESSAGES.captionTooLong
+      );
+      expect(result.current.errors['photos[photo-en-caption].caption.en']).toBe(
+        OPUS_VALIDATION_MESSAGES.captionTooLong
+      );
       expect(result.current.currentLanguage).toBe('EN');
     });
 
@@ -1402,7 +1402,9 @@ describe('useGroupContent Hook', () => {
         await emptyResult.result.current.handlePublishClick();
       });
       expect(toast.error).toHaveBeenCalledWith(COMPOSITION_NAME_REQUIRED_ERROR);
-      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe(COMPOSITION_VALIDATION_MESSAGES.titleRequired);
+      expect(emptyResult.result.current.errors['compositions.empty.name']).toBe(
+        COMPOSITION_VALIDATION_MESSAGES.titleRequired
+      );
     });
 
     it('should trigger validation error when performance URL is missing but row is not empty', async () => {
@@ -1546,8 +1548,7 @@ describe('useGroupContent Hook', () => {
 
   describe('Navigation', () => {
     it('should navigate to edit page on handleBackClick if "from" param is "edit"', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue('edit') };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      mockFromSearchParam('edit');
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1559,8 +1560,7 @@ describe('useGroupContent Hook', () => {
     });
 
     it('should navigate to creativity page on handleBackClick if "from" param is absent', () => {
-      const mockSearchParams = { get: jest.fn().mockReturnValue(null) };
-      jest.spyOn(nextNavigation, 'useSearchParams').mockReturnValue(mockSearchParams as any);
+      mockFromSearchParam(null);
 
       const { result } = renderHook(() => useGroupContent('test-id'));
 
@@ -1574,10 +1574,12 @@ describe('useGroupContent Hook', () => {
   describe('Saving', () => {
     it('should forcefully trigger none handleSave', async () => {
       const originalSplit = String.prototype.split;
-      jest.spyOn(String.prototype, 'split').mockImplementation(function (this: string, separator: any, limit?: any) {
+      type SplitSeparator = Parameters<typeof originalSplit>[0];
+      const mockSplit = function (this: string, separator: SplitSeparator, limit?: number) {
         if (this === 'trigger-empty-split') return [] as unknown as string[];
         return originalSplit.call(this, separator, limit);
-      });
+      };
+      jest.spyOn(String.prototype, 'split').mockImplementation(mockSplit);
 
       const edgeOpus = {
         ...mockFetchedOpus,

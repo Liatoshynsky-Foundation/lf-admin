@@ -77,10 +77,6 @@ query OpusById($id: ID!) {
         height
       }
     }
-    performancesTitle {
-      uk
-      en
-    }
     performances {
       id
       title {

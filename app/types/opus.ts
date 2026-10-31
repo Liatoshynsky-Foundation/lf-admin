@@ -110,7 +110,6 @@ export interface FetchedOpusData {
     altText?: NullableLocalizedString | null;
     crop?: { x?: number; y?: number; width?: number; height?: number } | null;
   }> | null;
-  performancesTitle?: NullableLocalizedString | null;
   performances?: Array<{
     id: string;
     title?: NullableLocalizedString | null;

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { MockCollapsibleBlock, mockLocalizedTextField } from '../__mocks__/mockComponents';
 import { WarInfo } from './WarInfo';
 import { BLOCK_IDS } from '~/constants/pageBlocks';
 import { usePageBlock } from '~/shared/hooks/use-page-block/usePageBlock';
@@ -15,38 +16,11 @@ jest.mock('~/shared/components/edit-block-skeleton/EditBlockSkeleton', () => ({
 
 jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock', () => ({
   __esModule: true,
-  default: ({ title, children }: any) => (
-    <div data-testid="collapsible-block">
-      <span>{title}</span>
-      {children}
-    </div>
-  )
+  default: MockCollapsibleBlock
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => ({
-  CustomTextField: ({ title, value, onChange }: any) => (
-    <div data-testid={`field-${title}`}>
-      <input
-        aria-label={title}
-        value={typeof value === 'object' && value !== null ? JSON.stringify(value) : (value || '')}
-        onChange={(e) => {
-          if (title === 'Опис блоку') {
-            onChange(e.target.value);
-          } else {
-            onChange(e);
-          }
-        }}
-        data-testid={`input-${title}`}
-      />
-      <button 
-        type="button" 
-        data-testid={`direct-string-btn-${title}`} 
-        onClick={() => onChange('Прямий рядок заголовку')}
-      >
-        Set Direct String
-      </button>
-    </div>
-  )
+  CustomTextField: mockLocalizedTextField('Опис блоку', 'Прямий рядок заголовку')
 }));
 
 describe('WarInfo', () => {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
 import { styles } from './EditablePageLayout.styles';
+import DiscardChangesModal from '~/shared/components/design-system/discard-changes-modal/DiscardChangesModal';
 import { EditBlockSkeleton } from '~/shared/components/edit-block-skeleton/EditBlockSkeleton';
 import { Header } from '~/shared/components/header/Header';
 import LanguageSwitcher from '~/shared/components/language-switcher/LanguageSwitcher';
@@ -35,6 +36,8 @@ export const EditablePageLayout = ({
   backHref
 }: EditablePageLayoutProps) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
+  const [pendingLocale, setPendingLocale] = useState<'uk' | 'en' | null>(null);
 
   const setLocale = useStore((s) => s.setLocale);
   const setPageData = useStore((state) => state.setPageData);
@@ -42,6 +45,7 @@ export const EditablePageLayout = ({
   const discardChanges = useStore((s) => s.discardChanges);
   const hasInvalidFields = useStore((s) => Object.values(s.invalidFields).some(Boolean));
   const setIsSaving = useStore((s) => s.setIsSaving);
+  const locale = useStore((s) => s.locale);
 
   const { data, loading: queryLoading } = useGetPageQuery({
     variables: { slug: pageSlug }
@@ -69,6 +73,31 @@ export const EditablePageLayout = ({
     void Promise.resolve(save()).catch(() => {});
   };
 
+  const handleLocaleChange = (newLocale: 'uk' | 'en') => {
+    if (locale === newLocale) return;
+
+    if (isChanged) {
+      setPendingLocale(newLocale);
+      setIsDiscardChangesModalOpen(true);
+      return;
+    }
+
+    setLocale(newLocale);
+  };
+
+  const closeDiscardChangesModal = () => {
+    setPendingLocale(null);
+    setIsDiscardChangesModalOpen(false);
+  };
+
+  const handleConfirmLocaleChange = () => {
+    if (!pendingLocale) return;
+
+    discardChanges(pageSlug);
+    setLocale(pendingLocale);
+    closeDiscardChangesModal();
+  };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -86,6 +115,9 @@ export const EditablePageLayout = ({
   );
 
   const content = isLoading ? renderLoadingContent() : children;
+
+  const discardChangesModalDescription =
+    'Усі незбережені зміни буде втрачено. Ви впевнені, що хочете перемкнути мову без збереження?';
 
   if (variant === 'simple-layout') {
     return (
@@ -105,7 +137,7 @@ export const EditablePageLayout = ({
             </Typography>
           </Stack>
           <Stack direction="row" gap={2} alignItems="center">
-            <LanguageSwitcher languageSwitcher={setLocale} />
+            <LanguageSwitcher languageSwitcher={handleLocaleChange} />
             <Button
               onClick={handleSave}
               disabled={isLoading || !isChanged || saveLoading}
@@ -134,6 +166,12 @@ export const EditablePageLayout = ({
             </Box>
           </>
         )}
+        <DiscardChangesModal
+          open={isDiscardChangesModalOpen}
+          description={discardChangesModalDescription}
+          handleSubmit={handleConfirmLocaleChange}
+          handleClose={closeDiscardChangesModal}
+        />
       </Box>
     );
   }
@@ -148,10 +186,16 @@ export const EditablePageLayout = ({
         isSaveDisabled={isLoading || hasInvalidFields}
         onCancel={() => discardChanges(pageSlug)}
         isSaving={isSaving}
-        onLanguageChange={(lang: 'uk' | 'en') => setLocale(lang)}
+        onLanguageChange={handleLocaleChange}
       />
       {content}
       {!isLoading && <PageSectionsEditor pageSlug={pageSlug} />}
+      <DiscardChangesModal
+        open={isDiscardChangesModalOpen}
+        description={discardChangesModalDescription}
+        handleSubmit={handleConfirmLocaleChange}
+        handleClose={closeDiscardChangesModal}
+      />
     </Box>
   );
 };

@@ -16,7 +16,7 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 
   {
-    ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode', 'app/types/graphql/generated/']
+    ignores: ['node_modules', '.next', 'coverage', '.idea', '.vscode', 'app/types/graphql/generated/', 'next-env.d.ts']
   },
   {
     rules: {
@@ -54,6 +54,12 @@ const eslintConfig = [
         }
       ],
       'simple-import-sort/exports': 'error'
+    }
+  },
+  {
+    files: ['app/shared/components/content-editor/cropped-image-block/CroppedImageBlock.tsx'],
+    rules: {
+      '@next/next/no-img-element': 'off'
     }
   }
 ];

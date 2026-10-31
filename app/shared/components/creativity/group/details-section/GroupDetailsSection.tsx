@@ -13,7 +13,7 @@ import {
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
 import YearPicker from '~/shared/components/forms/opus-details-block/year-picker/YearPicker';
-import { LocalizedString } from '~/types/common';
+import type { LocalizedString } from '~/types/localization';
 
 type GroupDetailsSectionProps = {
   data: {

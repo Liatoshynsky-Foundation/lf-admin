@@ -1,5 +1,5 @@
 import {
-  resolveSharedLocalizedFields,
+  resolveSharedLocalizedStrings,
   syncLocalizedCrop,
   syncLocalizedStringPair
 } from './normalizeSharedLocalizedFields';
@@ -46,7 +46,7 @@ describe('syncLocalizedCrop', () => {
   });
 });
 
-describe('resolveSharedLocalizedFields', () => {
+describe('resolveSharedLocalizedStrings', () => {
   const fetched = {
     coverImage: {
       src: 'img.png',
@@ -57,7 +57,7 @@ describe('resolveSharedLocalizedFields', () => {
   } as FetchedPublicationData;
 
   it('syncs shared fields for events', () => {
-    expect(resolveSharedLocalizedFields('events', fetched)).toEqual({
+    expect(resolveSharedLocalizedStrings('events', fetched)).toEqual({
       altText: { uk: 'Alt UK', en: 'Alt UK' },
       ticketUrl: { uk: 'https://uk.example', en: 'https://uk.example' },
       crop: {
@@ -68,7 +68,7 @@ describe('resolveSharedLocalizedFields', () => {
   });
 
   it('keeps per-locale alt for news', () => {
-    expect(resolveSharedLocalizedFields('news', fetched).altText).toEqual({
+    expect(resolveSharedLocalizedStrings('news', fetched).altText).toEqual({
       uk: 'Alt UK',
       en: 'Alt EN'
     });

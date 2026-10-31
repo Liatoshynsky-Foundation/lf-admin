@@ -56,16 +56,11 @@ jest.mock('~/shared/components/creativity/group/works-section/GroupWorksSection'
 
 jest.mock('~/shared/components/creativity/group/performances-section/GroupPerformancesSection', () => ({
   GroupPerformancesSection: ({
-    onChangeSectionTitle,
     onChangePerformances
   }: {
-    onChangeSectionTitle: (title: string) => void;
     onChangePerformances: (performances: unknown[]) => void;
   }) => (
     <div data-testid="group-performances-section">
-      <button data-testid="change-perf-title" onClick={() => onChangeSectionTitle('New Title')}>
-        Change Perf Title
-      </button>
       <button data-testid="change-perfs" onClick={() => onChangePerformances([])}>
         Change Perfs
       </button>
@@ -136,8 +131,13 @@ jest.mock('~/lib/utils/sortableDragEndHelper', () => ({
   })
 }));
 
+interface MockSortableListProps {
+  onDragEnd: (event: { active: { id: string }; over: { id: string } }) => void;
+  children: ReactNode;
+}
+
 jest.mock('~/shared/components/sortable-list/SortableList', () => ({
-  SortableList: ({ onDragEnd, children }: any) => (
+  SortableList: ({ onDragEnd, children }: MockSortableListProps) => (
     <div data-testid="mock-sortable-list">
       <button
         data-testid="simulate-drag-end"
@@ -166,7 +166,6 @@ const mockUseGroupContent = {
     parts: { uk: '', en: '' },
     description: { uk: {}, en: {} },
     photos: [],
-    performancesTitle: '',
     performances: [],
     compositions: []
   },
@@ -334,8 +333,6 @@ describe('GroupContentView Component', () => {
       fireEvent.click(screen.getByTestId('change-works'));
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('compositions', []);
 
-      fireEvent.click(screen.getByTestId('change-perf-title'));
-      expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performancesTitle', 'New Title');
 
       fireEvent.click(screen.getByTestId('change-perfs'));
       expect(mockUseGroupContent.handleFieldChange).toHaveBeenCalledWith('performances', []);

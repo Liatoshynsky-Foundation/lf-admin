@@ -1,3 +1,5 @@
+import type { LocalizedString } from '~/types/localization';
+
 export type SeoData = {
   meta: {
     uk: {
@@ -5,14 +7,14 @@ export type SeoData = {
       description: string;
       keywords: string;
       canonicalUrl?: string;
-      altText?: { uk: string; en: string };
+      altText?: LocalizedString;
     };
     en: {
       title: string;
       description: string;
       keywords: string;
       canonicalUrl?: string;
-      altText?: { uk: string; en: string };
+      altText?: LocalizedString;
     };
   };
   allowIndexing: {

@@ -5,8 +5,9 @@ import { styles } from './GroupIntroSection.styles';
 import { GroupDataField } from '~/constants/creativity';
 import { EditorLanguage } from '~/constants/publications';
 import { CustomTextField } from '~/shared/components/design-system/text-field/TextField';
+import type { LocalizedString } from '~/types/localization';
 
-type MultilingualText = { uk: string; en: string };
+type MultilingualText = LocalizedString;
 
 type MultilingualRichText = { uk: JSONContent | null; en: JSONContent | null };
 

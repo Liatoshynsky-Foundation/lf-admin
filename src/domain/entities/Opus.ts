@@ -1,17 +1,15 @@
-
 import { Composition } from './Composition';
-import { LocalizedBoolean, LocalizedImage, LocalizedString } from '~/domain/entities/BaseContent';
+import { LocalizedBoolean, LocalizedImage } from '~/domain/entities/BaseContent';
 import { OpusStatus } from '~/types/graphql/generated/graphql';
+import type { LocalizedString } from '~/types/localization';
 
-export type OpusNumberKind = 'op' | 'sineop' |  'compositions';
+export type OpusNumberKind = 'op' | 'sineop' | 'compositions';
 
-export type OpusDescription = {
-  uk: string;
-  en: string;
+export type OpusDescription = LocalizedString & {
   meta?: {
-    description?: { uk: string; en: string };
-    canonicalUrl?: { uk: string; en: string };
-    metaTitle?: { uk: string; en: string };
+    description?: LocalizedString;
+    canonicalUrl?: LocalizedString;
+    metaTitle?: LocalizedString;
   };
 };
 
@@ -39,7 +37,7 @@ export type Opus = {
   endYear?: string | null;
   datesNote?: LocalizedString | null;
   genre?: LocalizedString | null;
-  
+
   title?: LocalizedString | null;
   adminTitle?: string | null;
   slug?: string;
@@ -52,7 +50,6 @@ export type Opus = {
 
   gallery?: OpusGalleryItem[];
 
-  performancesTitle?: LocalizedString | null;
   performances?: OpusPerformance[];
 
   status: OpusStatus;
@@ -67,4 +64,4 @@ export type Opus = {
   blocksOrder?: string[] | null;
 };
 
-export type OpusFull = Omit<Opus, 'compositions'> & { compositions: Composition[]}
+export type OpusFull = Omit<Opus, 'compositions'> & { compositions: Composition[] };

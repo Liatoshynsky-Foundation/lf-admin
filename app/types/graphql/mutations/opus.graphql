@@ -82,10 +82,6 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
         height
       }
     }
-    performancesTitle {
-      uk
-      en
-    }
     performances {
       id
       title {

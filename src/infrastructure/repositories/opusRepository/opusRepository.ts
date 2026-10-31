@@ -41,7 +41,6 @@ export type DbOpus = {
   introDescription: Opus['introDescription'];
   parts: Opus['parts'];
   gallery?: DbOpusGalleryItem[];
-  performancesTitle: Opus['performancesTitle'];
   performances?: DbOpusPerformance[];
   blocksOrder?: string[] | null;
   keywords: Opus['keywords'];
@@ -86,7 +85,6 @@ const toEntity = (doc: DbOpus): Opus =>
     description: doc.description ?? undefined,
     introDescription: doc.introDescription ?? undefined,
     parts: doc.parts ?? undefined,
-    performancesTitle: doc.performancesTitle ?? undefined,
     gallery:
       doc.gallery?.map((item) => ({
         id: item._id?.toString() ?? '',

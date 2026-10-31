@@ -389,7 +389,7 @@ describe('CaseMutation', () => {
       ['caseDescriptions uk empty', { caseDescriptions: { uk: '', en: 'Description' } }],
       ['caseDescriptions uk exceeding 300 characters', { caseDescriptions: { uk: 'a'.repeat(301), en: 'Description' } }],
 
-      ['detailedCaseDescription uk exceeding 1000 characters', { detailedCaseDescription: { uk: 'a'.repeat(1001), en: 'Valid' } }],
+      ['detailedCaseDescription uk exceeding 5000 characters', { detailedCaseDescription: { uk: 'a'.repeat(5001), en: 'Valid' } }],
 
       ['pdfFile with a non-pdf extension', { pdfFile: { filename: 'scan.jpg', url: 'https://cdn/scan.jpg', mimeType: 'application/pdf' } }],
       ['pdfFile with a non-pdf mimetype', { pdfFile: { filename: 'scan.pdf', url: 'https://cdn/scan.pdf', mimeType: 'image/jpeg' } }],

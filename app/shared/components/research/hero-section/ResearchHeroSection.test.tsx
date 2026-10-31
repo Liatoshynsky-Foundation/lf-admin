@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { ResearchHeroSection } from './ResearchHeroSection';
@@ -24,8 +25,14 @@ jest.mock('~/shared/components/design-system/collapsible-block/CollapsibleBlock'
   )
 }));
 
+interface MockCustomTextFieldProps {
+  label: string;
+  value?: JSONContent | string;
+  onChange: (value: JSONContent | string) => void;
+}
+
 jest.mock('~/shared/components/design-system/text-field/TextField', () => ({
-  CustomTextField: ({ value, onChange, label }: any) => (
+  CustomTextField: ({ value, onChange, label }: MockCustomTextFieldProps) => (
     <div data-testid="custom-text-field">
       <label>{label}</label>
       <input
@@ -69,7 +76,7 @@ describe('ResearchHeroSection Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseStore.mockImplementation((selector: any) => {
+    mockUseStore.mockImplementation((selector: (state: { locale: 'uk' | 'en'; setField: jest.Mock }) => unknown) => {
       return selector({
         locale: 'uk',
         setField: mockSetField

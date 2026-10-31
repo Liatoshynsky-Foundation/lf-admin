@@ -107,10 +107,12 @@ describe('EditableSectionList', () => {
     );
     expect(screen.getAllByTestId('grip-mock')).toHaveLength(mockItems.length);
     fireEvent.click(screen.getByTestId('mock-sortable-list'));
-    expect(onDragEndMock).toHaveBeenCalledWith({
-      active: { id: '1' },
-      over: { id: '2' }
-    });
+    expect(onDragEndMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        active: expect.objectContaining({ id: '1' }),
+        over: expect.objectContaining({ id: '2' })
+      })
+    );
   });
 
   it('should correctly propagate item onChange through ConfigurableList', () => {

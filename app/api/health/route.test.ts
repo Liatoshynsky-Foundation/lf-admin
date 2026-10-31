@@ -32,7 +32,7 @@ jest.mock('mongoose', () => {
 jest.mock('next/server', () => ({
   __esModule: true,
   NextResponse: {
-    json: (body: any, init?: ResponseInit) => new Response(JSON.stringify(body), init)
+    json: (body: unknown, init?: ResponseInit) => new Response(JSON.stringify(body), init)
   }
 }));
 jest.mock('~/utils/apiResponse', () => ({
@@ -49,21 +49,23 @@ const mockServerStatus = mongoose.connection.db!.admin().serverStatus as jest.Mo
 const mockGetLastMongoConnectionErrorMessage = getLastMongoConnectionErrorMessage as jest.Mock;
 const originalDb = mongoose.connection.db;
 
+const setConnectionState = (state: { readyState?: number; db?: typeof originalDb | null }) =>
+  Object.assign(mongoose.connection, state);
+
 describe('GET /api/health', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (mongoose.connection as any).readyState = 0;
-    (mongoose.connection as any).db = originalDb;
+    setConnectionState({ readyState: 0, db: originalDb });
     mockGetLastMongoConnectionErrorMessage.mockReturnValue(null);
   });
 
   afterEach(() => {
-    (mongoose.connection as any).db = originalDb;
+    setConnectionState({ db: originalDb });
   });
 
   it('should return status UP when database connection is successful', async () => {
     (dbConnect as jest.Mock).mockResolvedValue(true);
-    (mongoose.connection as any).readyState = 1;
+    setConnectionState({ readyState: 1 });
 
     mockDbCommand.mockResolvedValue({ collections: 10, objects: 1000 });
     mockServerStatus.mockResolvedValue({ version: '5.0.0', uptime: 3600 });
@@ -87,7 +89,7 @@ describe('GET /api/health', () => {
 
   it('should return status DOWN with 503 if database is not connected', async () => {
     (dbConnect as jest.Mock).mockResolvedValue(true);
-    (mongoose.connection as any).readyState = 2;
+    setConnectionState({ readyState: 2 });
 
     const response = await GET();
 
@@ -129,7 +131,7 @@ describe('GET /api/health', () => {
 
   it('should return status DOWN with 503 if db.command throws an error', async () => {
     (dbConnect as jest.Mock).mockResolvedValue(true);
-    (mongoose.connection as any).readyState = 1;
+    setConnectionState({ readyState: 1 });
     const mockError = new Error('Command failed');
     mockDbCommand.mockRejectedValue(mockError);
 
@@ -151,7 +153,7 @@ describe('GET /api/health', () => {
 
   it('should return UNKNOWN connectionStatus for unrecognized readyState', async () => {
     (dbConnect as jest.Mock).mockResolvedValue(true);
-    (mongoose.connection as any).readyState = 99;
+    setConnectionState({ readyState: 99 });
 
     const response = await GET();
 
@@ -163,8 +165,7 @@ describe('GET /api/health', () => {
 
   it('should throw if db is null when connected', async () => {
     (dbConnect as jest.Mock).mockResolvedValue(true);
-    (mongoose.connection as any).readyState = 1;
-    (mongoose.connection as any).db = null;
+    setConnectionState({ readyState: 1, db: null });
 
     const response = await GET();
 

@@ -69,7 +69,6 @@ export type CreateOpusGQLInput = {
   introDescription?: OpusDescription;
   parts?: OpusDescription;
   gallery?: OpusGalleryItem[];
-  performancesTitle?: LocalizedString;
   performances?: OpusPerformance[];
   keywords?: LocalizedString;
   allowIndexation?: LocalizedBoolean;
@@ -304,12 +303,8 @@ const validatePerformances = (performances?: OpusPerformance[] | null): void => 
     }
 
     if (
-      !titleUk ||
-      titleUk.length < 2 ||
-      titleUk.length > 250 ||
-      !titleEn ||
-      titleEn.length < 2 ||
-      titleEn.length > 250
+      (titleUk && (titleUk.length < 2 || titleUk.length > 250)) ||
+      (titleEn && (titleEn.length < 2 || titleEn.length > 250))   
     ) {
       throw new GraphQLError(opusServiceErrors.PERFORMANCES_TITLE_INVALID, {
         extensions: { code: 'BAD_USER_INPUT' }
@@ -433,7 +428,6 @@ const buildOpusUpdateData = (input: UpdateOpusGQLInput, compositionIds: string[]
     introDescription: input.introDescription,
     parts: input.parts,
     gallery: input.gallery,
-    performancesTitle: input.performancesTitle,
     performances: input.performances,
     compositions: compositionIds,
     blocksOrder: input.blocksOrder
@@ -537,11 +531,10 @@ const buildPreviewContentFields = (
   previewCompositionIds: string[]
 ): Pick<
   PreviewOpusInput,
-  'compositions' | 'gallery' | 'performancesTitle' | 'performances' | 'blocksOrder'
+  'compositions' | 'gallery' | 'performances' | 'blocksOrder'
 > => ({
   compositions: previewCompositionIds.length > 0 ? previewCompositionIds : sourceOpus.compositions || [],
   gallery: sanitizePreviewGallery(input.gallery),
-  performancesTitle: input.performancesTitle ?? sourceOpus.performancesTitle ?? null,
   performances: sanitizePreviewPerformances(input.performances),
   blocksOrder: input.blocksOrder ?? sourceOpus.blocksOrder ?? null
 });
@@ -637,7 +630,6 @@ export const OpusMutation = {
         meta: { views: 0 },
         compositions: compositionIds,
         gallery: input.gallery,
-        performancesTitle: input.performancesTitle,
         performances: input.performances,
         blocksOrder: input.blocksOrder ?? null
       };
