@@ -11,7 +11,6 @@ import { CustomFormattingField } from '~/shared/components/custom-formatting-fie
 interface RequisitesContentEditorProps {
   value?: JSONContent;
   onChange: (value: JSONContent) => void;
-  disabled?: boolean;
 }
 
 export const RequisitesContentEditor: React.FC<RequisitesContentEditorProps> = ({

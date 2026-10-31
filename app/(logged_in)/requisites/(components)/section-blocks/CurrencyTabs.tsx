@@ -229,7 +229,6 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                     onBlur={handleCommitEdit}
                     onKeyDown={handleKeyDown}
                     placeholder={REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY}
-                    autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (

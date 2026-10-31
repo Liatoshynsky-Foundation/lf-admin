@@ -119,7 +119,6 @@ const PaymentDetailsPageContent = () => {
             key={activeTab.id}
             value={activeTab.content}
             onChange={handleContentChange}
-            disabled={saving}
           />
 
           <PdfAttachmentBlock

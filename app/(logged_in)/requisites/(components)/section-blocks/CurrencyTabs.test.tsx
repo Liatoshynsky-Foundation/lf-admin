@@ -149,9 +149,13 @@ describe('CurrencyTabs', () => {
     jest.useFakeTimers();
     renderCurrencyTabs({ editingId: '1' });
 
+    const input = screen.getByDisplayValue('UAH');
+
     act(() => {
       jest.advanceTimersByTime(100);
     });
+
+    expect(input).toHaveFocus();
     jest.useRealTimers();
   });
 

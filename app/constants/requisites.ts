@@ -1,25 +1,18 @@
-import type { JSONContent } from '@tiptap/react';
-
 import type {
-  PaymentDetails,
   PaymentDetailsPdfFile,
   PaymentDetailsTab as DomainPaymentDetailsTab
 } from '~/domain/entities/PaymentDetails';
-import type { UpdatePaymentDetailsInput } from '~/domain/repositories/PaymentDetailsRepository';
+
+export type { JSONContent } from '@tiptap/react';
+export type {
+  PaymentDetails,
+  PaymentDetailsPdfFile
+} from '~/domain/entities/PaymentDetails';
+export type { UpdatePaymentDetailsInput } from '~/domain/repositories/PaymentDetailsRepository';
 
 export type PaymentDetailsTab = DomainPaymentDetailsTab & {
   pdfFile?: PaymentDetailsPdfFile | null;
 };
-
-export type {
-  JSONContent,
-  PaymentDetails,
-  PaymentDetailsPdfFile,
-  UpdatePaymentDetailsInput
-};
-
-export type RequisiteItem = PaymentDetailsTab;
-export type RequisitePdfFile = PaymentDetailsPdfFile;
 
 export interface RequisitesData {
   items: PaymentDetailsTab[];
