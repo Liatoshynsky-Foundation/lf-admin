@@ -71,6 +71,21 @@ export const styles = {
       color: 'text.primary'
     }
   },
+  tabButton: {
+    background: 'none',
+    border: 'none',
+    outline: 'none',
+    color: 'inherit',
+    font: 'inherit',
+    fontSize: 'inherit',
+    fontWeight: 'inherit',
+    padding: 0,
+    margin: 0,
+    cursor: 'inherit',
+    display: 'inline-flex',
+    alignItems: 'center',
+    userSelect: 'none'
+  },
   tabInput: {
     backgroundColor: 'transparent',
     color: buttonGroupColors.primary.selectedButtonText,
@@ -92,6 +107,10 @@ export const styles = {
     cursor: 'pointer',
     padding: '2px',
     borderRadius: '4px',
+    margin: 0,
+    background: 'none',
+    border: 'none',
+    outline: 'none',
     transition: 'opacity 0.15s ease',
     '&:hover': {
       opacity: 0.75

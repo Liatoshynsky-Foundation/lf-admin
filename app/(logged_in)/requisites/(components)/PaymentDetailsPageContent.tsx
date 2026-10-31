@@ -2,7 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 import type { JSONContent } from '@tiptap/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { INITIAL_REQUISITES_DATA } from '../__mocks__/requisites';
@@ -24,6 +24,24 @@ const PaymentDetailsPageContent = () => {
   const [activeTabId, setActiveTabId] = useState(INITIAL_REQUISITES_DATA.items[0].id);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const localBlobUrlsRef = useRef<Set<string>>(new Set());
+
+  const revokeBlobUrl = (url?: string | null) => {
+    if (url && localBlobUrlsRef.current.has(url)) {
+      URL.revokeObjectURL(url);
+      localBlobUrlsRef.current.delete(url);
+    }
+  };
+
+  useEffect(() => {
+    const urls = localBlobUrlsRef.current;
+    return () => {
+      urls.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+      urls.clear();
+    };
+  }, []);
 
   const activeTab = useMemo(() => {
     return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
@@ -61,6 +79,10 @@ const PaymentDetailsPageContent = () => {
     }
 
     setTabs((prev) => {
+      const deletedTab = prev.find((tab) => tab.id === id);
+      if (deletedTab?.pdfFile?.url) {
+        revokeBlobUrl(deletedTab.pdfFile.url);
+      }
       const filtered = prev.filter((tab) => tab.id !== id);
       if (activeTabId === id) {
         setActiveTabId(filtered[0].id);
@@ -77,8 +99,20 @@ const PaymentDetailsPageContent = () => {
   };
 
   const handlePdfChange = (file: PaymentDetailsPdfFile | null) => {
+    if (file?.url?.startsWith('blob:')) {
+      localBlobUrlsRef.current.add(file.url);
+    }
+
     setTabs((prev) =>
-      prev.map((tab) => (tab.id === activeTabId ? { ...tab, pdfFile: file } : tab))
+      prev.map((tab) => {
+        if (tab.id === activeTabId) {
+          if (tab.pdfFile?.url && tab.pdfFile.url !== file?.url) {
+            revokeBlobUrl(tab.pdfFile.url);
+          }
+          return { ...tab, pdfFile: file };
+        }
+        return tab;
+      })
     );
   };
 
@@ -87,8 +121,6 @@ const PaymentDetailsPageContent = () => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 600));
       toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
-    } catch {
-      toast.error('Помилка під час збереження');
     } finally {
       setSaving(false);
     }

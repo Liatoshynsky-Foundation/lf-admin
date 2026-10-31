@@ -194,35 +194,68 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByText('GBP')).toBeInTheDocument();
   });
 
-  it('shows error toast when saving throws an error', async () => {
-    (toast.success as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Save error');
-    });
+  it('attaches, replaces, and removes PDF file with object URL revocation', () => {
+    global.URL.createObjectURL = jest
+      .fn()
+      .mockReturnValueOnce('blob:http://localhost/first.pdf')
+      .mockReturnValueOnce('blob:http://localhost/second.pdf');
+    global.URL.revokeObjectURL = jest.fn();
 
-    render(<PaymentDetailsPageContent />);
-
-    const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Помилка під час збереження');
-    });
-  });
-
-  it('attaches a new PDF file for active tab', () => {
     render(<PaymentDetailsPageContent />);
 
     fireEvent.click(screen.getByText('USD'));
-    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
-
     const fileInput = screen.getByTestId('pdf-file-input');
-    const file = new File(['dummy'], 'new-usd.pdf', { type: 'application/pdf' });
-    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/new-usd');
 
+    const firstFile = new File(['dummy1'], 'first.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [firstFile] } });
+    expect(screen.getByText('first.pdf')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('UAH'));
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('USD'));
+    const secondFile = new File(['dummy2'], 'second.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [secondFile] } });
+    expect(screen.getByText('second.pdf')).toBeInTheDocument();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/first.pdf');
+
+    const deletePdfButton = screen.getByTestId('delete-pdf-button');
+    fireEvent.click(deletePdfButton);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/second.pdf');
+  });
+
+  it('revokes blob URL when a tab with an attached file is deleted', () => {
+    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/tab-delete.pdf');
+    global.URL.revokeObjectURL = jest.fn();
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByText('USD'));
+    const fileInput = screen.getByTestId('pdf-file-input');
+    const file = new File(['dummy'], 'tab-delete.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
-    expect(screen.getByText('new-usd.pdf')).toBeInTheDocument();
+    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
+    fireEvent.click(optionsButton);
+    const deleteItem = screen.getByText('Видалити реквізит');
+    fireEvent.click(deleteItem);
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/tab-delete.pdf');
+  });
+
+  it('revokes all remaining local blob URLs when page unmounts', () => {
+    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/unmount.pdf');
+    global.URL.revokeObjectURL = jest.fn();
+
+    const { unmount } = render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByText('USD'));
+    const fileInput = screen.getByTestId('pdf-file-input');
+    const file = new File(['dummy'], 'unmount.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    unmount();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/unmount.pdf');
   });
 
   it('cancels editing tab id when clicking on another tab', () => {

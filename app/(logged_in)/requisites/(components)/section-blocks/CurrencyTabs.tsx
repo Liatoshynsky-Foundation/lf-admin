@@ -209,11 +209,6 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                   styles.tabItem,
                   isActive ? styles.tabItemActive : styles.tabItemInactive
                 ]}
-                onClick={() => {
-                  if (!isEditing) onSelectTab(item.id);
-                }}
-                role="button"
-                tabIndex={0}
               >
                 {isEditing ? (
                   <input
@@ -232,17 +227,23 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span>{item.name}</span>
+                  <Box
+                    component="button"
+                    type="button"
+                    sx={styles.tabButton}
+                    onClick={() => onSelectTab(item.id)}
+                  >
+                    {item.name}
+                  </Box>
                 )}
 
                 {isActive && !isEditing && (
                   <Box
-                    component="span"
+                    component="button"
+                    type="button"
                     sx={styles.menuTrigger}
                     onClick={(e) => handleOpenMenu(e, item.id)}
                     aria-label="Опції реквізиту"
-                    role="button"
-                    tabIndex={0}
                   >
                     <EllipsisVertical size={16} />
                   </Box>
