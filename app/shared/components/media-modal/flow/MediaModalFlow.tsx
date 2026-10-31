@@ -311,6 +311,7 @@ export function MediaModalFlow({
     <MediaModalContainer
       open={open}
       onClose={handleClose}
+      disableEscapeKeyDown={isCrop}
       dataTestId="MediaModal"
       headerLeft={headerLeft}
       headerCenter={headerCenter}
