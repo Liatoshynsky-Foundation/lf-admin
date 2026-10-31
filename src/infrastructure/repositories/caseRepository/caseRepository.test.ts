@@ -282,14 +282,13 @@ describe('caseRepository', () => {
   });
 
   describe('countDistinctDescriptionNumbers', () => {
-    it('should return the number of distinct descriptions with a detailed description', async () => {
+    it('should count distinct series numbers without filtering by detailed description or status', async () => {
       distinctMock.mockResolvedValue([1, 2, 3]);
 
       const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
       expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', {
-        fundId: mockFundId,
-        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+        fundId: mockFundId
       });
       expect(result).toBe(3);
     });
