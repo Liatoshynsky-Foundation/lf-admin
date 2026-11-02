@@ -155,16 +155,18 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
 
 const mockDeleteCase = jest.fn();
 const mockUpdateCase = jest.fn();
+const mockGetFundStatus = jest.fn();
 
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   __esModule: true,
   useDeleteCase: () => [mockDeleteCase, { loading: false }],
-  useUpdateCase: () => [mockUpdateCase, { loading: false }]
+  useUpdateCase: () => [mockUpdateCase, { loading: false }],
+  useGetFundStatus: () => mockGetFundStatus
 }));
 
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
-  default: { success: jest.fn(), error: jest.fn() }
+  default: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() })
 }));
 
 describe('ArchiveCasesTable', () => {
@@ -172,6 +174,7 @@ describe('ArchiveCasesTable', () => {
     jest.clearAllMocks();
     mockDeleteCase.mockResolvedValue(undefined);
     mockUpdateCase.mockResolvedValue(undefined);
+    mockGetFundStatus.mockResolvedValue(BaseContentStatuses.Published);
   });
 
   it('renders an empty table when there are no cases', () => {
@@ -329,6 +332,50 @@ describe('ArchiveCasesTable', () => {
       expect(onCaseChanged).toHaveBeenCalledTimes(1);
     }
   );
+
+  it('passes the supplied fund status to case row actions', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ArchiveCasesTable
+        cases={[mockCase({ status: BaseContentStatuses.Hidden })]}
+        fundStatus={BaseContentStatuses.Hidden}
+      />
+    );
+
+    await user.click(screen.getByTestId('menu-item-toggle-status'));
+
+    expect(mockGetFundStatus).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+  });
+
+  it('looks up each case fund independently in the global cases table', async () => {
+    const user = userEvent.setup();
+    mockGetFundStatus.mockImplementation(async (fundId: string) =>
+      fundId === 'hidden-fund' ? BaseContentStatuses.Hidden : BaseContentStatuses.Published
+    );
+
+    render(
+      <ArchiveCasesTable
+        cases={[
+          mockCase({ id: 'hidden-case', fundId: 'hidden-fund', status: BaseContentStatuses.Hidden }),
+          mockCase({ id: 'published-case', fundId: 'published-fund', status: BaseContentStatuses.Hidden })
+        ]}
+      />
+    );
+
+    const publishActions = screen.getAllByTestId('menu-item-toggle-status');
+    await user.click(publishActions[0]);
+    await user.click(publishActions[1]);
+
+    expect(mockGetFundStatus).toHaveBeenNthCalledWith(1, 'hidden-fund');
+    expect(mockGetFundStatus).toHaveBeenNthCalledWith(2, 'published-fund');
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    expect(toast.success).toHaveBeenCalledTimes(1);
+    expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+  });
 
   it.each([
     { status: BaseContentStatuses.Published, thrown: new Error('мережева помилка'), expectedMessage: 'мережева помилка' },

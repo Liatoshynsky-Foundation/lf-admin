@@ -125,7 +125,6 @@ export const FundsTable = ({
     }
   };
 
-
   const buildFundRowData = (fund: Fund): FundRow => {
     const canPublish = fund.status === BaseContentStatuses.Hidden && Boolean(onPublish);
     const canUnpublish = fund.status === BaseContentStatuses.Published && Boolean(onUnpublish);
@@ -175,9 +174,7 @@ export const FundsTable = ({
     menuActions: caseRow.menuActions
   });
 
-  const renderDate = (date: string) => (
-    <TitleWithTooltip text={date} lineClamp={2} fontWeight={600} fontSize={16} />
-  );
+  const renderDate = (date: string) => <TitleWithTooltip text={date} lineClamp={2} fontWeight={600} fontSize={16} />;
 
   const renderFundNumber = (fundNumber: number | string) => {
     const text = typeof fundNumber === 'number' || /^\d+$/.test(fundNumber) ? `ф. ${fundNumber}` : fundNumber;
@@ -285,8 +282,8 @@ export const FundsTable = ({
       onClose={() => setDeleteState({ open: false })}
       title="Підтвердити видалення"
       description={
-        deleteState.isCase 
-          ? `Ви впевнені, що хочете видалити справу «${deleteState.name ?? ''}»?` 
+        deleteState.isCase
+          ? `Ви впевнені, що хочете видалити справу «${deleteState.name ?? ''}»?`
           : `Видалити фонд «${deleteState.name ?? ''}»? Усі справи цього фонду також будуть видалені. Цю дію неможливо скасувати.`
       }
       onConfirm={async () => {
@@ -330,7 +327,7 @@ export const FundsTable = ({
       type: 'group' as const,
       id: fund.id,
       groupData: buildFundRowData(fund),
-      subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem))
+      subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem, fund.status))
     }));
 
     orphanCases.forEach((caseItem) => {

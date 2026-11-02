@@ -149,6 +149,7 @@ export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
 export const casesStatusMessages = {
   publishError: 'Не вдалося опублікувати справу. Спробуйте ще раз',
   updateError: 'Не вдалося змінити статус справи',
+  fundStatusError: 'Не вдалося перевірити статус фонду. Справу опубліковано без перевірки.',
   publishHiddenFundWarning: 'Справу опубліковано, але вона не буде доступна на сайті, доки фонд приховано'
 };
 

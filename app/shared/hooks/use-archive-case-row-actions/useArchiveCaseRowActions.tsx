@@ -5,12 +5,13 @@ import toast from 'react-hot-toast';
 
 import { ArchiveCase } from '~/(logged_in)/archive/(components)/archive-funds-table/ArchiveFundsTable';
 import { ArchiveCaseModal } from '~/(logged_in)/archive/(components)/ArchiveCaseModal';
+import { casesStatusMessages } from '~/constants/errors';
 import { buildArchiveCaseShareUrl } from '~/lib/utils/archiveCaseShare';
 import { getCaseStatusErrorMessage, showCaseStatusToast } from '~/lib/utils/caseStatus';
 import { DeleteCompositionModal } from '~/shared/components/delete-composition-modal/DeleteCompositionModal';
 import { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import type { ArchiveCaseInitialData } from '~/shared/hooks/use-archive-case-modal/useArchiveCaseModal';
-import { useDeleteCase, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
+import { useDeleteCase, useGetFundStatus, useUpdateCase } from '~/shared/hooks/use-funds/useFunds';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import { CaseStatus } from '~/types/graphql/generated/graphql';
 
@@ -47,6 +48,7 @@ export const useArchiveCaseRowActions = (
 ) => {
   const [deleteCase] = useDeleteCase();
   const [updateCase] = useUpdateCase();
+  const getFundStatus = useGetFundStatus();
   const [deleteState, setDeleteState] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
   const [editCase, setEditCase] = useState<{ item: ArchiveCase; data: ArchiveCaseInitialData }>();
   const initialCaseId = initialCase?.id;
@@ -70,7 +72,17 @@ export const useArchiveCaseRowActions = (
       const nextStatus = item.status === BaseContentStatuses.Published ? CaseStatus.Draft : CaseStatus.Published;
       try {
         await updateCase({ id: item.id, input: { status: nextStatus } });
-        showCaseStatusToast(nextStatus, fundStatus);
+
+        let statusForToast = fundStatus;
+        if (nextStatus === CaseStatus.Published && statusForToast === undefined && item.fundId) {
+          try {
+            statusForToast = await getFundStatus(item.fundId);
+          } catch {
+            toast.error(casesStatusMessages.fundStatusError);
+          }
+        }
+
+        showCaseStatusToast(nextStatus, statusForToast);
         await onCaseChanged?.();
       } catch (error) {
         toast.error(getCaseStatusErrorMessage(error, nextStatus));

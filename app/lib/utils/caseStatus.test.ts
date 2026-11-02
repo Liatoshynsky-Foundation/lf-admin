@@ -30,9 +30,9 @@ describe('caseStatus helpers', () => {
       expect(toast.success).toHaveBeenCalledWith(message);
     });
 
-    it('should show a success toats and a warning when publishing a case under a hidden fund', () => {
+    it('should show only a warning when publishing a case under a hidden fund', () => {
       showCaseStatusToast(CaseStatus.Published, BaseContentStatuses.Hidden);
-      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(toast.success).not.toHaveBeenCalled();
       expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
     });
   });

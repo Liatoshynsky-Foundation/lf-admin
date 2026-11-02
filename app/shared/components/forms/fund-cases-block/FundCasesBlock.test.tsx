@@ -30,10 +30,7 @@ const capturedTableLayoutProps: {
 
 jest.mock('~/shared/components/table-layout/TableLayout', () => ({
   __esModule: true,
-  TableLayout: (props: {
-    columns: ColumnDefLike[];
-    data: { plainData: Record<string, unknown> }[];
-  }) => {
+  TableLayout: (props: { columns: ColumnDefLike[]; data: { plainData: Record<string, unknown> }[] }) => {
     capturedTableLayoutProps.columns = props.columns;
     capturedTableLayoutProps.data = props.data;
     return (
@@ -121,7 +118,9 @@ jest.mock('~/shared/components/pagination/Pagination', () => ({
   }) => (
     <nav>
       {Array.from({ length: totalPages }, (_, index) => (
-        <span key={index} aria-current={index + 1 === currentPage ? 'page' : undefined}>{index + 1}</span>
+        <span key={index} aria-current={index + 1 === currentPage ? 'page' : undefined}>
+          {index + 1}
+        </span>
       ))}
       <button onClick={(event) => onPageChange(event, currentPage + 1)}>next page</button>
     </nav>
@@ -144,7 +143,7 @@ jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
 
 jest.mock('react-hot-toast', () => {
   const toast = Object.assign(jest.fn(), {
-    success: jest.fn(), 
+    success: jest.fn(),
     error: jest.fn()
   });
 
@@ -210,11 +209,13 @@ describe('FundCasesBlock', () => {
 
   it('paginates cases with eight rows per page', async () => {
     const user = userEvent.setup();
-    mockCases = Array.from({ length: 9 }, (_, index) => buildCase({
-      id: `case-${index + 1}`,
-      caseName: `Справа ${index + 1}`,
-      caseNumber: index + 1
-    }));
+    mockCases = Array.from({ length: 9 }, (_, index) =>
+      buildCase({
+        id: `case-${index + 1}`,
+        caseName: `Справа ${index + 1}`,
+        caseNumber: index + 1
+      })
+    );
 
     render(<FundCasesBlock fundId="fund-1" />);
 
@@ -312,9 +313,7 @@ describe('FundCasesBlock', () => {
 
     await user.click(screen.getByText('Поширити'));
 
-    expect(writeText).toHaveBeenCalledWith(
-      `${window.location.origin}/archive/fund/fund-1/edit?caseId=case-1`
-    );
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/archive/fund/fund-1/edit?caseId=case-1`);
     expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
   });
 
@@ -431,27 +430,22 @@ describe('FundCasesBlock', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
-  it('should show success and warning toasts when publishing a case under a hidden fund', async () =>{
+  it('should show only warning toast without success toast when publishing a case under a hidden fund', async () => {
     const user = userEvent.setup();
     mockCases = [buildCase({ id: 'case-1', status: CaseStatus.Draft })];
 
-    render(
-      <FundCasesBlock
-        fundId='fund-1'
-        fundStatus={BaseContentStatuses.Hidden}
-      />
-    );
+    render(<FundCasesBlock fundId="fund-1" fundStatus={BaseContentStatuses.Hidden} />);
 
     await user.click(screen.getByText('Опублікувати'));
 
-    expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+    expect(toast.success).not.toHaveBeenCalled();
     expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
   });
 
   it.each([
     { status: CaseStatus.Draft, rejection: new Error('Update failed'), expectedMessage: 'Update failed' },
     { status: CaseStatus.Draft, rejection: 'Some string error', expectedMessage: casesStatusMessages.publishError },
-    { status: CaseStatus.Published, rejection: 'Some string error', expectedMessage: casesStatusMessages.updateError },
+    { status: CaseStatus.Published, rejection: 'Some string error', expectedMessage: casesStatusMessages.updateError }
   ])('handles errors when toggling a case status', async ({ status, rejection, expectedMessage }) => {
     const user = userEvent.setup();
     const isPublished = status === CaseStatus.Published;
@@ -461,7 +455,10 @@ describe('FundCasesBlock', () => {
 
     await user.click(screen.getByText(isPublished ? 'Сховати' : 'Опублікувати'));
 
-    expect(mockUpdateCase).toHaveBeenCalledWith({ id: 'case-1', input: { status: isPublished ? CaseStatus.Draft : CaseStatus.Published } });
+    expect(mockUpdateCase).toHaveBeenCalledWith({
+      id: 'case-1',
+      input: { status: isPublished ? CaseStatus.Draft : CaseStatus.Published }
+    });
     expect(toast.error).toHaveBeenCalledWith(expectedMessage);
   });
 
