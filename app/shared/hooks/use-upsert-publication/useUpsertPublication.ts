@@ -131,17 +131,11 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       if (lastCoverImageAltRef.current?.uk === alt.uk && lastCoverImageAltRef.current?.en === alt.en) return;
 
       try {
-        let result;
-        switch (type) {
-        case 'news':
-          result = await saveNewsCoverImageAlt(id, alt);
-          break;
-        case 'events':
-          result = await saveEventCoverImageAlt(id, alt);
-          break;
-        default:
-          return;
-        }
+        const saveCoverImageAlt = {
+          news: saveNewsCoverImageAlt,
+          events: saveEventCoverImageAlt
+        }[type];
+        const result = await saveCoverImageAlt(id, alt);
 
         if (!result) return;
 
