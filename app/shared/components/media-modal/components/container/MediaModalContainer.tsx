@@ -9,6 +9,7 @@ import CloseIcon from '~/public/icons/close.svg';
 type Props = Readonly<{
   open: boolean;
   onClose: () => void;
+  disableEscapeKeyDown?: boolean;
   dataTestId?: string;
   headerLeft?: ReactNode;
   headerCenter?: ReactNode;
@@ -22,6 +23,7 @@ type Props = Readonly<{
 export function MediaModalContainer({
   open,
   onClose,
+  disableEscapeKeyDown = false,
   dataTestId,
   headerLeft,
   headerCenter,
@@ -39,6 +41,7 @@ export function MediaModalContainer({
       open={open}
       onClose={(_, reason: 'backdropClick' | 'escapeKeyDown') => {
         if (reason === 'backdropClick') return;
+        if (reason === 'escapeKeyDown' && disableEscapeKeyDown) return;
         onClose();
       }}
       sx={styles.dialog}

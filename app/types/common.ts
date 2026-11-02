@@ -7,6 +7,11 @@ export interface LocalizedString {
   en: string;
 }
 
+export type NullableLocalizedString = {
+  uk?: string | null;
+  en?: string | null;
+};
+
 export interface LocalizedBoolean {
   uk: boolean;
   en: boolean;

@@ -164,6 +164,7 @@ describe('ContactsPageContent', () => {
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.uk);
     fireEvent.click(screen.getByRole('button', { name: LANGUAGE_BUTTON_LABEL }));
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.en);
+
     fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
     fireEvent.click(screen.getByRole('button', { name: LOCALIZED_FIELD_CHANGE_LABEL }));
@@ -173,9 +174,11 @@ describe('ContactsPageContent', () => {
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_FIELD_CHANGE_LABEL }));
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_FIELD_BLUR_LABEL }));
 
-    expect(mockUpdateContacts).toHaveBeenCalledWith({
-      contactInformation: CONTACT_INFORMATION,
-      socialNetworks: SOCIAL_NETWORKS.map((item, id) => ({ ...item, id }))
+    await waitFor(() => {
+      expect(mockUpdateContacts).toHaveBeenCalledWith({
+        contactInformation: CONTACT_INFORMATION,
+        socialNetworks: SOCIAL_NETWORKS.map((item, id) => ({ ...item, id }))
+      });
     });
   });
 
