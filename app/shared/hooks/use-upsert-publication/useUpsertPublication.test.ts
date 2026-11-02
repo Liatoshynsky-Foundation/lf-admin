@@ -203,6 +203,44 @@ describe('useUpsertPublication', () => {
       expect(toast.error).toHaveBeenCalledWith('Save failed');
       expect(mockSaveNewsCoverImageAlt).toHaveBeenCalledTimes(2);
     });
+
+    it('saves a revert while a different alt is still pending', async () => {
+      let resolveBb!: (result: { data: object }) => void;
+      const pendingBbSave = new Promise<{ data: object }>((resolve) => {
+        resolveBb = resolve;
+      });
+      const aa = { uk: 'aa', en: 'aa' };
+      const bb = { uk: 'bb', en: 'bb' };
+
+      mockSaveNewsCoverImageAlt
+        .mockResolvedValueOnce({ data: {} })
+        .mockReturnValueOnce(pendingBbSave)
+        .mockResolvedValueOnce({ data: {} });
+
+      const { result } = renderHook(() =>
+        useUpsertPublication({ type: 'news', id: MOCK_PUBLICATION.newsId })
+      );
+
+      await act(async () => {
+        await result.current.handleCoverImageAltChange(aa);
+      });
+
+      let bbSave!: Promise<unknown>;
+      let aaRevert!: Promise<unknown>;
+      act(() => {
+        bbSave = result.current.handleCoverImageAltChange(bb);
+        aaRevert = result.current.handleCoverImageAltChange(aa);
+      });
+
+      expect(mockSaveNewsCoverImageAlt).toHaveBeenCalledTimes(3);
+      expect(mockSaveNewsCoverImageAlt).toHaveBeenNthCalledWith(2, MOCK_PUBLICATION.newsId, bb);
+      expect(mockSaveNewsCoverImageAlt).toHaveBeenNthCalledWith(3, MOCK_PUBLICATION.newsId, aa);
+
+      await act(async () => {
+        resolveBb({ data: {} });
+        await Promise.all([bbSave, aaRevert]);
+      });
+    });
   });
 
   describe('handleSave', () => {

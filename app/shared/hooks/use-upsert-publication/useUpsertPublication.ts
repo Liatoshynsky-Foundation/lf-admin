@@ -67,7 +67,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
   const form = usePublicationForm();
   const [saveNewsCoverImageAlt] = useUpdateNewsCoverImageAlt();
   const [saveEventCoverImageAlt] = useUpdateEventCoverImageAlt();
-  const lastCoverImageAltRef = useRef<LocalizedString | null>(null);
+  const lastRequestedCoverImageAltRef = useRef<LocalizedString | null>(null);
 
   const isInitializedRef = useRef(false);
 
@@ -128,21 +128,26 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     async (alt: LocalizedString) => {
       if (!id || (type !== 'news' && type !== 'events')) return;
 
-      if (lastCoverImageAltRef.current?.uk === alt.uk && lastCoverImageAltRef.current?.en === alt.en) return;
+      const isSameAlt = (value: LocalizedString | null) =>
+        value?.uk === alt.uk && value?.en === alt.en;
+
+      if (isSameAlt(lastRequestedCoverImageAltRef.current)) return;
 
       try {
         const saveCoverImageAlt = {
           news: saveNewsCoverImageAlt,
           events: saveEventCoverImageAlt
         }[type];
+        lastRequestedCoverImageAltRef.current = alt;
         const result = await saveCoverImageAlt(id, alt);
 
         if (!result) return;
 
-        lastCoverImageAltRef.current = alt;
         form.setInitialState((previous) => updateInitialAltText(previous, alt));
       } catch (error) {
-        lastCoverImageAltRef.current = null;
+        if (isSameAlt(lastRequestedCoverImageAltRef.current)) {
+          lastRequestedCoverImageAltRef.current = null;
+        }
         toast.error(error instanceof Error ? error.message : publicationErrors.uk.genericError);
       }
     },
