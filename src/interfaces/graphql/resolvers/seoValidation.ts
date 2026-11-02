@@ -24,6 +24,21 @@ type Locale = (typeof LOCALES)[number];
 
 const EMPTY_LOCALIZED_STRING: LocalizedString = { uk: '', en: '' };
 
+export const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
+  if (!value) return value;
+
+  const trimmed: LocalizedString = { ...value };
+
+  LOCALES.forEach((locale) => {
+    const localizedValue = value[locale];
+    if (typeof localizedValue === 'string') {
+      trimmed[locale] = localizedValue.trim();
+    }
+  });
+
+  return trimmed;
+};
+
 const hasCoverImageSrc = (coverImage?: LocalizedImage): boolean => Boolean(coverImage?.src?.trim());
 
 const getInvalidLocalizedStrings = (
@@ -72,5 +87,12 @@ export const validateSeoLengths = ({ title, description, keywords, coverImage }:
   throwBadUserInput(
     seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
     getInvalidLocalizedStrings(coverImage?.alt ?? EMPTY_LOCALIZED_STRING, 'altText', altRequiredLocales)
+  );
+};
+
+export const validateCoverImageAltLength = (alt: LocalizedString): void => {
+  throwBadUserInput(
+    seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
+    getInvalidLocalizedStrings(alt, 'altText', ALT_REQUIRED_LOCALES)
   );
 };

@@ -67,6 +67,18 @@ mutation UpdateNews($id: ID!, $input: UpdateNewsInput!) {
   }
 }
 
+mutation UpdateNewsCoverImageAlt($id: ID!, $input: UpdateNewsCoverImageAltInput!) {
+  updateNewsCoverImageAlt(id: $id, input: $input) {
+    id
+    coverImage {
+      alt {
+        uk
+        en
+      }
+    }
+  }
+}
+
 mutation DeleteNews($id: ID!) {
   deleteNews(id: $id)
 }

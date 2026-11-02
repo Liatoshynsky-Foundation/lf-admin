@@ -48,6 +48,7 @@ export interface SeoMetadataBlockProps {
   readonly crop?: LocalizedCropRect | null;
   readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
   readonly onChange?: (value: SeoBlockValue) => void;
+  readonly onChangeAltText?: (value: LocalizedString) => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
     value: LocalizedMeta,
@@ -67,6 +68,7 @@ export default function SeoMetadataBlock({
   crop,
   onChangeCrop,
   onChange: externalOnChange,
+  onChangeAltText,
   extraFields,
   labels
 }: SeoMetadataBlockProps) {
@@ -79,6 +81,7 @@ export default function SeoMetadataBlock({
   const value = isControlled ? externalValue : internalValue;
   const isLocaleRequired = (locale: 'uk' | 'en'): SeoFieldsRequired =>
     typeof required === 'boolean' ? required : required[locale];
+  const handleAltTextChange = (altText: string) => onChangeAltText?.({ uk: altText, en: altText });
 
   const handleChange = (next: SeoBlockValue) => {
     if (isControlled) {
@@ -176,6 +179,7 @@ export default function SeoMetadataBlock({
       <SeoMetadataForm
         value={value.meta.uk}
         onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'uk', newMeta))}
+        onChangeAltText={handleAltTextChange}
         locale="uk"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
@@ -203,6 +207,7 @@ export default function SeoMetadataBlock({
       <SeoMetadataForm
         value={value.meta.en}
         onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'en', newMeta))}
+        onChangeAltText={handleAltTextChange}
         locale="en"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}

@@ -1,6 +1,7 @@
 import { act,renderHook } from '@testing-library/react';
 
 import { buildStatusUpdater } from '../buildStatusUpdater';
+import { addCoverImageAltAutosaveTests } from '../use-upsert-publication/coverImageAltTestHelpers';
 import {
   useAllEvents,
   useCreateEvent,
@@ -11,6 +12,7 @@ import {
   usePaginatedEvents,
   usePublishedEvents,
   useUpdateEvent,
+  useUpdateEventCoverImageAlt,
   useUpdateEventStatus} from './useEvents';
 import { EventsErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
@@ -39,6 +41,7 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
     jest.fn(),
     { loading: false, data: { updateEvent: { status: 'Published' } } }
   ]),
+  useUpdateEventCoverImageAltMutation: jest.fn(() => [jest.fn(), { loading: false, error: null }]),
   useDeleteEventMutation: jest.fn(() => [jest.fn(), { loading: false }]),
   useIncrementEventViewsMutation: jest.fn(() => [jest.fn(), { loading: false }])
 }));
@@ -204,6 +207,15 @@ describe('useEvents hooks', () => {
         EventsErrors.NETWORK_ERROR_UPDATE,
         EventsErrors.FAILED_TO_UPDATE
       );
+    });
+  });
+
+  describe('useUpdateEventCoverImageAlt', () => {
+    addCoverImageAltAutosaveTests({
+      useSaveHook: useUpdateEventCoverImageAlt,
+      mockSafeMutate: safeMutate as jest.Mock,
+      staleResult: Promise.resolve({ data: { updateEventCoverImageAlt: { id: 'id1' } } }),
+      latestResult: Promise.resolve({ data: { updateEventCoverImageAlt: { id: 'id2' } } })
     });
   });
 

@@ -59,7 +59,8 @@ export default function CreatePublicationsView({
     handleSave,
     forceShowErrors,
     seoErrors,
-    handleDateTimeChange
+    handleDateTimeChange,
+    handleCoverImageAltChange
   } = data;
   const router = useRouter();
 
@@ -213,6 +214,7 @@ export default function CreatePublicationsView({
           errors={seoErrors}
           crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
+          onChangeAltText={handleCoverImageAltChange}
           value={seoValue}
           onChange={setSeoValue}
           extraFields={seoExtraFields}

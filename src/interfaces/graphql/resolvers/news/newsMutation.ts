@@ -7,7 +7,7 @@ import {
   syncImagesCrops
 } from '../helpers';
 import { validateNewsDate } from '../newsValidation';
-import { validateSeoLengths } from '../seoValidation';
+import { trimLocalizedString, validateCoverImageAltLength, validateSeoLengths } from '../seoValidation';
 import { processNewsContent } from './processNewsContent/processNewsContent';
 import type { GraphQLContext } from '~/back-shared/types/container/types';
 import { graphqlErrors } from '~/constants/errors';
@@ -36,6 +36,7 @@ export type UpdateNewsGQLInput = Partial<CreateNewsGQLInput>;
 
 type CreateNewsArgs = { input: CreateNewsGQLInput };
 type UpdateNewsArgs = { id: string; input: UpdateNewsGQLInput };
+type UpdateNewsCoverImageAltArgs = { id: string; input: { alt: LocalizedString } };
 interface IdArgs {
   id: string;
 }
@@ -58,22 +59,6 @@ const processContentFields = async (input: UpdateNewsGQLInput, updateData: Updat
   if (input.coverImage) {
     updateData.coverImage = processedContent.coverImage;
   }
-};
-
-const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
-  if (!value) return value;
-
-  const trimmed: LocalizedString = { ...value };
-
-  (['uk', 'en'] as const).forEach((lang) => {
-    const localizedValue = value[lang];
-
-    if (typeof localizedValue === 'string') {
-      trimmed[lang] = localizedValue.trim();
-    }
-  });
-
-  return trimmed;
 };
 
 const trimLocalizedImageAlt = (coverImage: LocalizedImage | undefined): LocalizedImage | undefined => {
@@ -195,6 +180,32 @@ export const NewsMutation = {
     }
     if (input.content) {
       await syncImagesCrops(res.id, input.content);
+    }
+
+    return res;
+  },
+
+  updateNewsCoverImageAlt: async (
+    _: unknown,
+    { id, input }: UpdateNewsCoverImageAltArgs,
+    context: GraphQLContext
+  ): Promise<News> => {
+    if (!context.admin) {
+      throw new GraphQLError(graphqlErrors.UNAUTHENTICATED.message, {
+        extensions: { code: graphqlErrors.UNAUTHENTICATED.code }
+      });
+    }
+
+    const alt = trimLocalizedString(input.alt) ?? input.alt;
+    validateCoverImageAltLength(alt);
+
+    const repo = context.requestContainer.cradle.newsRepository;
+    const res = await repo.updateCoverImageAlt(id, alt);
+
+    if (!res) {
+      throw new GraphQLError(newsServiceErrors.NEWS_NOT_FOUND(id), {
+        extensions: { code: 'NEWS_NOT_FOUND' }
+      });
     }
 
     return res;

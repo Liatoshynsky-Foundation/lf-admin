@@ -28,7 +28,8 @@ describe('EventsMutation Resolvers', () => {
     delete: jest.fn(),
     findById: jest.fn(),
     findBySlug: jest.fn(),
-    incrementViews: jest.fn()
+    incrementViews: jest.fn(),
+    updateCoverImageAlt: jest.fn()
   };
 
   const adminContext = createMockContext(true, 'eventsRepository', mockRepo);
@@ -318,6 +319,21 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Deletion and Metadata', () => {
+    it('updateEventCoverImageAlt: should call the dedicated repository method', async () => {
+      const id = '1';
+      const event = createMockEntity({ id });
+      (mockRepo.updateCoverImageAlt as jest.Mock).mockResolvedValue(event);
+
+      const result = await EventsMutation.updateEventCoverImageAlt(
+        {},
+        { id, input: { alt: { uk: 'аа', en: 'aa' } } },
+        adminContext
+      );
+
+      expect(mockRepo.updateCoverImageAlt).toHaveBeenCalledWith(id, { uk: 'аа', en: 'aa' });
+      expect(result).toBe(event);
+    });
+
     it('deleteEvent: should throw error if not admin', async () => {
       await expect(EventsMutation.deleteEvent({}, { id: '1' }, userContext))
         .rejects.toThrow('You must be logged in to access this resource.');

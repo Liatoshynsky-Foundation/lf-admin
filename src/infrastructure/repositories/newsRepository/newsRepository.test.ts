@@ -1,5 +1,6 @@
 import { Model } from 'mongoose';
 
+import { addCoverImageAltRepositoryTests } from '../coverImageAltTestHelpers';
 import { DbNews, NewsRepository } from './newsRepository';
 import { News } from '~/domain/entities/News';
 import { CreateNewsInput, INewsRepository } from '~/domain/repositories/newsRepository';
@@ -395,6 +396,15 @@ describe('NewsRepository Comprehensive Tests', () => {
       const count = await repository.count({ statuses: [NewsStatus.Archived] });
       expect(count).toBe(0);
       expect(countDocumentsMock).toHaveBeenCalledWith({ status: { $in: [NewsStatus.Archived] } });
+    });
+  });
+
+  describe('Cover image alt updates', () => {
+    addCoverImageAltRepositoryTests({
+      getRepository: () => repository,
+      findByIdAndUpdateMock,
+      createDocument: (alt) => createMockNewsDoc({ coverImage: { src: 'img.jpg', alt } }),
+      validId: mockId
     });
   });
 });

@@ -1,5 +1,6 @@
 import { Model } from 'mongoose';
 
+import { addCoverImageAltRepositoryTests } from '../coverImageAltTestHelpers';
 import { DbEvent, EventsRepository } from './eventRepository';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, IEventsRepository } from '~/src/domain/repositories/eventsRepository';
@@ -312,6 +313,15 @@ describe('EventsRepository Comprehensive Tests', () => {
 
       const result = await repository.create(input);
       expect(result.meta.views).toBe(25);
+    });
+  });
+
+  describe('Cover image alt updates', () => {
+    addCoverImageAltRepositoryTests({
+      getRepository: () => repository,
+      findByIdAndUpdateMock,
+      createDocument: (alt) => createMockEventDoc({ coverImage: { src: 'img.jpg', alt } }),
+      validId: mockId
     });
   });
 });

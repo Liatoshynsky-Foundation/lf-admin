@@ -248,6 +248,7 @@ const createMockData = (
   handleSave: jest.fn(),
   handlePreviewSave: jest.fn().mockResolvedValue(null),
   handleDateTimeChange: jest.fn(),
+  handleCoverImageAltChange: jest.fn(),
   hasUnsavedChanges: false,
   ...overrides
 });

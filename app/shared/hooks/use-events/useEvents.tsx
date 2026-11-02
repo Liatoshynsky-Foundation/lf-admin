@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { buildStatusUpdater } from '../buildStatusUpdater';
 import { EventsErrors } from '~/constants/errors';
@@ -13,6 +13,8 @@ import {
   type DeleteEventMutationVariables,
   EventFiltersInput,
   EventStatus,
+  type UpdateEventCoverImageAltMutation,
+  type UpdateEventCoverImageAltMutationVariables,
   type UpdateEventMutation,
   type UpdateEventMutationVariables,
   useAllEventsQuery,
@@ -23,7 +25,9 @@ import {
   useIncrementEventViewsMutation,
   usePaginatedEventsQuery,
   usePublishedEventsQuery,
-  useUpdateEventMutation} from '~/types/graphql/generated/graphql';
+  useUpdateEventCoverImageAltMutation,
+  useUpdateEventMutation
+} from '~/types/graphql/generated/graphql';
 
 type QueryHookOptions = Readonly<{
   skip?: boolean;
@@ -71,6 +75,39 @@ export const useUpdateEvent = () => {
     [mutate]
   );
   return [updateEvent, meta] as const;
+};
+
+export const useUpdateEventCoverImageAlt = () => {
+  const [mutate, { loading, error }] = useUpdateEventCoverImageAltMutation();
+  const sequenceRef = useRef(0);
+
+  const save = useCallback(
+    async (id: string, alt: UpdateEventCoverImageAltMutationVariables['input']['alt']) => {
+      const sequence = ++sequenceRef.current;
+
+      try {
+        const result = await safeMutate<
+          UpdateEventCoverImageAltMutation,
+          UpdateEventCoverImageAltMutationVariables
+        >(
+          mutate,
+          { id, input: { alt } },
+          EventsErrors.NETWORK_ERROR_UPDATE,
+          EventsErrors.FAILED_TO_UPDATE
+        );
+
+        return sequence === sequenceRef.current ? result : undefined;
+      } catch (saveError) {
+        if (sequence === sequenceRef.current) {
+          throw saveError;
+        }
+        return undefined;
+      }
+    },
+    [mutate]
+  );
+
+  return [save, { loading, error }] as const;
 };
 
 export const useUpdateEventStatus = () => {
