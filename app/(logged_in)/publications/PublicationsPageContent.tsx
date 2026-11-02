@@ -462,7 +462,7 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
 
     const allItems = [...newsItems, ...mediaItems, ...eventItems];
 
-    const sortedItems = allItems.sort((a, b) => comparePublicationItems(a, b, sortValue));
+    const sortedItems = [...allItems].sort((a, b) => comparePublicationItems(a, b, sortValue));
 
     return sortedItems;
   }, [activeTab, mediaItems, eventItems, newsItems, sortValue]);
