@@ -327,7 +327,7 @@ export const FundsTable = ({
       type: 'group' as const,
       id: fund.id,
       groupData: buildFundRowData(fund),
-      subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem))
+      subRows: (casesByFund.get(fund.id) ?? []).map((caseItem) => getCaseRow(caseItem, fund.status))
     }));
 
     orphanCases.forEach((caseItem) => {
@@ -357,8 +357,6 @@ export const FundsTable = ({
     plainData: buildFundRowData(fund)
   }));
 
-  const fundStatus = funds.find((fund) => fund.id === cases[0]?.fundId)?.status ?? funds[0]?.status;
-
   return (
     <>
       {fundRows.length > 0 && (
@@ -367,7 +365,7 @@ export const FundsTable = ({
           {deleteFundOrCaseModal}
         </>
       )}
-      {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} fundStatus={fundStatus} />}
+      {cases.length > 0 && <ArchiveCasesTable cases={cases} onCaseChanged={onCaseChanged} />}
       {caseRowModals}
     </>
   );

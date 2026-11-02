@@ -10,9 +10,11 @@ import { CaseStatus } from '~/types/graphql/generated/graphql';
 
 const mockDeleteCase = jest.fn();
 const mockUpdateCase = jest.fn();
+const mockGetFundStatus = jest.fn();
 jest.mock('~/shared/hooks/use-funds/useFunds', () => ({
   useDeleteCase: () => [mockDeleteCase],
   useUpdateCase: () => [mockUpdateCase],
+  useGetFundStatus: () => mockGetFundStatus
 }));
 
 jest.mock('react-hot-toast', () => {
@@ -113,6 +115,7 @@ const TestHarness = ({
 describe('useArchiveCaseRowActions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetFundStatus.mockResolvedValue(BaseContentStatuses.Published);
   });
 
   it('should map an ArchiveCase into the expected row fields', () => {
@@ -346,7 +349,7 @@ describe('useArchiveCaseRowActions', () => {
       expect(onCaseChangedMock).toHaveBeenCalled();
     });
 
-    it('should show success and warning toasts when publishing a case under a hidden fund', async () => {
+    it('should show only a warning toast when publishing a case under a hidden fund', async () => {
       const user = userEvent.setup();
       const caseItem = buildCase({
         status: BaseContentStatuses.Hidden
@@ -367,8 +370,54 @@ describe('useArchiveCaseRowActions', () => {
         id: caseItem.id,
         input: { status: CaseStatus.Published }
       });
-      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(mockGetFundStatus).not.toHaveBeenCalled();
+      expect(toast.success).not.toHaveBeenCalled();
       expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    });
+
+    it('should look up the fund status for a global case row before showing the publish notification', async () => {
+      const user = userEvent.setup();
+      const caseItem = buildCase({ status: BaseContentStatuses.Hidden });
+      mockGetFundStatus.mockResolvedValueOnce(BaseContentStatuses.Hidden);
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-toggle-status'));
+
+      expect(mockGetFundStatus).toHaveBeenCalledWith(caseItem.fundId);
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast).toHaveBeenCalledWith(casesStatusMessages.publishHiddenFundWarning);
+    });
+
+    it('should preserve the success toast when the global case belongs to a published fund', async () => {
+      const user = userEvent.setup();
+      const caseItem = buildCase({ status: BaseContentStatuses.Hidden });
+      mockGetFundStatus.mockResolvedValueOnce(BaseContentStatuses.Published);
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-toggle-status'));
+
+      expect(mockGetFundStatus).toHaveBeenCalledWith(caseItem.fundId);
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it('should still publish when the fund status lookup fails and report the lookup failure', async () => {
+      const user = userEvent.setup();
+      const caseItem = buildCase({ status: BaseContentStatuses.Hidden });
+      mockGetFundStatus.mockRejectedValueOnce(new Error('network error'));
+      mockUpdateCase.mockResolvedValueOnce(undefined);
+      render(<TestHarness caseItem={caseItem} />);
+
+      await user.click(screen.getByTestId('menu-toggle-status'));
+
+      expect(mockUpdateCase).toHaveBeenCalledWith({
+        id: caseItem.id,
+        input: { status: CaseStatus.Published }
+      });
+      expect(toast.error).toHaveBeenCalledWith(casesStatusMessages.fundStatusError);
+      expect(toast.success).toHaveBeenCalledWith('Справу успішно опубліковано');
     });
 
     it('should not call onCaseChanged after a successful toggle when it is not provided', async () => {
