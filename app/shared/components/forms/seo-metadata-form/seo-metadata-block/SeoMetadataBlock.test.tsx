@@ -18,6 +18,7 @@ jest.mock('../SeoMetadataForm', () => ({
     onImageChange,
     onIndexingChange,
     onChangeCrop,
+    onChangeAltText,
     extraFields,
     required
   }: {
@@ -29,6 +30,7 @@ jest.mock('../SeoMetadataForm', () => ({
     onImageChange: (url: string) => void;
     onIndexingChange: (val: boolean) => void;
     onChangeCrop?: (crop: object | null) => void;
+    onChangeAltText?: (altText: string) => void;
     extraFields?: (value: object, onChange: (val: object) => void) => React.ReactNode;
     required?: boolean;
   }) => (
@@ -39,18 +41,7 @@ jest.mock('../SeoMetadataForm', () => ({
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
       <span data-testid={`required-${locale}`}>{String(required ?? true)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
-      <button
-        onClick={() =>
-          onChange({
-            title: value?.title ?? '',
-            description: value?.description ?? '',
-            keywords: value?.keywords ?? '',
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          })
-        }
-      >
-        alt-{locale}
-      </button>
+      <button onClick={() => onChangeAltText?.(`alt-from-${locale}`)}>alt-{locale}</button>
       <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
       <button onClick={() => onChangeCrop?.({ x: 10 })}>crop-{locale}</button>
@@ -72,6 +63,20 @@ describe('SeoMetadataBlock', () => {
     },
     ogImage: null,
     allowIndexing: { uk: true, en: true }
+  };
+
+  const valueWithAltText: SeoBlockValue = {
+    ...controlledValue,
+    meta: {
+      uk: {
+        ...controlledValue.meta.uk,
+        altText: { uk: 'old-uk', en: 'old-en' }
+      },
+      en: {
+        ...controlledValue.meta.en,
+        altText: { uk: 'old-uk', en: 'old-en' }
+      }
+    }
   };
 
   it('renders two forms for uk and en locales', () => {
@@ -136,22 +141,21 @@ describe('SeoMetadataBlock', () => {
     );
   });
 
-  it.each(locales)('syncs altText across both meta locales when %s alt changes', (locale) => {
-    const onChange = jest.fn();
-    renderBlock({ value: controlledValue, onChange });
+  it.each(locales)('updates %s altText without changing the other locale', (locale) => {
+    const onChangeAltText = jest.fn();
+
+    renderBlock({
+      value: valueWithAltText,
+      onChange: jest.fn(),
+      onChangeAltText
+    });
+
     clickButton(`alt-${locale}`);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        meta: {
-          uk: expect.objectContaining({
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          }),
-          en: expect.objectContaining({
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          })
-        }
-      })
-    );
+
+    expect(onChangeAltText).toHaveBeenCalledWith({
+      uk: locale === 'uk' ? `alt-from-${locale}` : 'old-uk',
+      en: locale === 'en' ? `alt-from-${locale}` : 'old-en'
+    });
   });
 
   it('renders extraFields for both locales when provided', () => {
