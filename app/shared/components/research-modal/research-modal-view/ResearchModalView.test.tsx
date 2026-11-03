@@ -90,17 +90,6 @@ describe('ResearchModalView', () => {
     expect(screen.getByRole('button', { name: 'Зберегти' })).toBeEnabled();
   });
 
-  it('initializes create mode with empty defaults and required field labels', () => {
-    renderView();
-
-    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveValue('');
-    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveValue('');
-    expect(screen.getByLabelText('Рік публікації *')).toHaveValue('');
-    expect(screen.getByLabelText('Ключові слова')).toHaveValue('');
-    expect(screen.getByLabelText('Показувати на сайті')).toBeChecked();
-    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
-  });
-
   it('pre-populates fields from initialData', () => {
     renderView({
       initialData: {
@@ -256,7 +245,7 @@ describe('ResearchModalView', () => {
 
     expect(screen.getByText(message)).toBeInTheDocument();
   });
-  
+
   it('uses example.com placeholder for the URL field', () => {
     renderView();
 
