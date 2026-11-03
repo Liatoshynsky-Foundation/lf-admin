@@ -1,5 +1,6 @@
 import { paymentDetailsService } from './paymentDetails';
 import type { PaymentDetails } from '~/domain/entities/PaymentDetails';
+import type { IPaymentDetailsRepository } from '~/domain/repositories/PaymentDetailsRepository';
 
 describe('paymentDetailsService', () => {
   it('retrieves payment details through repository', async () => {
@@ -12,8 +13,12 @@ describe('paymentDetailsService', () => {
       updatedAt: 'updated'
     };
     const getPaymentDetails = jest.fn().mockResolvedValue(paymentDetails);
+    const paymentDetailsRepository: IPaymentDetailsRepository = {
+      getPaymentDetails,
+      updatePaymentDetails: jest.fn()
+    };
     const service = paymentDetailsService({
-      paymentDetailsRepository: { getPaymentDetails }
+      paymentDetailsRepository
     });
 
     await expect(service.execute()).resolves.toBe(paymentDetails);

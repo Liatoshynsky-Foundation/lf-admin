@@ -1,13 +1,10 @@
 import type { PaymentDetails } from '~/domain/entities/PaymentDetails';
-
-interface PaymentDetailsReader {
-  getPaymentDetails(): Promise<PaymentDetails | null>;
-}
+import type { IPaymentDetailsRepository } from '~/domain/repositories/PaymentDetailsRepository';
 
 export const paymentDetailsService = ({
   paymentDetailsRepository
 }: {
-  paymentDetailsRepository: PaymentDetailsReader;
+  paymentDetailsRepository: IPaymentDetailsRepository;
 }) => ({
   execute: (): Promise<PaymentDetails | null> => paymentDetailsRepository.getPaymentDetails()
 });

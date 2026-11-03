@@ -11,6 +11,6 @@ export const PaymentDetailsQuery = {
       });
     }
 
-    return context.requestContainer.cradle.paymentDetailsService.execute();
+    return await context.requestContainer.cradle.paymentDetailsService.execute();
   }
 };
