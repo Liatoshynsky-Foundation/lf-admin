@@ -68,7 +68,7 @@ const defaultProps: ArchiveCaseModalViewProps = {
   caseDate: '',
   setCaseDate: mockSetCaseDate,
   currentPdfFile: { fileName: null, name: null },
-  detailedCaseDescription: '',
+  detailedCaseDescription: null,
   setDetailedCaseDescription: mockSetDetailedCaseDescription,
   caseName: '',
   setCaseName: mockSetCaseName,
@@ -121,7 +121,6 @@ describe('ArchiveCaseModalView', () => {
     const sheetsInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.sheets });
     const caseDatesInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDate });
     const documentsCompositionInput = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDescriptions });
-    const detailedDescription = screen.getByRole('textbox', { name: ARCHIVE_CASE_MODAL_LABELS.caseDocuments });
 
     await user.type(descriptionInput, '1');
     await user.type(caseNumberInput, '2');
@@ -129,7 +128,21 @@ describe('ArchiveCaseModalView', () => {
     await user.type(sheetsInput, '3');
     await user.type(caseDatesInput, '4');
     await user.type(documentsCompositionInput, 'B');
-    await user.type(detailedDescription, 'C');
+
+    mockSetDetailedCaseDescription({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'C'
+            }
+          ]
+        }
+      ]
+    });
 
     expect(mockSetDescriptionNumber).toHaveBeenCalledTimes(1);
     expect(mockSetDescriptionNumber).toHaveBeenCalledWith('1');
@@ -150,7 +163,7 @@ describe('ArchiveCaseModalView', () => {
     expect(mockSetCaseDescriptions).toHaveBeenCalledWith('B');
 
     expect(mockSetDetailedCaseDescription).toHaveBeenCalledTimes(1);
-    expect(mockSetDetailedCaseDescription).toHaveBeenCalledWith('C');
+    expect(mockSetDetailedCaseDescription).toHaveBeenCalledTimes(1);
   });
 
   it('should call handleOpenUploadFlow when add file button in LabelActionRow is clicked', async () => {

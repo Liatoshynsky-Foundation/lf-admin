@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSONContent } from '@tiptap/core';
 import toast from 'react-hot-toast';
 
 import { useArchiveCaseRowActions } from './useArchiveCaseRowActions';
@@ -65,7 +66,7 @@ const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
   sheetsNumber: 5,
   editCaseDate: '1995',
   editCaseDescriptions: 'опис справи',
-  detailedCaseDescription: 'детальний опис',
+  detailedCaseDescription: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'детальний опис' }] }] } as unknown as JSONContent,
   status: BaseContentStatuses.Published,
   updatedAt: '2023-01-01',
   ...overrides,

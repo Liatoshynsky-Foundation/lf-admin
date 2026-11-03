@@ -62,12 +62,12 @@ export const ArchiveCaseModal = ({
       caseDate: { uk: input.dates, en: input.dates },
       sheetsNumber: input.sheetsNumber,
       caseDescriptions: { uk: input.nameDescription, en: input.nameDescription },
-      detailedCaseDescription: input.contentDescription
-        ? { uk: input.contentDescription, en: input.contentDescription }
-        : undefined,
+      detailedCaseDescription: {
+        uk: input.contentDescription ?? null,
+        en: input.contentDescription ?? null
+      },
       pdfFile
     };
-
     if (caseId) {
       const { fundId: _fundId, ...caseInput } = mutationInput;
       await updateCase({ id: caseId, input: caseInput });

@@ -1,6 +1,7 @@
 'use client';
 
 import { Typography } from '@mui/material';
+import type { JSONContent } from '@tiptap/core';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -41,7 +42,7 @@ export type ArchiveCase = {
   sheetsNumber: number;
   editCaseDate: string;
   editCaseDescriptions: string;
-  detailedCaseDescription: string;
+  detailedCaseDescription: JSONContent | null;
   pdfFile?: PdfEntry;
   status: BaseContentStatuses;
   updatedAt: string;

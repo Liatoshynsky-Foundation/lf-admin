@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/core';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -10,7 +11,7 @@ export interface ArchiveCaseInitialData {
   sheetsNumber?: string;
   caseDate?: string;
   currentPdfFile?: PdfEntry;
-  detailedCaseDescription?: string;
+  detailedCaseDescription?: JSONContent | null;
   caseName?: string;
   caseDescriptions?: string;
   pdfUrl?: string;
@@ -23,7 +24,7 @@ export interface ArchiveCaseSaveData {
   sheetsNumber: number;
   dates: string;
   name: string;
-  contentDescription: string;
+  contentDescription: JSONContent | null;
   nameDescription: string;
   pdfUrl?: string;
 }
@@ -52,7 +53,6 @@ const validateCaseForm = (
   caseName: string,
   caseDate: string,
   caseDescriptions: string,
-  detailedCaseDescription: string
 ) => {
   const errors: Record<string, string> = {};
 
@@ -91,10 +91,6 @@ const validateCaseForm = (
   if (!caseDescriptions.trim()) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsRequired;
   else if (caseDescriptions.length > 300) errors.caseDescriptions = CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength;
 
-  if (detailedCaseDescription.length > 5000) {
-    errors.detailedCaseDescription = CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength;
-  }
-
   return errors;
 };
 
@@ -104,8 +100,8 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
   const [sheetsNumber, setSheetsNumber] = useState(initialData?.sheetsNumber ?? '');
   const [caseDate, setCaseDate] = useState(initialData?.caseDate ?? '');
   const [currentPdfFile, setCurrentPdfFile] = useState<PdfEntry>(initialData?.currentPdfFile ?? INITIAL_PDF_ENTRY);
-  const [detailedCaseDescription, setDetailedCaseDescription] = useState<string>(
-    initialData?.detailedCaseDescription ?? ''
+  const [detailedCaseDescription, setDetailedCaseDescription] = useState<JSONContent | null>(
+    initialData?.detailedCaseDescription ?? null
   );
   const [caseName, setCaseName] = useState<string>(initialData?.caseName ?? '');
   const [caseDescriptions, setCaseDescriptions] = useState<string>(initialData?.caseDescriptions ?? '');
@@ -120,7 +116,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     setSheetsNumber(initialData?.sheetsNumber ?? '');
     setCaseDate(initialData?.caseDate ?? '');
     setCurrentPdfFile(initialData?.currentPdfFile ?? INITIAL_PDF_ENTRY);
-    setDetailedCaseDescription(initialData?.detailedCaseDescription ?? '');
+    setDetailedCaseDescription(initialData?.detailedCaseDescription ?? null);
     setCaseName(initialData?.caseName ?? '');
     setCaseDescriptions(initialData?.caseDescriptions ?? '');
   }, [initialData]);
@@ -130,7 +126,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
       caseNumber.trim() !== (initialData?.caseNumber ?? '').trim() ||
       sheetsNumber.trim() !== (initialData?.sheetsNumber ?? '').trim() ||
       caseDate.trim() !== (initialData?.caseDate ?? '').trim() ||
-      detailedCaseDescription.trim() !== (initialData?.detailedCaseDescription ?? '').trim() ||
+      JSON.stringify(detailedCaseDescription) !== JSON.stringify(initialData?.detailedCaseDescription ?? null) ||
       caseName.trim() !== (initialData?.caseName ?? '').trim() ||
       caseDescriptions.trim() !== (initialData?.caseDescriptions ?? '').trim() ||
       (currentPdfFile?.fileName ?? '') !== (initialData?.currentPdfFile?.fileName ?? '') ||
@@ -152,7 +148,7 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
     setSheetsNumber('');
     setCaseDate('');
     setCurrentPdfFile(INITIAL_PDF_ENTRY);
-    setDetailedCaseDescription('');
+    setDetailedCaseDescription(null);
     setCaseName('');
     setCaseDescriptions('');
     setFieldErrors({});
@@ -188,7 +184,6 @@ export const useArchiveCaseModal = ({ setIsOpen, initialData, onSave }: UseArchi
       caseName,
       caseDate,
       caseDescriptions,
-      detailedCaseDescription
     );
 
     setFieldErrors(nextErrors);

@@ -35,7 +35,7 @@ const toInitialData = (c: CaseItem): ArchiveCaseInitialData => ({
   caseDate: c.caseDate.uk,
   caseName: c.caseName.uk,
   caseDescriptions: c.caseDescriptions.uk,
-  detailedCaseDescription: c.detailedCaseDescription?.uk ?? '',
+  detailedCaseDescription: c.detailedCaseDescription?.uk ?? null,
   currentPdfFile: c.pdfFile
     ? {
       name: c.pdfFile.filename,

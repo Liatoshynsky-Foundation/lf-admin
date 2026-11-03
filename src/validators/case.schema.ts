@@ -1,3 +1,4 @@
+import type { JSONContent } from '@tiptap/core';
 import z from 'zod';
 
 import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
@@ -23,6 +24,30 @@ const requiredLocalizedString = (requiredMessage: string, maxLength: number, max
     uk: z.string().trim().min(1, { message: requiredMessage }).max(maxLength, { message: maxLengthMessage }),
     en: z.string().trim().min(1, { message: requiredMessage }).max(maxLength, { message: maxLengthMessage })
   });
+
+const jsonContentSchema: z.ZodType<JSONContent> = z.lazy(() =>
+  z.object({
+    type: z.string().optional(),
+    attrs: z.record(z.string(), z.unknown()).optional(),
+    content: z.array(jsonContentSchema).optional(),
+    marks: z
+      .array(
+        z.object({
+          type: z.string(),
+          attrs: z.record(z.string(), z.unknown()).optional()
+        })
+      )
+      .optional(),
+    text: z.string().optional()
+  })
+);
+
+const optionalRichTextSchema = z
+  .object({
+    uk: jsonContentSchema.nullable().optional(),
+    en: jsonContentSchema.nullable().optional()
+  })
+  .optional();
 
 const pdfFileSchema = z
   .object({
@@ -70,12 +95,7 @@ export const zCaseSchema = z.object({
     CASE_VALIDATION_MESSAGES.caseDescriptionsMaxLength
   ),
 
-  detailedCaseDescription: z
-    .object({
-      uk: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
-      en: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
-    })
-    .optional(),
+  detailedCaseDescription: optionalRichTextSchema,
   pdfFile: pdfFileSchema.nullable().optional(),
 
   status: z.enum(BaseContentStatuses).default(BaseContentStatuses.Hidden)
@@ -85,12 +105,7 @@ export const zCaseUpdateSchema = zCaseSchema
   .omit({ detailedCaseDescription: true })
   .partial()
   .extend({
-    detailedCaseDescription: z
-      .object({
-        uk: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength }),
-        en: z.string().trim().max(5000, { message: CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength })
-      })
-      .optional(),
+    detailedCaseDescription: optionalRichTextSchema,
     pdfFile: pdfFileSchema.nullable().optional(),
     status: z.enum(BaseContentStatuses).optional()
   });

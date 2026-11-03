@@ -389,8 +389,9 @@ describe('CaseMutation', () => {
       ['caseDescriptions uk empty', { caseDescriptions: { uk: '', en: 'Description' } }],
       ['caseDescriptions uk exceeding 300 characters', { caseDescriptions: { uk: 'a'.repeat(301), en: 'Description' } }],
 
-      ['detailedCaseDescription uk exceeding 5000 characters', { detailedCaseDescription: { uk: 'a'.repeat(5001), en: 'Valid' } }],
-
+      ['detailedCaseDescription as a string instead of Tiptap JSON object', { detailedCaseDescription: { uk: 'invalid string', en: 'invalid string' } as unknown as CreateCaseInput['detailedCaseDescription'] }],
+      ['detailedCaseDescription with non-object type inside', { detailedCaseDescription: { uk: 12345, en: { type: 'doc' } } as unknown as CreateCaseInput['detailedCaseDescription'] }],   
+   
       ['pdfFile with a non-pdf extension', { pdfFile: { filename: 'scan.jpg', url: 'https://cdn/scan.jpg', mimeType: 'application/pdf' } }],
       ['pdfFile with a non-pdf mimetype', { pdfFile: { filename: 'scan.pdf', url: 'https://cdn/scan.pdf', mimeType: 'image/jpeg' } }],
 
