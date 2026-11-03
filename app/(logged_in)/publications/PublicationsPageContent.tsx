@@ -83,6 +83,36 @@ const DEFAULT_COVER_IMAGE = 'https://pub-2b50c59c64954ab89b7837f9f4607e12.r2.dev
 const DEFAULT_COVER_ALT = 'Обкладинка матеріалу';
 const SORT_FALLBACK_DATE = '1970-01-01T00:00:00.000Z';
 
+const getPublicationTimestamp = (date: string | number | undefined | null): number | null => {
+  if (date === undefined || date === null || date === '' || date === 0 || date === '0') {
+    return null;
+  }
+
+  let timestamp: number;
+
+  if (typeof date === 'number') {
+    timestamp = date;
+  } else {
+    const trimmedDate = date.trim();
+
+    if (/^-?\d+(\.\d+)?$/.test(trimmedDate)) {
+      timestamp = Number(trimmedDate);
+    } else {
+      timestamp = Date.parse(trimmedDate);
+    }
+  }
+
+  if (!Number.isFinite(timestamp)) {
+    return null;
+  }
+
+  if (Math.abs(timestamp) < 100_000_000_000) {
+    timestamp *= 1000;
+  }
+
+  return timestamp;
+};
+
 const comparePublicationItems = (
   left: PublicationCardItem,
   right: PublicationCardItem,
@@ -96,37 +126,15 @@ const comparePublicationItems = (
     return right.sortTitle.localeCompare(left.sortTitle, 'uk');
   }
 
-  const leftDate = new Date(left.createdAtRaw).getTime();
-  const rightDate = new Date(right.createdAtRaw).getTime();
+  const leftDate = getPublicationTimestamp(left.publishedAt);
 
-  if (sortValue === 'date_asc') {
-    return leftDate - rightDate;
-  }
+  const rightDate = getPublicationTimestamp(right.publishedAt);
 
-  return rightDate - leftDate;
-};
+  if (leftDate === null && rightDate === null) return 0;
+  if (leftDate === null) return 1;
+  if (rightDate === null) return -1;
 
-const mergeSortedPublicationItems = (
-  leftItems: PublicationCardItem[],
-  rightItems: PublicationCardItem[],
-  sortValue: FilesSortValue
-): PublicationCardItem[] => {
-  const mergedItems: PublicationCardItem[] = [];
-  let leftIndex = 0;
-  let rightIndex = 0;
-
-  while (leftIndex < leftItems.length && rightIndex < rightItems.length) {
-    if (comparePublicationItems(leftItems[leftIndex], rightItems[rightIndex], sortValue) <= 0) {
-      mergedItems.push(leftItems[leftIndex]);
-      leftIndex += 1;
-      continue;
-    }
-
-    mergedItems.push(rightItems[rightIndex]);
-    rightIndex += 1;
-  }
-
-  return [...mergedItems, ...leftItems.slice(leftIndex), ...rightItems.slice(rightIndex)];
+  return sortValue === 'date_asc' ? leftDate - rightDate : rightDate - leftDate;
 };
 
 const getPublicationSearchOptions = (items: PublicationCardItem[]) => {
@@ -452,8 +460,11 @@ export function PublicationsPageContent({ activeTab }: PublicationsPageContentPr
       return mediaItems;
     }
 
-    const mergedNewsMedia = mergeSortedPublicationItems(newsItems, mediaItems, sortValue);
-    return mergeSortedPublicationItems(mergedNewsMedia, eventItems, sortValue);
+    const allItems = [...newsItems, ...mediaItems, ...eventItems];
+
+    const sortedItems = [...allItems].sort((a, b) => comparePublicationItems(a, b, sortValue));
+
+    return sortedItems;
   }, [activeTab, mediaItems, eventItems, newsItems, sortValue]);
 
   const titleOptions = useMemo(() => getPublicationSearchOptions(visibleItems), [visibleItems]);
