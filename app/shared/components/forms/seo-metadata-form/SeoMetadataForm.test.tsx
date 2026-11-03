@@ -415,7 +415,7 @@ describe('SeoMetadataForm', () => {
     fireEvent.blur(altInput);
     fireEvent.change(altInput, { target: { value: 'valid alt text' } });
 
-    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ altText: { uk: 'valid alt text', en: 'valid alt text' } }));
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ altText: { uk: 'valid alt text', en: '' } }));
     await waitFor(() => expect(screen.queryByText(seoFormErrors.uk.required)).not.toBeInTheDocument());
   });
 
@@ -573,7 +573,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, 'a');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'a', en: 'a' }
+        altText: { uk: 'a', en: '' }
       })
     );
   });
@@ -601,7 +601,7 @@ describe('SeoMetadataForm', () => {
     expect(defaultProps.onImageChange).toHaveBeenCalledWith(`${IMAGE_URL}?v=1.0`);
   });
 
-  it('syncs altText to both locales when updating altText in uk locale', async () => {
+  it('updates only uk altText when editing uk locale', async () => {
     const onChangeMock = jest.fn();
     render(
       <SeoMetadataForm
@@ -619,12 +619,12 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, '2');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'Початковий укр2', en: 'Початковий укр2' }
+        altText: { uk: 'Початковий укр2', en: 'Existing English' }
       })
     );
   });
 
-  it('syncs altText to both locales when updating altText in en locale', async () => {
+  it('updates only en altText when editing en locale', async () => {
     const onChangeMock = jest.fn();
     render(
       <SeoMetadataForm
@@ -642,7 +642,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, '2');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'Initial English2', en: 'Initial English2' }
+        altText: { uk: 'Existing Ukrainian', en: 'Initial English2' }
       })
     );
   });
@@ -758,7 +758,7 @@ describe('SeoMetadataForm', () => {
     await user.type(altInput, 'b');
     expect(onChangeMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        altText: { uk: 'b', en: 'b' }
+        altText: { uk: '', en: 'b' }
       })
     );
   });

@@ -242,7 +242,11 @@ export default function SeoMetadataForm({
   const handleAltTextChange = (val: string) => {
     const nextValue = {
       ...value,
-      altText: { uk: val, en: val }
+      altText: {
+        uk: value.altText?.uk ?? '',
+        en: value.altText?.en ?? '',
+        [locale]: val
+      }
     };
 
     onChange(nextValue);
