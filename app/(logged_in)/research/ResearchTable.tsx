@@ -4,6 +4,7 @@ import { Box, Typography } from '@mui/material';
 
 import { styles } from './ResearchTable.styles';
 import { RESEARCH_MENU_ACTIONS } from '~/constants/research';
+import { proseToText } from '~/lib/utils/prose';
 import type { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
 import { RowActions } from '~/shared/components/table-layout/components/RowActions';
 import { StatusBadge } from '~/shared/components/table-layout/components/StatusBadge';
@@ -24,9 +25,9 @@ type PlainWork = ResearchWork & {
 const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
   {
     id: 'author',
-    headerLabel: 'Автор',
-    width: '184px',
-    renderPlain: (work) => work.author
+    headerLabel: 'Автор(и)/Упорядник(и)',
+    width: '300px',
+    renderPlain: (work) => proseToText(work.author)
   },
   {
     id: 'description',
@@ -34,13 +35,13 @@ const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
     width: 'minmax(300px, 1fr)',
     renderPlain: (work) => (
       <Typography sx={{ fontSize: '16px', fontWeight: 600, ...twoLineEllipsis }}>
-        {work.bibliographicDescription}
+        {proseToText(work.bibliographicDescription)}
       </Typography>
     )
   },
   {
     id: 'year',
-    headerLabel: 'Дати',
+    headerLabel: 'Рік публікації',
     width: 'minmax(96px, 120px)',
     renderPlain: (work) => <Typography sx={styles.datesCell}>{work.year}</Typography>
   },
@@ -49,7 +50,9 @@ const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
     headerLabel: 'Ключові слова',
     width: '252px',
     renderPlain: (work) => (
-      <Typography sx={{ fontSize: '16px', fontWeight: 600, ...twoLineEllipsis }}>{work.keywords}</Typography>
+      <Typography sx={{ fontSize: '16px', fontWeight: 600, ...twoLineEllipsis }}>
+        {proseToText(work.keywords)}
+      </Typography>
     )
   },
   {

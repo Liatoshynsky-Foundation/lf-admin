@@ -20,6 +20,14 @@ describe('proseToText', () => {
     };
     expect(proseToText(doc)).toBe('Hello');
   });
+
+  it('should extract text from a serialized TipTap document', () => {
+    const doc: ProseDoc = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Serialized text' }] }]
+    };
+    expect(proseToText(JSON.stringify(doc))).toBe('Serialized text');
+  });
 });
 
 describe('proseToText edge cases', () => {

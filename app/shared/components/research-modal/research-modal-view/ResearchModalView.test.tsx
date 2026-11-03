@@ -17,6 +17,30 @@ jest.mock('../../composition-modal/file-item/FileItem', () => ({
   )
 }));
 
+jest.mock('~/ds-components/text-field/TextField', () => {
+  const MockComponent = ({ label, value, onChange, onBlur, error, helperText, fieldType }: any) => (
+    <div>
+      <label htmlFor={label}>{label}</label>
+      <input
+        id={label}
+        data-testid={`mock-${fieldType || 'styled'}-input`}
+        data-value-type={typeof value}
+        value={typeof value === 'object' ? JSON.stringify(value) : (value ?? '')}
+        onChange={(e) => onChange?.(fieldType === 'formatting' ? e.target.value : e)}
+        onBlur={onBlur}
+      />
+      {error && helperText && <span>{helperText}</span>}
+    </div>
+  );
+
+  return {
+    __esModule: true,
+    default: MockComponent,
+    CustomTextField: MockComponent,
+    TextField: MockComponent
+  };
+});
+
 describe('ResearchModalView', () => {
   const onClose = jest.fn();
   const onSave = jest.fn().mockResolvedValue(undefined);
@@ -38,7 +62,7 @@ describe('ResearchModalView', () => {
   const fillRequiredFields = () => {
     fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
     fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
+    fireEvent.change(screen.getByLabelText(/рік публікації/i), { target: { value: '1970' } });
   };
 
   beforeEach(() => {
@@ -71,6 +95,27 @@ describe('ResearchModalView', () => {
     expect(screen.getByDisplayValue('існуючі слова')).toBeInTheDocument();
   });
 
+  it('parses serialized TipTap values before passing them to the rich-text editors', () => {
+    const serializedDoc = JSON.stringify({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Існуючий текст' }] }]
+    });
+
+    renderView({
+      initialData: {
+        bibliographicDescription: serializedDoc,
+        author: serializedDoc,
+        caseDates: '1980',
+        keywords: serializedDoc
+      }
+    });
+
+    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveAttribute('data-value-type', 'object');
+    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveAttribute('data-value-type', 'object');
+    expect(screen.getByLabelText('Ключові слова')).toHaveAttribute('data-value-type', 'object');
+    expect(screen.getByRole('textbox', { name: /рік публікації/i })).toHaveValue('1980');
+  });
+
   it('calls onClose when Cancel is clicked', () => {
     renderView();
 
@@ -98,23 +143,15 @@ describe('ResearchModalView', () => {
     });
   });
 
-  it.each([
-    {
-      label: /ключові слова/i,
-      maxLength: RESEARCH_FIELD_LIMITS.keywords,
-      name: 'keywords'
-    },
-    {
-      label: /автор/i,
-      maxLength: RESEARCH_FIELD_LIMITS.author,
-      name: 'author'
-    }
-  ])('clamps $name input to $maxLength characters', ({ label, maxLength }) => {
+  it('clamps caseDates input to maxLength characters', () => {
     renderView();
 
-    fireEvent.change(screen.getByLabelText(label), { target: { value: 'a'.repeat(maxLength + 50) } });
+    const yearInput = screen.getByLabelText(/рік публікації/i);
+    fireEvent.change(yearInput, {
+      target: { value: 'a'.repeat(RESEARCH_FIELD_LIMITS.year + 50) }
+    });
 
-    expect(screen.getByLabelText(label)).toHaveValue('a'.repeat(maxLength));
+    expect(yearInput).toHaveValue('a'.repeat(RESEARCH_FIELD_LIMITS.year));
   });
 
   it('does not render the dialog content when isOpen is false', () => {
@@ -168,7 +205,7 @@ describe('ResearchModalView', () => {
       message: RESEARCH_VALIDATION_MESSAGES.authorRequired
     },
     {
-      label: /дати справи/i,
+      label: /рік публікації/i,
       message: RESEARCH_VALIDATION_MESSAGES.yearRequired
     }
   ])('shows required error for $message after blur', ({ label, message }) => {
@@ -178,18 +215,7 @@ describe('ResearchModalView', () => {
 
     expect(screen.getByText(message)).toBeInTheDocument();
   });
-
-  it('shows author suggestions from authorOptions', async () => {
-    renderView({ authorOptions: ['Коваленко Олена', 'Мельник Андрій'] });
-
-    const authorInput = screen.getByLabelText(/автор/i);
-    fireEvent.focus(authorInput);
-    fireEvent.change(authorInput, { target: { value: 'Ков' } });
-    fireEvent.keyDown(authorInput, { key: 'ArrowDown' });
-
-    expect(await screen.findByText('Коваленко Олена')).toBeInTheDocument();
-  });
-
+  
   it('uses example.com placeholder for the URL field', () => {
     renderView();
 

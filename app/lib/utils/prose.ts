@@ -5,6 +5,15 @@ import { HeadingNode, ParagraphNode, ProseDoc, ProseNode, ProseTextNode } from '
 export const proseToText = (doc?: unknown): string => {
   if (!doc) return '';
   if (typeof doc === 'string') {
+    try {
+      const parsedDoc: unknown = JSON.parse(doc);
+      if (isProseDoc(parsedDoc)) {
+        return proseToText(parsedDoc);
+      }
+    } catch {
+      // Plain text is also a supported input.
+    }
+
     return doc.replace(/<[^>]*>?/gm, '');
   }
 
@@ -34,6 +43,17 @@ export const proseToHeaderText = (doc?: ProseDoc, fallback = ''): string => {
 
 export const isProseDoc = (value: unknown): value is ProseDoc =>
   typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'doc';
+
+export const parseSerializedProse = (value?: JSONContent | string | null): JSONContent | string => {
+  if (typeof value !== 'string') return value ?? '';
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return isProseDoc(parsed) ? parsed : value;
+  } catch {
+    return value;
+  }
+};
 
 export const resolveLocalizedText = (value?: JSONContent | string | null): string => {
   if (!value) return '';

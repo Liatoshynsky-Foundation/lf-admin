@@ -10,10 +10,23 @@ import {
   zResearchWorkStatusSchema,
   zResearchWorkUpdateSchema
 } from '~/src/validators/researchWork.schema';
+import { TipTapDocSchema } from '~/src/validators/tiptap.schema';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
-type CreateResearchWorkArgs = { input: CreateResearchWorkInput };
-type UpdateResearchWorkArgs = { id: string; input: UpdateResearchWorkInput };
+type RichTextInput = string | ReturnType<typeof TipTapDocSchema.parse>;
+type ResearchWorkTextFields = {
+  bibliographicDescription: RichTextInput;
+  author: RichTextInput;
+  keywords?: RichTextInput | null;
+};
+type CreateResearchWorkArgs = {
+  input: Omit<CreateResearchWorkInput, keyof ResearchWorkTextFields> & ResearchWorkTextFields;
+};
+type UpdateResearchWorkArgs = {
+  id: string;
+  input: Partial<Omit<UpdateResearchWorkInput, keyof ResearchWorkTextFields>> &
+    Partial<ResearchWorkTextFields>;
+};
 type UpdateResearchWorkStatusArgs = {
   id: string;
   input: { status: BaseContentStatuses.Published | BaseContentStatuses.Hidden };
@@ -54,6 +67,39 @@ const parseResearchWorkInput = <T>(schema: ZodType<T>, input: unknown): T => {
 
     throw error;
   }
+};
+
+const serializeRichTextInput = (value: RichTextInput): string =>
+  typeof value === 'string' ? value : JSON.stringify(value);
+
+const toCreateResearchWorkInput = (
+  input: ReturnType<typeof zResearchWorkSchema.parse>
+): CreateResearchWorkInput => {
+  const { bibliographicDescription, author, keywords, ...rest } = input;
+
+  return {
+    ...rest,
+    bibliographicDescription: serializeRichTextInput(bibliographicDescription),
+    author: serializeRichTextInput(author),
+    keywords: keywords == null ? keywords : serializeRichTextInput(keywords)
+  };
+};
+
+const toUpdateResearchWorkInput = (
+  input: ReturnType<typeof zResearchWorkUpdateSchema.parse>
+): UpdateResearchWorkInput => {
+  const { bibliographicDescription, author, keywords, ...rest } = input;
+
+  return {
+    ...rest,
+    ...(bibliographicDescription !== undefined
+      ? { bibliographicDescription: serializeRichTextInput(bibliographicDescription) }
+      : {}),
+    ...(author !== undefined ? { author: serializeRichTextInput(author) } : {}),
+    ...(keywords !== undefined
+      ? { keywords: keywords === null ? null : serializeRichTextInput(keywords) }
+      : {})
+  };
 };
 
 const withPublishedAt = <T extends { status?: BaseContentStatuses; publishedAt?: string | null }>(
@@ -101,7 +147,7 @@ export const ResearchWorkMutation = {
     const { researchWorkRepository: repo } = context.requestContainer.cradle;
     const validatedInput = parseResearchWorkInput(zResearchWorkSchema, input);
 
-    return repo.create(withPublishedAt(validatedInput));
+    return repo.create(withPublishedAt(toCreateResearchWorkInput(validatedInput)));
   },
 
   updateResearchWork: async (
@@ -111,7 +157,9 @@ export const ResearchWorkMutation = {
   ): Promise<ResearchWork> => {
     assertAuthenticated(context);
 
-    const validatedInput = parseResearchWorkInput(zResearchWorkUpdateSchema, input);
+    const validatedInput = toUpdateResearchWorkInput(
+      parseResearchWorkInput(zResearchWorkUpdateSchema, input)
+    );
     return updateExistingResearchWork(id, validatedInput, context);
   },
 

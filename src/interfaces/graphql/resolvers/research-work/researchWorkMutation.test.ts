@@ -9,6 +9,7 @@ import {
   IResearchWorkRepository,
   UpdateResearchWorkInput
 } from '~/src/domain/repositories/researchWorkRepository';
+import { TipTapDocSchema } from '~/src/validators/tiptap.schema';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
@@ -115,6 +116,31 @@ describe('ResearchWorkMutation', () => {
       await ResearchWorkMutation.createResearchWork({}, { input }, adminContext);
 
       expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ keywords: null }));
+    });
+
+    it('serializes TipTap document inputs before saving', async () => {
+      const createTipTapDoc = (text: string) =>
+        TipTapDocSchema.parse({
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+        });
+      const input = {
+        ...createMockCreateInput(),
+        bibliographicDescription: createTipTapDoc('Опис'),
+        author: createTipTapDoc('Автор'),
+        keywords: createTipTapDoc('Слова')
+      };
+      mockCreate.mockResolvedValue(createMockEntity());
+
+      await ResearchWorkMutation.createResearchWork({}, { input }, adminContext);
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bibliographicDescription: JSON.stringify(input.bibliographicDescription),
+          author: JSON.stringify(input.author),
+          keywords: JSON.stringify(input.keywords)
+        })
+      );
     });
 
     it('rejects draft status on create with BAD_USER_INPUT', async () => {

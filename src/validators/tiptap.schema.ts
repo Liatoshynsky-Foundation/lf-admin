@@ -44,3 +44,5 @@ export const TipTapDocSchema = z.object({
   type: z.literal(TipTapNodeTypes.doc),
   content: z.array(z.union([ParagraphNodeSchema, tableNodeSchema])).min(1)
 });
+
+export type TipTapDoc = z.infer<typeof TipTapDocSchema>;

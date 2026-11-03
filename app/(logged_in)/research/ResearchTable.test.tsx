@@ -24,10 +24,16 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
     }>;
     columns: Array<{
       id: string;
+      headerLabel: string;
       renderPlain?: (plain: Record<string, unknown>) => ReactNode;
     }>;
   }) => (
     <div data-testid="research-table">
+      {columns.map((col) => (
+        <div key={col.id} role="columnheader">
+          {col.headerLabel}
+        </div>
+      ))}
       {data.map((row) => (
         <div key={row.id} data-testid={`research-row-${row.id}`}>
           {columns
@@ -105,6 +111,39 @@ describe('ResearchTable', () => {
     expect(screen.getByTestId('research-row-work-2')).toBeInTheDocument();
   });
 
+  it('renders serialized TipTap content as plain text in rich-text cells', () => {
+    const richTextWork: ResearchWork = {
+      ...work,
+      author: JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Авторський текст' }] }]
+      }),
+      bibliographicDescription: JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Бібліографічний текст' }] }]
+      }),
+      keywords: JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ключові слова' }] }]
+      })
+    };
+
+    render(<ResearchTable works={[richTextWork]} onEditWork={jest.fn()} />);
+
+    const row = screen.getByTestId('research-row-work-1');
+    expect(within(row).getByText('Авторський текст')).toBeInTheDocument();
+    expect(within(row).getByText('Бібліографічний текст')).toBeInTheDocument();
+    expect(within(row).getByText('Ключові слова')).toBeInTheDocument();
+    expect(within(row).queryByText(/"type":"doc"/)).not.toBeInTheDocument();
+  });
+
+  it('uses the requested author and publication-year headers', () => {
+    render(<ResearchTable works={[work]} onEditWork={jest.fn()} />);
+
+    expect(screen.getByRole('columnheader', { name: 'Автор(и)/Упорядник(и)' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Рік публікації' })).toBeInTheDocument();
+  });
+
   it('wraps long free-text dates onto the next line', () => {
     const longDatesWork: ResearchWork = {
       ...work,
@@ -122,7 +161,7 @@ describe('ResearchTable', () => {
   it('renders an empty table when no works are provided', () => {
     render(<ResearchTable works={[]} onEditWork={jest.fn()} />);
 
-    expect(screen.getByTestId('research-table')).toBeEmptyDOMElement();
+    expect(screen.getByTestId('research-table').querySelector('[data-testid^="research-row-"]')).not.toBeInTheDocument();
   });
 
   it('calls onEditWork when the edit action is clicked', async () => {
