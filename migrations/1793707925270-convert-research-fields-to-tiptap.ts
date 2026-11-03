@@ -62,6 +62,7 @@ const convertFieldUp = (value: unknown): string | null => {
 
   return null;
 };
+
 const convertFieldDown = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
 
@@ -85,41 +86,35 @@ const convertFieldDown = (value: unknown): string | null => {
 
 export async function up(db: Db): Promise<void> {
   const collection = db.collection(COLLECTION);
-  const cursor = collection.find({});
+  const docs = await collection.find({}).toArray();
 
-  while (await cursor.hasNext()) {
-    const doc = await cursor.next();
-    if (!doc) continue;
-
-    const updatedBibliographic = convertFieldUp(doc.bibliographicDescription);
-    const updatedAuthor = convertFieldUp(doc.author);
-    const updatedKeywords = convertFieldUp(doc.keywords);
-
-    await collection.updateOne(
-      { _id: doc._id },
-      {
+  const operations = docs.map((doc) => ({
+    updateOne: {
+      filter: { _id: doc._id },
+      update: {
         $set: {
-          bibliographicDescription: updatedBibliographic ?? '',
-          author: updatedAuthor ?? '',
-          keywords: updatedKeywords,
+          bibliographicDescription: convertFieldUp(doc.bibliographicDescription) ?? '',
+          author: convertFieldUp(doc.author) ?? '',
+          keywords: convertFieldUp(doc.keywords),
           updatedAt: new Date()
         }
       }
-    );
+    }
+  }));
+
+  if (operations.length > 0) {
+    await collection.bulkWrite(operations);
   }
 }
 
 export async function down(db: Db): Promise<void> {
   const collection = db.collection(COLLECTION);
-  const cursor = collection.find({});
+  const docs = await collection.find({}).toArray();
 
-  while (await cursor.hasNext()) {
-    const doc = await cursor.next();
-    if (!doc) continue;
-
-    await collection.updateOne(
-      { _id: doc._id },
-      {
+  const operations = docs.map((doc) => ({
+    updateOne: {
+      filter: { _id: doc._id },
+      update: {
         $set: {
           bibliographicDescription: convertFieldDown(doc.bibliographicDescription) ?? '',
           author: convertFieldDown(doc.author) ?? '',
@@ -127,6 +122,10 @@ export async function down(db: Db): Promise<void> {
           updatedAt: new Date()
         }
       }
-    );
+    }
+  }));
+
+  if (operations.length > 0) {
+    await collection.bulkWrite(operations);
   }
 }
