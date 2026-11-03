@@ -12,6 +12,29 @@ import {
 } from '~/shared/hooks/use-research-works/useResearchWorks';
 import { AssetType, ResearchWorkStatus, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
+jest.mock('~/ds-components/text-field/TextField', () => {
+  const MockComponent = ({ label, value, onChange, onBlur, error, helperText, fieldType }: any) => (
+    <div>
+      <label htmlFor={label}>{label}</label>
+      <input
+        id={label}
+        data-testid={`mock-${fieldType || 'styled'}-input`}
+        value={typeof value === 'object' ? JSON.stringify(value) : (value ?? '')}
+        onChange={(e) => onChange?.(fieldType === 'formatting' ? e.target.value : e)}
+        onBlur={onBlur}
+      />
+      {error && helperText && <span>{helperText}</span>}
+    </div>
+  );
+
+  return {
+    __esModule: true,
+    default: MockComponent,
+    CustomTextField: MockComponent,
+    TextField: MockComponent
+  };
+});
+
 jest.mock('react-hot-toast', () => ({
   __esModule: true,
   default: {
@@ -71,7 +94,7 @@ const mockedUseCreateAssetMutation = jest.mocked(useCreateAssetMutation);
 const fillRequiredFields = () => {
   fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
   fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
-  fireEvent.change(screen.getByLabelText(/дати справи/i), { target: { value: '1970' } });
+  fireEvent.change(screen.getByLabelText(/рік публікації/i), { target: { value: '1970' } });
   fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
 };
 
@@ -311,10 +334,7 @@ describe('ResearchModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
     await waitFor(() =>
-      expect(updateResearchWork).toHaveBeenCalledWith(
-        'work-1',
-        expect.objectContaining({ pdfFile: null })
-      )
+      expect(updateResearchWork).toHaveBeenCalledWith('work-1', expect.objectContaining({ pdfFile: null }))
     );
   });
 
@@ -326,9 +346,7 @@ describe('ResearchModal', () => {
     fillRequiredFields();
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith('Автор є обов’язковим.')
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Автор є обов’язковим.'));
     expect(onClose).not.toHaveBeenCalled();
   });
 });

@@ -55,7 +55,8 @@ export enum TipTapNodeTypes {
 export enum TipTapMarkType {
   bold = 'bold',
   italic = 'italic',
-  underline = 'underline'
+  underline = 'underline',
+  link = 'link'
 }
 
 export enum TipTapTableNodeTypes {

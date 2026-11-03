@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -16,6 +15,7 @@ import {
   Theme,
   Typography
 } from '@mui/material';
+import type { JSONContent } from '@tiptap/react';
 import { useState } from 'react';
 
 import FileItem from '../../composition-modal/file-item/FileItem';
@@ -26,7 +26,9 @@ import {
   RESEARCH_URL_PLACEHOLDER,
   RESEARCH_VALIDATION_MESSAGES
 } from '~/constants/research';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
 import { isValidHttpUrl } from '~/lib/utils/isValidUrl';
+import { parseSerializedProse, proseToText } from '~/lib/utils/prose';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 const clampLength = (value: string, maxLength: number) => value.slice(0, maxLength);
@@ -45,11 +47,13 @@ const DEFAULT_TOUCHED: TouchedFields = {
   url: false
 };
 
+export type TipTapValue = JSONContent | string;
+
 export interface ResearchWorkFormData {
-  bibliographicDescription: string;
-  author: string;
+  bibliographicDescription: TipTapValue;
+  author: TipTapValue;
   caseDates: string;
-  keywords: string;
+  keywords: TipTapValue | null;
   url: string;
   isVisibleOnSite: boolean;
 }
@@ -83,7 +87,6 @@ export const ResearchModalView = ({
   dialogTitle = RESEARCH_MODAL_TITLE,
   isOpen,
   initialData,
-  authorOptions = [],
   attachedFileName = null,
   onAddFile,
   onDeleteFile,
@@ -91,12 +94,14 @@ export const ResearchModalView = ({
   onSave,
   sx
 }: ResearchModalViewProps) => {
-  const [bibliographicDescription, setBibliographicDescription] = useState(
-    initialData?.bibliographicDescription ?? DEFAULT_DATA.bibliographicDescription
+  const [bibliographicDescription, setBibliographicDescription] = useState<TipTapValue>(
+    () => parseSerializedProse(initialData?.bibliographicDescription)
   );
-  const [author, setAuthor] = useState(initialData?.author ?? DEFAULT_DATA.author);
+  const [author, setAuthor] = useState<TipTapValue>(() => parseSerializedProse(initialData?.author));
   const [caseDates, setCaseDates] = useState(initialData?.caseDates ?? DEFAULT_DATA.caseDates);
-  const [keywords, setKeywords] = useState(initialData?.keywords ?? DEFAULT_DATA.keywords);
+  const [keywords, setKeywords] = useState<TipTapValue | null>(() =>
+    parseSerializedProse(initialData?.keywords)
+  );
   const [url, setUrl] = useState(initialData?.url ?? DEFAULT_DATA.url);
   const [isVisibleOnSite, setIsVisibleOnSite] = useState(initialData?.isVisibleOnSite ?? DEFAULT_DATA.isVisibleOnSite);
   const [isSaving, setIsSaving] = useState(false);
@@ -135,64 +140,65 @@ export const ResearchModalView = ({
   };
 
   const isUrlValid = !url.trim() || isValidHttpUrl(url.trim());
-  const bibliographicDescriptionError = requiredError(
-    bibliographicDescription,
-    touched.bibliographicDescription,
-    RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
-  );
-  const authorError = requiredError(author, touched.author, RESEARCH_VALIDATION_MESSAGES.authorRequired);
+
+  const isRichTextEmpty = (value: TipTapValue | null | undefined): boolean => {
+    if (!value) return true;
+    if (typeof value === 'string') return !value.trim();
+    return !proseToText(value).trim();
+  };
+
+  const bibliographicDescriptionError =
+    touched.bibliographicDescription && isRichTextEmpty(bibliographicDescription)
+      ? RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
+      : undefined;
+
+  const authorError =
+    touched.author && isRichTextEmpty(author) ? RESEARCH_VALIDATION_MESSAGES.authorRequired : undefined;
+
   const caseDatesError = requiredError(caseDates, touched.caseDates, RESEARCH_VALIDATION_MESSAGES.yearRequired);
+
   const urlError = touched.url && !isUrlValid ? RESEARCH_VALIDATION_MESSAGES.urlInvalid : undefined;
 
-  const isFormValid = Boolean(bibliographicDescription.trim() && author.trim() && caseDates.trim() && isUrlValid);
+  const isFormValid = Boolean(
+    !isRichTextEmpty(bibliographicDescription) && !isRichTextEmpty(author) && caseDates.trim() && isUrlValid
+  );
   const hasAttachedFile = Boolean(attachedFileName);
 
   return (
-    <Dialog disableScrollLock open={isOpen} sx={{ ...styles.dialog, ...sxToArray(sx) }} onClose={handleCancel} fullWidth>
+    <Dialog
+      disableScrollLock
+      open={isOpen}
+      sx={{ ...styles.dialog, ...sxToArray(sx) }}
+      onClose={handleCancel}
+      fullWidth
+    >
       <DialogTitle sx={styles.dialogTitle}>{dialogTitle}</DialogTitle>
 
       <DialogContent sx={styles.dialogContent}>
         <Stack spacing={3} sx={styles.contentContainer}>
-          <TextField
-            label="Бібліографічний опис"
+          <CustomTextField
+            fieldType="formatting"
+            label="Бібліографічний опис *"
             value={bibliographicDescription}
-            onChange={(e) =>
-              setBibliographicDescription(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.bibliographicDescription))
-            }
+            onChange={(value: JSONContent) => setBibliographicDescription(value)}
             onBlur={() => markTouched('bibliographicDescription')}
             error={Boolean(bibliographicDescriptionError)}
             helperText={bibliographicDescriptionError}
-            required
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={2}
-            inputProps={{ maxLength: RESEARCH_FIELD_LIMITS.bibliographicDescription }}
-            sx={styles.multilineField}
           />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Autocomplete
-              freeSolo
-              fullWidth
-              options={authorOptions}
-              inputValue={author}
-              onInputChange={(_, value) => setAuthor(clampLength(value, RESEARCH_FIELD_LIMITS.author))}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Автор"
-                  required
-                  fullWidth
-                  error={Boolean(authorError)}
-                  helperText={authorError}
-                  onBlur={() => markTouched('author')}
-                  inputProps={{ ...params.inputProps, maxLength: RESEARCH_FIELD_LIMITS.author }}
-                />
-              )}
+            <CustomTextField
+              fieldType="formatting"
+              label="Автор(и)/Упорядник(и) *"
+              value={author}
+              onChange={(value: JSONContent) => setAuthor(value)}
+              onBlur={() => markTouched('author')}
+              error={Boolean(authorError)}
+              helperText={authorError}
             />
+
             <TextField
-              label="Дати справи"
+              label="Рік публікації"
               value={caseDates}
               onChange={(e) => setCaseDates(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.year))}
               onBlur={() => markTouched('caseDates')}
@@ -204,22 +210,12 @@ export const ResearchModalView = ({
             />
           </Stack>
 
-          <Box>
-            <TextField
-              label="Ключові слова"
-              value={keywords}
-              onChange={(e) => setKeywords(clampLength(e.target.value, RESEARCH_FIELD_LIMITS.keywords))}
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={2}
-              inputProps={{ maxLength: RESEARCH_FIELD_LIMITS.keywords }}
-              sx={styles.multilineField}
-            />
-            <Typography variant="caption" sx={styles.charCounter}>
-              {keywords.length}/{RESEARCH_FIELD_LIMITS.keywords}
-            </Typography>
-          </Box>
+          <CustomTextField
+            fieldType="formatting"
+            label="Ключові слова"
+            value={keywords ?? ''}
+            onChange={(value: JSONContent) => setKeywords(value)}
+          />
 
           <Stack spacing={2}>
             <Typography variant="subtitle2" sx={styles.fileSectionTitle}>
@@ -231,19 +227,12 @@ export const ResearchModalView = ({
                 Файл
               </Typography>
               <Box sx={styles.fileRowDivider} />
-              <Button
-                variant="text"
-                onClick={onAddFile}
-                disabled={hasAttachedFile}
-                sx={styles.addFileButton}
-              >
+              <Button variant="text" onClick={onAddFile} disabled={hasAttachedFile} sx={styles.addFileButton}>
                 Додати файл
               </Button>
             </Stack>
 
-            {attachedFileName && (
-              <FileItem fileName={attachedFileName} fileType="pdf" onDelete={onDeleteFile} />
-            )}
+            {attachedFileName && <FileItem fileName={attachedFileName} fileType="pdf" onDelete={onDeleteFile} />}
 
             <TextField
               label="URL"

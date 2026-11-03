@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { ResearchModalView, ResearchWorkFormData } from './research-modal-view/ResearchModalView';
+import { ResearchModalView, ResearchWorkFormData, TipTapValue } from './research-modal-view/ResearchModalView';
 import { PDF_FILE_ACCEPT } from '~/constants/archive';
 import { RESEARCH_MUTATION_RESULTS, RESEARCH_VALIDATION_MESSAGES } from '~/constants/research';
 import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
@@ -38,11 +38,19 @@ interface ResearchModalProps {
 const toStatus = (isVisibleOnSite: boolean): ResearchWorkStatus =>
   isVisibleOnSite ? ResearchWorkStatus.Published : ResearchWorkStatus.Hidden;
 
+const formatRichTextField = (value: TipTapValue | null | undefined): string | null => {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    return value.trim() || null;
+  }
+  return JSON.stringify(value);
+};
+
 const toCommonInput = (data: ResearchWorkFormData) => ({
-  bibliographicDescription: data.bibliographicDescription.trim(),
-  author: data.author.trim(),
+  bibliographicDescription: formatRichTextField(data.bibliographicDescription) ?? '',
+  author: formatRichTextField(data.author) ?? '',
   year: data.caseDates.trim(),
-  keywords: data.keywords.trim() || null,
+  keywords: formatRichTextField(data.keywords),
   url: data.url.trim() || null,
   status: toStatus(data.isVisibleOnSite)
 });
@@ -99,10 +107,7 @@ const ResearchModal = ({
     toast.success(RESEARCH_MUTATION_RESULTS.created);
   };
 
-  const saveUpdate = async (
-    data: ResearchWorkFormData,
-    pdfFile: ResearchWorkPdfFileInput | null | undefined
-  ) => {
+  const saveUpdate = async (data: ResearchWorkFormData, pdfFile: ResearchWorkPdfFileInput | null | undefined) => {
     if (!workId) {
       throw new Error(RESEARCH_MUTATION_RESULTS.updateFailed);
     }
