@@ -1,0 +1,25 @@
+type PaymentDetailsPdfFile {
+  filename: String!
+  url: String!
+  mimeType: String!
+}
+
+type PaymentDetailsTab {
+  id: ID!
+  name: String!
+  content: JSON!
+  order: Int!
+}
+
+type PaymentDetails {
+  id: ID!
+  slug: String!
+  tabs: [PaymentDetailsTab!]!
+  pdfFile: PaymentDetailsPdfFile
+  createdAt: String!
+  updatedAt: String!
+}
+
+extend type Query {
+  paymentDetails: PaymentDetails
+}
