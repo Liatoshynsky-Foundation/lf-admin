@@ -47,6 +47,7 @@ const optionalRichTextSchema = z
     uk: jsonContentSchema.nullable().optional(),
     en: jsonContentSchema.nullable().optional()
   })
+  .nullable()
   .optional();
 
 const pdfFileSchema = z

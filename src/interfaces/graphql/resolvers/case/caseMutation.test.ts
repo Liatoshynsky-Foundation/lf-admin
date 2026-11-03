@@ -18,7 +18,7 @@ const createMockCreateCaseInput = (overrides: Partial<CreateCaseInput> = {}): Cr
   caseDate: { uk: '1917-1918', en: '1917-1918' },
   sheetsNumber: 10,
   caseDescriptions: { uk: 'Опис', en: 'Description' },
-  detailedCaseDescription: undefined,
+  detailedCaseDescription: null,
   pdfFile: undefined,
   status: BaseContentStatuses.Hidden,
   ...overrides
