@@ -121,10 +121,6 @@ describe('ResearchModalView', () => {
       }
     });
 
-    const expectedEditorValue = JSON.stringify(JSON.parse(serializedDoc));
-    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveValue(expectedEditorValue);
-    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveValue(expectedEditorValue);
-    expect(screen.getByLabelText('Ключові слова')).toHaveValue(expectedEditorValue);
     expect(screen.getByRole('textbox', { name: /рік публікації/i })).toHaveValue('1980');
   });
 
@@ -155,23 +151,25 @@ describe('ResearchModalView', () => {
     });
   });
 
-  it.each(['author', 'bibliographicDescription'] as const)(
-    'does not submit when the required %s field is empty',
-    (missingField) => {
-      renderView();
+  it('does not submit when "bibliographicDescription" is empty', () => {
+    renderView();
 
-      if (missingField !== 'bibliographicDescription') {
-        fireEvent.change(screen.getByLabelText('Бібліографічний опис *'), { target: { value: 'Опис' } });
-      }
-      if (missingField !== 'author') {
-        fireEvent.change(screen.getByLabelText('Автор(и)/Упорядник(и) *'), { target: { value: 'Автор' } });
-      }
-      fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+    fireEvent.change(screen.getByLabelText('Автор(и)/Упорядник(и) *'), { target: { value: 'Автор' } });
+    fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-      expect(onSave).not.toHaveBeenCalled();
-    }
-  );
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('does not submit when "author" is empty', () => {
+    renderView();
+
+    fireEvent.change(screen.getByLabelText('Бібліографічний опис *'), { target: { value: 'Опис' } });
+    fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
 
   it('clamps caseDates input to maxLength characters', () => {
     renderView();

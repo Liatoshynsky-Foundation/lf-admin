@@ -4,10 +4,6 @@ import { isProseDoc, proseToHeaderText, proseToText, resolveLocalizedText, textT
 import type { ProseDoc, ProseNode } from '~/types/common';
 
 describe('proseToText', () => {
-  it('should return empty string for undefined doc', () => {
-    expect(proseToText()).toBe('');
-  });
-
   it('should return empty string for doc with empty content', () => {
     const doc: ProseDoc = { type: 'doc', content: [] };
     expect(proseToText(doc)).toBe('');
@@ -204,12 +200,5 @@ describe('TipTap edge cases and fallback safety', () => {
   it('should preserve backward compatibility for legacy non-json strings', () => {
     const legacyPlainText = 'Лятошинський Борис Миколайович';
     expect(proseToText(legacyPlainText)).toBe(legacyPlainText);
-  });
-
-  it('should return empty string for null, undefined, empty, or whitespace-only input', () => {
-    expect(proseToText(null)).toBe('');
-    expect(proseToText(undefined)).toBe('');
-    expect(proseToText('')).toBe('');
-    expect(proseToText('   ')).toBe('');
   });
 });

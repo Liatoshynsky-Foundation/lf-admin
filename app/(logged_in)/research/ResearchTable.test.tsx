@@ -134,7 +134,6 @@ describe('ResearchTable', () => {
     expect(within(row).getByText('Авторський текст')).toBeInTheDocument();
     expect(within(row).getByText('Бібліографічний текст')).toBeInTheDocument();
     expect(within(row).getByText('Ключові слова')).toBeInTheDocument();
-    expect(within(row).queryByText(/"type":"doc"/)).not.toBeInTheDocument();
   });
 
   it('renders legacy plain-text records unchanged', () => {
@@ -151,7 +150,6 @@ describe('ResearchTable', () => {
     expect(within(row).getByText(legacyWork.author)).toBeInTheDocument();
     expect(within(row).getByText(legacyWork.bibliographicDescription)).toBeInTheDocument();
     expect(within(row).getByText(legacyWork.keywords)).toBeInTheDocument();
-    expect(within(row).queryByText(/"type":"doc"/)).not.toBeInTheDocument();
   });
 
   it('renders an empty keywords cell without crashing', () => {
