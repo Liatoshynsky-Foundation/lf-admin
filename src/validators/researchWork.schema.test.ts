@@ -1,4 +1,4 @@
-import { zResearchWorkSchema, zResearchWorkStatusSchema,zResearchWorkUpdateSchema } from './researchWork.schema';
+import { zResearchWorkSchema, zResearchWorkStatusSchema, zResearchWorkUpdateSchema } from './researchWork.schema';
 import { RESEARCH_VALIDATION_MESSAGES } from '~/constants/research';
 import { BaseContentStatuses, TipTapNodeTypes } from '~/types/enums/common.enums';
 
@@ -38,6 +38,74 @@ describe('zResearchWorkSchema', () => {
       });
 
       expect(result.success).toBe(true);
+    });
+
+    it('accepts serialized TipTap JSON strings and validates their document structure', () => {
+      const serializedDoc = JSON.stringify(validTipTapDoc);
+      const result = zResearchWorkSchema.safeParse({
+        ...validBaseWork,
+        bibliographicDescription: serializedDoc,
+        author: serializedDoc,
+        keywords: serializedDoc
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.bibliographicDescription).toEqual(validTipTapDoc);
+        expect(result.data.author).toEqual(validTipTapDoc);
+        expect(result.data.keywords).toEqual(validTipTapDoc);
+      }
+    });
+
+    it('accepts omitted or null keywords', () => {
+      const withoutKeywords = { ...validBaseWork };
+      Reflect.deleteProperty(withoutKeywords, 'keywords');
+
+      const omittedResult = zResearchWorkSchema.safeParse(withoutKeywords);
+      const nullResult = zResearchWorkSchema.safeParse({ ...validBaseWork, keywords: null });
+
+      expect(omittedResult.success).toBe(true);
+      if (omittedResult.success) {
+        expect(omittedResult.data.keywords).toBeUndefined();
+      }
+      expect(nullResult.success).toBe(true);
+      if (nullResult.success) {
+        expect(nullResult.data.keywords).toBeNull();
+      }
+    });
+
+    it('accepts very long formatted text payloads', () => {
+      const longText = 'Formatted research text '.repeat(20_000);
+      const longFormattedDoc = {
+        type: TipTapNodeTypes.doc,
+        content: [
+          {
+            type: TipTapNodeTypes.paragraph,
+            content: [{ type: TipTapNodeTypes.text, text: longText, marks: [{ type: 'bold' }] }]
+          },
+          {
+            type: TipTapNodeTypes.paragraph,
+            content: [
+              {
+                type: TipTapNodeTypes.text,
+                text: 'Read more',
+                marks: [{ type: 'link', attrs: { href: 'https://example.com/research' } }]
+              }
+            ]
+          }
+        ]
+      };
+
+      const result = zResearchWorkSchema.safeParse({
+        ...validBaseWork,
+        bibliographicDescription: longFormattedDoc,
+        author: validTipTapDoc
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.bibliographicDescription).toEqual(longFormattedDoc);
+      }
     });
 
     it('transforms empty string url and keywords to null', () => {
@@ -93,6 +161,17 @@ describe('zResearchWorkSchema', () => {
         const fieldError = result.error.issues.find((i) => i.path.includes('author'));
         expect(fieldError?.message).toBe(RESEARCH_VALIDATION_MESSAGES.authorRequired);
       }
+    });
+
+    it.each([
+      ['bibliographicDescription', ''],
+      ['bibliographicDescription', { type: TipTapNodeTypes.doc, content: [] }],
+      ['author', ''],
+      ['author', { type: TipTapNodeTypes.text, text: 'Invalid author document' }]
+    ] as const)('rejects empty or invalid %s values', (field, value) => {
+      const result = zResearchWorkSchema.safeParse({ ...validBaseWork, [field]: value });
+
+      expect(result.success).toBe(false);
     });
 
     it('returns error message when year exceeds 150 characters', () => {

@@ -1,6 +1,6 @@
 import { JSONContent } from '@tiptap/react';
 
-import { isProseDoc, proseToHeaderText,proseToText, resolveLocalizedText, textToProse } from './prose';
+import { isProseDoc, proseToHeaderText, proseToText, resolveLocalizedText, textToProse } from './prose';
 import type { ProseDoc, ProseNode } from '~/types/common';
 
 describe('proseToText', () => {
@@ -150,5 +150,66 @@ describe('resolveLocalizedText', () => {
   it('should return empty string for non-string, non-ProseDoc objects', () => {
     const invalidObj: JSONContent = { type: 'unknown' };
     expect(resolveLocalizedText(invalidObj)).toBe('');
+  });
+});
+
+describe('TipTap edge cases and fallback safety', () => {
+  it('should correctly join text from multiple paragraphs with spaces', () => {
+    const multiParagraphDoc = JSON.stringify({
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Перший абзац.' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Другий абзац.' }] }
+      ]
+    });
+
+    expect(proseToText(multiParagraphDoc)).toBe('Перший абзац. Другий абзац.');
+  });
+
+  it('should extract plain text from nodes with marks (bold, italic, links)', () => {
+    const formattedDoc = JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Звичайний ' },
+            { type: 'text', text: 'жирний', marks: [{ type: 'bold' }] },
+            { type: 'text', text: ' та ' },
+            { type: 'text', text: 'курсив', marks: [{ type: 'italic' }] },
+            { type: 'text', text: ' і ' },
+            { type: 'text', text: 'посилання', marks: [{ type: 'link', attrs: { href: 'https://example.com' } }] }
+          ]
+        }
+      ]
+    });
+
+    expect(proseToText(formattedDoc)).toBe('Звичайний жирний та курсив і посилання');
+  });
+
+  it('should gracefully return original string if json is malformed', () => {
+    const malformedJson = '{ "type": "doc", "content": "<invalid>" ';
+    expect(proseToText(malformedJson)).toBe(malformedJson);
+  });
+
+  it('should safely handle empty doc without content nodes', () => {
+    const emptyDoc = JSON.stringify({
+      type: 'doc',
+      content: []
+    });
+    expect(proseToText(emptyDoc)).toBe('');
+    expect(proseToText(JSON.stringify({ type: 'doc' }))).toBe('');
+  });
+
+  it('should preserve backward compatibility for legacy non-json strings', () => {
+    const legacyPlainText = 'Лятошинський Борис Миколайович';
+    expect(proseToText(legacyPlainText)).toBe(legacyPlainText);
+  });
+
+  it('should return empty string for null, undefined, empty, or whitespace-only input', () => {
+    expect(proseToText(null)).toBe('');
+    expect(proseToText(undefined)).toBe('');
+    expect(proseToText('')).toBe('');
+    expect(proseToText('   ')).toBe('');
   });
 });

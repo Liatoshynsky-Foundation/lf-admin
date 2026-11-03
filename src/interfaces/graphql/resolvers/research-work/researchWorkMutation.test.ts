@@ -41,10 +41,10 @@ const createMockEntity = (overrides: Partial<ResearchWork> = {}): ResearchWork =
   ...overrides
 });
 
-const mockCreate = jest.fn();
-const mockUpdate = jest.fn();
-const mockDelete = jest.fn();
-const mockFindById = jest.fn();
+const mockCreate: jest.MockedFunction<IResearchWorkRepository['create']> = jest.fn();
+const mockUpdate: jest.MockedFunction<IResearchWorkRepository['update']> = jest.fn();
+const mockDelete: jest.MockedFunction<IResearchWorkRepository['delete']> = jest.fn();
+const mockFindById: jest.MockedFunction<IResearchWorkRepository['findById']> = jest.fn();
 
 const mockRepo: Partial<IResearchWorkRepository> = {
   create: mockCreate,
@@ -116,6 +116,15 @@ describe('ResearchWorkMutation', () => {
       await ResearchWorkMutation.createResearchWork({}, { input }, adminContext);
 
       expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ keywords: null }));
+    });
+
+    it('preserves omitted keywords as undefined', async () => {
+      const input = createMockCreateInput({ keywords: undefined });
+      mockCreate.mockResolvedValue(createMockEntity({ keywords: undefined }));
+
+      await ResearchWorkMutation.createResearchWork({}, { input }, adminContext);
+
+      expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ keywords: undefined }));
     });
 
     it('serializes TipTap document inputs before saving', async () => {
@@ -317,7 +326,7 @@ describe('ResearchWorkMutation', () => {
       );
 
       expect(mockUpdate).toHaveBeenCalledTimes(1);
-      const [, payload] = mockUpdate.mock.calls[0] as [string, Record<string, unknown>];
+      const [, payload] = mockUpdate.mock.calls[0];
       expect(payload).toEqual({ author: 'Новий автор' });
       expect(payload).not.toHaveProperty('url');
       expect(payload).not.toHaveProperty('keywords');

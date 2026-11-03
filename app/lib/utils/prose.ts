@@ -5,16 +5,18 @@ import { HeadingNode, ParagraphNode, ProseDoc, ProseNode, ProseTextNode } from '
 export const proseToText = (doc?: unknown): string => {
   if (!doc) return '';
   if (typeof doc === 'string') {
+    if (!doc.trim()) return '';
+
     try {
       const parsedDoc: unknown = JSON.parse(doc);
       if (isProseDoc(parsedDoc)) {
         return proseToText(parsedDoc);
       }
     } catch {
-      // Plain text is also a supported input.
+      return doc;
     }
 
-    return doc.replace(/<[^>]*>?/gm, '');
+    return doc;
   }
 
   const typedDoc = doc as Partial<ProseDoc>;
@@ -28,7 +30,7 @@ export const proseToText = (doc?: unknown): string => {
       }
       return '';
     })
-    .join('\n');
+    .join(' ');
 };
 
 export const textToProse = (text: string): ProseDoc => ({

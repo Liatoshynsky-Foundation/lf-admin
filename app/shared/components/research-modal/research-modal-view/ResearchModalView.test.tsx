@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { JSONContent } from '@tiptap/react';
+import type { ChangeEvent, ComponentProps, ReactNode } from 'react';
 
 import { ResearchModalView } from './ResearchModalView';
 import { RESEARCH_FIELD_LIMITS, RESEARCH_VALIDATION_MESSAGES } from '~/constants/research';
@@ -18,7 +19,17 @@ jest.mock('../../composition-modal/file-item/FileItem', () => ({
 }));
 
 jest.mock('~/ds-components/text-field/TextField', () => {
-  const MockComponent = ({ label, value, onChange, onBlur, error, helperText, fieldType }: any) => (
+  type MockTextFieldProps = {
+    label?: string;
+    value?: string | JSONContent | null;
+    onChange?: (value: string | ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: () => void;
+    error?: boolean;
+    helperText?: ReactNode;
+    fieldType?: string;
+  };
+
+  const MockComponent = ({ label = '', value, onChange, onBlur, error, helperText, fieldType }: MockTextFieldProps) => (
     <div>
       <label htmlFor={label}>{label}</label>
       <input
@@ -26,7 +37,7 @@ jest.mock('~/ds-components/text-field/TextField', () => {
         data-testid={`mock-${fieldType || 'styled'}-input`}
         data-value-type={typeof value}
         value={typeof value === 'object' ? JSON.stringify(value) : (value ?? '')}
-        onChange={(e) => onChange?.(fieldType === 'formatting' ? e.target.value : e)}
+        onChange={(event) => onChange?.(fieldType === 'formatting' ? event.target.value : event)}
         onBlur={onBlur}
       />
       {error && helperText && <span>{helperText}</span>}
@@ -79,6 +90,17 @@ describe('ResearchModalView', () => {
     expect(screen.getByRole('button', { name: 'Зберегти' })).toBeEnabled();
   });
 
+  it('initializes create mode with empty defaults and required field labels', () => {
+    renderView();
+
+    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveValue('');
+    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveValue('');
+    expect(screen.getByLabelText('Рік публікації *')).toHaveValue('');
+    expect(screen.getByLabelText('Ключові слова')).toHaveValue('');
+    expect(screen.getByLabelText('Показувати на сайті')).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+  });
+
   it('pre-populates fields from initialData', () => {
     renderView({
       initialData: {
@@ -110,9 +132,10 @@ describe('ResearchModalView', () => {
       }
     });
 
-    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveAttribute('data-value-type', 'object');
-    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveAttribute('data-value-type', 'object');
-    expect(screen.getByLabelText('Ключові слова')).toHaveAttribute('data-value-type', 'object');
+    const expectedEditorValue = JSON.stringify(JSON.parse(serializedDoc));
+    expect(screen.getByLabelText('Бібліографічний опис *')).toHaveValue(expectedEditorValue);
+    expect(screen.getByLabelText('Автор(и)/Упорядник(и) *')).toHaveValue(expectedEditorValue);
+    expect(screen.getByLabelText('Ключові слова')).toHaveValue(expectedEditorValue);
     expect(screen.getByRole('textbox', { name: /рік публікації/i })).toHaveValue('1980');
   });
 
@@ -142,6 +165,24 @@ describe('ResearchModalView', () => {
       );
     });
   });
+
+  it.each(['author', 'bibliographicDescription'] as const)(
+    'does not submit when the required %s field is empty',
+    (missingField) => {
+      renderView();
+
+      if (missingField !== 'bibliographicDescription') {
+        fireEvent.change(screen.getByLabelText('Бібліографічний опис *'), { target: { value: 'Опис' } });
+      }
+      if (missingField !== 'author') {
+        fireEvent.change(screen.getByLabelText('Автор(и)/Упорядник(и) *'), { target: { value: 'Автор' } });
+      }
+      fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+
+      expect(onSave).not.toHaveBeenCalled();
+    }
+  );
 
   it('clamps caseDates input to maxLength characters', () => {
     renderView();

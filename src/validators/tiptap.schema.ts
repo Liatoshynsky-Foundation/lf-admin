@@ -5,8 +5,17 @@ import { TipTapMarkType, TipTapNodeTypes, TipTapTableNodeTypes } from '~/types/e
 const BoldMarkSchema = z.object({ type: z.literal(TipTapMarkType.bold) });
 const ItalicMarkSchema = z.object({ type: z.literal(TipTapMarkType.italic) });
 const UnderlineMarkSchema = z.object({ type: z.literal(TipTapMarkType.underline) });
+const LinkMarkSchema = z.object({
+  type: z.literal(TipTapMarkType.link),
+  attrs: z.object({ href: z.url() })
+});
 
-export const MarkSchema = z.discriminatedUnion('type', [BoldMarkSchema, ItalicMarkSchema, UnderlineMarkSchema]);
+export const MarkSchema = z.discriminatedUnion('type', [
+  BoldMarkSchema,
+  ItalicMarkSchema,
+  UnderlineMarkSchema,
+  LinkMarkSchema
+]);
 
 const TextNodeSchema = z.object({
   type: z.literal(TipTapNodeTypes.text),
@@ -40,9 +49,19 @@ const tableNodeSchema = z.object({
   content: z.array(tableRowSchema).min(1)
 });
 
-export const TipTapDocSchema = z.object({
+const TipTapDocObjectSchema = z.object({
   type: z.literal(TipTapNodeTypes.doc),
   content: z.array(z.union([ParagraphNodeSchema, tableNodeSchema])).min(1)
 });
+
+export const TipTapDocSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}, TipTapDocObjectSchema);
 
 export type TipTapDoc = z.infer<typeof TipTapDocSchema>;
