@@ -1,6 +1,7 @@
 import { asFunction, AwilixContainer } from 'awilix';
 
 import { loginAdmin } from '~/application/use-cases/loginAdmin/loginAdmin';
+import { paymentDetailsService } from '~/application/use-cases/paymentDetails/paymentDetails';
 import { requestPasswordReset } from '~/application/use-cases/requestPasswordReset/requestPasswordReset';
 import { resetPassword } from '~/application/use-cases/resetPassword/resetPassword';
 import { verifyResetToken } from '~/application/use-cases/verifyResetToken/verifyResetToken';
@@ -12,6 +13,7 @@ export type UseCasesModule = {
   requestPasswordResetUseCase: ReturnType<typeof requestPasswordReset>;
   resetPasswordUseCase: ReturnType<typeof resetPassword>;
   verifyResetTokenUseCase: ReturnType<typeof verifyResetToken>;
+  paymentDetailsService: ReturnType<typeof paymentDetailsService>;
 };
 
 export const registerUseCases = (container: AwilixContainer<UseCasesModule>) => {
@@ -20,6 +22,7 @@ export const registerUseCases = (container: AwilixContainer<UseCasesModule>) => 
     createTokenService: asFunction(createTokenService).scoped(),
     requestPasswordResetUseCase: asFunction(requestPasswordReset).singleton(),
     resetPasswordUseCase: asFunction(resetPassword).singleton(),
-    verifyResetTokenUseCase: asFunction(verifyResetToken).singleton()
+    verifyResetTokenUseCase: asFunction(verifyResetToken).singleton(),
+    paymentDetailsService: asFunction(paymentDetailsService).scoped()
   });
 };
