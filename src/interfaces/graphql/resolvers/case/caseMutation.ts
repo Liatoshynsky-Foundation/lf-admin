@@ -65,7 +65,17 @@ export const CaseMutation = {
     }
 
     try {
-      const createdCase = await repo.create(validatedInput);
+      const createInput: CreateCaseInput = {
+        ...validatedInput,
+        detailedCaseDescription: validatedInput.detailedCaseDescription
+          ? {
+            uk: validatedInput.detailedCaseDescription.uk ?? null,
+            en: validatedInput.detailedCaseDescription.en ?? null
+          }
+          : null
+      };
+
+      const createdCase = await repo.create(createInput);
       await recalculateFundStats(fundId, { caseRepository: repo, fundRepository });
       return createdCase;
     } catch (error) {
@@ -104,7 +114,11 @@ export const CaseMutation = {
       const effectiveDescriptionNumber = validatedInput.descriptionNumber ?? current.descriptionNumber;
       const effectiveCaseNumber = validatedInput.caseNumber ?? current.caseNumber;
 
-      const existing = await repo.findByFundAndNumbers(effectiveFundId, effectiveDescriptionNumber, effectiveCaseNumber);
+      const existing = await repo.findByFundAndNumbers(
+        effectiveFundId,
+        effectiveDescriptionNumber,
+        effectiveCaseNumber
+      );
       if (existing && existing.id !== id) {
         throw duplicateNumbersError();
       }
@@ -112,7 +126,19 @@ export const CaseMutation = {
 
     let updatedCase: Case | null;
     try {
-      updatedCase = await repo.update(id, validatedInput);
+      const updateInput: UpdateCaseInput = {
+        ...validatedInput,
+        ...(validatedInput.detailedCaseDescription !== undefined && {
+          detailedCaseDescription: validatedInput.detailedCaseDescription
+            ? {
+              uk: validatedInput.detailedCaseDescription.uk ?? null,
+              en: validatedInput.detailedCaseDescription.en ?? null
+            }
+            : null
+        })
+      } as UpdateCaseInput;
+
+      updatedCase = await repo.update(id, updateInput);
     } catch (error) {
       if (isDuplicateKeyError(error)) {
         throw duplicateNumbersError();
@@ -124,8 +150,7 @@ export const CaseMutation = {
       throw caseNotFoundError(id);
     }
 
-    const statsAffectingChange =
-      validatedInput.fundId !== undefined || validatedInput.descriptionNumber !== undefined;
+    const statsAffectingChange = validatedInput.fundId !== undefined || validatedInput.descriptionNumber !== undefined;
 
     if (statsAffectingChange) {
       const affectedFundIds = new Set([current.fundId, updatedCase.fundId]);

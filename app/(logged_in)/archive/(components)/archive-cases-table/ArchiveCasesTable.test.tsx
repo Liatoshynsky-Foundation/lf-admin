@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSONContent } from '@tiptap/core';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
@@ -20,7 +21,7 @@ function mockCase(overrides: Partial<ArchiveCase> = {}): ArchiveCase {
     sheetsNumber: 42,
     editCaseDate: '1930-1935',
     editCaseDescriptions: 'Опис справи',
-    detailedCaseDescription: 'Детальний опис справи',
+    detailedCaseDescription: { type: 'doc', content: [] } as unknown as JSONContent,
     status: BaseContentStatuses.Published,
     updatedAt: '2023-01-01',
     ...overrides
@@ -215,6 +216,7 @@ describe('ArchiveCasesTable', () => {
 
   it('opens the edit modal with the mapped initial data when the edit pencil is clicked', async () => {
     const user = userEvent.setup();
+    const mockTiptapDetails: JSONContent = { type: 'doc', content: [] };
     render(
       <ArchiveCasesTable
         cases={[
@@ -227,7 +229,7 @@ describe('ArchiveCasesTable', () => {
             sheetsNumber: 55,
             editCaseDate: '1940-1945',
             editCaseDescriptions: 'Склад справи',
-            detailedCaseDescription: 'Деталі справи'
+            detailedCaseDescription: mockTiptapDetails
           })
         ]}
       />
@@ -249,7 +251,7 @@ describe('ArchiveCasesTable', () => {
         caseDate: '1940-1945',
         caseName: 'Справа для редагування',
         caseDescriptions: 'Склад справи',
-        detailedCaseDescription: 'Деталі справи'
+        detailedCaseDescription: mockTiptapDetails
       })
     );
   });

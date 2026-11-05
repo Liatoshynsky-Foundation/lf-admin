@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSONContent } from '@tiptap/core';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
 
@@ -155,6 +156,11 @@ jest.mock('react-hot-toast', () => {
 
 const localized = (uk: string) => ({ uk, en: uk });
 
+const defaultTiptapContent: JSONContent = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Детальний опис' }] }]
+};
+
 const buildCase = (
   overrides: Partial<{
     id: string;
@@ -167,6 +173,7 @@ const buildCase = (
     descriptionNumber: number;
     caseNumber: number;
     pdfFile: { filename: string; url: string; mimeType: string } | null;
+    detailedCaseDescription: JSONContent;
   }> = {}
 ) => ({
   id: overrides.id ?? 'case-1',
@@ -178,7 +185,7 @@ const buildCase = (
   caseDate: localized(overrides.caseDate ?? '1930'),
   sheetsNumber: overrides.sheetsNumber ?? 5,
   caseDescriptions: localized(overrides.caseDescriptions ?? 'Опис справи'),
-  detailedCaseDescription: localized('Детальний опис'),
+  detailedCaseDescription: overrides.detailedCaseDescription ?? defaultTiptapContent,
   pdfFile: overrides.pdfFile !== undefined ? overrides.pdfFile : null,
   status: overrides.status ?? CaseStatus.Published,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -264,7 +271,7 @@ describe('FundCasesBlock', () => {
       caseDate: '1930',
       sheetsNumber: '5',
       caseDescriptions: 'Опис справи',
-      detailedCaseDescription: 'Детальний опис',
+      detailedCaseDescription: null,
       currentPdfFile: undefined
     });
   });

@@ -1,5 +1,4 @@
 import { zCaseSchema, zCaseUpdateSchema } from './case.schema';
-import { CASE_VALIDATION_MESSAGES } from '~/constants/case';
 
 describe('Case schemas detailedCaseDescription validation', () => {
   const baseValidCase = {
@@ -12,37 +11,59 @@ describe('Case schemas detailedCaseDescription validation', () => {
     caseDescriptions: { uk: 'Опис справи', en: 'Description' }
   };
 
-  it('should accept detailedCaseDescription with exactly 5000 characters', () => {
-    const validData = {
-      ...baseValidCase,
-      detailedCaseDescription: {
-        uk: 'a'.repeat(5000),
-        en: 'b'.repeat(5000)
+  const validTiptapDoc = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Текст' }]
       }
-    };
-
-    expect(zCaseSchema.safeParse(validData).success).toBe(true);
-    expect(zCaseUpdateSchema.safeParse(validData).success).toBe(true);
-  });
+    ]
+  };
 
   describe.each([
     { schemaName: 'zCaseSchema', schema: zCaseSchema, data: baseValidCase },
     { schemaName: 'zCaseUpdateSchema', schema: zCaseUpdateSchema, data: {} }
-  ])('rejections in $schemaName', ({ schema, data }) => {
-    it.each(['uk', 'en'])('should reject when %s exceeds 5000 characters', (lang) => {
+  ])('validation in $schemaName', ({ schema, data }) => {
+    it('should accept valid Tiptap JSON object', () => {
+      const validData = {
+        ...data,
+        detailedCaseDescription: {
+          uk: validTiptapDoc,
+          en: validTiptapDoc
+        }
+      };
+
+      const result = schema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept null values in detailedCaseDescription', () => {
+      const validNullData = {
+        ...data,
+        detailedCaseDescription: {
+          uk: null,
+          en: null
+        }
+      };
+
+      const result = schema.safeParse(validNullData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject  strings in detailedCaseDescription', () => {
       const invalidData = {
         ...data,
         detailedCaseDescription: {
-          uk: 'Valid text',
-          en: 'Valid text',
-          [lang]: 'a'.repeat(5001)
+          uk: 'This is just a string, not a Tiptap object',
+          en: 'This should fail'
         }
       };
 
       const result = schema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe(CASE_VALIDATION_MESSAGES.detailedCaseDescriptionMaxLength);
+        expect(result.error.issues[0].code).toBe('invalid_type');
       }
     });
   });

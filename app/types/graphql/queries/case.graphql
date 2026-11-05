@@ -17,10 +17,7 @@ query AllCases($filters: CaseFiltersInput) {
       uk
       en
     }
-    detailedCaseDescription {
-      uk
-      en
-    }
+    detailedCaseDescription
     pdfFile {
       filename
       url
@@ -52,10 +49,7 @@ mutation CreateCase($input: CreateCaseInput!) {
       uk
       en
     }
-    detailedCaseDescription {
-      uk
-      en
-    }
+    detailedCaseDescription 
     pdfFile {
       filename
       url
@@ -87,10 +81,7 @@ mutation UpdateCase($id: ID!, $input: UpdateCaseInput!) {
       uk
       en
     }
-    detailedCaseDescription {
-      uk
-      en
-    }
+    detailedCaseDescription
     pdfFile {
       filename
       url

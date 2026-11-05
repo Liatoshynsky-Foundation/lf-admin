@@ -1,5 +1,5 @@
 /** @jest-environment node */
-
+import type { JSONContent } from '@tiptap/core';
 import { ObjectId } from 'mongodb';
 import type { Connection } from 'mongoose';
 
@@ -9,7 +9,7 @@ type CaseRecord = {
   fundId: ObjectId;
   descriptionNumber: number;
   status: string;
-  detailedCaseDescription?: { uk: string | null };
+  detailedCaseDescription?: { uk: JSONContent | null };
 };
 
 const createDatabase = () => {
@@ -28,17 +28,34 @@ const createDatabase = () => {
       fundId: funds[1]._id,
       descriptionNumber,
       status: 'published',
-      detailedCaseDescription: { uk: descriptionNumber <= 3 ? 'Опис' : '' }
+      detailedCaseDescription: descriptionNumber <= 3
+        ? { uk: { type: 'doc', content: [{ type: 'paragraph' }] } }
+        : { uk: null }
     }))
   ];
   cases[0].detailedCaseDescription = { uk: null };
-  cases[1].detailedCaseDescription = { uk: '' };
+  cases[1].detailedCaseDescription = { uk: { type: 'doc', content: [] } };
 
   const distinct = jest.fn(async (_field: string, filter: Record<string, unknown>) => {
-    const matchingCases = cases.filter((item) =>
-      item.fundId.equals(filter.fundId as ObjectId) &&
-      (!filter['detailedCaseDescription.uk'] || Boolean(item.detailedCaseDescription?.uk))
-    );
+    const matchingCases = cases.filter((item) => {
+      const matchesFund = item.fundId.equals(filter.fundId as ObjectId);
+      const detailedUk = item.detailedCaseDescription?.uk;
+      const hasDetailedDescription =
+        detailedUk !== null &&
+        detailedUk !== undefined &&
+        typeof detailedUk === 'object' &&
+        'content' in detailedUk &&
+        Array.isArray((detailedUk as JSONContent).content) &&
+        ((detailedUk as JSONContent).content as unknown[]).length > 0;
+
+      const filterDetailed = filter['detailedCaseDescription.uk'];
+      if (filterDetailed) {
+        return matchesFund && hasDetailedDescription;
+      }
+
+      return matchesFund;
+    });
+
     return [...new Set(matchingCases.map((item) => item.descriptionNumber))];
   });
   const updateOne = jest.fn(async (

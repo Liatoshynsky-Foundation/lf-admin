@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/core';
 import toast from 'react-hot-toast';
 
 import { useArchiveCaseModal, type UseArchiveCaseModalProps } from './useArchiveCaseModal';
@@ -46,7 +47,7 @@ describe('useArchiveCaseModal', () => {
         caseName: '',
         caseNumber: '',
         descriptionNumber: '',
-        detailedCaseDescription: '',
+        detailedCaseDescription: null,
         sheetsNumber: '',
         isUploadModalOpen: false,
         isDiscardModalOpen: false,
@@ -81,13 +82,17 @@ describe('useArchiveCaseModal', () => {
     });
 
     it('should initialize state values with passed initialData', () => {
+      const mockTiptapContent: JSONContent = { 
+        type: 'doc', 
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Detail' }] }] 
+      };
       const initialData = {
         descriptionNumber: '1',
         caseNumber: 'CASE-99',
         sheetsNumber: '10',
         caseDate: '2026',
         currentPdfFile: { fileName: 'file.pdf', name: 'file.pdf' },
-        detailedCaseDescription: 'Detail',
+        detailedCaseDescription: mockTiptapContent,
         caseName: 'Test Case',
         caseDescriptions: 'Descriptions'
       };
@@ -98,7 +103,7 @@ describe('useArchiveCaseModal', () => {
       expect(result.current.sheetsNumber).toBe('10');
       expect(result.current.caseDate).toBe('2026');
       expect(result.current.currentPdfFile).toEqual({ fileName: 'file.pdf', name: 'file.pdf' });
-      expect(result.current.detailedCaseDescription).toBe('Detail');
+      expect(result.current.detailedCaseDescription).toEqual(mockTiptapContent);
       expect(result.current.caseName).toBe('Test Case');
       expect(result.current.caseDescriptions).toBe('Descriptions');
     });
@@ -196,18 +201,22 @@ describe('useArchiveCaseModal', () => {
   describe('clearInputs', () => {
     it('should reset all input state values to their defaults', () => {
       const { result } = renderHook(() => useArchiveCaseModal(defaultProps));
+      const mockTiptapContent: JSONContent = {
+        type: 'doc',
+        content: [{ type: 'paragraph' }]
+      };
 
       act(() => {
         result.current.setDescriptionNumber('10');
         result.current.setCaseNumber('123');
         result.current.setCaseName('Case Title');
-        result.current.setDetailedCaseDescription('Some detailed description');
+        result.current.setDetailedCaseDescription(mockTiptapContent);
       });
 
       expect(result.current.descriptionNumber).toBe('10');
       expect(result.current.caseNumber).toBe('123');
       expect(result.current.caseName).toBe('Case Title');
-      expect(result.current.detailedCaseDescription).toBe('Some detailed description');
+      expect(result.current.detailedCaseDescription).toEqual(mockTiptapContent);
 
       act(() => {
         result.current.clearInputs();
@@ -216,7 +225,7 @@ describe('useArchiveCaseModal', () => {
       expect(result.current.descriptionNumber).toBe('');
       expect(result.current.caseNumber).toBe('');
       expect(result.current.caseName).toBe('');
-      expect(result.current.detailedCaseDescription).toBe('');
+      expect(result.current.detailedCaseDescription).toBeNull();
     });
   });
 

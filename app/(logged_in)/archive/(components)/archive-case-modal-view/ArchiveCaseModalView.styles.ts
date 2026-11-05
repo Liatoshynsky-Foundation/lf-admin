@@ -20,7 +20,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     p: 0,
     alignItems: 'center',
     justifyContent: 'space-between'
-  }, 
+  },
   dialogTitle: {
     typography: 'h6',
     lineHeight: 1.2,
@@ -64,6 +64,10 @@ export const styles: Record<string, SxProps<Theme>> = {
     '& .MuiInputBase-root': {
       height: 'auto',
       p: '12px 16px'
+    },
+    '& .ProseMirror': {
+      height: '168px',
+      overflowY: 'auto'
     }
   }
 };

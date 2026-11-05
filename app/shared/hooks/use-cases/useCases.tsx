@@ -39,7 +39,7 @@ export function useAllCases(filters?: CaseFiltersInput | null, options: QueryHoo
       createdAt: c.createdAt,
       editCaseDate: c.caseDate.uk,
       editCaseDescriptions: c.caseDescriptions.uk,
-      detailedCaseDescription: c.detailedCaseDescription?.uk ?? '',
+      detailedCaseDescription: c.detailedCaseDescription?.uk ?? null,
       pdfFile: c.pdfFile
         ? {
           name: c.pdfFile.filename,
