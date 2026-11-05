@@ -43,6 +43,7 @@ export type SeoFormLabels = {
   readonly fileNameLabel?: string;
   readonly editImageLabel?: string;
   readonly changeImageLabel?: string;
+  readonly removeImageLabel?: string;
 };
 
 export interface SeoMetadataFormProps {
@@ -52,6 +53,7 @@ export interface SeoMetadataFormProps {
   readonly locale: 'uk' | 'en';
   readonly ogImage: string | null;
   readonly onImageChange: (url: string) => void;
+  readonly onRemoveImage?: () => void;
   readonly allowIndexing: boolean;
   readonly onIndexingChange: (val: boolean) => void;
   readonly showAlternativeText?: boolean;
@@ -114,6 +116,7 @@ export default function SeoMetadataForm({
   locale,
   ogImage,
   onImageChange,
+  onRemoveImage,
   allowIndexing,
   onIndexingChange,
   showAlternativeText = false,
@@ -284,6 +287,7 @@ export default function SeoMetadataForm({
         imageUrl={ogImagePreview || ''}
         fileName={displayFileName}
         onChangeImage={handleImageChange}
+        onRemoveImage={onRemoveImage}
         aspectRatio={CROP_RATIOS.GROUP_PHOTO}
         disabled={isUploading}
         buttonSpacing="8px"
@@ -303,6 +307,7 @@ export default function SeoMetadataForm({
         fileNameLabel={labels.fileNameLabel}
         editImageLabel={labels.editImageLabel}
         changeImageLabel={labels.changeImageLabel}
+        removeImageLabel={labels.removeImageLabel ?? (locale === 'en' ? 'Delete' : 'Видалити')}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
         {labels.ogImageHint || 'Оптимальний розмір: 1200×630 px.'}

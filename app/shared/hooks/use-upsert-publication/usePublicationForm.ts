@@ -147,6 +147,18 @@ export const usePublicationForm = () => {
     setCrop(val);
   }, []);
 
+  const removeCoverImage = useCallback(() => {
+    changeSeoValue((previous) => ({
+      ...previous,
+      ogImage: null,
+      meta: {
+        uk: { ...previous.meta.uk, altText: { uk: '', en: '' } },
+        en: { ...previous.meta.en, altText: { uk: '', en: '' } }
+      }
+    }));
+    changeCrop(null);
+  }, [changeSeoValue, changeCrop]);
+
   const handleDateTimeChange = useCallback((start: string | undefined, end: string | undefined) => {
     changeSeoValue((prev) => ({
       ...prev,
@@ -205,6 +217,7 @@ export const usePublicationForm = () => {
     setSeoValue: changeSeoValue,
     crop,
     setCrop: changeCrop,
+    removeCoverImage,
     hasUnsavedChanges,
     seoErrors,
     setSeoErrors,

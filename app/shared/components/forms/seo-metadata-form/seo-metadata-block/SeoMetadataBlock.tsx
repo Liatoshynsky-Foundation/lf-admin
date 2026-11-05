@@ -48,6 +48,7 @@ export interface SeoMetadataBlockProps {
   readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly onChangeAltText?: (value: LocalizedString) => void;
+  readonly onRemoveImage?: () => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
     value: LocalizedMeta,
@@ -68,6 +69,7 @@ export default function SeoMetadataBlock({
   onChangeCrop,
   onChange: externalOnChange,
   onChangeAltText,
+  onRemoveImage,
   extraFields,
   labels
 }: SeoMetadataBlockProps) {
@@ -189,6 +191,7 @@ export default function SeoMetadataBlock({
         locale="uk"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
+        onRemoveImage={onRemoveImage}
         allowIndexing={value.allowIndexing.uk}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, uk: val } })}
         showAlternativeText={showAlternativeText}
@@ -217,6 +220,7 @@ export default function SeoMetadataBlock({
         locale="en"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
+        onRemoveImage={onRemoveImage}
         allowIndexing={value.allowIndexing.en}
         onIndexingChange={(val) => handleChange({ ...value, allowIndexing: { ...value.allowIndexing, en: val } })}
         showAlternativeText={showAlternativeText}

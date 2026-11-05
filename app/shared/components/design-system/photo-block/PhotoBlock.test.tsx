@@ -140,6 +140,21 @@ describe('ImagePreviewBlock', () => {
     });
   });
 
+  it('does not offer removal unless a handler is provided', () => {
+    renderComponent();
+    expect(screen.queryByRole('button', { name: 'Видалити' })).not.toBeInTheDocument();
+  });
+
+  it('disables removal when the image block is disabled', () => {
+    renderComponent({ onRemoveImage: jest.fn(), disabled: true });
+    expect(screen.getByRole('button', { name: 'Видалити' })).toBeDisabled();
+  });
+
+  it('does not offer removal for an empty image', () => {
+    renderComponent({ imageUrl: '', onRemoveImage: jest.fn() });
+    expect(screen.queryByRole('button', { name: 'Видалити' })).not.toBeInTheDocument();
+  });
+
   it('should render correctly with initial image', () => {
     renderComponent({ title: 'Основне зображення' });
 

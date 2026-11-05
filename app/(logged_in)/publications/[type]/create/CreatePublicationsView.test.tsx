@@ -151,10 +151,11 @@ type MockSeoBlockProps = {
   ) => ReactNode;
   value?: SeoBlockValue;
   onChange?: (val: SeoBlockValue) => void;
+  onRemoveImage?: () => void;
 };
 
 jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock', () => {
-  return function MockSeoCollapsibleBlock({ children, extraFields, value, onChange }: MockSeoBlockProps) {
+  return function MockSeoCollapsibleBlock({ children, extraFields, value, onChange, onRemoveImage }: MockSeoBlockProps) {
     const emptyLocaleMeta = { title: '', description: '', keywords: '' };
     const seoValue: SeoBlockValue = value ?? {
       meta: { uk: emptyLocaleMeta, en: emptyLocaleMeta },
@@ -165,6 +166,7 @@ jest.mock('~/shared/components/forms/seo-collapsible-block/SeoCollapsibleBlock',
 
     return (
       <div data-testid="mock-seo-collapsible-block">
+        {onRemoveImage && <button onClick={onRemoveImage}>Remove preview image</button>}
         <div data-testid="seo-children">{children}</div>
 
         <div data-testid="seo-extra-fields">
@@ -239,6 +241,7 @@ const createMockData = (
   setSeoErrors: jest.fn(),
   crop: null,
   setCrop: jest.fn(),
+  removeCoverImage: jest.fn(),
   forceShowErrors: false,
   setForceShowErrors: jest.fn(),
   initialState: null,
@@ -266,6 +269,17 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('Rendering by Publication Type', () => {
+    it.each(['create', 'edit', 'seo'] as const)('enables event image removal in %s mode', (mode) => {
+      const mockData = createMockData({ publicationType: 'events' });
+      render(<CreatePublicationsView data={mockData} mode={mode} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Remove preview image' }));
+      expect(mockData.removeCoverImage).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['news', 'media'] as const)('does not change image actions for %s', (publicationType) => {
+      render(<CreatePublicationsView data={createMockData({ publicationType })} />);
+      expect(screen.queryByRole('button', { name: 'Remove preview image' })).not.toBeInTheDocument();
+    });
     it('should render correctly for News (no extra SEO fields)', () => {
       const mockData = createMockData({ publicationType: 'news' });
       render(<CreatePublicationsView data={mockData} />);

@@ -56,6 +56,7 @@ export default function CreatePublicationsView({
     setSeoValue,
     crop,
     setCrop,
+    removeCoverImage,
     handleSave,
     forceShowErrors,
     seoErrors,
@@ -214,6 +215,7 @@ export default function CreatePublicationsView({
           errors={seoErrors}
           crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
+          onRemoveImage={publicationType === 'events' ? removeCoverImage : undefined}
           onChangeAltText={handleCoverImageAltChange}
           value={seoValue}
           onChange={setSeoValue}

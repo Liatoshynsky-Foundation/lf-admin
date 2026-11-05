@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Stack, type StackProps, TextField, Typography } from '@mui/material';
-import { CloudUpload } from 'lucide-react';
+import { CloudUpload, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -28,6 +28,7 @@ interface ImagePreviewBlockProps extends StackProps {
   elipse?: boolean;
   imageFit?: React.CSSProperties['objectFit'];
   onChangeImage: (url: string, crop?: MediaModalResult['crop']) => void;
+  onRemoveImage?: () => void;
   initialCrop?: MediaModalResult['crop'];
   direction?: 'row' | 'row-reverse' | 'column' | 'column-reverse';
   buttonSpacing?: string;
@@ -48,6 +49,7 @@ interface ImagePreviewBlockProps extends StackProps {
   fileNameLabel?: string;
   editImageLabel?: string;
   changeImageLabel?: string;
+  removeImageLabel?: string;
 }
 
 export const ImagePreviewBlock = ({
@@ -57,6 +59,7 @@ export const ImagePreviewBlock = ({
   elipse = false,
   imageFit = 'cover',
   onChangeImage,
+  onRemoveImage,
   initialCrop,
   direction = 'row',
   buttonSpacing = '16px',
@@ -72,6 +75,7 @@ export const ImagePreviewBlock = ({
   fileNameLabel = 'Назва файлу',
   editImageLabel = 'Редагувати',
   changeImageLabel = 'Змінити зображення',
+  removeImageLabel = 'Видалити',
   onBlurAltText,
   disabled = false,
   locale = 'uk',
@@ -291,6 +295,19 @@ export const ImagePreviewBlock = ({
       >
         {changeImageLabel}
       </Button>
+      {onRemoveImage && previewImage && (
+        <Button
+          startIcon={<Trash2 size={20} />}
+          variant="outlined"
+          color="primary"
+          size="small"
+          onClick={onRemoveImage}
+          sx={[styles.imageActionButton, styles.removeButton]}
+          disabled={disabled}
+        >
+          {removeImageLabel}
+        </Button>
+      )}
     </Stack>
   );
 

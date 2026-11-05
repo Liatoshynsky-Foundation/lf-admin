@@ -73,6 +73,11 @@ export const styles = {
     width: '190px'
   },
 
+  removeButton: {
+    width: 'fit-content',
+    alignSelf: 'flex-start'
+  },
+
   fileNameText: {
     display: '-webkit-box',
     WebkitLineClamp: 1,
