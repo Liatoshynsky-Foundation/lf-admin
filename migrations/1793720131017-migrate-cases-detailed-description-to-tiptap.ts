@@ -64,46 +64,6 @@ export async function up(db: Db): Promise<void> {
   );
 }
 
-type DescPayload = {
-  uk?: { content?: { content?: { text?: string }[] }[] };
-  en?: { content?: { content?: { text?: string }[] }[] };
-};
-
-export async function down(db: Db): Promise<void> {
-  const casesCollection = db.collection(COLLECTIONS);
-  const cases = await casesCollection.find({}).toArray();
-
-  await Promise.all(
-    cases.map(async (caseItem) => {
-      const desc = caseItem.detailedCaseDescription as DescPayload | undefined | string;
-      let fallbackUk = '';
-      let fallbackEn = '';
-
-      if (desc && typeof desc === 'object') {
-        try {
-          fallbackUk = desc.uk?.content?.[0]?.content?.[0]?.text || '';
-        } catch {
-          fallbackUk = '';
-        }
-        try {
-          fallbackEn = desc.en?.content?.[0]?.content?.[0]?.text || '';
-        } catch {
-          fallbackEn = '';
-        }
-      }
-
-      await casesCollection.updateOne(
-        { _id: caseItem._id },
-        {
-          $set: {
-            detailedCaseDescription: {
-              uk: fallbackUk,
-              en: fallbackEn
-            },
-            updatedAt: new Date()
-          }
-        }
-      );
-    })
-  );
+export async function down(_db: Db): Promise<void> {
+  // made no-op,for rollback purposes, use restoration from a backup
 }
