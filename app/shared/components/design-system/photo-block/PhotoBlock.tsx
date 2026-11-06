@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import Button from '../button/Button';
-import { PREVIEW_H, PREVIEW_W, styles } from './PhotoBlock.styles';
+import { NEWS_PREVIEW_H, NEWS_PREVIEW_W, PREVIEW_H, PREVIEW_W, styles } from './PhotoBlock.styles';
+import { CROP_RATIOS } from '~/constants/publications';
 import { useCroppedImage } from '~/hooks/use-cropped-image/use-cropped-image';
 import ImageIcon from '~/public/icons/image.svg';
 import PencilIcon from '~/public/icons/pencil.svg';
@@ -76,10 +77,14 @@ export const ImagePreviewBlock = ({
   disabled = false,
   locale = 'uk',
   aspectRatio,
-  previewWidth = PREVIEW_W,
-  previewHeight = PREVIEW_H,
+  previewWidth: previewWidthProp,
+  previewHeight: previewHeightProp,
   alignActionsToPreviewBottom = false
 }: ImagePreviewBlockProps) => {
+  const isNewsCard = aspectRatio === CROP_RATIOS.NEWS_CARD;
+  const previewWidth = previewWidthProp ?? (isNewsCard ? NEWS_PREVIEW_W : PREVIEW_W);
+  const previewHeight = previewHeightProp ?? (isNewsCard ? NEWS_PREVIEW_H : PREVIEW_H);
+  
   const [previewImage, setPreviewImage] = useState<string>(imageUrl);
 
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
