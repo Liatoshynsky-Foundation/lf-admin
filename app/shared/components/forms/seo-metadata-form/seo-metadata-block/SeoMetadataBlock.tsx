@@ -47,6 +47,7 @@ export interface SeoMetadataBlockProps {
   readonly value?: SeoBlockValue;
   readonly crop?: LocalizedCropRect | null;
   readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
+  readonly cropAspectRatio?: number;
   readonly onChange?: (value: SeoBlockValue) => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
@@ -66,6 +67,7 @@ export default function SeoMetadataBlock({
   value: externalValue,
   crop,
   onChangeCrop,
+  cropAspectRatio,
   onChange: externalOnChange,
   extraFields,
   labels
@@ -187,6 +189,7 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
         crop={crop?.uk ?? null}
+        cropAspectRatio={cropAspectRatio}
         onChangeCrop={(newUkCrop) =>
           onChangeCrop?.({
             uk: newUkCrop,
@@ -214,6 +217,7 @@ export default function SeoMetadataBlock({
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
         crop={crop?.en ?? null}
+        cropAspectRatio={cropAspectRatio}
         onChangeCrop={(newEnCrop) =>
           onChangeCrop?.({
             uk: crop?.uk ?? null,

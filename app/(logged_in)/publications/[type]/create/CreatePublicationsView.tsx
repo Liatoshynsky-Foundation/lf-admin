@@ -12,6 +12,7 @@ import DeleteCardModal from '~/components/delete-card-modal/DeleteCardModal';
 import { publicationErrors } from '~/constants/errors';
 import {   ADMIN_TITLE_LABELS,
   ADMIN_TITLE_LENGTH ,
+  CROP_RATIOS,
   MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
@@ -213,6 +214,7 @@ export default function CreatePublicationsView({
           errors={seoErrors}
           crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
+          cropAspectRatio={publicationType === 'events' ? CROP_RATIOS.EVENT_CARD : CROP_RATIOS.NEWS_CARD}
           value={seoValue}
           onChange={setSeoValue}
           extraFields={seoExtraFields}
