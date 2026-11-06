@@ -277,7 +277,7 @@ export default function SeoMetadataForm({
         imageUrl={ogImagePreview || ''}
         fileName={displayFileName}
         onChangeImage={handleImageChange}
-        aspectRatio={CROP_RATIOS.GROUP_PHOTO}
+        aspectRatio={CROP_RATIOS.NEWS_CARD}
         disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="16px"
@@ -298,7 +298,7 @@ export default function SeoMetadataForm({
         changeImageLabel={labels.changeImageLabel}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
-        {labels.ogImageHint || 'Оптимальний розмір: 1200×630 px.'}
+        {labels.ogImageHint || 'Оптимальний розмір: 1002×640 px.'}
       </Typography>
     </Stack>
   );

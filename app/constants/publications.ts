@@ -285,7 +285,7 @@ export const PUBLICATION_SEO_LABELS = {
     startDateTime: 'Початок події',
     endDateTime: 'Закінчення події',
     ogImage: 'Зображення для соцмереж',
-    ogImageHint: 'Оптимальний розмір: 1200×630 px.',
+    ogImageHint: 'Оптимальний розмір: 1002×640 px.',
     allowIndexing: 'Дозволити індексацію сторінки пошуковими системами',
     fileNameLabel: 'Назва файлу',
     editImageLabel: 'Редагувати',
@@ -302,7 +302,7 @@ export const PUBLICATION_SEO_LABELS = {
     startDateTime: 'Event start',
     endDateTime: 'Event end',
     ogImage: 'Social media image',
-    ogImageHint: 'Optimal size: 1200×630 px.',
+    ogImageHint: 'Optimal size: 1002×640 px.',
     allowIndexing: 'Allow search engines to index this page',
     fileNameLabel: 'File name',
     editImageLabel: 'Edit',
@@ -331,5 +331,6 @@ export const CROP_RATIOS = {
   TEAM_AVATAR: 200 / 180,
   CAROUSEL_BIG: 1080 / 742,
   FUNDATION_MAIN_FOUNDER: 744 / 454,
-  GROUP_PHOTO: 16 / 9
+  GROUP_PHOTO: 16 / 9,
+  NEWS_CARD: 501 / 320 
 } as const;
