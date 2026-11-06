@@ -502,7 +502,7 @@ describe('useUpsertOpus', () => {
     const payload = mockCreateOpus.mock.calls[0][0];
     expect(payload.additionalText).toBeUndefined();
     expect(payload.endYear).toBeUndefined();
-    expect(payload.datesNote).toBeUndefined();
+    expect(payload.datesNote).toEqual({ en: undefined, uk: undefined });
     expect(payload.genre).toEqual({ en: undefined, uk: undefined });
 
     const composition = payload.compositions[0];

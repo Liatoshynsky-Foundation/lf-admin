@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { CONTACT_INFORMATION, CONTACT_LOCALES, CONTACTS_DATA, SOCIAL_NETWORKS } from '../__mocks__/contacts';
@@ -77,17 +77,20 @@ jest.mock('./section-blocks/ContactInformationBlock', () => ({
   ContactInformationBlock: ({
     data,
     locale,
+    errors,
     onFieldChange,
     onFieldBlur
   }: {
     data: ContactInformation;
     locale: ContactsLocale;
+    errors?: Record<string, string>;
     onFieldChange?: (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => void;
     onFieldBlur?: (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => void;
   }) => (
     <div data-testid={CONTACT_INFORMATION_ID}>
       <span>{locale}</span>
       <input aria-label={CONTACT_NAME_INPUT_LABEL} value={data.foundationName[locale]} readOnly />
+      {errors && Object.keys(errors).length > 0 && <span data-testid="contact-errors">errors</span>}
       <button onClick={() => onFieldChange?.('foundationName', locale)}>{LOCALIZED_FIELD_CHANGE_LABEL}</button>
       <button onClick={() => onFieldChange?.('email')}>{PLAIN_FIELD_CHANGE_LABEL}</button>
       <button onClick={() => onFieldBlur?.('foundationName', locale)}>{LOCALIZED_FIELD_BLUR_LABEL}</button>
@@ -161,6 +164,7 @@ describe('ContactsPageContent', () => {
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.uk);
     fireEvent.click(screen.getByRole('button', { name: LANGUAGE_BUTTON_LABEL }));
     expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.en);
+
     fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
     fireEvent.click(screen.getByRole('button', { name: LOCALIZED_FIELD_CHANGE_LABEL }));
@@ -170,20 +174,37 @@ describe('ContactsPageContent', () => {
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_FIELD_CHANGE_LABEL }));
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_FIELD_BLUR_LABEL }));
 
-    expect(mockUpdateContacts).toHaveBeenCalledWith({
-      contactInformation: CONTACT_INFORMATION,
-      socialNetworks: SOCIAL_NETWORKS.map((item, id) => ({ ...item, id }))
+    await waitFor(() => {
+      expect(mockUpdateContacts).toHaveBeenCalledWith({
+        contactInformation: CONTACT_INFORMATION,
+        socialNetworks: SOCIAL_NETWORKS.map((item, id) => ({ ...item, id }))
+      });
     });
   });
 
-  it('saves contacts successfully', () => {
-    mockUseContacts.mockReturnValue({ data: CONTACTS_DATA, loading: false });
+  it('saves contacts successfully and clears validation state', async () => {
+    mockUseContacts.mockReturnValue({
+      data: {
+        ...CONTACTS_DATA,
+        contactInformation: { ...CONTACT_INFORMATION, email: '' }
+      },
+      loading: false
+    });
     mockUpdateContacts.mockResolvedValue({ data: { updateContacts: CONTACTS_DATA } });
 
-    render(<ContactsPageContent />);
+    const { rerender } = render(<ContactsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
+    expect(screen.getByTestId('contact-errors')).toBeInTheDocument();
+
+    mockUseContacts.mockReturnValue({ data: CONTACTS_DATA, loading: false });
+    rerender(<ContactsPageContent />);
 
     fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
+    await waitFor(() => {
+      expect(screen.queryByTestId('contact-errors')).not.toBeInTheDocument();
+    });
     expect(mockUpdateContacts).toHaveBeenCalledTimes(1);
   });
 });

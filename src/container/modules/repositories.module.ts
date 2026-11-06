@@ -25,10 +25,12 @@ import { BrandingInfo } from '~/src/infrastructure/models/foundation-info/founda
 import { ContactInfo } from '~/src/infrastructure/models/foundation-info/foundationInfoContact';
 import FundModel from '~/src/infrastructure/models/fund.model';
 import { MediaMentionModel } from '~/src/infrastructure/models/mediaMention.model';
+import PaymentDetailsModel from '~/src/infrastructure/models/paymentDetails.model';
 import ResearchWorkModel from '~/src/infrastructure/models/researchWork.model';
 import { CaseRepository } from '~/src/infrastructure/repositories/caseRepository/caseRepository';
 import { ContactsRepository } from '~/src/infrastructure/repositories/contactsRepository/contactsRepository';
 import { FundRepository } from '~/src/infrastructure/repositories/fundRepository/fundRepository';
+import { PaymentDetailsRepository } from '~/src/infrastructure/repositories/paymentDetailsRepository/paymentDetailsRepository';
 import { ResearchWorkRepository } from '~/src/infrastructure/repositories/researchWorkRepository/researchWorkRepository';
 import { createFundLoader } from '~/src/interfaces/graphql/resolvers/case/fundLoader';
 
@@ -48,6 +50,7 @@ export type RepositoriesModule = {
   contactsRepository: ReturnType<typeof ContactsRepository>;
   fundLoader: ReturnType<typeof createFundLoader>;
   researchWorkRepository: ReturnType<typeof ResearchWorkRepository>;
+  paymentDetailsRepository: ReturnType<typeof PaymentDetailsRepository>;
 };
 
 export const registerRepositories = (container: AwilixContainer) => {
@@ -68,6 +71,7 @@ export const registerRepositories = (container: AwilixContainer) => {
     BrandingInfo: asValue(BrandingInfo),
     ResearchWorkModel: asValue(ResearchWorkModel),
     RateLimitModel: asValue(RateLimit),
+    PaymentDetailsModel: asValue(PaymentDetailsModel),
 
     adminRepository: asFunction(AdminRepository).scoped(),
     refreshTokenRepository: asFunction(RefreshTokenRepository).scoped(),
@@ -85,5 +89,6 @@ export const registerRepositories = (container: AwilixContainer) => {
     fundLoader: asFunction(createFundLoader).scoped(),
     contactsRepository: asFunction(ContactsRepository).scoped(),
     researchWorkRepository: asFunction(ResearchWorkRepository).scoped(),
+    paymentDetailsRepository: asFunction(PaymentDetailsRepository).scoped()
   });
 };

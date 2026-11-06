@@ -1,6 +1,7 @@
 import { toOpusNumberKind } from '../use-upsert-opus/opusMappers';
 import { isMediaItemFilled } from './compositionMedia';
 import { GroupData, GroupPhoto } from '~/constants/creativity';
+import { NullableLocalizedString } from '~/types/common';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 import {
   OpusStatus,
@@ -25,11 +26,9 @@ const getPersistedId = (id?: string): string | undefined => {
   return id;
 };
 
-type LocalizedText = { uk?: string | null; en?: string | null };
-
 const trimText = (value?: string | null): string => value?.trim() || '';
 
-const mapLocalizedTrimmedValue = (value?: LocalizedText | null) => ({
+const mapLocalizedTrimmedValue = (value?: NullableLocalizedString | null) => ({
   uk: trimText(value?.uk),
   en: trimText(value?.en)
 });
@@ -125,7 +124,7 @@ const buildGroupDetailsInput = (
   },
   creationYear: String(groupData.creationYear || '').trim(),
   endYear: groupData.endYear ? String(groupData.endYear) : null,
-  datesNote: groupData.dateAdditionalText ? String(groupData.dateAdditionalText).trim() : null
+  datesNote: mapLocalizedTrimmedValue(groupData.dateAdditionalText)
 });
 
 const buildGroupRichContentInput = (

@@ -27,7 +27,7 @@ type Case {
     caseDate: LocalizedString!
     sheetsNumber: Int!
     caseDescriptions: LocalizedString!
-    detailedCaseDescription: LocalizedString
+    detailedCaseDescription: JSON
     pdfFile: CasePdfFile
     status: CaseStatus!
     cipher: String!

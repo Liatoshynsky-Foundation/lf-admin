@@ -1,13 +1,9 @@
 import { JSONContent } from '@tiptap/react';
 
-import { isProseDoc, proseToHeaderText,proseToText, resolveLocalizedText, textToProse } from './prose';
+import { isProseDoc, proseToHeaderText, proseToText, resolveLocalizedText, textToProse } from './prose';
 import type { ProseDoc, ProseNode } from '~/types/common';
 
 describe('proseToText', () => {
-  it('should return empty string for undefined doc', () => {
-    expect(proseToText()).toBe('');
-  });
-
   it('should return empty string for doc with empty content', () => {
     const doc: ProseDoc = { type: 'doc', content: [] };
     expect(proseToText(doc)).toBe('');
@@ -19,6 +15,14 @@ describe('proseToText', () => {
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }]
     };
     expect(proseToText(doc)).toBe('Hello');
+  });
+
+  it('should extract text from a serialized TipTap document', () => {
+    const doc: ProseDoc = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Serialized text' }] }]
+    };
+    expect(proseToText(JSON.stringify(doc))).toBe('Serialized text');
   });
 });
 
@@ -142,5 +146,59 @@ describe('resolveLocalizedText', () => {
   it('should return empty string for non-string, non-ProseDoc objects', () => {
     const invalidObj: JSONContent = { type: 'unknown' };
     expect(resolveLocalizedText(invalidObj)).toBe('');
+  });
+});
+
+describe('TipTap edge cases and fallback safety', () => {
+  it('should correctly join text from multiple paragraphs with spaces', () => {
+    const multiParagraphDoc = JSON.stringify({
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Перший абзац.' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Другий абзац.' }] }
+      ]
+    });
+
+    expect(proseToText(multiParagraphDoc)).toBe('Перший абзац. Другий абзац.');
+  });
+
+  it('should extract plain text from nodes with marks (bold, italic, links)', () => {
+    const formattedDoc = JSON.stringify({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Звичайний ' },
+            { type: 'text', text: 'жирний', marks: [{ type: 'bold' }] },
+            { type: 'text', text: ' та ' },
+            { type: 'text', text: 'курсив', marks: [{ type: 'italic' }] },
+            { type: 'text', text: ' і ' },
+            { type: 'text', text: 'посилання', marks: [{ type: 'link', attrs: { href: 'https://example.com' } }] }
+          ]
+        }
+      ]
+    });
+
+    expect(proseToText(formattedDoc)).toBe('Звичайний жирний та курсив і посилання');
+  });
+
+  it('should gracefully return original string if json is malformed', () => {
+    const malformedJson = '{ "type": "doc", "content": "<invalid>" ';
+    expect(proseToText(malformedJson)).toBe(malformedJson);
+  });
+
+  it('should safely handle empty doc without content nodes', () => {
+    const emptyDoc = JSON.stringify({
+      type: 'doc',
+      content: []
+    });
+    expect(proseToText(emptyDoc)).toBe('');
+    expect(proseToText(JSON.stringify({ type: 'doc' }))).toBe('');
+  });
+
+  it('should preserve backward compatibility for legacy non-json strings', () => {
+    const legacyPlainText = 'Лятошинський Борис Миколайович';
+    expect(proseToText(legacyPlainText)).toBe(legacyPlainText);
   });
 });

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,7 +34,9 @@ describe('LanguageSwitcher', () => {
   });
 
   afterEach(() => {
-    useStore.getState().setLocale('uk');
+    act(() => {
+      useStore.getState().setLocale('uk');
+    });
   });
 
   it('should render language buttons', () => {
@@ -63,8 +65,11 @@ describe('LanguageSwitcher', () => {
     expect(ukrainianButton).toBeInTheDocument();
   });
 
-  it('should render with English as the active language', () => {
-    useStore.getState().setLocale('en');
+  it('should render with English as the active language', async () => {
+    act(() => {
+      useStore.getState().setLocale('en');
+    });
+
     render(<LanguageSwitcher languageSwitcher={mockLanguageSwitcher} />);
 
     expect(screen.getByText('English')).toBeInTheDocument();

@@ -28,7 +28,10 @@ mutation UpdateOpus($id: ID!, $input: UpdateOpusInput!) {
     additionalText
     creationYear
     endYear
-    datesNote
+    datesNote {
+      uk
+      en
+    }
     genre {
       uk
       en

@@ -5,7 +5,7 @@ import { seoValidationErrors } from '~/src/constants/errors';
 const LOCALES = ['uk', 'en'] as const;
 
 const SEO_LENGTH_LIMITS = {
-  title: { min: 2, max: 150 },
+  title: { min: 2, max: 300 },
   description: { min: 2, max: 250 },
   keywords: { min: 2, max: 250 },
   altText: { min: 2, max: 250 }
@@ -23,6 +23,21 @@ export type SeoLengthValidationInput = {
 type Locale = (typeof LOCALES)[number];
 
 const EMPTY_LOCALIZED_STRING: LocalizedString = { uk: '', en: '' };
+
+export const trimLocalizedString = (value: LocalizedString | undefined): LocalizedString | undefined => {
+  if (!value) return value;
+
+  const trimmed: LocalizedString = { ...value };
+
+  LOCALES.forEach((locale) => {
+    const localizedValue = value[locale];
+    if (typeof localizedValue === 'string') {
+      trimmed[locale] = localizedValue.trim();
+    }
+  });
+
+  return trimmed;
+};
 
 const hasCoverImageSrc = (coverImage?: LocalizedImage): boolean => Boolean(coverImage?.src?.trim());
 
@@ -72,5 +87,12 @@ export const validateSeoLengths = ({ title, description, keywords, coverImage }:
   throwBadUserInput(
     seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
     getInvalidLocalizedStrings(coverImage?.alt ?? EMPTY_LOCALIZED_STRING, 'altText', altRequiredLocales)
+  );
+};
+
+export const validateCoverImageAltLength = (alt: LocalizedString): void => {
+  throwBadUserInput(
+    seoValidationErrors.ALT_TEXT_LENGTH_INVALID,
+    getInvalidLocalizedStrings(alt, 'altText', ALT_REQUIRED_LOCALES)
   );
 };

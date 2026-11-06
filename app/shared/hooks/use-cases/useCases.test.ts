@@ -71,7 +71,7 @@ describe('useCases', () => {
           createdAt: '2022-01-01',
           editCaseDate: '1920-1930',
           editCaseDescriptions: 'Опис справи',
-          detailedCaseDescription: ''
+          detailedCaseDescription: null
         }
       ]);
       expect(result.current.loading).toBe(false);

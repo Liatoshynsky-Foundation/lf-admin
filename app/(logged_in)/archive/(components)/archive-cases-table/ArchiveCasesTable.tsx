@@ -4,19 +4,21 @@ import type { ArchiveCase } from '../archive-funds-table/ArchiveFundsTable';
 import { createCaseTableColumns } from '~/shared/components/table-layout/columns/caseTableColumns';
 import { TableLayout } from '~/shared/components/table-layout/TableLayout';
 import { useArchiveCaseRowActions } from '~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions';
+import { BaseContentStatuses } from '~/types/enums/common.enums';
 
 const columns = createCaseTableColumns();
 
 export interface ArchiveCasesTableProps {
   cases: ArchiveCase[];
   onCaseChanged?: () => Promise<unknown>;
+  fundStatus?: BaseContentStatuses;
 }
 
-export const ArchiveCasesTable = ({ cases, onCaseChanged }: ArchiveCasesTableProps) => {
+export const ArchiveCasesTable = ({ cases, onCaseChanged, fundStatus }: ArchiveCasesTableProps) => {
   const { getCaseRow, caseRowModals } = useArchiveCaseRowActions(onCaseChanged);
 
   const rows = cases.map((item) => {
-    const row = getCaseRow(item);
+    const row = getCaseRow(item, fundStatus);
 
     return {
       type: 'individual' as const,

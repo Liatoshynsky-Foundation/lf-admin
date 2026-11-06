@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import type { LocalizedMeta, SeoFieldsRequired, SeoFormLabels } from '../SeoMetadataForm';
 import SeoMetadataForm from '../SeoMetadataForm';
 import { styles } from '../SeoMetadataForm.styles';
-import { syncAltAcrossLocales } from './syncAltAcrossLocales';
 import { seoFormErrors } from '~/constants/errors';
 import { TICKET_URL_PLACEHOLDER } from '~/constants/publications';
 import { LocalizedCropRect } from '~/types/common';
@@ -49,6 +48,7 @@ export interface SeoMetadataBlockProps {
   readonly onChangeCrop?: (newCrop: LocalizedCropRect | null) => void;
   readonly cropAspectRatio?: number;
   readonly onChange?: (value: SeoBlockValue) => void;
+  readonly onChangeAltText?: (value: LocalizedString) => void;
   readonly extraFields?: (
     locale: 'uk' | 'en',
     value: LocalizedMeta,
@@ -69,6 +69,7 @@ export default function SeoMetadataBlock({
   onChangeCrop,
   cropAspectRatio,
   onChange: externalOnChange,
+  onChangeAltText,
   extraFields,
   labels
 }: SeoMetadataBlockProps) {
@@ -81,6 +82,14 @@ export default function SeoMetadataBlock({
   const value = isControlled ? externalValue : internalValue;
   const isLocaleRequired = (locale: 'uk' | 'en'): SeoFieldsRequired =>
     typeof required === 'boolean' ? required : required[locale];
+  const handleAltTextChange = (locale: 'uk' | 'en', altText: string) => {
+    const nextAltText = {
+      uk: value.meta.uk.altText?.uk ?? '',
+      en: value.meta.en.altText?.en ?? '',
+      [locale]: altText
+    };
+    onChangeAltText?.(nextAltText);
+  };
 
   const handleChange = (next: SeoBlockValue) => {
     if (isControlled) {
@@ -177,7 +186,8 @@ export default function SeoMetadataBlock({
     <Box sx={{ display: 'flex', flexDirection: 'row', gap: '4%', width: '100%' }}>
       <SeoMetadataForm
         value={value.meta.uk}
-        onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'uk', newMeta))}
+        onChange={(newMeta) => handleChange({...value, meta: { ...value.meta, uk: newMeta }})}
+        onChangeAltText={(altText) => handleAltTextChange('uk', altText)}
         locale="uk"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
@@ -188,12 +198,12 @@ export default function SeoMetadataBlock({
         required={isLocaleRequired('uk')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.uk}
-        crop={crop?.uk ?? null}
         cropAspectRatio={cropAspectRatio}
+        crop={crop?.uk ?? crop?.en ?? null}
         onChangeCrop={(newUkCrop) =>
           onChangeCrop?.({
             uk: newUkCrop,
-            en: crop?.en ?? null
+            en: newUkCrop
           })
         }
         labels={labels?.uk}
@@ -205,7 +215,8 @@ export default function SeoMetadataBlock({
       />
       <SeoMetadataForm
         value={value.meta.en}
-        onChange={(newMeta) => handleChange(syncAltAcrossLocales(value, 'en', newMeta))}
+        onChange={(newMeta) => handleChange({...value, meta: { ...value.meta, en: newMeta }})}
+        onChangeAltText={(altText) => handleAltTextChange('en', altText)}
         locale="en"
         ogImage={value.ogImage}
         onImageChange={(url) => handleChange({ ...value, ogImage: url })}
@@ -216,11 +227,11 @@ export default function SeoMetadataBlock({
         required={isLocaleRequired('en')}
         forceShowErrors={forceShowErrors}
         errors={errors?.meta.en}
-        crop={crop?.en ?? null}
         cropAspectRatio={cropAspectRatio}
+        crop={crop?.en ?? crop?.uk ?? null}
         onChangeCrop={(newEnCrop) =>
           onChangeCrop?.({
-            uk: crop?.uk ?? null,
+            uk: newEnCrop,
             en: newEnCrop
           })
         }

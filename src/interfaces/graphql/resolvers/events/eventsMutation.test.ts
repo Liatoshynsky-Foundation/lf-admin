@@ -28,7 +28,8 @@ describe('EventsMutation Resolvers', () => {
     delete: jest.fn(),
     findById: jest.fn(),
     findBySlug: jest.fn(),
-    incrementViews: jest.fn()
+    incrementViews: jest.fn(),
+    updateCoverImageAlt: jest.fn()
   };
 
   const adminContext = createMockContext(true, 'eventsRepository', mockRepo);
@@ -105,7 +106,7 @@ describe('EventsMutation Resolvers', () => {
 
     it.each([
       { caseName: 'title is shorter than 2 characters', overrides: { title: { uk: 'П', en: 'E' } }, fields: ['title.uk', 'title.en'] },
-      { caseName: 'title exceeds 150 characters', overrides: { title: { uk: tooLong(150), en: 'Event' } }, fields: ['title.uk'] },
+      { caseName: 'title exceeds 300 characters', overrides: { title: { uk: tooLong(300), en: 'Event' } }, fields: ['title.uk'] },
       {
         caseName: 'description exceeds 250 characters',
         overrides: { description: { uk: tooLong(250), en: 'Desc' } },
@@ -318,6 +319,21 @@ describe('EventsMutation Resolvers', () => {
   });
 
   describe('Deletion and Metadata', () => {
+    it('updateEventCoverImageAlt: should call the dedicated repository method', async () => {
+      const id = '1';
+      const event = createMockEntity({ id });
+      (mockRepo.updateCoverImageAlt as jest.Mock).mockResolvedValue(event);
+
+      const result = await EventsMutation.updateEventCoverImageAlt(
+        {},
+        { id, input: { alt: { uk: 'аа', en: 'aa' } } },
+        adminContext
+      );
+
+      expect(mockRepo.updateCoverImageAlt).toHaveBeenCalledWith(id, { uk: 'аа', en: 'aa' });
+      expect(result).toBe(event);
+    });
+
     it('deleteEvent: should throw error if not admin', async () => {
       await expect(EventsMutation.deleteEvent({}, { id: '1' }, userContext))
         .rejects.toThrow('You must be logged in to access this resource.');

@@ -458,6 +458,75 @@ describe('Publications page integration', () => {
     expect(screen.getByTestId('empty-state-title')).toBeInTheDocument();
   });
 
+  it.each([
+    {
+      sortValue: 'date_desc',
+      expectedTitles: [
+        'Інтерв’ю про нову постановку', 
+        'Новина про фестиваль', 
+        'Головна подія сезону', 
+        'Вечір камерної музики', 
+        'Програма резиденції оголошена' 
+      ]
+    },
+    {
+      sortValue: 'date_asc',
+      expectedTitles: [
+        'Головна подія сезону', 
+        'Новина про фестиваль', 
+        'Інтерв’ю про нову постановку', 
+        'Вечір камерної музики', 
+        'Програма резиденції оголошена' 
+      ]
+    }
+  ])(
+    'sorts all publication types globally by $sortValue and puts missing/invalid dates last',
+    ({ sortValue, expectedTitles }) => {
+      mockSortValue.mockReturnValue(sortValue as FilesSortValue);
+
+      mockUseAllNews.mockReturnValue({
+        data: {
+          allNews: [
+            NEWS_ITEMS[1], 
+            NEWS_ITEMS[0] 
+          ]
+        },
+        loading: false,
+        error: undefined
+      });
+
+      mockUseAllMediaMentions.mockReturnValue({
+        data: {
+          allMediaMentions: [
+            {
+              ...MEDIA_ITEMS[1],
+              publishedAt: 'not-a-valid-date' 
+            },
+            MEDIA_ITEMS[0]
+          ]
+        },
+        loading: false,
+        error: undefined
+      });
+
+      mockUseAllEvents.mockReturnValue({
+        data: {
+          allEvents: [
+            EVENT_ITEMS[0] 
+          ]
+        },
+        loading: false,
+        error: undefined
+      });
+
+      render(<PublicationsPageContent activeTab="all" />);
+
+      const renderedTitles = screen.getAllByTestId('publication-card-title').map((element) => element.textContent);
+
+      expect(renderedTitles).toEqual(expectedTitles);
+    }
+  );
+
   it('renders error states for specific active tabs', () => {
     mockUseAllNews.mockReturnValue({ data: undefined, loading: false, error: new Error('News loading failed') });
 

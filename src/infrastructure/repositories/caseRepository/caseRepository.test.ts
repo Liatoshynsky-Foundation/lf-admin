@@ -18,7 +18,7 @@ const createMockCaseDoc = (overrides: Partial<DbCase> = {}): DbCase => ({
   caseDate: { uk: '1917-1918', en: '1917-1918' },
   sheetsNumber: 10,
   caseDescriptions: { uk: 'Опис', en: 'Description' },
-  detailedCaseDescription: { uk: 'Детальний опис', en: 'Detailed description' },
+  detailedCaseDescription: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } },
   pdfFile: null,
   status: BaseContentStatuses.Draft,
   createdAt: '2026-07-29T10:00:00.000Z',
@@ -60,7 +60,7 @@ describe('caseRepository', () => {
     caseDate: { uk: '1918', en: '1918' },
     sheetsNumber: 20,
     caseDescriptions: { uk: 'Опис 2', en: 'Description 2' },
-    detailedCaseDescription: { uk: 'Деталі', en: 'Details' },
+    detailedCaseDescription: { uk: { type: 'doc', content: [] }, en: { type: 'doc', content: [] } },
     status: BaseContentStatuses.Hidden,
     order: 0
   };
@@ -193,14 +193,12 @@ describe('caseRepository', () => {
     });
 
     it('defaults order to 0 when the document has no order', async () => {
-
       const result = await mockAndFetchCase({ order: undefined });
 
       expect(result?.order).toBe(0);
     });
 
     it('keeps the document order when it is present (including 0)', async () => {
-
       const result = await mockAndFetchCase({ order: 0 });
 
       expect(result?.order).toBe(0);
@@ -282,14 +280,13 @@ describe('caseRepository', () => {
   });
 
   describe('countDistinctDescriptionNumbers', () => {
-    it('should return the number of distinct descriptions with a detailed description', async () => {
+    it('should count distinct series numbers without filtering by detailed description or status', async () => {
       distinctMock.mockResolvedValue([1, 2, 3]);
 
       const result = await repository.countDistinctDescriptionNumbers(mockFundId);
 
       expect(distinctMock).toHaveBeenCalledWith('descriptionNumber', {
-        fundId: mockFundId,
-        'detailedCaseDescription.uk': { $exists: true, $nin: ['', null] }
+        fundId: mockFundId
       });
       expect(result).toBe(3);
     });
@@ -309,10 +306,7 @@ describe('caseRepository', () => {
 
       await repository.deleteByFundId(mockFundId, session);
 
-      expect(deleteManyMock).toHaveBeenCalledWith(
-        { fundId: mockFundId },
-        { session }
-      );
+      expect(deleteManyMock).toHaveBeenCalledWith({ fundId: mockFundId }, { session });
     });
   });
 
@@ -385,7 +379,6 @@ describe('caseRepository', () => {
     });
 
     it('should query with no conditions at all when no filters are provided', async () => {
-
       await repository.findAll();
 
       expect(findAllMock).toHaveBeenCalledWith({});

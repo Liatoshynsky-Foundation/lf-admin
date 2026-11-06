@@ -91,6 +91,10 @@ input EventFiltersInput {
   sort: [EventSortOptions!]
 }
 
+input UpdateEventCoverImageAltInput {
+  alt: LocalizedStringInput!
+}
+
 extend type Query {
   eventById(id: ID!): Event
   eventBySlug(slug: String!): Event
@@ -103,6 +107,7 @@ extend type Query {
 extend type Mutation {
   createEvent(input: CreateEventInput!): Event!
   updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  updateEventCoverImageAlt(id: ID!, input: UpdateEventCoverImageAltInput!): Event!
   deleteEvent(id: ID!): Boolean!
   incrementEventViews(id: ID!): Event!
 }

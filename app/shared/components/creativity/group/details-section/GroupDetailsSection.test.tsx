@@ -152,7 +152,7 @@ const defaultProps = {
     groupTitle: { uk: 'Квартет', en: 'Quartet' },
     creationYear: '1922',
     endYear: '1924',
-    dateAdditionalText: 'приблизно',
+    dateAdditionalText: { uk: 'приблизно', en: 'approx' },
     genre: { uk: 'Соната', en: 'Sonata' }
   },
   currentLanguage: 'UA' as EditorLanguage,
@@ -182,6 +182,7 @@ describe('GroupDetailsSection Component', () => {
     render(<GroupDetailsSection {...propsEN} />);
 
     expect(screen.getByTestId('mock-input-Назва групи')).toHaveValue('Quartet');
+    expect(screen.getByTestId('mock-input-dateAdditionalText')).toHaveValue('approx');
   });
 
   it('should call onChange with correct parameters when dateAdditionalText is changed', () => {
@@ -190,7 +191,7 @@ describe('GroupDetailsSection Component', () => {
     const langInput = screen.getByTestId('mock-input-dateAdditionalText');
     fireEvent.change(langInput, { target: { value: 'новий текст' } });
 
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст');
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'новий текст', true);
   });
 
   it('should format year and call onChange when dates are selected', () => {
@@ -303,11 +304,11 @@ describe('GroupDetailsSection Component', () => {
   it('should trim dateAdditionalText on blur', () => {
     const props = {
       ...defaultProps,
-      data: { ...defaultProps.data, dateAdditionalText: '  пробіли  ' }
+      data: { ...defaultProps.data, dateAdditionalText: { uk: '  пробіли  ', en: '' } }
     };
     render(<GroupDetailsSection {...props} />);
     fireEvent.blur(screen.getByTestId('mock-input-dateAdditionalText'));
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'пробіли');
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', 'пробіли', true);
   });
 
   it('should trim genre on blur', () => {
@@ -367,7 +368,7 @@ describe('GroupDetailsSection Component', () => {
   it('should fallback to empty string on blur when dateAdditionalText is missing (undefined)', () => {
     const propsWithMissingDateNote = {
       ...defaultProps,
-      data: { ...defaultProps.data, dateAdditionalText: undefined as unknown as string }
+      data: { ...defaultProps.data, dateAdditionalText: undefined as unknown as { uk: string; en: string } }
     };
 
     render(<GroupDetailsSection {...propsWithMissingDateNote} />);
@@ -375,7 +376,7 @@ describe('GroupDetailsSection Component', () => {
     const dateNoteInput = screen.getByTestId('mock-input-dateAdditionalText');
     fireEvent.blur(dateNoteInput);
 
-    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', '');
+    expect(mockOnChange).toHaveBeenCalledWith('dateAdditionalText', '', true);
   });
 
   it('should fallback to empty string for value and on blur when genre is missing (undefined)', () => {

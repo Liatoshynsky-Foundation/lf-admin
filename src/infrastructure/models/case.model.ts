@@ -1,6 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
-import { optionalTranslatedFieldSchema, translatedFieldSchema } from './commonSchemas';
+import { translatedFieldSchema } from './commonSchemas';
 import { Case } from '~/src/domain/entities/Case';
 import { BaseContentStatuses } from '~/types/enums/common.enums';
 
@@ -13,16 +13,32 @@ const casePdfFileSchema = new Schema(
   { _id: false }
 );
 
+const localizedRichTextSchema = new Schema(
+  {
+    uk: { type: Schema.Types.Mixed, default: null },
+    en: { type: Schema.Types.Mixed, default: null }
+  },
+  { _id: false }
+);
+
 const caseSchema = new Schema(
   {
     fundId: { type: Schema.Types.ObjectId, ref: 'Fund', required: true, index: true },
-    descriptionNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
+    descriptionNumber: {
+      type: Number,
+      required: true,
+      set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v)
+    },
     caseNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
     caseName: { type: translatedFieldSchema, required: true },
     caseDate: { type: translatedFieldSchema, required: true },
-    sheetsNumber: { type: Number, required: true, set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v) },
+    sheetsNumber: {
+      type: Number,
+      required: true,
+      set: (v: unknown) => (v !== null && v !== undefined ? Number(v) : v)
+    },
     caseDescriptions: { type: translatedFieldSchema, required: true },
-    detailedCaseDescription: { type: optionalTranslatedFieldSchema, default: null },
+    detailedCaseDescription: { type: localizedRichTextSchema, default: null },
     pdfFile: { type: casePdfFileSchema, default: null },
     status: {
       type: String,

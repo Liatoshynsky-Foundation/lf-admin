@@ -101,7 +101,10 @@ const buildDetailsInput = (
     additionalText: details.additionalText.trim() || undefined,
     creationYear: details.creationYear.trim(),
     endYear: details.endYear.trim() || undefined,
-    datesNote: details.datesNote.trim() || undefined,
+    datesNote: {
+      uk: details.datesNote.trim() || undefined,
+      en: isEditing ? undefined : details.datesNote.trim() || undefined
+    },
     genre: {
       uk: details.genre.trim() || undefined,
       en: isEditing ? undefined : details.genre.trim() || undefined

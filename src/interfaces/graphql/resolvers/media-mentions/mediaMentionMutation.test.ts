@@ -109,8 +109,8 @@ describe('media-mentions Mutation', () => {
         fields: ['title.uk', 'title.en']
       },
       {
-        caseName: 'title exceeds 150 characters',
-        overrides: { title: { uk: 'a'.repeat(151), en: 'Title' } },
+        caseName: 'title exceeds 300 characters',
+        overrides: { title: { uk: 'a'.repeat(301), en: 'Title' } },
         fields: ['title.uk']
       },
       {

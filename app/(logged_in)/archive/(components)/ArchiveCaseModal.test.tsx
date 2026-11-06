@@ -220,7 +220,7 @@ const defaultHookValues = {
   setCaseDate: jest.fn(),
   currentPdfFile: { fileName: null, name: null },
   setCurrentPdfFile: jest.fn(),
-  detailedCaseDescription: '',
+  detailedCaseDescription: null,
   setDetailedCaseDescription: jest.fn(),
   caseName: 'Test Case',
   setCaseName: jest.fn(),
@@ -438,7 +438,7 @@ describe('ArchiveCaseModal', () => {
   describe('onSave callback passed into useArchiveCaseModal', () => {
     const execSave = async (
       props: Partial<ComponentProps<typeof ArchiveCaseModal>>,
-      inputOverrides: Record<string, string | undefined> = {}
+      inputOverrides: Record<string, unknown> = {}
     ) => {
       const onSaved = jest.fn();
       renderModal({ ...props, onSaved });
@@ -452,7 +452,10 @@ describe('ArchiveCaseModal', () => {
           dates: '2026',
           sheetsNumber: '5',
           nameDescription: 'short desc',
-          contentDescription: 'long desc',
+          contentDescription: {
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'long desc' }] }]
+          },
           ...inputOverrides
         });
       }
@@ -467,7 +470,10 @@ describe('ArchiveCaseModal', () => {
     it('builds create-case mutation input, calls createCase, shows success toast and calls onSaved', async () => {
       const { onSaved } = await execSave(
         { fundId: 'FUND-1' },
-        { pdfUrl: 'https://example.com/files/document-123.pdf' }
+        {
+          pdfUrl: 'https://example.com/files/document-123.pdf',
+          contentDescription: { type: 'doc', content: [] }
+        }
       );
 
       expect(mockCreateCase).toHaveBeenCalledWith({
@@ -478,7 +484,10 @@ describe('ArchiveCaseModal', () => {
         caseDate: { uk: '2026', en: '2026' },
         sheetsNumber: '5',
         caseDescriptions: { uk: 'short desc', en: 'short desc' },
-        detailedCaseDescription: { uk: 'long desc', en: 'long desc' },
+        detailedCaseDescription: {
+          uk: { type: 'doc', content: [] },
+          en: { type: 'doc', content: [] }
+        },
         pdfFile: {
           filename: 'document-123.pdf',
           url: 'https://example.com/files/document-123.pdf',
@@ -501,7 +510,7 @@ describe('ArchiveCaseModal', () => {
           dates: '2027',
           sheetsNumber: '7',
           nameDescription: 'updated short desc',
-          contentDescription: '',
+          contentDescription: null,
           pdfUrl: undefined
         }
       );
@@ -515,7 +524,10 @@ describe('ArchiveCaseModal', () => {
           caseDate: { uk: '2027', en: '2027' },
           sheetsNumber: '7',
           caseDescriptions: { uk: 'updated short desc', en: 'updated short desc' },
-          detailedCaseDescription: undefined,
+          detailedCaseDescription: {
+            uk: null,
+            en: null
+          },
           pdfFile: null
         }
       });

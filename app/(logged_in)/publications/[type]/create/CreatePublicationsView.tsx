@@ -60,7 +60,8 @@ export default function CreatePublicationsView({
     handleSave,
     forceShowErrors,
     seoErrors,
-    handleDateTimeChange
+    handleDateTimeChange,
+    handleCoverImageAltChange
   } = data;
   const router = useRouter();
 
@@ -215,6 +216,7 @@ export default function CreatePublicationsView({
           crop={normalizeFetchedCrop(crop) ?? undefined}
           onChangeCrop={setCrop}
           cropAspectRatio={publicationType === 'events' ? CROP_RATIOS.EVENT_CARD : CROP_RATIOS.NEWS_CARD}
+          onChangeAltText={handleCoverImageAltChange}
           value={seoValue}
           onChange={setSeoValue}
           extraFields={seoExtraFields}

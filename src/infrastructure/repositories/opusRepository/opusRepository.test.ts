@@ -295,7 +295,7 @@ describe('OpusRepository', () => {
       expect(result?.additionalText).toBe('Додатковий текст');
       expect(result?.creationYear).toBe(MOCK_CREATION_YEAR);
       expect(result?.endYear).toBe('1925');
-      expect(result?.datesNote).toBe('Нотатка про дати');
+      expect(result?.datesNote).toEqual({ uk: 'Нотатка про дати', en: 'Нотатка про дати' });
       expect(result?.genre).toBeUndefined();
       expect(result?.adminTitle).toBeUndefined();
       expect(result?.slug).toBeUndefined();

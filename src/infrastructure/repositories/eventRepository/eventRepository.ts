@@ -4,33 +4,33 @@ import { createBaseRepository } from '../baseRepository/baseRepository';
 import { EventsEntity } from '~/domain/entities/Events';
 import { CreateEventInput, EventFilters, IEventsRepository } from '~/domain/repositories/eventsRepository';
 import dbConnect from '~/infrastructure/db/connect';
-import {buildBaseQuery, createToEntity, getBaseSort} from '~/infrastructure/repositories/helpers';
+import { buildBaseQuery, createToEntity, getBaseSort } from '~/infrastructure/repositories/helpers';
 import { EventStatus } from '~/types/enums/common.enums';
+import { LocalizedString } from '~/types/localization';
 
 export type DbEvent = {
-    _id: { toString(): string };
-    eventLink: string;
-    publishedAt: string | null;
-    title: EventsEntity['title'];
-    adminTitle: EventsEntity['adminTitle'];
-    description: EventsEntity['description'];
-    keywords: EventsEntity['keywords'];
-    allowIndexation: EventsEntity['allowIndexation'];
-    content: EventsEntity['content'];
-    slug: string;
-    coverImage: EventsEntity['coverImage'];
-    status: EventStatus;
-    meta: EventsEntity['meta'];
-    createdAt: string;
-    updatedAt: string;
-    eventDateTimeStart: string;
-    eventDateTimeEnd: string;
-    ticketUrl?: EventsEntity['ticketUrl'];
-
+  _id: { toString(): string };
+  eventLink: string;
+  publishedAt: string | null;
+  title: EventsEntity['title'];
+  adminTitle: EventsEntity['adminTitle'];
+  description: EventsEntity['description'];
+  keywords: EventsEntity['keywords'];
+  allowIndexation: EventsEntity['allowIndexation'];
+  content: EventsEntity['content'];
+  slug: string;
+  coverImage: EventsEntity['coverImage'];
+  status: EventStatus;
+  meta: EventsEntity['meta'];
+  createdAt: string;
+  updatedAt: string;
+  eventDateTimeStart: string;
+  eventDateTimeEnd: string;
+  ticketUrl?: EventsEntity['ticketUrl'];
 };
 
 type EventRepoDeps = Readonly<{
-    EventModel: Model<DbEvent>;
+  EventModel: Model<DbEvent>;
 }>;
 
 const toEntity = (doc: DbEvent): EventsEntity =>
@@ -49,7 +49,7 @@ const toEntity = (doc: DbEvent): EventsEntity =>
     publishedAt: doc.publishedAt ?? undefined,
     eventDateTimeStart: doc.eventDateTimeStart ?? undefined,
     eventDateTimeEnd: doc.eventDateTimeEnd ?? undefined,
-    ticketUrl: doc.ticketUrl ?? null,
+    ticketUrl: doc.ticketUrl ?? null
   });
 
 export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsRepository => {
@@ -79,6 +79,19 @@ export const EventsRepository = ({ EventModel }: EventRepoDeps): IEventsReposito
         { $inc: { 'meta.views': 1 } },
         { new: true }
       ).lean<DbEvent>();
+      return updated ? toEntity(updated) : null;
+    },
+    updateCoverImageAlt: async (id: string, alt: LocalizedString): Promise<EventsEntity | null> => {
+      await dbConnect();
+
+      if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+      const updated = await EventModel.findByIdAndUpdate(
+        id,
+        { $set: { 'coverImage.alt': alt } },
+        { new: true }
+      ).lean<DbEvent>();
+
       return updated ? toEntity(updated) : null;
     }
   };

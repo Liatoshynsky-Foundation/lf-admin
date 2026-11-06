@@ -149,6 +149,7 @@ export const CaseErrorCodes: Record<keyof typeof CaseErrors, string> = {
 export const casesStatusMessages = {
   publishError: 'Не вдалося опублікувати справу. Спробуйте ще раз',
   updateError: 'Не вдалося змінити статус справи',
+  fundStatusError: 'Не вдалося перевірити статус фонду. Справу опубліковано без перевірки.',
   publishHiddenFundWarning: 'Справу опубліковано, але вона не буде доступна на сайті, доки фонд приховано'
 };
 
@@ -203,7 +204,7 @@ export const seoFormErrors = {
     keywordsMaxLength: 'Значення не може перевищувати 250 символів.',
     altTextMaxLength: 'Значення не може перевищувати 250 символів.',
     minLength: 'Введіть щонайменше 2 символа.',
-    maxLength: 'Значення не може перевищувати 150 символів.',
+    maxLength: 'Значення не може перевищувати 300 символів.',
     adminTitleMaxLength: 'Значення не може перевищувати 250 символів.',
     required: 'Обовʼязкове поле.',
     invalidUrl: 'Некоректний URL.',
@@ -216,7 +217,7 @@ export const seoFormErrors = {
     keywordsMaxLength: 'Value must not exceed 250 characters.',
     altTextMaxLength: 'Value must not exceed 250 characters.',
     minLength: 'Value must be at least 2 characters.',
-    maxLength: 'Value must not exceed 150 characters.',
+    maxLength: 'Value must not exceed 300 characters.',
     adminTitleMaxLength: 'Value must not exceed 250 characters.',
     required: 'Required field.',
     invalidUrl: 'Invalid URL.',

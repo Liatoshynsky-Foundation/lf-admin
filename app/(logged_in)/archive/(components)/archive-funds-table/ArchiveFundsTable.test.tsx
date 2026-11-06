@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSONContent } from '@tiptap/core';
 import toast from 'react-hot-toast';
 
 import { ArchiveCase, FundsTable, FundsTableProps } from './ArchiveFundsTable';
@@ -78,18 +79,22 @@ const clearClipboardWriteText = () => {
   }
 };
 
-const mockGetCaseRow = jest.fn((caseItem: ArchiveCase) => ({
-  id: caseItem.id,
-  cipher: caseItem.cipher,
-  name: caseItem.name,
-  descriptionLabel: String(caseItem.descriptionNumber),
-  caseLabel: String(caseItem.sheetsNumber),
-  caseDate: caseItem.editCaseDate,
-  status: caseItem.status,
-  updatedAt: caseItem.updatedAt,
-  editAction: { editLabel: `Редагувати справу ${caseItem.name}` },
-  menuActions: { menuItems: [], menuTriggerLabel: `Дії для справи ${caseItem.name}` },
-}));
+const mockGetCaseRow = jest.fn((...args: [ArchiveCase, BaseContentStatuses?]) => {
+  const [caseItem] = args;
+
+  return {
+    id: caseItem.id,
+    cipher: caseItem.cipher,
+    name: caseItem.name,
+    descriptionLabel: String(caseItem.descriptionNumber),
+    caseLabel: String(caseItem.sheetsNumber),
+    caseDate: caseItem.editCaseDate,
+    status: caseItem.status,
+    updatedAt: caseItem.updatedAt,
+    editAction: { editLabel: `Редагувати справу ${caseItem.name}` },
+    menuActions: { menuItems: [], menuTriggerLabel: `Дії для справи ${caseItem.name}` },
+  };
+});
 
 jest.mock('~/shared/hooks/use-archive-case-row-actions/useArchiveCaseRowActions', () => ({
   useArchiveCaseRowActions: (_onCaseChanged?: () => Promise<unknown>) => ({
@@ -247,7 +252,7 @@ const buildCase = (overrides?: Partial<ArchiveCase>): ArchiveCase => ({
   sheetsNumber: 5,
   editCaseDate: '1995',
   editCaseDescriptions: 'desc',
-  detailedCaseDescription: 'detailed',
+  detailedCaseDescription: { type: 'doc', content: [] } as unknown as JSONContent,
   status: BaseContentStatuses.Published,
   updatedAt: '2023-01-01',
   ...overrides,
@@ -480,6 +485,7 @@ describe('ArchiveFundsTable', () => {
       expect(screen.getByTestId(`mock-table-layout-subrow-${matchingCase.id}`)).toBeInTheDocument();
       expect(screen.getByText(fund.name)).toBeInTheDocument();
       expect(screen.getByText(matchingCase.name)).toBeInTheDocument();
+      expect(mockGetCaseRow).toHaveBeenCalledWith(matchingCase, fund.status);
     });
 
     it('should render a case with no matching fund as an orphan individual row', () => {

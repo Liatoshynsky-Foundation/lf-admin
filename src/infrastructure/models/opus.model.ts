@@ -36,7 +36,11 @@ const opusSchema = new Schema(
     },
     creationYear: { type: String, default: null },
     endYear: { type: String, default: null },
-    datesNote: { type: String, default: null },
+    datesNote: {
+      type: translatedFieldUnrequiredSchema,
+      default: null,
+      set: (v: unknown) => (typeof v === 'string' ? { uk: v, en: v } : v)
+    },
     genre: { type: translatedFieldUnrequiredSchema, default: null },
 
     adminTitle: { type: String, default: null },

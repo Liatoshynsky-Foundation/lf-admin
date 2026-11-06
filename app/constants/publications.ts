@@ -318,7 +318,7 @@ const META_TEXT_LENGTH = {
 };
 export const META_TITLE_LENGTH = {
   ...META_TEXT_LENGTH,
-  max: 150
+  max: 300
 };
 export const META_DESCRIPTION_LENGTH = META_TEXT_LENGTH;
 export const META_KEYWORDS_LENGTH = META_TEXT_LENGTH;

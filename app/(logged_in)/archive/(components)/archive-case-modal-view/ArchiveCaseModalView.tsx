@@ -10,10 +10,12 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import type { JSONContent } from '@tiptap/core';
 import { X } from 'lucide-react';
 
 import { styles } from './ArchiveCaseModalView.styles';
 import { ARCHIVE_CASE_MODAL_LABELS, PdfEntry } from '~/constants/archive';
+import { CustomTextField } from '~/ds-components/text-field/TextField';
 import FileItem from '~/shared/components/composition-modal/file-item/FileItem';
 import LabelActionRow from '~/shared/components/composition-modal/label-action-row/LabelActionRow';
 import LabelRow from '~/shared/components/composition-modal/label-row/LabelRow';
@@ -32,8 +34,8 @@ export interface ArchiveCaseModalViewProps {
   caseDate: string;
   setCaseDate: (value: string) => void;
   currentPdfFile: PdfEntry;
-  detailedCaseDescription: string;
-  setDetailedCaseDescription: (value: string) => void;
+  detailedCaseDescription: JSONContent | null;
+  setDetailedCaseDescription: (value: JSONContent | null) => void;
   caseName: string;
   setCaseName: (value: string) => void;
   caseDescriptions: string;
@@ -71,7 +73,7 @@ export const ArchiveCaseModalView = ({
   handleDeletePdf,
   handleSave,
   handleCancel,
-  isSubmitDisabled,
+  isSubmitDisabled
 }: ArchiveCaseModalViewProps) => {
   const getDialogTitle = () => {
     if (mode !== 'edit') return ARCHIVE_CASE_MODAL_LABELS.title;
@@ -179,16 +181,13 @@ export const ArchiveCaseModalView = ({
 
           <Stack spacing={3}>
             <LabelRow title={ARCHIVE_CASE_MODAL_LABELS.detailedCaseDescription} />
-            <TextField
-              multiline
+            <CustomTextField
+              fieldType="formatting"
               label={ARCHIVE_CASE_MODAL_LABELS.caseDocuments}
-              rows={7}
-              value={detailedCaseDescription}
-              onChange={(e) => setDetailedCaseDescription(e.target.value)}
-              inputProps={{ maxLength: 1000 }}
+              value={detailedCaseDescription ?? undefined}
+              onChange={(val) => setDetailedCaseDescription((val as JSONContent | null) ?? null)}
               error={Boolean(fieldErrors.detailedCaseDescription)}
               helperText={fieldErrors.detailedCaseDescription}
-              fullWidth
               sx={styles.multilineTextField}
             />
           </Stack>

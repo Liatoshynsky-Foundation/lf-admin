@@ -48,6 +48,7 @@ export type SeoFormLabels = {
 export interface SeoMetadataFormProps {
   readonly value: LocalizedMeta;
   readonly onChange: (value: LocalizedMeta) => void;
+  readonly onChangeAltText?: (value: string) => void;
   readonly locale: 'uk' | 'en';
   readonly ogImage: string | null;
   readonly onImageChange: (url: string) => void;
@@ -110,6 +111,7 @@ const shouldShowAltFieldError = ({
 export default function SeoMetadataForm({
   value,
   onChange,
+  onChangeAltText,
   locale,
   ogImage,
   onImageChange,
@@ -242,10 +244,15 @@ export default function SeoMetadataForm({
   const handleAltTextChange = (val: string) => {
     const nextValue = {
       ...value,
-      altText: { uk: val, en: val }
+      altText: {
+        uk: value.altText?.uk ?? '',
+        en: value.altText?.en ?? '',
+        [locale]: val
+      }
     };
 
     onChange(nextValue);
+    onChangeAltText?.(val);
     if (isExternalValidation) {
       setDisplayErrors((previous) => ({ ...previous, altText: '' }));
     } else if (touched.altText) {

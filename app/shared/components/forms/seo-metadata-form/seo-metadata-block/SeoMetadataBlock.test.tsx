@@ -18,6 +18,7 @@ jest.mock('../SeoMetadataForm', () => ({
     onImageChange,
     onIndexingChange,
     onChangeCrop,
+    onChangeAltText,
     extraFields,
     required
   }: {
@@ -29,6 +30,7 @@ jest.mock('../SeoMetadataForm', () => ({
     onImageChange: (url: string) => void;
     onIndexingChange: (val: boolean) => void;
     onChangeCrop?: (crop: object | null) => void;
+    onChangeAltText?: (altText: string) => void;
     extraFields?: (value: object, onChange: (val: object) => void) => React.ReactNode;
     required?: boolean;
   }) => (
@@ -39,18 +41,7 @@ jest.mock('../SeoMetadataForm', () => ({
       <span data-testid={`indexing-${locale}`}>{String(allowIndexing)}</span>
       <span data-testid={`required-${locale}`}>{String(required ?? true)}</span>
       <button onClick={() => onChange({ title: 'test', description: 'desc', keywords: 'kw' })}>change-{locale}</button>
-      <button
-        onClick={() =>
-          onChange({
-            title: value?.title ?? '',
-            description: value?.description ?? '',
-            keywords: value?.keywords ?? '',
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          })
-        }
-      >
-        alt-{locale}
-      </button>
+      <button onClick={() => onChangeAltText?.(`alt-from-${locale}`)}>alt-{locale}</button>
       <button onClick={() => onImageChange('https://example.com/test.png')}>image-{locale}</button>
       <button onClick={() => onIndexingChange(false)}>indexing-{locale}</button>
       <button onClick={() => onChangeCrop?.({ x: 10 })}>crop-{locale}</button>
@@ -72,6 +63,20 @@ describe('SeoMetadataBlock', () => {
     },
     ogImage: null,
     allowIndexing: { uk: true, en: true }
+  };
+
+  const valueWithAltText: SeoBlockValue = {
+    ...controlledValue,
+    meta: {
+      uk: {
+        ...controlledValue.meta.uk,
+        altText: { uk: 'old-uk', en: 'old-en' }
+      },
+      en: {
+        ...controlledValue.meta.en,
+        altText: { uk: 'old-uk', en: 'old-en' }
+      }
+    }
   };
 
   it('renders two forms for uk and en locales', () => {
@@ -136,22 +141,21 @@ describe('SeoMetadataBlock', () => {
     );
   });
 
-  it.each(locales)('syncs altText across both meta locales when %s alt changes', (locale) => {
-    const onChange = jest.fn();
-    renderBlock({ value: controlledValue, onChange });
+  it.each(locales)('updates %s altText without changing the other locale', (locale) => {
+    const onChangeAltText = jest.fn();
+
+    renderBlock({
+      value: valueWithAltText,
+      onChange: jest.fn(),
+      onChangeAltText
+    });
+
     clickButton(`alt-${locale}`);
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        meta: {
-          uk: expect.objectContaining({
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          }),
-          en: expect.objectContaining({
-            altText: { uk: `alt-from-${locale}`, en: `alt-from-${locale}` }
-          })
-        }
-      })
-    );
+
+    expect(onChangeAltText).toHaveBeenCalledWith({
+      uk: locale === 'uk' ? `alt-from-${locale}` : 'old-uk',
+      en: locale === 'en' ? `alt-from-${locale}` : 'old-en'
+    });
   });
 
   it('renders extraFields for both locales when provided', () => {
@@ -216,61 +220,38 @@ describe('SeoMetadataBlock', () => {
     expect(screen.getByText(seoFormErrors.en.invalidUrl)).toBeInTheDocument();
   });
 
-  it('handles onChangeCrop when only one locale crop is provided in prop', () => {
+  it.each([
+    {
+      description: 'only one locale crop is provided in prop',
+      crop: { uk: { x: 1, y: 1, width: 10, height: 10 } }
+    },
+    {
+      description: 'both uk and en locale crops are provided in prop',
+      crop: {
+        uk: { x: 1, y: 1, width: 10, height: 10 },
+        en: { x: 2, y: 2, width: 20, height: 20 }
+      }
+    },
+    {
+      description: 'crop prop is omitted or undefined',
+      crop: undefined
+    }
+  ])('synchronizes crop across both locales when $description', ({ crop }) => {
     const onChangeCropMock = jest.fn();
-    renderBlock({
-      crop: { uk: { x: 1, y: 1, width: 10, height: 10 } },
-      onChangeCrop: onChangeCropMock
-    });
+    renderBlock({ crop, onChangeCrop: onChangeCropMock });
+
+    const expectedCrop = {
+      uk: { x: 10 },
+      en: { x: 10 }
+    };
 
     clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: null
-    });
+    expect(onChangeCropMock).toHaveBeenCalledWith(expectedCrop);
+
+    onChangeCropMock.mockClear();
 
     clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
-      en: { x: 10 }
-    });
-  });
-
-  it('handles onChangeCrop for uk and en locales when crop prop is provided', () => {
-    const onChangeCropMock = jest.fn();
-    renderBlock({
-      crop: { uk: { x: 1, y: 1, width: 10, height: 10 }, en: { x: 2, y: 2, width: 20, height: 20 } },
-      onChangeCrop: onChangeCropMock
-    });
-
-    clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: { x: 2, y: 2, width: 20, height: 20 }
-    });
-
-    clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 1, y: 1, width: 10, height: 10 },
-      en: { x: 10 }
-    });
-  });
-
-  it('handles onChangeCrop when crop prop is omitted or null', () => {
-    const onChangeCropMock = jest.fn();
-    renderBlock({ onChangeCrop: onChangeCropMock });
-
-    clickButton('crop-uk');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: { x: 10 },
-      en: null
-    });
-
-    clickButton('crop-en');
-    expect(onChangeCropMock).toHaveBeenCalledWith({
-      uk: null,
-      en: { x: 10 }
-    });
+    expect(onChangeCropMock).toHaveBeenCalledWith(expectedCrop);
   });
 
   it('handles ticketUrl change when ticketUrl object is initial undefined', async () => {

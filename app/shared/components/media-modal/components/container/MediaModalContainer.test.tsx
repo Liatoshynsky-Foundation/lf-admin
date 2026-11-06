@@ -129,7 +129,7 @@ describe('MediaModalContainer', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('should call onClose event if the reason is escapeKeyDown', async () => {
+  it('should call onClose event if the reason is escapeKeyDown and disableEscapeKeyDown is false', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
 
@@ -141,6 +141,20 @@ describe('MediaModalContainer', () => {
 
     await user.click(screen.getByTestId('mock-escape'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ignore onClose event if the reason is escapeKeyDown and disableEscapeKeyDown is true', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+
+    render(
+      <MediaModalContainer open onClose={onClose} disableEscapeKeyDown dataTestId="MediaModal">
+        <div />
+      </MediaModalContainer>
+    );
+
+    await user.click(screen.getByTestId('mock-escape'));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('should render only footerTop when provided alone', () => {

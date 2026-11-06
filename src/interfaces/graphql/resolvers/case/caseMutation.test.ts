@@ -18,7 +18,7 @@ const createMockCreateCaseInput = (overrides: Partial<CreateCaseInput> = {}): Cr
   caseDate: { uk: '1917-1918', en: '1917-1918' },
   sheetsNumber: 10,
   caseDescriptions: { uk: 'Опис', en: 'Description' },
-  detailedCaseDescription: undefined,
+  detailedCaseDescription: null,
   pdfFile: undefined,
   status: BaseContentStatuses.Hidden,
   ...overrides
@@ -389,8 +389,9 @@ describe('CaseMutation', () => {
       ['caseDescriptions uk empty', { caseDescriptions: { uk: '', en: 'Description' } }],
       ['caseDescriptions uk exceeding 300 characters', { caseDescriptions: { uk: 'a'.repeat(301), en: 'Description' } }],
 
-      ['detailedCaseDescription uk exceeding 1000 characters', { detailedCaseDescription: { uk: 'a'.repeat(1001), en: 'Valid' } }],
-
+      ['detailedCaseDescription as a string instead of Tiptap JSON object', { detailedCaseDescription: { uk: 'invalid string', en: 'invalid string' } as unknown as CreateCaseInput['detailedCaseDescription'] }],
+      ['detailedCaseDescription with non-object type inside', { detailedCaseDescription: { uk: 12345, en: { type: 'doc' } } as unknown as CreateCaseInput['detailedCaseDescription'] }],   
+   
       ['pdfFile with a non-pdf extension', { pdfFile: { filename: 'scan.jpg', url: 'https://cdn/scan.jpg', mimeType: 'application/pdf' } }],
       ['pdfFile with a non-pdf mimetype', { pdfFile: { filename: 'scan.pdf', url: 'https://cdn/scan.pdf', mimeType: 'image/jpeg' } }],
 

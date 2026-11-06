@@ -1,25 +1,24 @@
 import { EventsEntity } from '~/domain/entities/Events';
-import {FiltersInput, IBaseRepository} from '~/domain/repositories/baseRepository';
+import { FiltersInput, IBaseRepository } from '~/domain/repositories/baseRepository';
 import { EventStatus } from '~/types/enums/common.enums';
+import { LocalizedString } from '~/types/localization';
 
 export type EventFilters = FiltersInput & {
-    statuses?: EventStatus[];
+  statuses?: EventStatus[];
 };
 
-export type CreateEventInput = Omit<
-  EventsEntity,
-  'id' | 'createdAt' | 'updatedAt' | 'meta' | 'eventDateTimeStart'
-> & {
+export type CreateEventInput = Omit<EventsEntity, 'id' | 'createdAt' | 'updatedAt' | 'meta' | 'eventDateTimeStart'> & {
   meta?: Partial<EventsEntity['meta']>;
   eventDateTimeStart: string;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput> & {
-    meta?: { views: number };
-    slug?: string;
+  meta?: { views: number };
+  slug?: string;
 };
 
 export type IEventsRepository = IBaseRepository<EventsEntity, EventFilters> & {
-    create(input: CreateEventInput): Promise<EventsEntity>;
-    incrementViews(id: string): Promise<EventsEntity | null>;
+  create(input: CreateEventInput): Promise<EventsEntity>;
+  incrementViews(id: string): Promise<EventsEntity | null>;
+  updateCoverImageAlt(id: string, alt: LocalizedString): Promise<EventsEntity | null>;
 };

@@ -10,7 +10,7 @@ export const QuoteBlock = ({ title, description, onTitleChange, onDescriptionCha
       <CustomTextField
         fieldType="formatting"
         title="Головна цитата"
-        label="Текст підпису"
+        label="Текст цитати"
         value={title}
         onChange={(value) => onTitleChange?.(value)}
       />
