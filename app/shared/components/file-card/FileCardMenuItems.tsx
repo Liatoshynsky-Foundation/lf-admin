@@ -12,6 +12,7 @@ export interface FileCardMenuProps {
   onRename: () => void;
   onToggleStar: () => void;
   onDownload: () => void;
+  onCopyLink: () => void;
   onDelete: () => void;
 }
 
@@ -22,6 +23,7 @@ const FileCardMenuItems = ({
   onRename,
   onToggleStar,
   onDownload,
+  onCopyLink,
   onDelete
 }: FileCardMenuProps): ActionMenuGroups => {
   const renderStarIcon = () => {
@@ -71,6 +73,14 @@ const FileCardMenuItems = ({
             icon: <Image src="/icons/download.svg" width={18} height={18} alt="Download" />
           },
           onClick: onDownload
+        },
+        {
+          id: 'copy-link',
+          text: {
+            name: 'Копіювати посилання',
+            icon: <Image src="/icons/link.svg" width={18} height={18} alt="Copy link" />
+          },
+          onClick: onCopyLink
         },
         {
           id: 'delete',

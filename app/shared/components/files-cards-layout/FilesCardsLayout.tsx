@@ -29,7 +29,7 @@ type FilesCardsLayoutProps = Readonly<{
   };
   setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
-  onItemAction?: (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => void;
+    onItemAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => void;
   onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }>;

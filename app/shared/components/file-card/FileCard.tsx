@@ -42,7 +42,7 @@ export interface FileCardProps {
   fileData: FileCardData;
   isSelected?: boolean;
   onClick?: () => void;
-  onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+  onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }
@@ -157,6 +157,7 @@ const FileCard = ({
     onRename: () => onAction?.('rename', id),
     onToggleStar: handleToggleStar,
     onDownload: () => onAction?.('download', id),
+    onCopyLink: () => onAction?.('copy-link', id),
     onDelete: () => onAction?.('delete', id)
   });
 

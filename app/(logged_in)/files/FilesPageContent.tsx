@@ -296,11 +296,28 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     await downloadFile(getR2FileEndpoint(fileUrl), filename);
   };
 
+  const handleCopyLink = async (item: FilesCardsLayoutItem) => {
+    const file = allFiles.find((f) => f.id === item.id);
+
+    if (!file?.downloadUrl) {
+      toast.error('Посилання на файл відсутнє');
+      return;
+    }
+
+    try {
+      const fileLink = new URL(file.downloadUrl, window.location.origin).toString();
+      await navigator.clipboard.writeText(fileLink);
+      toast.success('Посилання скопійовано в буфер обміну.');
+    } catch {
+      toast.error('Не вдалося скопіювати посилання. Спробуйте ще раз.');
+    }
+  };
+
   const handleCloseDeleteModal = () => {
     setDeleteModalState({ open: false, fileId: null });
   };
 
-  const handleItemAction = (action: 'rename' | 'delete' | 'download', item: FilesCardsLayoutItem) => {
+  const handleItemAction = (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => {
     if (action === 'rename') {
       setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
     } else if (action === 'delete') {
@@ -312,6 +329,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       } else {
         toast.error('Посилання на завантаження відсутнє');
       }
+    } else if (action === 'copy-link') {
+      handleCopyLink(item);
     }
   };
 
