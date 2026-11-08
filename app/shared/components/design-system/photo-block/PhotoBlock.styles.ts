@@ -1,6 +1,9 @@
 export const PREVIEW_W = 196;
 export const PREVIEW_H = 120;
 
+export const NEWS_PREVIEW_W = 188;
+export const NEWS_PREVIEW_H = 120;
+
 const ELIPSE_PREVIEW_W = 220;
 const ELIPSE_PREVIEW_H = 197;
 

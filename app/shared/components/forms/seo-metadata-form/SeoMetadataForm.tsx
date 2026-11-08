@@ -62,6 +62,7 @@ export interface SeoMetadataFormProps {
   readonly extraFields?: (value: LocalizedMeta, onChange: (val: LocalizedMeta) => void) => ReactNode;
   readonly crop?: CropRect | null;
   readonly onChangeCrop?: (crop: CropRect | null) => void;
+  readonly cropAspectRatio?: number;
   readonly labels?: SeoFormLabels;
 }
 
@@ -123,6 +124,7 @@ export default function SeoMetadataForm({
   errors: externalErrors,
   crop,
   onChangeCrop,
+  cropAspectRatio = CROP_RATIOS.NEWS_CARD,
   extraFields,
   labels = {}
 }: SeoMetadataFormProps) {
@@ -284,7 +286,9 @@ export default function SeoMetadataForm({
         imageUrl={ogImagePreview || ''}
         fileName={displayFileName}
         onChangeImage={handleImageChange}
-        aspectRatio={CROP_RATIOS.GROUP_PHOTO}
+        aspectRatio={cropAspectRatio}
+        previewWidth={Math.round(120 * cropAspectRatio)}
+        previewHeight={120}
         disabled={isUploading}
         buttonSpacing="8px"
         stackSpacing="16px"
@@ -305,7 +309,7 @@ export default function SeoMetadataForm({
         changeImageLabel={labels.changeImageLabel}
       />
       <Typography variant="textMd" sx={styles.ogImageHint}>
-        {labels.ogImageHint || 'Оптимальний розмір: 1200×630 px.'}
+        {labels.ogImageHint || 'Оптимальний розмір: 1002×640 px.'}
       </Typography>
     </Stack>
   );
