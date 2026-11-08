@@ -53,6 +53,7 @@ jest.mock('../file-card/FileCardMenuItems', () => {
         onClick: props.onToggleStar
       },
       { text: 'Завантажити', onClick: props.onDownload },
+      { text: 'Копіювати посилання', onClick: props.onCopyLink },
       { text: 'Видалити', onClick: props.onDelete }
     ];
   });
@@ -223,6 +224,10 @@ describe('MinimizedFileCard', () => {
     await user.click(screen.getByLabelText('Open file menu'));
     await user.click(screen.getByText('Завантажити'));
     expect(handleAction).toHaveBeenCalledWith('download', 'test-id-123');
+
+    await user.click(screen.getByLabelText('Open file menu'));
+    await user.click(screen.getByText('Копіювати посилання'));
+    expect(handleAction).toHaveBeenCalledWith('copy-link', 'test-id-123');
 
     await user.click(screen.getByLabelText('Open file menu'));
     await user.click(screen.getByText('Видалити'));
