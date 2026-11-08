@@ -330,7 +330,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         toast.error('Посилання на завантаження відсутнє');
       }
     } else if (action === 'copy-link') {
-      handleCopyLink(item);
+      void handleCopyLink(item);
     }
   };
 
