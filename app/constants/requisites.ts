@@ -43,3 +43,8 @@ export const REQUISITES_ERROR = {
   title: 'Не вдалося завантажити реквізити',
   description: 'Перезавантажте сторінку та спробуйте ще раз.'
 };
+
+export const REQUISITES_EMPTY = {
+  title: 'Реквізити відсутні',
+  description: 'Не знайдено жодної валютної вкладки.'
+};

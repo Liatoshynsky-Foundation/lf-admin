@@ -13,6 +13,7 @@ import { RequisitesContentEditor } from './section-blocks/RequisitesContentEdito
 import {
   type PaymentDetailsPdfFile,
   type PaymentDetailsTab,
+  REQUISITES_EMPTY,
   REQUISITES_ERROR,
   REQUISITES_LOADING,
   REQUISITES_MESSAGES
@@ -36,6 +37,7 @@ const resolveActiveTabId = (
 const PaymentDetailsPageContent = () => {
   const { data, loading, error } = usePaymentDetails();
   const [tabs, setTabs] = useState<PaymentDetailsTab[]>([]);
+  const [pdfFile, setPdfFile] = useState<PaymentDetailsPdfFile | null>(null);
   const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -45,6 +47,7 @@ const PaymentDetailsPageContent = () => {
     if (!data) return;
 
     setTabs(data.tabs);
+    setPdfFile(data.pdfFile ?? null);
     setActiveTabId((currentId) => resolveActiveTabId(data.tabs, currentId));
   }, [data]);
 
@@ -73,8 +76,12 @@ const PaymentDetailsPageContent = () => {
     return <EmptyState title={REQUISITES_LOADING.title} description={REQUISITES_LOADING.description} />;
   }
 
-  if (error || !data || !activeTab) {
+  if (error) {
     return <EmptyState title={REQUISITES_ERROR.title} description={REQUISITES_ERROR.description} />;
+  }
+
+  if (!data || !activeTab) {
+    return <EmptyState title={REQUISITES_EMPTY.title} description={REQUISITES_EMPTY.description} />;
   }
 
   const handleSelectTab = (id: string) => {
@@ -88,7 +95,6 @@ const PaymentDetailsPageContent = () => {
       id: newId,
       name: REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY,
       content: { type: 'doc', content: [{ type: 'paragraph' }] },
-      pdfFile: null,
       order: tabs.length
     };
     setTabs((prev) => [...prev, newTab]);
@@ -109,10 +115,6 @@ const PaymentDetailsPageContent = () => {
     }
 
     setTabs((prev) => {
-      const deletedTab = prev.find((tab) => tab.id === id);
-      if (deletedTab?.pdfFile?.url) {
-        revokeBlobUrl(deletedTab.pdfFile.url);
-      }
       const filtered = prev.filter((tab) => tab.id !== id);
       if (activeTabId === id) {
         setActiveTabId(filtered[0].id);
@@ -133,17 +135,10 @@ const PaymentDetailsPageContent = () => {
       localBlobUrlsRef.current.add(file.url);
     }
 
-    setTabs((prev) =>
-      prev.map((tab) => {
-        if (tab.id === activeTabId) {
-          if (tab.pdfFile?.url && tab.pdfFile.url !== file?.url) {
-            revokeBlobUrl(tab.pdfFile.url);
-          }
-          return { ...tab, pdfFile: file };
-        }
-        return tab;
-      })
-    );
+    if (pdfFile?.url && pdfFile.url !== file?.url) {
+      revokeBlobUrl(pdfFile.url);
+    }
+    setPdfFile(file);
   };
 
   const handleSave = async () => {
@@ -184,7 +179,7 @@ const PaymentDetailsPageContent = () => {
           />
 
           <PdfAttachmentBlock
-            file={activeTab.pdfFile ?? null}
+            file={pdfFile}
             onFileChange={handlePdfChange}
             disabled={saving}
           />

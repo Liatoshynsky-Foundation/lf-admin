@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
 import {
+  REQUISITES_EMPTY,
   REQUISITES_ERROR,
   REQUISITES_LOADING
 } from '~/constants/requisites';
@@ -109,6 +110,21 @@ describe('PaymentDetailsPageContent', () => {
     expect(tabs.map((tab) => tab.textContent)).toEqual(['UAH', 'USD', 'EUR', 'GBP']);
   });
 
+  it('renders the root-level PDF returned by the API', () => {
+    mockUsePaymentDetails.mockReturnValue({
+      data: MOCK_PAYMENT_DETAILS,
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
+    expect(
+      screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')
+    ).toBeInTheDocument();
+  });
+
   it('renders loading state while payment details are being fetched', () => {
     mockUsePaymentDetails.mockReturnValue({ data: null, loading: true, error: undefined });
 
@@ -129,15 +145,27 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByText(REQUISITES_ERROR.title)).toBeInTheDocument();
   });
 
-  it('renders error state when payment details data is missing', () => {
+  it('renders empty state when payment details record is missing', () => {
     mockUsePaymentDetails.mockReturnValue({ data: null, loading: false, error: undefined });
 
     render(<PaymentDetailsPageContent />);
 
-    expect(screen.getByText(REQUISITES_ERROR.title)).toBeInTheDocument();
+    expect(screen.getByText(REQUISITES_EMPTY.title)).toBeInTheDocument();
   });
 
-  it('switches between currency tabs and changes attached file accordingly', () => {
+  it('renders empty state when payment details have no tabs', () => {
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs: [] },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByText(REQUISITES_EMPTY.title)).toBeInTheDocument();
+  });
+
+  it('switches between currency tabs while keeping page-level attachment', () => {
     render(<PaymentDetailsPageContent />);
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
@@ -145,7 +173,7 @@ describe('PaymentDetailsPageContent', () => {
     fireEvent.click(screen.getByText('USD'));
 
     expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
-    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('UAH'));
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
@@ -196,7 +224,7 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByTestId('editor-preview')).toHaveTextContent('Новий IBAN: UA123456789');
   });
 
-  it('removes attached PDF file for the active tab', () => {
+  it('removes the page-level attached PDF file', () => {
     render(<PaymentDetailsPageContent />);
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
@@ -283,7 +311,7 @@ describe('PaymentDetailsPageContent', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/second.pdf');
   });
 
-  it('revokes blob URL when a tab with an attached file is deleted', () => {
+  it('keeps page-level attachment independent from tab deletion', () => {
     global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/tab-delete.pdf');
     global.URL.revokeObjectURL = jest.fn();
 
@@ -299,7 +327,8 @@ describe('PaymentDetailsPageContent', () => {
     const deleteItem = screen.getByText('Видалити реквізит');
     fireEvent.click(deleteItem);
 
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/tab-delete.pdf');
+    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
 
   it('revokes all remaining local blob URLs when page unmounts', () => {
