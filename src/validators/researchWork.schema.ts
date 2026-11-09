@@ -14,11 +14,6 @@ const requiredBibliographicDescriptionTipTap = z.union([
   z.string().trim().min(1, { message: RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired })
 ]);
 
-const requiredAuthorTipTap = z.union([
-  TipTapDocSchema,
-  z.string().trim().min(1, { message: RESEARCH_VALIDATION_MESSAGES.authorRequired })
-]);
-
 const optionalKeywordsTipTapSchema = z
   .union([
     TipTapDocSchema,
@@ -53,8 +48,6 @@ const optionalUrlSchema = z
 
 export const zResearchWorkSchema = z.object({
   bibliographicDescription: requiredBibliographicDescriptionTipTap,
-
-  author: requiredAuthorTipTap,
 
   year: requiredString(RESEARCH_VALIDATION_MESSAGES.yearRequired, 150, RESEARCH_VALIDATION_MESSAGES.yearMaxLength),
 

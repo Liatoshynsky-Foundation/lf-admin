@@ -15,7 +15,6 @@ const researchWorkPdfFileSchema = new Schema(
 const researchWorkSchema = new Schema(
   {
     bibliographicDescription: { type: String, required: true },
-    author: { type: String, required: true },
     year: { type: String, required: true },
     keywords: { type: String, required: false },
     pdfFile: { type: researchWorkPdfFileSchema, default: null },

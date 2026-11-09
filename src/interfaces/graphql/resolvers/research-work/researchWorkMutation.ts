@@ -16,7 +16,6 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 type RichTextInput = string | ReturnType<typeof TipTapDocSchema.parse>;
 type ResearchWorkTextFields = {
   bibliographicDescription: RichTextInput;
-  author: RichTextInput;
   keywords?: RichTextInput | null;
 };
 type CreateResearchWorkArgs = {
@@ -75,12 +74,11 @@ const serializeRichTextInput = (value: RichTextInput): string =>
 const toCreateResearchWorkInput = (
   input: ReturnType<typeof zResearchWorkSchema.parse>
 ): CreateResearchWorkInput => {
-  const { bibliographicDescription, author, keywords, ...rest } = input;
+  const { bibliographicDescription, keywords, ...rest } = input;
 
   return {
     ...rest,
     bibliographicDescription: serializeRichTextInput(bibliographicDescription),
-    author: serializeRichTextInput(author),
     keywords: keywords == null ? keywords : serializeRichTextInput(keywords)
   };
 };
@@ -88,14 +86,13 @@ const toCreateResearchWorkInput = (
 const toUpdateResearchWorkInput = (
   input: ReturnType<typeof zResearchWorkUpdateSchema.parse>
 ): UpdateResearchWorkInput => {
-  const { bibliographicDescription, author, keywords, ...rest } = input;
+  const { bibliographicDescription, keywords, ...rest } = input;
 
   return {
     ...rest,
     ...(bibliographicDescription !== undefined
       ? { bibliographicDescription: serializeRichTextInput(bibliographicDescription) }
       : {}),
-    ...(author !== undefined ? { author: serializeRichTextInput(author) } : {}),
     ...(keywords !== undefined
       ? { keywords: keywords === null ? null : serializeRichTextInput(keywords) }
       : {})
