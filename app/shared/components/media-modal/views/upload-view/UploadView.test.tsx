@@ -323,7 +323,7 @@ describe('UploadView', () => {
       target: { files: [createFile('corrupt.png', 'image/png')] }
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Не вдалося прочитати зображення');
+    expect(await screen.findByRole('alert')).toHaveTextContent(IMAGE_UPLOAD_ERROR);
     expect(onPick).not.toHaveBeenCalled();
   });
 
