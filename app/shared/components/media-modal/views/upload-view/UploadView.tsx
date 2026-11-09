@@ -29,7 +29,6 @@ export type Props = Readonly<{
 
 const DROP_HINT = 'Перетягніть файл сюди або оберіть вручну';
 const ERROR_FILE_TOO_LARGE = 'Файл перевищує максимально допустимий розмір';
-const ERROR_IMAGE_UNREADABLE = 'Не вдалося прочитати зображення';
 
 const buildUploadId = (file: File): string => `${file.lastModified}-${file.size}-${file.name}`;
 
@@ -121,7 +120,7 @@ export function UploadView({
         const readResult = await checkImageReadable(file);
 
         if (readResult === 'unreadable') {
-          setError(ERROR_IMAGE_UNREADABLE);
+          setError(IMAGE_UPLOAD_ERROR);
           return;
         }
       }
