@@ -50,6 +50,22 @@ describe('HeaderRow Component', () => {
     }
   });
 
+  it('should handle spaces inside minmax columns', () => {
+    const columns = [
+      { id: 'description', headerLabel: 'Description', width: 'minmax(300px, 1fr)' },
+      { id: 'year', headerLabel: 'Year', width: '120px' }
+    ];
+
+    render(<HeaderRow columns={columns} gridTemplate="minmax(300px, 1fr) 120px" />);
+
+    const headerRoot = screen.getByText('Description').parentElement;
+    expect(headerRoot).toBeInTheDocument();
+
+    if (headerRoot) {
+      expect(globalThis.getComputedStyle(headerRoot).gridTemplateColumns).toContain('minmax(300px, 1fr)');
+    }
+  });
+
   it('should handle an empty columns array gracefully without crashing', () => {
     const { container } = render(<HeaderRow columns={[]} gridTemplate="" />);
 
