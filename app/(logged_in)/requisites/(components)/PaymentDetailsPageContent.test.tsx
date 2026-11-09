@@ -1,7 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
+import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
+import {
+  REQUISITES_ERROR,
+  REQUISITES_LOADING
+} from '~/constants/requisites';
+
+const mockUsePaymentDetails = jest.fn();
+
+jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
+  usePaymentDetails: () => mockUsePaymentDetails()
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: jest.fn() }))
@@ -61,6 +72,11 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
 describe('PaymentDetailsPageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUsePaymentDetails.mockReturnValue({
+      data: MOCK_PAYMENT_DETAILS,
+      loading: false,
+      error: undefined
+    });
   });
 
   it('renders initial UAH tab and content correctly', () => {
@@ -76,6 +92,49 @@ describe('PaymentDetailsPageContent', () => {
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
     expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
+  });
+
+  it('renders currency tabs in configured order', () => {
+    mockUsePaymentDetails.mockReturnValue({
+      data: MOCK_PAYMENT_DETAILS,
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    const tabs = screen.getAllByRole('button').filter((button) =>
+      ['UAH', 'USD', 'EUR', 'GBP'].includes(button.textContent ?? '')
+    );
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['UAH', 'USD', 'EUR', 'GBP']);
+  });
+
+  it('renders loading state while payment details are being fetched', () => {
+    mockUsePaymentDetails.mockReturnValue({ data: null, loading: true, error: undefined });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByText(REQUISITES_LOADING.title)).toBeInTheDocument();
+  });
+
+  it('renders error state when payment details request fails', () => {
+    mockUsePaymentDetails.mockReturnValue({
+      data: null,
+      loading: false,
+      error: new Error('Request failed')
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByText(REQUISITES_ERROR.title)).toBeInTheDocument();
+  });
+
+  it('renders error state when payment details data is missing', () => {
+    mockUsePaymentDetails.mockReturnValue({ data: null, loading: false, error: undefined });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByText(REQUISITES_ERROR.title)).toBeInTheDocument();
   });
 
   it('switches between currency tabs and changes attached file accordingly', () => {

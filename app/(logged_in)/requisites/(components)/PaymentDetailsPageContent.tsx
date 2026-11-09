@@ -5,7 +5,6 @@ import type { JSONContent } from '@tiptap/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { INITIAL_REQUISITES_DATA } from '../__mocks__/requisites';
 import { styles } from './PaymentDetailsPageContent.styles';
 import { PaymentHeaderActions } from './PaymentHeaderActions';
 import { CurrencyTabs } from './section-blocks/CurrencyTabs';
@@ -14,17 +13,40 @@ import { RequisitesContentEditor } from './section-blocks/RequisitesContentEdito
 import {
   type PaymentDetailsPdfFile,
   type PaymentDetailsTab,
+  REQUISITES_ERROR,
+  REQUISITES_LOADING,
   REQUISITES_MESSAGES
 } from '~/constants/requisites';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
+import { EmptyState } from '~/shared/components/empty-state';
+import { usePaymentDetails } from '~/shared/hooks/use-payment-details/usePaymentDetails';
+
+const resolveActiveTabId = (
+  tabs: PaymentDetailsTab[],
+  currentId: string
+): string => {
+  const currentTabStillExists = tabs.some((tab) => tab.id === currentId);
+
+  if (currentTabStillExists) return currentId;
+
+  return tabs[0]?.id ?? '';
+};
 
 const PaymentDetailsPageContent = () => {
-  const [tabs, setTabs] = useState<PaymentDetailsTab[]>(INITIAL_REQUISITES_DATA.items);
-  const [activeTabId, setActiveTabId] = useState(INITIAL_REQUISITES_DATA.items[0].id);
+  const { data, loading, error } = usePaymentDetails();
+  const [tabs, setTabs] = useState<PaymentDetailsTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const localBlobUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!data) return;
+
+    setTabs(data.tabs);
+    setActiveTabId((currentId) => resolveActiveTabId(data.tabs, currentId));
+  }, [data]);
 
   const revokeBlobUrl = (url?: string | null) => {
     if (url && localBlobUrlsRef.current.has(url)) {
@@ -46,6 +68,14 @@ const PaymentDetailsPageContent = () => {
   const activeTab = useMemo(() => {
     return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
   }, [tabs, activeTabId]);
+
+  if (loading) {
+    return <EmptyState title={REQUISITES_LOADING.title} description={REQUISITES_LOADING.description} />;
+  }
+
+  if (error || !data || !activeTab) {
+    return <EmptyState title={REQUISITES_ERROR.title} description={REQUISITES_ERROR.description} />;
+  }
 
   const handleSelectTab = (id: string) => {
     setActiveTabId(id);

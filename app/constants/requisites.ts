@@ -33,3 +33,13 @@ export const REQUISITES_MESSAGES = {
   DELETE_CONFIRMATION: 'Видалити цю вкладку реквізитів?',
   DEFAULT_NEW_CURRENCY: 'Без назви'
 } as const;
+
+export const REQUISITES_LOADING = {
+  title: 'Завантаження реквізитів',
+  description: 'Зачекайте, поки завершиться запит.'
+};
+
+export const REQUISITES_ERROR = {
+  title: 'Не вдалося завантажити реквізити',
+  description: 'Перезавантажте сторінку та спробуйте ще раз.'
+};
