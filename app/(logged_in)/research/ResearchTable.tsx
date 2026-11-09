@@ -24,12 +24,6 @@ type PlainWork = ResearchWork & {
 
 const columns: readonly ColumnDef<unknown, unknown, PlainWork>[] = [
   {
-    id: 'author',
-    headerLabel: 'Автор(и)/Упорядник(и)',
-    width: '300px',
-    renderPlain: (work) => proseToText(work.author)
-  },
-  {
     id: 'description',
     headerLabel: 'Бібліографічний опис',
     width: 'minmax(300px, 1fr)',
@@ -121,12 +115,12 @@ export function ResearchTable({
     plainData: {
       ...work,
       editAction: {
-        editLabel: `Редагувати роботу ${work.author}`,
+        editLabel: 'Редагувати роботу',
         onEditClick: () => onEditWork(work)
       },
       menuActions: {
         menuItems: buildMenuItems(work, onEditWork, onDeleteWork, onToggleStatus, onShareWork),
-        menuTriggerLabel: `Дії для роботи ${work.author}`
+        menuTriggerLabel: 'Дії для роботи'
       }
     }
   }));

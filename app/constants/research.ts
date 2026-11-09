@@ -22,7 +22,6 @@ export const RESEARCH_ITEMS_PER_PAGE = 8;
 
 export const RESEARCH_FIELD_LIMITS = {
   bibliographicDescription: 250,
-  author: 150,
   year: 150,
   keywords: 250
 } as const;
@@ -30,9 +29,6 @@ export const RESEARCH_FIELD_LIMITS = {
 export const RESEARCH_VALIDATION_MESSAGES = {
   bibliographicDescriptionRequired: 'Бібліографічний опис є обов’язковим.',
   bibliographicDescriptionMaxLength: 'Бібліографічний опис не може перевищувати 250 символів.',
-
-  authorRequired: 'Автор є обов’язковим.',
-  authorMaxLength: 'Значення не може перевищувати 150 символів.',
 
   yearRequired: 'Дати справи є обов’язковими.',
   yearMaxLength: 'Значення не може перевищувати 150 символів.',

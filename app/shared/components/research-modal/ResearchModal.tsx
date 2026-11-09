@@ -12,11 +12,7 @@ import type { MediaModalResult } from '~/shared/components/media-modal/MediaModa
 import { isPdfUploadFile } from '~/shared/components/media-modal/MediaModal.utils';
 import { resolvePdfAttachmentFromMediaModal } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
 import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
-import {
-  useCreateResearchWork,
-  useResearchWorkAuthors,
-  useUpdateResearchWork
-} from '~/shared/hooks/use-research-works/useResearchWorks';
+import { useCreateResearchWork, useUpdateResearchWork } from '~/shared/hooks/use-research-works/useResearchWorks';
 import {
   type CreateResearchWorkInput,
   type ResearchWorkPdfFileInput,
@@ -48,7 +44,6 @@ const formatRichTextField = (value: TipTapValue | null | undefined): string | nu
 
 const toCommonInput = (data: ResearchWorkFormData) => ({
   bibliographicDescription: formatRichTextField(data.bibliographicDescription) ?? '',
-  author: formatRichTextField(data.author) ?? '',
   year: data.caseDates.trim(),
   keywords: formatRichTextField(data.keywords),
   url: data.url.trim() || null,
@@ -66,7 +61,6 @@ const ResearchModal = ({
   const [createResearchWork] = useCreateResearchWork();
   const [updateResearchWork] = useUpdateResearchWork();
   const [createAsset] = useCreateAssetMutation();
-  const { authors: authorOptions } = useResearchWorkAuthors({ skip: !isOpen });
   const [isMediaOpen, setIsMediaOpen] = useState(false);
   const [attachedPdf, setAttachedPdf] = useState<ResearchWorkPdfFile | null>(existingPdfFile ?? null);
 
@@ -182,7 +176,6 @@ const ResearchModal = ({
       <ResearchModalView
         isOpen={isOpen}
         initialData={initialData}
-        authorOptions={authorOptions}
         attachedFileName={attachedPdf?.filename ?? null}
         onAddFile={() => setIsMediaOpen(true)}
         onDeleteFile={() => setAttachedPdf(null)}

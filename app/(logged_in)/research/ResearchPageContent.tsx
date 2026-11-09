@@ -223,7 +223,6 @@ export function ResearchPageContent() {
           activeWork
             ? {
               bibliographicDescription: activeWork.bibliographicDescription,
-              author: activeWork.author,
               keywords: activeWork.keywords,
               caseDates: String(activeWork.year),
               url: activeWork.url ?? '',
