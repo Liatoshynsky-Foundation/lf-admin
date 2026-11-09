@@ -27,6 +27,7 @@ jest.mock('./FileCardMenuItems', () => {
     onRename: () => void;
     onToggleStar: () => void;
     onDownload: () => void;
+    onCopyLink: () => void;
     onDelete: () => void;
   }
 
@@ -67,6 +68,15 @@ jest.mock('./FileCardMenuItems', () => {
         }}
       >
         Download
+      </Button>
+      <Button
+        data-testid="menu-btn-copy-link"
+        onClick={(e) => {
+          e.stopPropagation();
+          props.onCopyLink();
+        }}
+      >
+        Copy link
       </Button>
       <Button
         data-testid="menu-btn-delete"
@@ -303,6 +313,9 @@ describe('FileCard', () => {
 
     fireEvent.click(screen.getByTestId('menu-btn-download'));
     expect(mockOnAction).toHaveBeenCalledWith('download', 'test-file-123');
+
+    fireEvent.click(screen.getByTestId('menu-btn-copy-link'));
+    expect(mockOnAction).toHaveBeenCalledWith('copy-link', 'test-file-123');
 
     fireEvent.click(screen.getByTestId('menu-btn-delete'));
     expect(mockOnAction).toHaveBeenCalledWith('delete', 'test-file-123');

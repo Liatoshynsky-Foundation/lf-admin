@@ -31,6 +31,7 @@ describe('FileCardMenuItems', () => {
     onRename: jest.fn(),
     onToggleStar: jest.fn(),
     onDownload: jest.fn(),
+    onCopyLink: jest.fn(),
     onDelete: jest.fn()
   };
 
@@ -38,22 +39,23 @@ describe('FileCardMenuItems', () => {
     jest.clearAllMocks();
   });
 
-  it('returns a single group containing 5 items', () => {
+  it('returns a single group containing 6 items', () => {
     const groups = FileCardMenuItems(mockProps);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].items).toHaveLength(5);
+    expect(groups[0].items).toHaveLength(6);
   });
 
   it('returns items with the correct ids and labels in order', () => {
     const [{ items }] = FileCardMenuItems(mockProps);
 
-    expect(items.map((item) => item.id)).toEqual(['details', 'rename', 'toggle-star', 'download', 'delete']);
+    expect(items.map((item) => item.id)).toEqual(['details', 'rename', 'toggle-star', 'download', 'copy-link', 'delete']);
     expect(items[0].text.name).toBe('Відкрити деталі');
     expect(items[1].text.name).toBe('Перейменувати');
     expect(items[2].text.name).toBe('Додати в обрані');
     expect(items[3].text.name).toBe('Завантажити');
-    expect(items[4].text.name).toBe('Видалити');
+    expect(items[4].text.name).toBe('Копіювати посилання');
+    expect(items[5].text.name).toBe('Видалити');
   });
 
   it('renders the default (not starred, not loading) star icon', () => {
@@ -124,6 +126,20 @@ describe('FileCardMenuItems', () => {
     expect(mockProps.onDownload).toHaveBeenCalledTimes(1);
   });
 
+  it('calls onCopyLink when the copy-link item is clicked', () => {
+    const [{ items }] = FileCardMenuItems(mockProps);
+    items.find((item) => item.id === 'copy-link')?.onClick?.();
+
+    expect(mockProps.onCopyLink).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the copy-link icon with expected alt text', () => {
+    const [{ items }] = FileCardMenuItems(mockProps);
+    const copyLink = items.find((item) => item.id === 'copy-link');
+
+    expect(asElement(copyLink?.text.icon).props.alt).toBe('Copy link');
+  });
+
   it('calls onDelete when the delete item is clicked', () => {
     const [{ items }] = FileCardMenuItems(mockProps);
     items.find((item) => item.id === 'delete')?.onClick?.();
@@ -155,6 +171,7 @@ describe('FileCardMenuItems', () => {
       onRename: jest.fn(),
       onToggleStar: jest.fn(),
       onDownload: jest.fn(),
+      onCopyLink: jest.fn(),
       onDelete: jest.fn()
     };
 

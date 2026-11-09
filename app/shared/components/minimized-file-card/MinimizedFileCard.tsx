@@ -36,7 +36,7 @@ interface MinimizedFileCardProps {
   date: string;
   isSelected?: boolean;
   onClick?: () => void;
-  onAction?: (action: 'rename' | 'delete' | 'download', fileId: string) => void;
+    onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
@@ -151,6 +151,7 @@ const MinimizedFileCard = ({
           onRename: () => onAction?.('rename', id),
           onToggleStar: handleToggleStar,
           onDownload: () => onAction?.('download', id),
+          onCopyLink: () => onAction?.('copy-link', id),
           onDelete: () => onAction?.('delete', id)
         })}
       />

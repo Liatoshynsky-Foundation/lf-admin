@@ -110,7 +110,7 @@ interface FilesCardsLayoutProps {
   gridColumns?: unknown;
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
-  onItemAction: (action: 'rename' | 'delete' | 'download', item: TestFileItem) => void;
+  onItemAction: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: TestFileItem) => void;
   onItemToggleStar: (item: TestFileItem, next: boolean) => void | Promise<void>;
 }
 
@@ -273,6 +273,7 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
             <button onClick={() => props.onItemAction('rename', item)}>rename-{item.id}</button>
             <button onClick={() => props.onItemAction('delete', item)}>delete-{item.id}</button>
             <button onClick={() => props.onItemAction('download', item)}>download-{item.id}</button>
+            <button onClick={() => props.onItemAction('copy-link', item)}>copy-link-{item.id}</button>
             <button onClick={() => props.onItemToggleStar(item, true)}>star-{item.id}</button>
             <div ref={(node) => props.setItemRef(item.id, node)} />
           </div>
@@ -1103,6 +1104,55 @@ describe('FilesPageContent', () => {
           id: '1',
           input: { filename: 'renamed.png' }
         }
+      });
+    });
+  });
+
+  describe('copy link action', () => {
+    const mockWriteText = jest.fn();
+
+    beforeEach(() => {
+      mockWriteText.mockReset();
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: mockWriteText },
+        configurable: true
+      });
+    });
+
+    it('copies the file url to the clipboard and shows a success toast', async () => {
+      mockWriteText.mockResolvedValue(undefined);
+      setupHooks({ assets: [baseAsset] });
+      render(<FilesPageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('copy-link-1'));
+
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith(baseAsset.url);
+        expect(toast.success).toHaveBeenCalledWith('Посилання скопійовано в буфер обміну.');
+      });
+    });
+
+    it('shows an error toast when the file url is missing', async () => {
+      setupHooks({ assets: [{ ...baseAsset, url: '' }] });
+      render(<FilesPageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('copy-link-1'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith('Посилання на файл відсутнє');
+      });
+      expect(mockWriteText).not.toHaveBeenCalled();
+    });
+
+    it('shows an error toast when copying to the clipboard fails', async () => {
+      mockWriteText.mockRejectedValue(new Error('denied'));
+      setupHooks({ assets: [baseAsset] });
+      render(<FilesPageContent activeTab="all" />);
+
+      fireEvent.click(screen.getByText('copy-link-1'));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith('Не вдалося скопіювати посилання. Спробуйте ще раз.');
       });
     });
   });
