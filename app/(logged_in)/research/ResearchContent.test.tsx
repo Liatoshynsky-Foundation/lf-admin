@@ -28,7 +28,6 @@ jest.mock('~/shared/components/empty-state', () => ({
 
 const sampleWork: ResearchWork = {
   id: '1',
-  author: 'Коваленко Олена',
   bibliographicDescription: 'Коваленко, Олена. Тестовий бібліографічний опис.',
   year: '1970',
   keywords: '',

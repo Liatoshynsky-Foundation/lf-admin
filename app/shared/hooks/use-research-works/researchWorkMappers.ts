@@ -20,7 +20,6 @@ export const toGqlResearchWorkStatus = (status: ResearchWorkStatus): GqlResearch
 
 export const mapResearchWork = (item: ResearchWorkFieldsFragment): ResearchWork => ({
   id: item.id,
-  author: item.author,
   bibliographicDescription: item.bibliographicDescription,
   year: item.year,
   keywords: item.keywords ?? '',
@@ -37,9 +36,3 @@ export const mapResearchWork = (item: ResearchWorkFieldsFragment): ResearchWork 
   updatedAt: item.updatedAt,
   publishedAt: item.publishedAt ?? undefined
 });
-
-export const collectUniqueAuthors = (items: Array<{ author: string }>): string[] => {
-  const unique = new Set(items.map((item) => item.author.trim()).filter(Boolean));
-
-  return Array.from(unique).sort((a, b) => a.localeCompare(b, 'uk'));
-};

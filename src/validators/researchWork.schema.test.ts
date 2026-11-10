@@ -15,7 +15,6 @@ describe('zResearchWorkSchema', () => {
 
   const validBaseWork = {
     bibliographicDescription: 'Valid description',
-    author: 'Valid author',
     year: '1995',
     keywords: 'history, music',
     url: 'https://example.com/item',
@@ -29,11 +28,10 @@ describe('zResearchWorkSchema', () => {
       expect(result.success).toBe(true);
     });
 
-    it('accepts TipTap doc objects for bibliographicDescription, author, and keywords', () => {
+    it('accepts TipTap doc objects for rich-text fields', () => {
       const result = zResearchWorkSchema.safeParse({
         ...validBaseWork,
         bibliographicDescription: validTipTapDoc,
-        author: validTipTapDoc,
         keywords: validTipTapDoc
       });
 
@@ -45,14 +43,12 @@ describe('zResearchWorkSchema', () => {
       const result = zResearchWorkSchema.safeParse({
         ...validBaseWork,
         bibliographicDescription: serializedDoc,
-        author: serializedDoc,
         keywords: serializedDoc
       });
 
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.bibliographicDescription).toEqual(validTipTapDoc);
-        expect(result.data.author).toEqual(validTipTapDoc);
         expect(result.data.keywords).toEqual(validTipTapDoc);
       }
     });
@@ -99,7 +95,6 @@ describe('zResearchWorkSchema', () => {
       const result = zResearchWorkSchema.safeParse({
         ...validBaseWork,
         bibliographicDescription: longFormattedDoc,
-        author: validTipTapDoc
       });
 
       expect(result.success).toBe(true);
@@ -150,24 +145,9 @@ describe('zResearchWorkSchema', () => {
       }
     });
 
-    it('returns error message when author is empty string', () => {
-      const result = zResearchWorkSchema.safeParse({
-        ...validBaseWork,
-        author: '   '
-      });
-
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        const fieldError = result.error.issues.find((i) => i.path.includes('author'));
-        expect(fieldError?.message).toBe(RESEARCH_VALIDATION_MESSAGES.authorRequired);
-      }
-    });
-
     it.each([
       ['bibliographicDescription', ''],
-      ['bibliographicDescription', { type: TipTapNodeTypes.doc, content: [] }],
-      ['author', ''],
-      ['author', { type: TipTapNodeTypes.text, text: 'Invalid author document' }]
+      ['bibliographicDescription', { type: TipTapNodeTypes.doc, content: [] }]
     ] as const)('rejects empty or invalid %s values', (field, value) => {
       const result = zResearchWorkSchema.safeParse({ ...validBaseWork, [field]: value });
 

@@ -11,13 +11,16 @@ export const styles = {
     includeExpandGutter = false,
     withoutFirstColOffset = false
   ): SxProps<Theme> => {
-    const restTemplates = gridTemplate.substring(gridTemplate.indexOf(' ') + 1);
     const firstColumn = includeExpandGutter && !withoutFirstColOffset
       ? `calc(${firstColWidth} + ${EXPAND_ICON_GUTTER})`
       : firstColWidth;
+    const gridColumns = includeExpandGutter && !withoutFirstColOffset
+      ? `${firstColumn}${gridTemplate.slice(firstColWidth.length)}`
+      : gridTemplate;
+
     return {
       display: 'grid',
-      gridTemplateColumns: `${firstColumn} ${restTemplates}`,
+      gridTemplateColumns: gridColumns,
       columnGap: tableGap,
       alignItems: 'center',
       py: '16px',

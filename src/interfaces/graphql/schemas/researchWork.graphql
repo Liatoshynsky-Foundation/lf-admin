@@ -18,7 +18,6 @@ input ResearchWorkPdfFileInput {
 type ResearchWork {
   id: ID!
   bibliographicDescription: String!
-  author: String!
   year: String!
   keywords: String
   pdfFile: ResearchWorkPdfFile
@@ -31,7 +30,6 @@ type ResearchWork {
 
 input CreateResearchWorkInput {
   bibliographicDescription: String!
-  author: String!
   year: String!
   keywords: String
   pdfFile: ResearchWorkPdfFileInput
@@ -42,7 +40,6 @@ input CreateResearchWorkInput {
 
 input UpdateResearchWorkInput {
   bibliographicDescription: String
-  author: String
   year: String
   keywords: String
   pdfFile: ResearchWorkPdfFileInput
@@ -63,7 +60,6 @@ type PaginatedResearchWorks {
 }
 
 enum ResearchWorksSortBy {
-  author
   bibliographicDescription
   year
   createdAt

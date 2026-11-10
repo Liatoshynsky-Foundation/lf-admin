@@ -1,11 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 
 import {
-  collectUniqueAuthors,
   useCreateResearchWork,
   useDeleteResearchWork,
   usePaginatedResearchWorks,
-  useResearchWorkAuthors,
   useResearchWorkById,
   useUpdateResearchWork,
   useUpdateResearchWorkStatus
@@ -18,7 +16,6 @@ import {
   useCreateResearchWorkMutation,
   useDeleteResearchWorkMutation,
   usePaginatedResearchWorksQuery,
-  useResearchWorkAuthorsQuery,
   useResearchWorkByIdQuery,
   useUpdateResearchWorkMutation,
   useUpdateResearchWorkStatusMutation
@@ -28,7 +25,6 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
   useResearchWorkByIdQuery: jest.fn(),
   usePaginatedResearchWorksQuery: jest.fn(),
-  useResearchWorkAuthorsQuery: jest.fn(),
   useCreateResearchWorkMutation: jest.fn(),
   useUpdateResearchWorkMutation: jest.fn(),
   useUpdateResearchWorkStatusMutation: jest.fn(),
@@ -45,9 +41,6 @@ const mockUseResearchWorkByIdQuery = useResearchWorkByIdQuery as jest.MockedFunc
 const mockUsePaginatedResearchWorksQuery = usePaginatedResearchWorksQuery as jest.MockedFunction<
   typeof usePaginatedResearchWorksQuery
 >;
-const mockUseResearchWorkAuthorsQuery = useResearchWorkAuthorsQuery as jest.MockedFunction<
-  typeof useResearchWorkAuthorsQuery
->;
 const mockUseCreateResearchWorkMutation = useCreateResearchWorkMutation as jest.MockedFunction<
   typeof useCreateResearchWorkMutation
 >;
@@ -61,24 +54,6 @@ const mockUseDeleteResearchWorkMutation = useDeleteResearchWorkMutation as jest.
   typeof useDeleteResearchWorkMutation
 >;
 const mockSafeMutate = safeMutate as jest.MockedFunction<typeof safeMutate>;
-
-describe('collectUniqueAuthors', () => {
-  it('returns unique trimmed authors sorted with uk locale', () => {
-    expect(
-      collectUniqueAuthors([
-        { author: 'Мельник Андрій' },
-        { author: 'Коваленко Олена' },
-        { author: 'Мельник Андрій' },
-        { author: '  ' },
-        { author: ' Коваленко Олена ' }
-      ])
-    ).toEqual(['Коваленко Олена', 'Мельник Андрій']);
-  });
-
-  it('returns an empty list when there are no authors', () => {
-    expect(collectUniqueAuthors([])).toEqual([]);
-  });
-});
 
 describe('useResearchWorkById', () => {
   beforeEach(() => {
@@ -108,7 +83,6 @@ describe('useResearchWorkById', () => {
         researchWorkById: {
           id: 'work-1',
           bibliographicDescription: 'Опис',
-          author: 'Коваленко Олена',
           year: '1970',
           keywords: 'ключ',
           pdfFile: null,
@@ -133,7 +107,6 @@ describe('useResearchWorkById', () => {
     expect(result.current.work).toEqual({
       id: 'work-1',
       bibliographicDescription: 'Опис',
-      author: 'Коваленко Олена',
       year: '1970',
       keywords: 'ключ',
       pdfFile: undefined,
@@ -159,7 +132,6 @@ describe('usePaginatedResearchWorks', () => {
             {
               id: 'work-1',
               bibliographicDescription: 'Опис',
-              author: 'Автор',
               year: '1970',
               keywords: null,
               pdfFile: null,
@@ -180,14 +152,13 @@ describe('usePaginatedResearchWorks', () => {
       refetch: jest.fn()
     } as never);
 
-    const { result } = renderHook(() => usePaginatedResearchWorks(2, 8, { search: 'Автор' }));
+    const { result } = renderHook(() => usePaginatedResearchWorks(2, 8, { search: 'Опис' }));
 
     expect(mockUsePaginatedResearchWorksQuery).toHaveBeenCalledWith({
-      variables: { page: 2, limit: 8, filters: { search: 'Автор' } },
+      variables: { page: 2, limit: 8, filters: { search: 'Опис' } },
       fetchPolicy: 'network-only'
     });
     expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].author).toBe('Автор');
     expect(result.current.total).toBe(1);
     expect(result.current.page).toBe(2);
     expect(result.current.totalPages).toBe(3);
@@ -211,46 +182,6 @@ describe('usePaginatedResearchWorks', () => {
   });
 });
 
-describe('useResearchWorkAuthors', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('collects unique authors from all research works', () => {
-    mockUseResearchWorkAuthorsQuery.mockReturnValue({
-      data: {
-        allResearchWorks: [{ author: 'Б' }, { author: 'А' }, { author: 'Б' }]
-      },
-      loading: false,
-      error: undefined
-    } as never);
-
-    const { result } = renderHook(() => useResearchWorkAuthors());
-
-    expect(mockUseResearchWorkAuthorsQuery).toHaveBeenCalledWith({
-      fetchPolicy: 'network-only',
-      skip: undefined
-    });
-    expect(result.current.authors).toEqual(['А', 'Б']);
-  });
-
-  it('skips authors query when requested', () => {
-    mockUseResearchWorkAuthorsQuery.mockReturnValue({
-      data: undefined,
-      loading: false,
-      error: undefined
-    } as never);
-
-    const { result } = renderHook(() => useResearchWorkAuthors({ skip: true }));
-
-    expect(mockUseResearchWorkAuthorsQuery).toHaveBeenCalledWith({
-      fetchPolicy: 'network-only',
-      skip: true
-    });
-    expect(result.current.authors).toEqual([]);
-  });
-});
-
 describe('research work mutations', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -271,7 +202,6 @@ describe('research work mutations', () => {
     await act(async () => {
       await createResearchWork({
         bibliographicDescription: 'Опис',
-        author: 'Автор',
         year: '1970',
         status: ResearchWorkStatus.Hidden
       });
@@ -282,7 +212,6 @@ describe('research work mutations', () => {
       {
         input: {
           bibliographicDescription: 'Опис',
-          author: 'Автор',
           year: '1970',
           status: ResearchWorkStatus.Hidden
         }
@@ -300,12 +229,12 @@ describe('research work mutations', () => {
     const [updateResearchWork] = result.current;
 
     await act(async () => {
-      await updateResearchWork('work-1', { author: 'Новий' });
+      await updateResearchWork('work-1', { year: 'Новий' });
     });
 
     expect(mockSafeMutate).toHaveBeenCalledWith(
       mutate,
-      { id: 'work-1', input: { author: 'Новий' } },
+      { id: 'work-1', input: { year: 'Новий' } },
       ResearchWorkErrors.NETWORK_ERROR_UPDATE,
       ResearchWorkErrors.FAILED_TO_UPDATE
     );

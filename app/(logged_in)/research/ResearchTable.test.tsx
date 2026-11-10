@@ -78,7 +78,6 @@ jest.mock('~/shared/components/table-layout/TableLayout', () => ({
 
 const work: ResearchWork = {
   id: 'work-1',
-  author: 'Коваленко Олена',
   bibliographicDescription: 'Коваленко, Олена. Тестовий бібліографічний опис.',
   year: '1970',
   keywords: '',
@@ -90,7 +89,6 @@ const work: ResearchWork = {
 
 const secondWork: ResearchWork = {
   id: 'work-2',
-  author: 'Мельник Андрій',
   bibliographicDescription: 'Мельник, Андрій. Інший тестовий опис.',
   year: '1947',
   keywords: '',
@@ -100,11 +98,10 @@ const secondWork: ResearchWork = {
 };
 
 describe('ResearchTable', () => {
-  it('renders one row per work with author, description and dates', () => {
+  it('renders one row per work with description and dates', () => {
     render(<ResearchTable works={[work, secondWork]} onEditWork={jest.fn()} />);
 
     const firstRow = screen.getByTestId('research-row-work-1');
-    expect(within(firstRow).getByText(work.author)).toBeInTheDocument();
     expect(within(firstRow).getByText(work.bibliographicDescription)).toBeInTheDocument();
     expect(within(firstRow).getByText(work.year)).toBeInTheDocument();
 
@@ -114,10 +111,6 @@ describe('ResearchTable', () => {
   it('renders serialized TipTap content as plain text in rich-text cells', () => {
     const richTextWork: ResearchWork = {
       ...work,
-      author: JSON.stringify({
-        type: 'doc',
-        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Авторський текст' }] }]
-      }),
       bibliographicDescription: JSON.stringify({
         type: 'doc',
         content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Бібліографічний текст' }] }]
@@ -131,7 +124,6 @@ describe('ResearchTable', () => {
     render(<ResearchTable works={[richTextWork]} onEditWork={jest.fn()} />);
 
     const row = screen.getByTestId('research-row-work-1');
-    expect(within(row).getByText('Авторський текст')).toBeInTheDocument();
     expect(within(row).getByText('Бібліографічний текст')).toBeInTheDocument();
     expect(within(row).getByText('Ключові слова')).toBeInTheDocument();
   });
@@ -139,7 +131,6 @@ describe('ResearchTable', () => {
   it('renders legacy plain-text records unchanged', () => {
     const legacyWork: ResearchWork = {
       ...work,
-      author: 'Legacy author',
       bibliographicDescription: 'Legacy bibliographic description',
       keywords: 'Legacy keywords'
     };
@@ -147,7 +138,6 @@ describe('ResearchTable', () => {
     render(<ResearchTable works={[legacyWork]} onEditWork={jest.fn()} />);
 
     const row = screen.getByTestId('research-row-work-1');
-    expect(within(row).getByText(legacyWork.author)).toBeInTheDocument();
     expect(within(row).getByText(legacyWork.bibliographicDescription)).toBeInTheDocument();
     expect(within(row).getByText(legacyWork.keywords)).toBeInTheDocument();
   });
@@ -171,10 +161,9 @@ describe('ResearchTable', () => {
     expect(screen.getByTestId('cell-keywords')).toHaveTextContent(/^$/);
   });
 
-  it('uses the requested author and publication-year headers', () => {
+  it('uses the requested publication-year header', () => {
     render(<ResearchTable works={[work]} onEditWork={jest.fn()} />);
 
-    expect(screen.getByRole('columnheader', { name: 'Автор(и)/Упорядник(и)' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Рік публікації' })).toBeInTheDocument();
   });
 
@@ -204,7 +193,7 @@ describe('ResearchTable', () => {
 
     render(<ResearchTable works={[work]} onEditWork={onEditWork} />);
 
-    await user.click(screen.getByRole('button', { name: `Редагувати роботу ${work.author}` }));
+    await user.click(screen.getByRole('button', { name: 'Редагувати роботу' }));
 
     expect(onEditWork).toHaveBeenCalledWith(work);
   });

@@ -176,7 +176,6 @@ const mockedUseShare = jest.mocked(useShare);
 
 const sampleWork: ResearchWork = {
   id: '1',
-  author: 'Коваленко Олена',
   bibliographicDescription: 'Коваленко, Олена. Тестовий бібліографічний опис.',
   year: '1970',
   keywords: '',
@@ -194,7 +193,6 @@ describe('ResearchPageContent', () => {
   const defaultFilteringMock = {
     requestFilters: {
       sort: [
-        { field: 'author', order: 'asc' },
         { field: 'bibliographicDescription', order: 'asc' }
       ]
     },

@@ -72,7 +72,6 @@ describe('ResearchModalView', () => {
 
   const fillRequiredFields = () => {
     fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-    fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
     fireEvent.change(screen.getByLabelText(/рік публікації/i), { target: { value: '1970' } });
   };
 
@@ -94,14 +93,12 @@ describe('ResearchModalView', () => {
     renderView({
       initialData: {
         bibliographicDescription: 'Існуючий опис',
-        author: 'Існуючий автор',
         caseDates: '1980',
         keywords: 'існуючі слова'
       }
     });
 
     expect(screen.getByDisplayValue('Існуючий опис')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Існуючий автор')).toBeInTheDocument();
     expect(screen.getByDisplayValue('1980')).toBeInTheDocument();
     expect(screen.getByDisplayValue('існуючі слова')).toBeInTheDocument();
   });
@@ -115,7 +112,6 @@ describe('ResearchModalView', () => {
     renderView({
       initialData: {
         bibliographicDescription: serializedDoc,
-        author: serializedDoc,
         caseDates: '1980',
         keywords: serializedDoc
       }
@@ -143,7 +139,6 @@ describe('ResearchModalView', () => {
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({
           bibliographicDescription: 'Опис',
-          author: 'Автор',
           caseDates: '1970',
           keywords: 'слово'
         })
@@ -154,17 +149,6 @@ describe('ResearchModalView', () => {
   it('does not submit when "bibliographicDescription" is empty', () => {
     renderView();
 
-    fireEvent.change(screen.getByLabelText('Автор(и)/Упорядник(и) *'), { target: { value: 'Автор' } });
-    fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
-
-    expect(onSave).not.toHaveBeenCalled();
-  });
-
-  it('does not submit when "author" is empty', () => {
-    renderView();
-
-    fireEvent.change(screen.getByLabelText('Бібліографічний опис *'), { target: { value: 'Опис' } });
     fireEvent.change(screen.getByLabelText('Рік публікації *'), { target: { value: '1970' } });
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
@@ -227,10 +211,6 @@ describe('ResearchModalView', () => {
     {
       label: /бібліографічний опис/i,
       message: RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
-    },
-    {
-      label: /автор/i,
-      message: RESEARCH_VALIDATION_MESSAGES.authorRequired
     },
     {
       label: /рік публікації/i,

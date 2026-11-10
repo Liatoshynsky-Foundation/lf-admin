@@ -9,7 +9,6 @@ export type ResearchWorkPdfFile = {
 export interface ResearchWork {
   id: string;
   bibliographicDescription: string;
-  author: string;
   year: string;
   keywords?: string | null;
   pdfFile?: ResearchWorkPdfFile | null;

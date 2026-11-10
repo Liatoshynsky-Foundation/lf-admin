@@ -35,14 +35,12 @@ const clampLength = (value: string, maxLength: number) => value.slice(0, maxLeng
 
 type TouchedFields = Readonly<{
   bibliographicDescription: boolean;
-  author: boolean;
   caseDates: boolean;
   url: boolean;
 }>;
 
 const DEFAULT_TOUCHED: TouchedFields = {
   bibliographicDescription: false,
-  author: false,
   caseDates: false,
   url: false
 };
@@ -51,7 +49,6 @@ export type TipTapValue = JSONContent | string;
 
 export interface ResearchWorkFormData {
   bibliographicDescription: TipTapValue;
-  author: TipTapValue;
   caseDates: string;
   keywords: TipTapValue | null;
   url: string;
@@ -62,7 +59,6 @@ export interface ResearchModalViewProps {
   dialogTitle?: string;
   isOpen: boolean;
   initialData?: Partial<ResearchWorkFormData>;
-  authorOptions?: string[];
   attachedFileName?: string | null;
   onAddFile: () => void;
   onDeleteFile: () => void;
@@ -73,7 +69,6 @@ export interface ResearchModalViewProps {
 
 const DEFAULT_DATA: ResearchWorkFormData = {
   bibliographicDescription: '',
-  author: '',
   caseDates: '',
   keywords: '',
   url: '',
@@ -97,7 +92,6 @@ export const ResearchModalView = ({
   const [bibliographicDescription, setBibliographicDescription] = useState<TipTapValue>(
     () => parseSerializedProse(initialData?.bibliographicDescription)
   );
-  const [author, setAuthor] = useState<TipTapValue>(() => parseSerializedProse(initialData?.author));
   const [caseDates, setCaseDates] = useState(initialData?.caseDates ?? DEFAULT_DATA.caseDates);
   const [keywords, setKeywords] = useState<TipTapValue | null>(() =>
     parseSerializedProse(initialData?.keywords)
@@ -113,7 +107,6 @@ export const ResearchModalView = ({
 
   const resetForm = () => {
     setBibliographicDescription(DEFAULT_DATA.bibliographicDescription);
-    setAuthor(DEFAULT_DATA.author);
     setCaseDates(DEFAULT_DATA.caseDates);
     setKeywords(DEFAULT_DATA.keywords);
     setUrl(DEFAULT_DATA.url);
@@ -130,7 +123,7 @@ export const ResearchModalView = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave({ bibliographicDescription, author, caseDates, keywords, url, isVisibleOnSite });
+      await onSave({ bibliographicDescription, caseDates, keywords, url, isVisibleOnSite });
       resetForm();
     } catch {
       return;
@@ -152,15 +145,12 @@ export const ResearchModalView = ({
       ? RESEARCH_VALIDATION_MESSAGES.bibliographicDescriptionRequired
       : undefined;
 
-  const authorError =
-    touched.author && isRichTextEmpty(author) ? RESEARCH_VALIDATION_MESSAGES.authorRequired : undefined;
-
   const caseDatesError = requiredError(caseDates, touched.caseDates, RESEARCH_VALIDATION_MESSAGES.yearRequired);
 
   const urlError = touched.url && !isUrlValid ? RESEARCH_VALIDATION_MESSAGES.urlInvalid : undefined;
 
   const isFormValid = Boolean(
-    !isRichTextEmpty(bibliographicDescription) && !isRichTextEmpty(author) && caseDates.trim() && isUrlValid
+    !isRichTextEmpty(bibliographicDescription) && caseDates.trim() && isUrlValid
   );
   const hasAttachedFile = Boolean(attachedFileName);
 
@@ -187,16 +177,6 @@ export const ResearchModalView = ({
           />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <CustomTextField
-              fieldType="formatting"
-              label="Автор(и)/Упорядник(и) *"
-              value={author}
-              onChange={(value: JSONContent) => setAuthor(value)}
-              onBlur={() => markTouched('author')}
-              error={Boolean(authorError)}
-              helperText={authorError}
-            />
-
             <TextField
               label="Рік публікації"
               value={caseDates}

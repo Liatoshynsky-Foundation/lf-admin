@@ -1,7 +1,6 @@
 fragment ResearchWorkFields on ResearchWork {
   id
   bibliographicDescription
-  author
   year
   keywords
   pdfFile {
@@ -14,12 +13,6 @@ fragment ResearchWorkFields on ResearchWork {
   publishedAt
   createdAt
   updatedAt
-}
-
-query ResearchWorkAuthors {
-  allResearchWorks {
-    author
-  }
 }
 
 query PaginatedResearchWorks($page: Int = 1, $limit: Int = 10, $filters: ResearchWorkFiltersInput) {

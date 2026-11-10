@@ -21,7 +21,6 @@ const isResearchStatusValue = (value: string): value is ResearchWorkStatus =>
   Object.values(BaseContentStatuses).includes(value as BaseContentStatuses);
 
 export const RESEARCH_WORKS_DEFAULT_SORT: ResearchWorksSortOptions[] = [
-  { field: ResearchWorksSortBy.Author, order: SortOrder.Asc },
   { field: ResearchWorksSortBy.BibliographicDescription, order: SortOrder.Asc }
 ];
 

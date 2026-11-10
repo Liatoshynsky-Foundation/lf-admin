@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { collectUniqueAuthors, mapResearchWork } from './researchWorkMappers';
+import { mapResearchWork } from './researchWorkMappers';
 import { ResearchWorkErrors } from '~/constants/errors';
 import { safeMutate } from '~/lib/utils/safeMutate';
 import {
@@ -21,16 +21,15 @@ import {
   useCreateResearchWorkMutation,
   useDeleteResearchWorkMutation,
   usePaginatedResearchWorksQuery,
-  useResearchWorkAuthorsQuery,
   useResearchWorkByIdQuery,
   useUpdateResearchWorkMutation,
   useUpdateResearchWorkStatusMutation
 } from '~/types/graphql/generated/graphql';
 
 const RESEARCH_LIST_REFETCH_QUERIES = ['PaginatedResearchWorks'] as const;
-const RESEARCH_WORKS_REFETCH_QUERIES = ['PaginatedResearchWorks', 'ResearchWorkAuthors'] as const;
+const RESEARCH_WORKS_REFETCH_QUERIES = ['PaginatedResearchWorks'] as const;
 
-export { collectUniqueAuthors, mapResearchWork } from './researchWorkMappers';
+export { mapResearchWork } from './researchWorkMappers';
 
 export const usePaginatedResearchWorks = (
   page = 1,
@@ -53,20 +52,6 @@ export const usePaginatedResearchWorks = (
     error,
     refetch
   };
-};
-
-export const useResearchWorkAuthors = (options: { skip?: boolean } = {}) => {
-  const { data, loading, error } = useResearchWorkAuthorsQuery({
-    fetchPolicy: 'network-only',
-    skip: options.skip
-  });
-
-  const authors = useMemo(
-    () => collectUniqueAuthors(data?.allResearchWorks ?? []),
-    [data?.allResearchWorks]
-  );
-
-  return { authors, loading, error };
 };
 
 export const useCreateResearchWork = () => {

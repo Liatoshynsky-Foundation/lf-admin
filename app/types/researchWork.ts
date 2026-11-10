@@ -10,7 +10,6 @@ export type ResearchWorkPdfFile = {
 
 export type ResearchWork = {
   id: string;
-  author: string;
   bibliographicDescription: string;
   year: string;
   keywords: string;

@@ -16,7 +16,6 @@ const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
 
 const createMockCreateInput = (overrides: Partial<CreateResearchWorkInput> = {}): CreateResearchWorkInput => ({
   bibliographicDescription: 'Опис роботи',
-  author: 'Автор',
   year: '1993',
   keywords: 'музика',
   pdfFile: null,
@@ -29,7 +28,6 @@ const createMockCreateInput = (overrides: Partial<CreateResearchWorkInput> = {})
 const createMockEntity = (overrides: Partial<ResearchWork> = {}): ResearchWork => ({
   id: mockId,
   bibliographicDescription: 'Опис роботи',
-  author: 'Автор',
   year: '1993',
   keywords: 'музика',
   pdfFile: null,
@@ -136,7 +134,6 @@ describe('ResearchWorkMutation', () => {
       const input = {
         ...createMockCreateInput(),
         bibliographicDescription: createTipTapDoc('Опис'),
-        author: createTipTapDoc('Автор'),
         keywords: createTipTapDoc('Слова')
       };
       mockCreate.mockResolvedValue(createMockEntity());
@@ -146,7 +143,6 @@ describe('ResearchWorkMutation', () => {
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           bibliographicDescription: JSON.stringify(input.bibliographicDescription),
-          author: JSON.stringify(input.author),
           keywords: JSON.stringify(input.keywords)
         })
       );
@@ -255,7 +251,7 @@ describe('ResearchWorkMutation', () => {
   });
 
   describe('updateResearchWork', () => {
-    const updateInput: UpdateResearchWorkInput = { author: 'Новий автор' };
+    const updateInput: UpdateResearchWorkInput = { year: '2026' };
 
     it('throws if user is not an admin', async () => {
       await expect(
@@ -283,7 +279,7 @@ describe('ResearchWorkMutation', () => {
 
     it('updates and returns the entity', async () => {
       const current = createMockEntity();
-      const updated = createMockEntity({ author: 'Новий автор' });
+      const updated = createMockEntity({ year: '2026' });
       mockFindById.mockResolvedValue(current);
       mockUpdate.mockResolvedValue(updated);
 
@@ -293,7 +289,7 @@ describe('ResearchWorkMutation', () => {
         adminContext
       );
 
-      expect(mockUpdate).toHaveBeenCalledWith(mockId, expect.objectContaining({ author: 'Новий автор' }));
+      expect(mockUpdate).toHaveBeenCalledWith(mockId, expect.objectContaining({ year: '2026' }));
       expect(result).toEqual(updated);
     });
 
@@ -317,17 +313,17 @@ describe('ResearchWorkMutation', () => {
         keywords: 'існуючі'
       });
       mockFindById.mockResolvedValue(current);
-      mockUpdate.mockResolvedValue(createMockEntity({ author: 'Новий автор' }));
+      mockUpdate.mockResolvedValue(createMockEntity({ year: '2026' }));
 
       await ResearchWorkMutation.updateResearchWork(
         {},
-        { id: mockId, input: { author: 'Новий автор' } },
+        { id: mockId, input: { year: '2026' } },
         adminContext
       );
 
       expect(mockUpdate).toHaveBeenCalledTimes(1);
       const [, payload] = mockUpdate.mock.calls[0];
-      expect(payload).toEqual({ author: 'Новий автор' });
+      expect(payload).toEqual({ year: '2026' });
       expect(payload).not.toHaveProperty('url');
       expect(payload).not.toHaveProperty('keywords');
     });

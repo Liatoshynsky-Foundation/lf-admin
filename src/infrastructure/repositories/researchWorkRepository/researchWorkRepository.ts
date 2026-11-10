@@ -14,7 +14,6 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 export type DbResearchWork = {
   _id: { toString(): string };
   bibliographicDescription: ResearchWork['bibliographicDescription'];
-  author: ResearchWork['author'];
   year: ResearchWork['year'];
   keywords?: Exclude<ResearchWork['keywords'], undefined>;
   pdfFile?: Exclude<ResearchWork['pdfFile'], undefined>;
@@ -49,7 +48,6 @@ const toEntity = (doc: DbResearchWork): ResearchWork => {
 
   return createToEntity<ResearchWork, DbResearchWork>(safeDoc, {
     bibliographicDescription: safeDoc.bibliographicDescription,
-    author: safeDoc.author,
     year: safeDoc.year,
     keywords: safeDoc.keywords,
     pdfFile: safeDoc.pdfFile ?? null,
@@ -61,7 +59,6 @@ const toEntity = (doc: DbResearchWork): ResearchWork => {
 
 const RESEARCH_WORK_SEARCH_FIELDS = [
   'bibliographicDescription',
-  'author',
   'year',
   'keywords'
 ] as const;
@@ -76,7 +73,7 @@ export const ResearchWorkRepository = ({
     model: ResearchWorkModel,
     toEntity,
     buildQuery: buildResearchWorkQuery,
-    getDefaultSort: () => ({ author: 1, bibliographicDescription: 1 }),
+    getDefaultSort: () => ({ bibliographicDescription: 1 }),
     collation: { locale: 'uk', strength: 2 }
   });
 

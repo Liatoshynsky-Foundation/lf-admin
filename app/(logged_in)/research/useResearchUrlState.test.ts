@@ -25,7 +25,6 @@ const mockUseResearchWorkById = useResearchWorkById as jest.MockedFunction<typeo
 
 const sampleWork: ResearchWork = {
   id: 'work-1',
-  author: 'Коваленко Олена',
   bibliographicDescription: 'Опис',
   year: '1970',
   keywords: '',
