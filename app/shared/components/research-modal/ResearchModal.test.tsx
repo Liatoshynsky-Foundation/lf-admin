@@ -5,11 +5,7 @@ import toast from 'react-hot-toast';
 import ResearchModal from './ResearchModal';
 import { RESEARCH_MODAL_TITLE, RESEARCH_MUTATION_RESULTS } from '~/constants/research';
 import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
-import {
-  useCreateResearchWork,
-  useResearchWorkAuthors,
-  useUpdateResearchWork
-} from '~/shared/hooks/use-research-works/useResearchWorks';
+import { useCreateResearchWork, useUpdateResearchWork } from '~/shared/hooks/use-research-works/useResearchWorks';
 import { AssetType, ResearchWorkStatus, useCreateAssetMutation } from '~/types/graphql/generated/graphql';
 
 jest.mock('~/ds-components/text-field/TextField', () => {
@@ -46,7 +42,6 @@ jest.mock('react-hot-toast', () => ({
 jest.mock('~/shared/hooks/use-research-works/useResearchWorks', () => ({
   useCreateResearchWork: jest.fn(),
   useUpdateResearchWork: jest.fn(),
-  useResearchWorkAuthors: jest.fn()
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => {
@@ -88,12 +83,10 @@ jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => 
 
 const mockedUseCreateResearchWork = jest.mocked(useCreateResearchWork);
 const mockedUseUpdateResearchWork = jest.mocked(useUpdateResearchWork);
-const mockedUseResearchWorkAuthors = jest.mocked(useResearchWorkAuthors);
 const mockedUseCreateAssetMutation = jest.mocked(useCreateAssetMutation);
 
 const fillRequiredFields = () => {
   fireEvent.change(screen.getByLabelText(/бібліографічний опис/i), { target: { value: 'Опис' } });
-  fireEvent.change(screen.getByLabelText(/автор/i), { target: { value: 'Автор' } });
   fireEvent.change(screen.getByLabelText(/рік публікації/i), { target: { value: '1970' } });
   fireEvent.change(screen.getByLabelText(/ключові слова/i), { target: { value: 'слово' } });
 };
@@ -122,7 +115,6 @@ describe('ResearchModal', () => {
     });
     mockedUseCreateResearchWork.mockReturnValue([createResearchWork, { loading: false }] as never);
     mockedUseUpdateResearchWork.mockReturnValue([updateResearchWork, { loading: false }] as never);
-    mockedUseResearchWorkAuthors.mockReturnValue({ authors: [], loading: false, error: undefined });
     mockedUseCreateAssetMutation.mockReturnValue([createAsset] as never);
   });
 
@@ -146,7 +138,6 @@ describe('ResearchModal', () => {
     await waitFor(() =>
       expect(createResearchWork).toHaveBeenCalledWith({
         bibliographicDescription: 'Опис',
-        author: 'Автор',
         year: '1970',
         keywords: 'слово',
         url: 'https://example.com/work',
@@ -246,7 +237,6 @@ describe('ResearchModal', () => {
         onClose={onClose}
         initialData={{
           bibliographicDescription: 'Опис',
-          author: 'Автор',
           caseDates: '1970',
           keywords: 'слово',
           isVisibleOnSite: false
@@ -259,7 +249,6 @@ describe('ResearchModal', () => {
     await waitFor(() =>
       expect(updateResearchWork).toHaveBeenCalledWith('work-1', {
         bibliographicDescription: 'Опис',
-        author: 'Автор',
         year: '1970',
         keywords: 'слово',
         url: null,
@@ -286,7 +275,6 @@ describe('ResearchModal', () => {
         onClose={onClose}
         initialData={{
           bibliographicDescription: 'Опис',
-          author: 'Автор',
           caseDates: '1970',
           keywords: 'слово',
           isVisibleOnSite: true
@@ -322,7 +310,6 @@ describe('ResearchModal', () => {
         onClose={onClose}
         initialData={{
           bibliographicDescription: 'Опис',
-          author: 'Автор',
           caseDates: '1970',
           keywords: 'слово',
           isVisibleOnSite: true
@@ -339,14 +326,14 @@ describe('ResearchModal', () => {
   });
 
   it('shows an error toast and keeps the modal open when create fails', async () => {
-    createResearchWork.mockRejectedValue(new Error('Автор є обов’язковим.'));
+    createResearchWork.mockRejectedValue(new Error('Не вдалося зберегти.'));
 
     render(<ResearchModal isOpen onClose={onClose} />);
 
     fillRequiredFields();
     fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Автор є обов’язковим.'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Не вдалося зберегти.'));
     expect(onClose).not.toHaveBeenCalled();
   });
 });

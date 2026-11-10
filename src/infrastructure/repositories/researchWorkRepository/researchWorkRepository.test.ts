@@ -9,7 +9,6 @@ const mockId = '65eddf5e2f1a2b3c4d5e6f7a';
 const createMockResearchWorkDoc = (overrides: Partial<DbResearchWork> = {}): DbResearchWork => ({
   _id: { toString: () => mockId },
   bibliographicDescription: 'Опис',
-  author: 'Автор',
   year: '1993',
   keywords: 'музика',
   pdfFile: null,
@@ -40,7 +39,6 @@ describe('researchWorkRepository', () => {
     it('saves a research work and maps it to an entity', async () => {
       const input: CreateResearchWorkInput = {
         bibliographicDescription: 'Опис',
-        author: 'Автор',
         year: '1993',
         keywords: 'музика',
         pdfFile: null,
@@ -64,7 +62,6 @@ describe('researchWorkRepository', () => {
       expect(result).toEqual({
         id: mockId,
         bibliographicDescription: input.bibliographicDescription,
-        author: input.author,
         year: input.year,
         keywords: input.keywords,
         pdfFile: null,
@@ -88,7 +85,6 @@ describe('researchWorkRepository', () => {
 
       const result = await repository.create({
         bibliographicDescription: 'Опис',
-        author: 'Автор',
         year: '1993',
         status: BaseContentStatuses.Published,
         publishedAt: publishedAt.toISOString()

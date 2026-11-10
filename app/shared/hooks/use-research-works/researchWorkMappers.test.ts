@@ -20,7 +20,6 @@ describe('researchWorkMappers', () => {
   it('maps a research work fragment to the UI model', () => {
     const item = {
       id: '1',
-      author: 'Author',
       bibliographicDescription: 'Desc',
       year: '2020',
       keywords: null,

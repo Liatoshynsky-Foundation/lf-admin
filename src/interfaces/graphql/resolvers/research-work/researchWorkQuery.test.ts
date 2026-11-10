@@ -51,14 +51,14 @@ describe('ResearchWorkQuery', () => {
       const filters = {
         search: 'ліатошинський',
         statuses: ['published'],
-        sort: [{ field: 'author', order: 'asc' }]
+        sort: [{ field: 'bibliographicDescription', order: 'asc' }]
       };
 
       await ResearchWorkQuery.allResearchWorks({}, { filters }, authorizedContext);
 
       expect(mockRepo.findAll).toHaveBeenCalledWith({
         search: 'ліатошинський',
-        sort: [{ sortBy: 'author', sortOrder: 'asc' }],
+        sort: [{ sortBy: 'bibliographicDescription', sortOrder: 'asc' }],
         languages: undefined,
         limit: undefined,
         skip: undefined,
