@@ -94,9 +94,22 @@ describe('ResearchHeroSection Component', () => {
     mockUsePageBlock.mockReturnValue({ block: mockBlockData });
     render(<ResearchHeroSection />);
 
-    expect(screen.getByText('Дослідження та наукові праці')).toBeInTheDocument();
+    expect(screen.getByLabelText('Заголовок сторінки')).toHaveValue('Дослідження та наукові праці');
     expect(screen.getByLabelText('Цитата')).toHaveValue('Початкова цитата');
     expect(screen.getByLabelText('Підпис до цитати')).toHaveValue('Початкове джерело');
+  });
+
+  it('should call setField when page title is changed', () => {
+    mockUsePageBlock.mockReturnValue({ block: mockBlockData });
+    render(<ResearchHeroSection />);
+
+    const titleInput = screen.getByLabelText('Заголовок сторінки');
+    fireEvent.change(titleInput, { target: { value: 'Новий заголовок' } });
+
+    expect(mockSetField).toHaveBeenCalledWith(PAGE_IDS.RESEARCH, BLOCK_IDS.RESEARCH_HERO, 'title', {
+      uk: 'Новий заголовок',
+      en: 'Research and Scientific Works'
+    });
   });
 
   it('should call setField when quote text is changed', () => {
@@ -144,6 +157,19 @@ describe('ResearchHeroSection Component', () => {
         ...mockBlockData.quote.text,
         uk: 'Текст з редактора TipTap'
       }
+    });
+  });
+
+  it('should handle TipTap document objects in onChange via toPlainText for title', () => {
+    mockUsePageBlock.mockReturnValue({ block: mockBlockData });
+    render(<ResearchHeroSection />);
+
+    const tipTapButton = screen.getByTestId('mock-change-Заголовок сторінки');
+    fireEvent.click(tipTapButton);
+
+    expect(mockSetField).toHaveBeenCalledWith(PAGE_IDS.RESEARCH, BLOCK_IDS.RESEARCH_HERO, 'title', {
+      uk: 'Текст з редактора TipTap',
+      en: 'Research and Scientific Works'
     });
   });
 });

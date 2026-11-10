@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 import { BLOCK_IDS, PAGE_IDS } from '~/constants/pageBlocks';
 import CollapsibleBlock from '~/shared/components/design-system/collapsible-block/CollapsibleBlock';
@@ -55,20 +55,34 @@ export const ResearchHeroSection = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
-  const titleData = block.title;
-  const rawReturnedTitle =
-    typeof titleData === 'string' ? titleData : (titleData as Record<'uk' | 'en', string> | undefined)?.[currentLocale];
-  const displayTitle = rawReturnedTitle || 'Дослідження та наукові праці';
+  let titleValue = '';
+
+  if (typeof block.title === 'object' && block.title !== null) {
+    titleValue = (block.title as Record<string, string>)[currentLocale] ?? '';
+  } else if (typeof block.title === 'string') {
+    titleValue = block.title;
+  }
 
   return (
     <CollapsibleBlock title="Цитата">
       <Box sx={{ mb: 3 }}>
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-          Заголовок сторінки
-        </Typography>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {displayTitle}
-        </Typography>
+        <CustomTextField
+          key={`research-title-${currentLocale}`}
+          fieldType="formatting"
+          label="Заголовок сторінки"
+          value={titleValue}
+          onChange={(val) => {
+            const currentTitleObj =
+              typeof block.title === 'object' && block.title !== null
+                ? (block.title as Record<'uk' | 'en', string>)
+                : { uk: '', en: '' };
+
+            setField(pageId, blockId, 'title', {
+              ...currentTitleObj,
+              [currentLocale]: toPlainText(val)
+            });
+          }}
+        />
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
