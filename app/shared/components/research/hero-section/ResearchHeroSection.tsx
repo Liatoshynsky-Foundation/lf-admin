@@ -55,12 +55,13 @@ export const ResearchHeroSection = () => {
 
   if (!block) return <EditBlockSkeleton />;
 
-  const titleValue =
-    typeof block.title === 'object' && block.title !== null
-      ? ((block.title as Record<string, string>)[currentLocale] ?? '')
-      : typeof block.title === 'string'
-        ? block.title
-        : '';
+  let titleValue = '';
+
+  if (typeof block.title === 'object' && block.title !== null) {
+    titleValue = (block.title as Record<string, string>)[currentLocale] ?? '';
+  } else if (typeof block.title === 'string') {
+    titleValue = block.title;
+  }
 
   return (
     <CollapsibleBlock title="Цитата">
