@@ -7,6 +7,7 @@ export const styles: Record<string, SxProps<Theme>> = {
   },
   fileContainer: {
     flexGrow: 1,
+    minWidth: 0,
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -22,6 +23,7 @@ export const styles: Record<string, SxProps<Theme>> = {
     height: 32
   },
   deleteButton: {
+    flexShrink: 0,
     width: 40,
     height: 40,
     display: 'flex',
