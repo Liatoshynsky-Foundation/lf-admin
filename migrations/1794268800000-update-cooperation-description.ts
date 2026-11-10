@@ -39,7 +39,12 @@ export async function down(db: Db): Promise<void> {
   await Promise.all(
     COLLECTIONS.map((name) =>
       db.collection(name).updateMany(
-        { slug: 'cooperation', [BACKUP_PATH]: { $exists: true } },
+        {
+          slug: 'cooperation',
+          [BACKUP_PATH]: { $exists: true },
+          // Preserve editor changes made after up(), along with their original backup.
+          [DESCRIPTION_PATH]: DESCRIPTION
+        },
         [
           {
             $set: {
