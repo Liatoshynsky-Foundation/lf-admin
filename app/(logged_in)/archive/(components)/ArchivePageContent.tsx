@@ -280,7 +280,21 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
   const isAllTab = activeTab === 'all';
 
   const search = appliedSearch?.trim() || undefined;
-  const statuses = isAllStatus ? undefined : (filterValues as FundStatus[] | undefined);
+  const fundStatuses = isAllStatus ? undefined : (filterValues as FundStatus[]);
+
+  const caseStatuses = isAllStatus
+    ? undefined
+    : filterValues.flatMap((status) => {
+      if (status === FundStatus.Published) {
+        return [CaseStatus.Published];
+      }
+
+      if (status === FundStatus.Hidden) {
+        return [CaseStatus.Draft];
+      }
+
+      return [];
+    });
 
   const fundRequestPage = knownFundPageCount > 0 ? Math.min(page, knownFundPageCount) : page;
   const {
@@ -295,12 +309,16 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     ARCHIVE_ITEMS_PER_PAGE,
     {
       search,
-      statuses,
+      statuses: fundStatuses,
       sort: [{ field: 'fundNumber', order: SortOrder.Asc }]
     },
     { skip: !showFunds }
   );
-  const { funds: allFunds, loading: allFundsLoading, error: allFundsError } = useAllFunds(undefined, {
+  const {
+    funds: allFunds,
+    loading: allFundsLoading,
+    error: allFundsError
+  } = useAllFunds(undefined, {
     skip: !isAllTab
   });
 
@@ -309,7 +327,13 @@ export const ArchivePageContent = ({ activeTab }: ArchivePageContentProps) => {
     loading: casesLoading,
     error: casesError,
     refetch: refetchCases
-  } = useAllCases({ search, statuses: statuses as CaseStatus[] | undefined }, { skip: !showCases });
+  } = useAllCases(
+    {
+      search,
+      statuses: caseStatuses
+    },
+    { skip: !showCases }
+  );
 
   useEffect(() => {
     setPage(1);
