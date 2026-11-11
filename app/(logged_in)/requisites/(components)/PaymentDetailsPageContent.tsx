@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './PaymentDetailsPageContent.styles';
-import { PaymentHeaderActions } from './PaymentHeaderActions';
+// import { PaymentHeaderActions } from './PaymentHeaderActions';
 import { CurrencyTabs } from './section-blocks/CurrencyTabs';
 import { PdfAttachmentBlock } from './section-blocks/PdfAttachmentBlock';
 import { RequisitesContentEditor } from './section-blocks/RequisitesContentEditor';
@@ -40,7 +40,7 @@ const PaymentDetailsPageContent = () => {
   const [pdfFile, setPdfFile] = useState<PaymentDetailsPdfFile | null>(null);
   const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // const [saving, setSaving] = useState(false);
   const localBlobUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -141,23 +141,24 @@ const PaymentDetailsPageContent = () => {
     setPdfFile(file);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
-    } finally {
-      setSaving(false);
-    }
-  };
+  // const handleSave = async () => {
+  //   setSaving(true);
+  //   try {
+  //     await new Promise((resolve) => setTimeout(resolve, 600));
+  //     toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
+  //   } finally {
+  //     setSaving(false);
+  //   }
+  // };
+
+  // rightActions={
+  //   <PaymentHeaderActions onSave={() => void handleSave()} saving={saving} />
+  // }
 
   return (
     <ContentPageLayout
       title={<Typography variant="h4">{REQUISITES_MESSAGES.PAGE_TITLE}</Typography>}
       showBackButton={false}
-      rightActions={
-        <PaymentHeaderActions onSave={() => void handleSave()} saving={saving} />
-      }
     >
       <CollapsibleBlock title={REQUISITES_MESSAGES.BLOCK_TITLE} defaultExpanded>
         <Box sx={styles.content}>
@@ -170,18 +171,20 @@ const PaymentDetailsPageContent = () => {
             onUpdateCurrency={handleUpdateTabName}
             onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
+            readOnly
           />
 
           <RequisitesContentEditor
             key={activeTab.id}
             value={activeTab.content}
             onChange={handleContentChange}
+            readOnly
           />
 
           <PdfAttachmentBlock
             file={pdfFile}
             onFileChange={handlePdfChange}
-            disabled={saving}
+            disabled
           />
         </Box>
       </CollapsibleBlock>
