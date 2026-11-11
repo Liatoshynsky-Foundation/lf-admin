@@ -1,8 +1,20 @@
 import { alpha } from '@mui/material';
 
-import { mainHexPalette as colors } from '~/shared/theme/colors';
+import { chipsColors, mainHexPalette as colors } from '~/shared/theme/colors';
 
 export const styles = {
+  mainCompositionIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    backgroundColor: chipsColors.published,
+    color: 'adminBlue.50'
+  },
+
   container: (isSelected = false) => ({
     display: 'flex',
     alignItems: 'center',

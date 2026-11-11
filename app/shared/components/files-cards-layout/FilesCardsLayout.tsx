@@ -15,6 +15,7 @@ export type FilesCardsLayoutItem = {
   isStarred?: boolean;
   usageLinks?: number;
   imageSrc?: string;
+  isMainComposition?: boolean;
 };
 
 type FilesCardsLayoutProps = Readonly<{
@@ -29,7 +30,7 @@ type FilesCardsLayoutProps = Readonly<{
   };
   setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
-    onItemAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => void;
+  onItemAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => void;
   onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }>;
@@ -72,6 +73,7 @@ export function FilesCardsLayout({
                 fileType={minimizedTypeMap[item.type]}
                 starred={!!item.isStarred}
                 linked={!!item.usageLinks && item.usageLinks > 0}
+                isMainComposition={!!item.isMainComposition}
                 name={item.name}
                 date={item.dateAdded}
                 isSelected={item.id === selectedItemId}
@@ -104,6 +106,7 @@ export function FilesCardsLayout({
               dateAdded: item.dateAdded,
               isStarred: item.isStarred,
               usageLinks: item.usageLinks,
+              isMainComposition: item.isMainComposition,
               imageSrc: item.imageSrc
             }}
             isSelected={item.id === selectedItemId}

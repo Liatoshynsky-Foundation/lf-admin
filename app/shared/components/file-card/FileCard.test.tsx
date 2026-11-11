@@ -198,6 +198,18 @@ describe('FileCard', () => {
     expect(screen.getByAltText('Starred file')).toBeInTheDocument();
   });
 
+  it('should display main composition icon when isMainComposition is true', () => {
+    render(<FileCard fileType="audio" fileData={{ ...defaultFileData, isMainComposition: true }} />);
+
+    expect(screen.getByLabelText('Головна композиція')).toBeInTheDocument();
+  });
+
+  it('should not display main composition icon by default', () => {
+    render(<FileCard fileType="audio" fileData={defaultFileData} />);
+
+    expect(screen.queryByLabelText('Головна композиція')).not.toBeInTheDocument();
+  });
+
   it('should not display star icon when isStarred is false', () => {
     render(<FileCard fileType="image" fileData={defaultFileData} />);
 

@@ -1,18 +1,20 @@
 'use client';
 import { Box, IconButton, Paper, Stack, Typography } from '@mui/material';
-import { EllipsisVertical } from 'lucide-react';
+import { CircleCheckBig, EllipsisVertical } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import ActionMenu from '../dropdown-menu/ActionMenu';
 import FileCardMenuItems from '../file-card/FileCardMenuItems';
+import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star-1.svg';
 import { styles } from '~/shared/components/minimized-file-card/MinimizedFileCard.styles';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 20;
+const MAIN_COMPOSITION_LABEL = 'Головна композиція';
 const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
@@ -32,6 +34,7 @@ interface MinimizedFileCardProps {
   fileType?: FileType;
   starred?: boolean;
   linked?: boolean;
+  isMainComposition?: boolean;
   name: string;
   date: string;
   isSelected?: boolean;
@@ -46,6 +49,7 @@ const MinimizedFileCard = ({
   fileType = FILE_TYPES.img,
   starred = false,
   linked = false,
+  isMainComposition = false,
   name,
   date,
   isSelected = false,
@@ -118,6 +122,13 @@ const MinimizedFileCard = ({
             >
               <StarIcon width={ICON_SIZE} height={ICON_SIZE} />
             </Box>
+          )}
+          {isMainComposition && (
+            <TooltipCustom title={MAIN_COMPOSITION_LABEL} placement="top" showArrow={false}>
+              <Box sx={styles.mainCompositionIcon} aria-label={MAIN_COMPOSITION_LABEL} data-testid="main-composition-icon">
+                <CircleCheckBig size={16} />
+              </Box>
+            </TooltipCustom>
           )}
           {linked && (
             <Box aria-label="File is linked to other pages" sx={styles.linkIconWrapper}>

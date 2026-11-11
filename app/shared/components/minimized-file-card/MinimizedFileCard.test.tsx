@@ -22,7 +22,8 @@ jest.mock('~/public/icons/link.svg', () => ({
 }));
 
 jest.mock('lucide-react', () => ({
-  EllipsisVertical: (props: React.ComponentProps<'svg'>) => <svg data-testid="menu-icon" {...props} />
+  EllipsisVertical: (props: React.ComponentProps<'svg'>) => <svg data-testid="menu-icon" {...props} />,
+  CircleCheckBig: (props: React.ComponentProps<'svg'>) => <svg data-testid="circle-check-icon" {...props} />
 }));
 
 jest.mock('~/public/icons/star-1.svg', () => ({
@@ -173,6 +174,16 @@ describe('MinimizedFileCard', () => {
   it('should not render link icon when linked prop is false', () => {
     render(<MinimizedFileCard {...defaultProps} linked={false} />);
     expect(screen.queryByLabelText('File is linked to other pages')).not.toBeInTheDocument();
+  });
+
+  it('should render main composition icon when isMainComposition prop is true', () => {
+    render(<MinimizedFileCard {...defaultProps} isMainComposition={true} />);
+    expect(screen.getByLabelText('Головна композиція')).toBeInTheDocument();
+  });
+
+  it('should not render main composition icon by default', () => {
+    render(<MinimizedFileCard {...defaultProps} />);
+    expect(screen.queryByLabelText('Головна композиція')).not.toBeInTheDocument();
   });
 
   it('should call onClick handler when the card is clicked', async () => {

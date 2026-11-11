@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Stack, Typography } from '@mui/material';
+import { CircleCheckBig } from 'lucide-react';
 import Image from 'next/image';
 import { MouseEvent, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -14,6 +15,7 @@ import { formatUsageCount } from '~/lib/utils/formatUsageCount';
 import { useUpdateAssetMutation } from '~/types/graphql/generated/graphql';
 
 const ICON_SIZE = 21;
+const MAIN_COMPOSITION_LABEL = 'Головна композиція';
 const FAVORITE_UPDATE_ERROR = 'Не вдалося оновити статус обраного файлу. Спробуйте пізніше.';
 
 const FILE_TYPES = {
@@ -35,6 +37,7 @@ export interface FileCardData {
   isStarred?: boolean;
   usageLinks?: number;
   imageSrc?: string;
+  isMainComposition?: boolean;
 }
 
 export interface FileCardProps {
@@ -58,7 +61,7 @@ const FileCard = ({
 }: FileCardProps) => {
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
-  const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc } = fileData;
+  const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc, isMainComposition = false } = fileData;
   const [updateAsset, { loading: isUpdatingStar }] = useUpdateAssetMutation();
 
   const handleToggleStar = async () => {
@@ -128,6 +131,14 @@ const FileCard = ({
           <Box sx={{ ...styles.iconWrapper, cursor: isUpdatingStar ? 'wait' : 'pointer' }} onClick={handleStarClick}>
             <Image src="/icons/star-1.svg" width={ICON_SIZE} height={ICON_SIZE} alt="Starred file" />
           </Box>
+        )}
+
+        {isMainComposition && (
+          <TooltipCustom title={MAIN_COMPOSITION_LABEL} placement="top" showArrow={false}>
+            <Box sx={styles.mainCompositionIcon} aria-label={MAIN_COMPOSITION_LABEL} data-testid="main-composition-icon">
+              <CircleCheckBig size={16} />
+            </Box>
+          </TooltipCustom>
         )}
 
         {usageLinks !== undefined && usageLinks > 0 && (
