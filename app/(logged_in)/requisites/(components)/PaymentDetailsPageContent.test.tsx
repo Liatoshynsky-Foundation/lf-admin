@@ -8,9 +8,6 @@ import {
   REQUISITES_LOADING
 } from '~/constants/requisites';
 
-// import { waitFor } from '@testing-library/react';
-// import toast from 'react-hot-toast';
-
 const mockUsePaymentDetails = jest.fn();
 
 jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
@@ -46,28 +43,18 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
   CustomFormattingField: ({
     label,
     value,
-    onChange
+    editable = true
   }: {
     label?: string;
     value?: { content?: Array<{ content?: Array<{ text?: string }> }> };
-    onChange: (value: unknown) => void;
+    onChange?: (value: unknown) => void;
+    editable?: boolean;
   }) => (
-    <div data-testid="custom-formatting-field">
+    <div data-testid="custom-formatting-field" data-editable={String(editable)}>
       <span>{label}</span>
       <span data-testid="editor-preview">
         {value?.content?.[0]?.content?.[0]?.text ?? ''}
       </span>
-      <button
-        data-testid="change-editor-btn"
-        onClick={() =>
-          onChange({
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Новий IBAN: UA123456789' }] }]
-          })
-        }
-      >
-        Change
-      </button>
     </div>
   )
 }));
@@ -181,187 +168,29 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
   });
 
-  /*
-  it('adds a new tab when clicking "Додати реквізити"', () => {
+  it('does not render the save action', () => {
     render(<PaymentDetailsPageContent />);
 
-    const addButton = screen.getByRole('button', { name: /додати реквізити/i });
-    fireEvent.click(addButton);
-
-    const input = screen.getByPlaceholderText('Без назви');
-    expect(input).toBeInTheDocument();
-
-    fireEvent.change(input, { target: { value: 'PLN' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-
-    expect(screen.getByText('PLN')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /зберегти/i })).not.toBeInTheDocument();
   });
 
-  it('renames an existing tab via "Редагувати назву" menu item', () => {
+  it('renders tab editing controls as unavailable', () => {
     render(<PaymentDetailsPageContent />);
 
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-
-    const renameItem = screen.getByText('Редагувати назву');
-    expect(renameItem).toBeInTheDocument();
-
-    fireEvent.click(renameItem);
-
-    const input = screen.getByDisplayValue('UAH');
-    expect(input).toBeInTheDocument();
-
-    fireEvent.change(input, { target: { value: 'CZK' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-
-    expect(screen.getByText('CZK')).toBeInTheDocument();
-    expect(screen.queryByDisplayValue('CZK')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /додати реквізити/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
   });
 
-  it('edits content in editor', () => {
+  it('renders the editor as non-editable', () => {
     render(<PaymentDetailsPageContent />);
 
-    const changeBtn = screen.getByTestId('change-editor-btn');
-    fireEvent.click(changeBtn);
-
-    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Новий IBAN: UA123456789');
+    expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'false');
   });
 
-  it('removes the page-level attached PDF file', () => {
+  it('renders PDF controls as disabled', () => {
     render(<PaymentDetailsPageContent />);
 
-    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
-
-    const deletePdfButton = screen.getByTestId('delete-pdf-button');
-    fireEvent.click(deletePdfButton);
-
-    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /додати файл/i })).toBeDisabled();
+    expect(screen.getByTestId('delete-pdf-button')).toBeDisabled();
   });
-
-  it('saves requisites and shows success toast', async () => {
-    render(<PaymentDetailsPageContent />);
-
-    const saveButton = screen.getByRole('button', { name: /зберегти/i });
-    fireEvent.click(saveButton);
-
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Реквізити успішно збережено');
-    });
-  });
-
-  it('deletes active tab and selects next available tab', () => {
-    render(<PaymentDetailsPageContent />);
-
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-
-    const deleteItem = screen.getByText('Видалити реквізит');
-    fireEvent.click(deleteItem);
-
-    expect(screen.queryByText('UAH')).not.toBeInTheDocument();
-    expect(screen.getByText('USD')).toBeInTheDocument();
-    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
-  });
-
-  it('prevents deleting the last remaining tab', () => {
-    render(<PaymentDetailsPageContent />);
-
-    for (let i = 0; i < 3; i++) {
-      const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-      fireEvent.click(optionsButton);
-      const deleteItem = screen.getByText('Видалити реквізит');
-      fireEvent.click(deleteItem);
-    }
-
-    expect(screen.getByText('GBP')).toBeInTheDocument();
-
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-    const deleteItem = screen.getByText('Видалити реквізит');
-    fireEvent.click(deleteItem);
-
-    expect(toast.error).toHaveBeenCalledWith('Неможливо видалити останню вкладку');
-    expect(screen.getByText('GBP')).toBeInTheDocument();
-  });
-
-  it('attaches, replaces, and removes PDF file with object URL revocation', () => {
-    global.URL.createObjectURL = jest
-      .fn()
-      .mockReturnValueOnce('blob:http://localhost/first.pdf')
-      .mockReturnValueOnce('blob:http://localhost/second.pdf');
-    global.URL.revokeObjectURL = jest.fn();
-
-    render(<PaymentDetailsPageContent />);
-
-    fireEvent.click(screen.getByText('USD'));
-    const fileInput = screen.getByTestId('pdf-file-input');
-
-    const firstFile = new File(['dummy1'], 'first.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [firstFile] } });
-    expect(screen.getByText('first.pdf')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('UAH'));
-    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByText('USD'));
-    const secondFile = new File(['dummy2'], 'second.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [secondFile] } });
-    expect(screen.getByText('second.pdf')).toBeInTheDocument();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/first.pdf');
-
-    const deletePdfButton = screen.getByTestId('delete-pdf-button');
-    fireEvent.click(deletePdfButton);
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/second.pdf');
-  });
-
-  it('keeps page-level attachment independent from tab deletion', () => {
-    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/tab-delete.pdf');
-    global.URL.revokeObjectURL = jest.fn();
-
-    render(<PaymentDetailsPageContent />);
-
-    fireEvent.click(screen.getByText('USD'));
-    const fileInput = screen.getByTestId('pdf-file-input');
-    const file = new File(['dummy'], 'tab-delete.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-    const deleteItem = screen.getByText('Видалити реквізит');
-    fireEvent.click(deleteItem);
-
-    expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
-    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-  });
-
-  it('revokes all remaining local blob URLs when page unmounts', () => {
-    global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost/unmount.pdf');
-    global.URL.revokeObjectURL = jest.fn();
-
-    const { unmount } = render(<PaymentDetailsPageContent />);
-
-    fireEvent.click(screen.getByText('USD'));
-    const fileInput = screen.getByTestId('pdf-file-input');
-    const file = new File(['dummy'], 'unmount.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    unmount();
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/unmount.pdf');
-  });
-
-  it('cancels editing tab id when clicking on another tab', () => {
-    render(<PaymentDetailsPageContent />);
-
-    const optionsButton = screen.getByRole('button', { name: 'Опції реквізиту' });
-    fireEvent.click(optionsButton);
-
-    const renameItem = screen.getByText('Редагувати назву');
-    fireEvent.click(renameItem);
-
-    expect(screen.getByDisplayValue('UAH')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('USD'));
-    expect(screen.queryByDisplayValue('UAH')).not.toBeInTheDocument();
-  });
-  */
 });

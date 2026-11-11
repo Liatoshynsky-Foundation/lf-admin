@@ -6,13 +6,15 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
   __esModule: true,
   CustomFormattingField: ({
     label,
-    onChange
+    onChange,
+    editable = true
   }: {
     label?: string;
     value?: unknown;
     onChange: (value: unknown) => void;
+    editable?: boolean;
   }) => (
-    <div data-testid="custom-formatting-field">
+    <div data-testid="custom-formatting-field" data-editable={String(editable)}>
       <span>{label}</span>
       <button
         onClick={() =>
@@ -57,5 +59,17 @@ describe('RequisitesContentEditor', () => {
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated Details' }] }]
     });
+  });
+
+  it('passes editable={false} to CustomFormattingField when readOnly is true', () => {
+    render(
+      <RequisitesContentEditor
+        value={{ type: 'doc', content: [{ type: 'paragraph' }] }}
+        onChange={jest.fn()}
+        readOnly
+      />
+    );
+
+    expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'false');
   });
 });
