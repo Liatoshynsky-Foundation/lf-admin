@@ -23,6 +23,7 @@ export interface Props {
   error?: boolean;
   helperText?: string;
   onBlur?: () => void;
+  editable?: boolean;
 }
 const FormattingDoc = Document.extend({
   content: 'paragraph+'
@@ -45,7 +46,8 @@ export const CustomFormattingField = ({
   sx,
   error = false,
   helperText,
-  onBlur
+  onBlur,
+  editable = true
 }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -84,6 +86,7 @@ export const CustomFormattingField = ({
       })
     ],
     content: value,
+    editable,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
