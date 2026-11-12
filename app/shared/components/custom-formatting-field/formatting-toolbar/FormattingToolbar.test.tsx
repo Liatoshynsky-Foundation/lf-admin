@@ -7,7 +7,9 @@ import { FormattingToolbar } from './FormattingToolbar';
 jest.mock('lucide-react', () => ({
   Bold: () => <span data-testid="icon-bold" />,
   Italic: () => <span data-testid="icon-italic" />,
-  Link: () => <span data-testid="icon-link" />
+  Link: () => <span data-testid="icon-link" />,
+  Underline: () => <span data-testid="icon-underline" />,
+  Table: () => <span data-testid="icon-table" />
 }));
 
 jest.mock('~/lib/utils/sxToArray', () => ({
@@ -74,6 +76,34 @@ describe('FormattingToolbar', () => {
       expect(screen.getByLabelText('bold')).toBeInTheDocument();
       expect(screen.getByLabelText('italic')).toBeInTheDocument();
       expect(screen.getByLabelText('link')).toBeInTheDocument();
+      expect(screen.queryByLabelText('underline')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('table')).not.toBeInTheDocument();
+    });
+
+    it('should hide the link button when links are not allowed', () => {
+      const { editor } = createMockEditor();
+      render(<FormattingToolbar editor={editor} allowLinks={false} />);
+
+      expect(screen.queryByLabelText('link')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('bold')).toBeInTheDocument();
+      expect(screen.getByLabelText('italic')).toBeInTheDocument();
+    });
+
+    it('should render a disabled table button when allowed', () => {
+      const { editor } = createMockEditor();
+      render(<FormattingToolbar editor={editor} allowTable />);
+
+      expect(screen.getByLabelText('table')).toBeDisabled();
+    });
+
+    it('should render the underline button and toggle underline when allowed', () => {
+      const { editor, chainSpies } = createMockEditor();
+      render(<FormattingToolbar editor={editor} allowUnderline />);
+
+      fireEvent.click(screen.getByLabelText('underline'));
+
+      expect(chainSpies.toggleMark).toHaveBeenCalledWith('underline');
+      expect(chainSpies.run).toHaveBeenCalled();
     });
   });
 

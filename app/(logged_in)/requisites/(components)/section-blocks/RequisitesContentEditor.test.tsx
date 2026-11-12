@@ -7,14 +7,26 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
   CustomFormattingField: ({
     label,
     onChange,
-    editable = true
+    editable = true,
+    allowLinks = true,
+    allowUnderline = false,
+    allowTable = false
   }: {
     label?: string;
     value?: unknown;
     onChange: (value: unknown) => void;
     editable?: boolean;
+    allowLinks?: boolean;
+    allowUnderline?: boolean;
+    allowTable?: boolean;
   }) => (
-    <div data-testid="custom-formatting-field" data-editable={String(editable)}>
+    <div
+      data-testid="custom-formatting-field"
+      data-editable={String(editable)}
+      data-allow-links={String(allowLinks)}
+      data-allow-underline={String(allowUnderline)}
+      data-allow-table={String(allowTable)}
+    >
       <span>{label}</span>
       <button
         onClick={() =>
@@ -42,6 +54,15 @@ describe('RequisitesContentEditor', () => {
 
     expect(screen.getByTestId('custom-formatting-field')).toBeInTheDocument();
     expect(screen.getByText('Текст реквізитів')).toBeInTheDocument();
+  });
+
+  it('enables underline and table and disables links in the requisites editor', () => {
+    render(<RequisitesContentEditor value={{ type: 'doc', content: [{ type: 'paragraph' }] }} onChange={jest.fn()} />);
+
+    const field = screen.getByTestId('custom-formatting-field');
+    expect(field).toHaveAttribute('data-allow-links', 'false');
+    expect(field).toHaveAttribute('data-allow-underline', 'true');
+    expect(field).toHaveAttribute('data-allow-table', 'true');
   });
 
   it('calls onChange with TipTap doc when changed', () => {

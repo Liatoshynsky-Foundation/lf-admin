@@ -67,6 +67,18 @@ describe('CustomFormattingField', () => {
     mockGetJSON.mockReturnValue(defaultJSON);
   });
 
+  it('includes the link extension by default', () => {
+    render(<CustomFormattingField onChange={mockOnChange} />);
+
+    expect(mockEditorConfig.extensions.some((extension) => extension.name === 'link')).toBe(true);
+  });
+
+  it('does not include the link extension when links are not allowed', () => {
+    render(<CustomFormattingField onChange={mockOnChange} allowLinks={false} />);
+
+    expect(mockEditorConfig.extensions.some((extension) => extension.name === 'link')).toBe(false);
+  });
+
   it('allows multiple paragraphs in the document schema', () => {
     render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
 

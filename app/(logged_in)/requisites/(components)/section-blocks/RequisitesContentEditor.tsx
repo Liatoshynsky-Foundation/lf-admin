@@ -26,6 +26,9 @@ export const RequisitesContentEditor: React.FC<RequisitesContentEditorProps> = (
         value={value}
         onChange={onChange}
         editable={!readOnly}
+        allowLinks={false}
+        allowUnderline
+        allowTable
       />
     </Box>
   );
