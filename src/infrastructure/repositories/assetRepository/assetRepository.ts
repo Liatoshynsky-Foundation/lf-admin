@@ -27,6 +27,7 @@ export type AssetEntity = {
   createdBy?: string;
   description?: string;
   isStarred: boolean;
+  isMainComposition: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -55,6 +56,7 @@ type DbAsset = {
   createdBy?: Types.ObjectId;
   description?: string;
   isStarred: boolean;
+  isMainComposition?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -86,6 +88,7 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   createdBy: doc.createdBy?.toString(),
   description: doc.description,
   isStarred: doc.isStarred,
+  isMainComposition: doc.isMainComposition ?? false,
   createdAt: dateToIso(doc.createdAt),
   updatedAt: dateToIso(doc.updatedAt)
 });
