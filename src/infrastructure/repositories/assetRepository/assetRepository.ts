@@ -5,6 +5,7 @@ import { UPLOAD_ERRORS } from '../../../uploads/errors';
 import { createStorageAdapter } from '../../../uploads/storage';
 import { preserveOriginalFilenameSafely } from '../../../uploads/utils';
 import { createBaseRepository } from '../baseRepository/baseRepository';
+import { withTransaction } from '../helpers';
 import {
   AssetAlreadyExistsError,
   type AssetType,
@@ -12,7 +13,6 @@ import {
   type CreateAssetData
 } from '~/domain/repositories/assetRepository';
 import logger from '~/src/middleware/logger/logger';
-
 
 export type AssetEntity = {
   id: string;
@@ -118,7 +118,6 @@ const buildAssetQuery = (
     query.isStarred = filters.isStarred;
   }
 
-
   if (filters.tag) {
     query.tags = filters.tag;
   }
@@ -141,10 +140,7 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
 
 export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
 
-
-type AssetUpdateFields = Partial<
-  Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>
->;
+type AssetUpdateFields = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>>;
 
 const INVALID_RENAME_FILENAME_MESSAGE = 'Введіть назву файлу без крапки та розширення';
 
@@ -297,6 +293,9 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
       throw new Error('Файл не знайдено');
     }
 
+    if (asset.isMainComposition) {
+      throw new Error('Неможливо видалити головну композицію');
+    }
 
     const { filename, folder } = getCloudStoragePath(asset);
 
@@ -312,11 +311,47 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     return true;
   };
 
+  const setMainComposition = async (id: string): Promise<AssetEntity> =>
+    withTransaction(async (session) => {
+      const asset = await AssetModel.findById(id, null, { session });
+
+      if (!asset) {
+        throw new Error('Файл не знайдено');
+      }
+
+      if (asset.type !== 'audio') {
+        throw new Error('Головною композицією може бути лише аудіофайл');
+      }
+
+      if (asset.isMainComposition) {
+        return toEntity(asset);
+      }
+
+      await AssetModel.updateMany(
+        { _id: { $ne: asset._id }, isMainComposition: true },
+        { $set: { isMainComposition: false } },
+        { session }
+      );
+
+      const updatedDoc = await AssetModel.findByIdAndUpdate(
+        id,
+        { $set: { isMainComposition: true } },
+        { new: true, session }
+      );
+
+      if (!updatedDoc) {
+        throw new Error('Файл не знайдено');
+      }
+
+      return toEntity(updatedDoc);
+    });
+
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
     findByUrls,
-    deleteAsset
+    deleteAsset,
+    setMainComposition
   };
 };
