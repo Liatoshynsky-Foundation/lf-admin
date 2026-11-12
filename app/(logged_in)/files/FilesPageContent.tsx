@@ -335,7 +335,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     } else if (action === 'copy-link') {
       void handleCopyLink(item);
     } else if (action === 'make-primary') {
-      // TODO 
+      // TODO: Implement logic to set the main composition here
     }
   };
 

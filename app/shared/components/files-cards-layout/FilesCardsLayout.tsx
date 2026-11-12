@@ -80,6 +80,7 @@ export function FilesCardsLayout({
                 isMainComposition={item.isMainComposition}
                 name={item.name}
                 date={item.dateAdded}
+                mimeType={item.mimeType}
                 isSelected={item.id === selectedItemId}
                 onClick={() => onItemClick?.(item)}
                 onAction={(action) => onItemAction?.(action, item)}

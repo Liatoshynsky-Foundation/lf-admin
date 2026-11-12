@@ -35,6 +35,7 @@ interface MinimizedFileCardProps {
   isMainComposition?: boolean;
   name: string;
   date: string;
+  mimeType?: string;
   isSelected?: boolean;
   onClick?: () => void;
   onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', fileId: string) => void;
@@ -49,6 +50,7 @@ const MinimizedFileCard = ({
   linked = false,
   name,
   date,
+  mimeType,
   isSelected = false,
   isMainComposition = false,
   onClick,
@@ -56,7 +58,7 @@ const MinimizedFileCard = ({
   onToggleStar,
   onMenuClick
 }: MinimizedFileCardProps) => {
-  const isMp3 = fileType === 'audio' && name.toLowerCase().endsWith('.mp3');
+  const isMp3 = fileType === 'audio' && (name.toLowerCase().endsWith('.mp3') || mimeType === 'audio/mpeg');
   const showMakePrimary = isMp3;
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
