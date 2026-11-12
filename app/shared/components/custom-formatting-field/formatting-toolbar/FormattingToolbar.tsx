@@ -3,7 +3,7 @@ import '@tiptap/extension-italic';
 import '@tiptap/extension-link';
 import { Box, InputBase, Paper, SxProps, Theme, ToggleButton } from '@mui/material';
 import { Editor } from '@tiptap/react';
-import { Bold, Italic, Link } from 'lucide-react';
+import { Bold, Italic, Link, Table, Underline } from 'lucide-react';
 import React, { useEffect, useReducer, useState } from 'react';
 
 import { styles } from './FormattingToolbar.style';
@@ -12,9 +12,18 @@ import { sxToArray } from '~/lib/utils/sxToArray';
 interface FormattingToolbarProps {
   editor: Editor | null;
   sx?: SxProps<Theme>;
+  allowLinks?: boolean;
+  allowUnderline?: boolean;
+  allowTable?: boolean;
 }
 
-export const FormattingToolbar = ({ editor, sx }: FormattingToolbarProps) => {
+export const FormattingToolbar = ({
+  editor,
+  sx,
+  allowLinks = true,
+  allowUnderline = false,
+  allowTable = false
+}: FormattingToolbarProps) => {
   const [isLinkEditing, setIsLinkEditing] = useState(false);
   const [url, setUrl] = useState('');
   // Workaround to prevent formatting toolbar options toggle population across editor
@@ -103,15 +112,35 @@ export const FormattingToolbar = ({ editor, sx }: FormattingToolbarProps) => {
             <Italic />
           </ToggleButton>
 
-          <ToggleButton
-            sx={styles.toggleButton}
-            value="link"
-            disabled={isSelectionEmpty && !editor.isActive('link')}
-            onClick={startLinkEdit}
-            aria-label="link"
-          >
-            <Link />
-          </ToggleButton>
+          {allowUnderline && (
+            <ToggleButton
+              sx={styles.toggleButton}
+              value="underline"
+              selected={editor.isActive('underline')}
+              onClick={() => editor.chain().focus().toggleMark('underline').run()}
+              aria-label="underline"
+            >
+              <Underline />
+            </ToggleButton>
+          )}
+
+          {allowLinks && (
+            <ToggleButton
+              sx={styles.toggleButton}
+              value="link"
+              disabled={isSelectionEmpty && !editor.isActive('link')}
+              onClick={startLinkEdit}
+              aria-label="link"
+            >
+              <Link />
+            </ToggleButton>
+          )}
+
+          {allowTable && (
+            <ToggleButton sx={styles.toggleButton} value="table" disabled aria-label="table">
+              <Table />
+            </ToggleButton>
+          )}
         </Box>
       )}
     </Paper>
