@@ -168,7 +168,8 @@ describe('AssetsQuery', () => {
       findAll: jest.fn(),
       updateAsset: jest.fn(),
       createAsset: jest.fn(),
-      deleteAsset: jest.fn()
+      deleteAsset: jest.fn(),
+      setMainComposition: jest.fn()
     };
 
     beforeEach(() => {
@@ -206,6 +207,26 @@ describe('AssetsQuery', () => {
 
       expect(res).toBe(true);
       expect(mockRepo.deleteAsset).toHaveBeenCalledWith('1');
+    });
+
+    it('setMainComposition: should set asset as main composition', async () => {
+      const expected = { ...MOCK_AUDIO_ASSET, isMainComposition: true };
+      mockRepo.setMainComposition.mockResolvedValue(expected);
+      const ctx = createMockContext(true, 'assetsRepository', mockRepo);
+
+      const res = await AssetsMutation.setMainComposition({}, { id: MOCK_AUDIO_ASSET.id }, ctx);
+
+      expect(res).toEqual(expected);
+      expect(mockRepo.setMainComposition).toHaveBeenCalledWith(MOCK_AUDIO_ASSET.id);
+    });
+
+    it('setMainComposition: should throw when admin is missing', async () => {
+      const invalidCtx = createMockContext(false, 'assetsRepository', mockRepo);
+
+      await expect(
+        AssetsMutation.setMainComposition({}, { id: MOCK_AUDIO_ASSET.id }, invalidCtx)
+      ).rejects.toThrow();
+      expect(mockRepo.setMainComposition).not.toHaveBeenCalled();
     });
   });
 });

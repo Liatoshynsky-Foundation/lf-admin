@@ -12,6 +12,10 @@ jest.mock('../baseRepository/baseRepository', () => ({
   createBaseRepository: jest.fn((config) => config)
 }));
 
+jest.mock('../helpers', () => ({
+  withTransaction: jest.fn((callback: (session: object) => Promise<unknown>) => callback({}))
+}));
+
 jest.mock('../../../config', () => ({
   config: { uploads: { storage: { type: 'local' } } }
 }));
@@ -198,6 +202,7 @@ describe('AssetRepository', () => {
       findByIdAndUpdate: jest.fn(),
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
+      updateMany: jest.fn(),
       create: jest.fn()
     };
 
@@ -227,12 +232,22 @@ describe('AssetRepository', () => {
       mockStorageGetMetadata.mockResolvedValue(null);
       mockAssetModel.find.mockResolvedValue([]);
       mockAssetModel.findByIdAndUpdate.mockReset();
+      mockAssetModel.updateMany.mockReset();
     });
 
     describe('deleteAsset', () => {
       it('should throw if asset is not found', async () => {
         mockAssetModel.findById.mockResolvedValueOnce(null);
         await expect(repository.deleteAsset(FAKE_ASSET_ID)).rejects.toThrow('Файл не знайдено');
+        expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
+      });
+
+      it('should throw if asset is the main composition', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(
+          buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, { isMainComposition: true })
+        );
+        await expect(repository.deleteAsset(ASSET_ID)).rejects.toThrow('Неможливо видалити головну композицію');
+        expect(mockStorageDelete).not.toHaveBeenCalled();
         expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
       });
 
@@ -566,6 +581,77 @@ describe('AssetRepository', () => {
         expect(mockAssetModel.find).toHaveBeenCalledWith(
           buildFilenameLookupQuery(DUPLICATE_FILENAME)
         );
+      });
+    });
+
+    describe('setMainComposition', () => {
+      it('should throw if asset is not found', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(null);
+
+        await expect(repository.setMainComposition(FAKE_ASSET_ID)).rejects.toThrow('Файл не знайдено');
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should throw if asset is not an audio file', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
+
+        await expect(repository.setMainComposition(ASSET_ID)).rejects.toThrow(
+          'Головною композицією може бути лише аудіофайл'
+        );
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should return entity early without updating when asset is already main composition', async () => {
+        const alreadyMainDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: true
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(alreadyMainDoc);
+
+        const result = await repository.setMainComposition(ASSET_ID);
+
+        expect(result).toMatchObject({ id: ASSET_ID, isMainComposition: true });
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should unset previous main composition and set new main composition in transaction', async () => {
+        const targetDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: false
+        });
+        const updatedDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: true
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(targetDoc);
+        mockAssetModel.updateMany.mockResolvedValueOnce({ modifiedCount: 1 });
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(updatedDoc);
+
+        const result = await repository.setMainComposition(ASSET_ID);
+
+        expect(mockAssetModel.findById).toHaveBeenCalledWith(ASSET_ID, null, { session: {} });
+        expect(mockAssetModel.updateMany).toHaveBeenCalledWith(
+          { _id: { $ne: targetDoc._id }, isMainComposition: true },
+          { $set: { isMainComposition: false } },
+          { session: {} }
+        );
+        expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalledWith(
+          ASSET_ID,
+          { $set: { isMainComposition: true } },
+          { new: true, session: {} }
+        );
+        expect(result).toMatchObject({ id: ASSET_ID, isMainComposition: true });
+      });
+
+      it('should throw if findByIdAndUpdate returns null', async () => {
+        const targetDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: false
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(targetDoc);
+        mockAssetModel.updateMany.mockResolvedValueOnce({ modifiedCount: 1 });
+        mockAssetModel.findByIdAndUpdate.mockResolvedValueOnce(null);
+
+        await expect(repository.setMainComposition(ASSET_ID)).rejects.toThrow('Файл не знайдено');
       });
     });
   });
