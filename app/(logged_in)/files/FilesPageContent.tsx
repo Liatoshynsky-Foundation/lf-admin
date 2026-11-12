@@ -317,7 +317,10 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     setDeleteModalState({ open: false, fileId: null });
   };
 
-  const handleItemAction = (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => {
+  const handleItemAction = (
+    action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary',
+    item: FilesCardsLayoutItem
+  ) => {
     if (action === 'rename') {
       setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
     } else if (action === 'delete') {
@@ -331,6 +334,8 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       }
     } else if (action === 'copy-link') {
       void handleCopyLink(item);
+    } else if (action === 'make-primary') {
+      // TODO 
     }
   };
 

@@ -354,4 +354,33 @@ describe('MinimizedFileCard', () => {
     const starWrapper = screen.getByLabelText('Starred file');
     expect(starWrapper).toHaveStyle('cursor: wait');
   });
+
+  it('passes showMakePrimary as true for MP3 files', () => {
+    render(<MinimizedFileCard {...defaultProps} name="track.mp3" fileType="audio" />);
+    
+    expect(capturedMenuItemsProps?.showMakePrimary).toBe(true);
+  });
+
+  it('passes showMakePrimary as false for non-MP3 files', () => {
+    render(<MinimizedFileCard {...defaultProps} name="document.pdf" fileType="pdf" />);
+    
+    expect(capturedMenuItemsProps?.showMakePrimary).toBe(false);
+  });
+
+  it('calls onAction with "make-primary" when onMakePrimary is triggered', () => {
+    const handleAction = jest.fn();
+    render(<MinimizedFileCard {...defaultProps} name="track.mp3" fileType="audio" onAction={handleAction} />);
+    
+    expect(capturedMenuItemsProps).not.toBeNull();
+    
+    capturedMenuItemsProps?.onMakePrimary?.();
+    
+    expect(handleAction).toHaveBeenCalledWith('make-primary', 'test-id-123');
+  });
+
+  it('passes isMainComposition to FileCardMenuItems', () => {
+    render(<MinimizedFileCard {...defaultProps} name="track.mp3" fileType="audio" isMainComposition={true} />);
+    
+    expect(capturedMenuItemsProps?.isMainComposition).toBe(true);
+  });
 });

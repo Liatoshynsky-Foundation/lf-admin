@@ -1,29 +1,47 @@
-import { CircularProgress } from '@mui/material';
-import { Info } from 'lucide-react';
+import { Box, CircularProgress } from '@mui/material';
+import { CircleCheckBig, EyeOff, Info } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
 import { ActionMenuGroups } from '../dropdown-menu/ActionMenu';
+import { chipsColors, mainHexPalette as colors } from '~/shared/theme/colors';
 
 export interface FileCardMenuProps {
   isStarred?: boolean;
   isStarLoading?: boolean;
+  showMakePrimary?: boolean;
+  isMainComposition?: boolean;
   onOpenDetails: () => void;
   onRename: () => void;
   onToggleStar: () => void;
   onDownload: () => void;
   onCopyLink: () => void;
+  onMakePrimary?: () => void;
   onDelete: () => void;
 }
+
+const menuIconWrapper = (bgColor: string) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 24,
+  height: 24,
+  borderRadius: '50%',
+  backgroundColor: bgColor,
+  color: colors.adminBlue?.[50] || '#ffffff'
+});
 
 const FileCardMenuItems = ({
   isStarred = false,
   isStarLoading = false,
+  showMakePrimary = false,
+  isMainComposition = false,
   onOpenDetails,
   onRename,
   onToggleStar,
   onDownload,
   onCopyLink,
+  onMakePrimary,
   onDelete
 }: FileCardMenuProps): ActionMenuGroups => {
   const renderStarIcon = () => {
@@ -36,9 +54,32 @@ const FileCardMenuItems = ({
     return <Image src="/icons/small-star.svg" width={20} height={20} alt="Star" />;
   };
 
+  const primaryActionName = isMainComposition ? 'Скасувати статус головної' : 'Зробити головною композицією';
+  const primaryActionIcon = isMainComposition ? (
+    <Box sx={menuIconWrapper(chipsColors.hidden)}>
+      <EyeOff size={16} strokeWidth={1.5} />
+    </Box>
+  ) : (
+    <Box sx={menuIconWrapper(chipsColors.published)}>
+      <CircleCheckBig size={16} strokeWidth={1.5} />
+    </Box>
+  );
+
   return [
     {
       items: [
+        ...(showMakePrimary && onMakePrimary
+          ? [
+            {
+              id: 'make-primary',
+              text: {
+                name: primaryActionName,
+                icon: primaryActionIcon
+              },
+              onClick: onMakePrimary
+            }
+          ]
+          : []),
         {
           id: 'details',
           text: {
