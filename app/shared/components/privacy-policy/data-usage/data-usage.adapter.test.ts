@@ -16,13 +16,14 @@ const buildBlock = (overrides?: Omit<Partial<DataUsageBlock>, 'hidden'>): DataUs
 
 describe('dataUsageAdapter', () => {
   describe('toContent', () => {
-    it('maps block title and list to header and list content items', () => {
+    it('maps block title, description and list to header, paragraph and list content items', () => {
       const block = buildBlock();
 
       const result = dataUsageAdapter.toContent(block);
 
       expect(result).toEqual([
         { id: 'title', type: CONTENT_TYPE.HEADER, title: block.title },
+        { id: 'description', type: CONTENT_TYPE.PARAGRAPH, value: block.description, label: 'Вступний текст секції' },
         { id: 'list', type: CONTENT_TYPE.LIST, items: block.list }
       ]);
     });
@@ -34,13 +35,14 @@ describe('dataUsageAdapter', () => {
 
       expect(result).toEqual([
         { id: 'title', type: CONTENT_TYPE.HEADER, title: block.title },
+        { id: 'description', type: CONTENT_TYPE.PARAGRAPH, value: block.description, label: 'Вступний текст секції' },
         { id: 'list', type: CONTENT_TYPE.LIST, items: [] }
       ]);
     });
   });
 
   describe('fromContent', () => {
-    it('extracts title and list from content items', () => {
+    it('extracts title, description and list from content items', () => {
       const block = buildBlock();
       const content = dataUsageAdapter.toContent(block);
 
@@ -48,6 +50,7 @@ describe('dataUsageAdapter', () => {
 
       expect(result).toEqual({
         title: block.title,
+        description: block.description,
         list: block.list
       });
     });
@@ -76,6 +79,17 @@ describe('dataUsageAdapter', () => {
       const result = dataUsageAdapter.fromContent(content, block);
 
       expect(result).toEqual({ list: block.list });
+    });
+
+    it('returns only description when header and list items are missing', () => {
+      const block = buildBlock();
+      const content = [
+        { id: 'description', type: CONTENT_TYPE.PARAGRAPH, value: block.description, label: 'Вступний текст секції' }
+      ];
+
+      const result = dataUsageAdapter.fromContent(content, block);
+
+      expect(result).toEqual({ description: block.description });
     });
   });
 });
