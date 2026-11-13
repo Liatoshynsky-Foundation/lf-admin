@@ -38,7 +38,8 @@ const assetSchema = new Schema(
 
     isStarred: { type: Boolean, required: true, default: false },
 
-    isMainComposition: { type: Boolean, default: false }
+    isMainComposition: { type: Boolean, default: false },
+    isDeleting: { type: Boolean, default: false }
   },
   {
     timestamps: true,

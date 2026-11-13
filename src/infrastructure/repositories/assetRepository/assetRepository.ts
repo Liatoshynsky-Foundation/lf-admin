@@ -57,6 +57,7 @@ type DbAsset = {
   description?: string;
   isStarred: boolean;
   isMainComposition?: boolean;
+  isDeleting?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -287,26 +288,39 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   };
 
   const deleteAsset = async (id: string): Promise<boolean> => {
-    const asset = await AssetModel.findById(id);
+    const asset = await AssetModel.findOneAndUpdate(
+      { _id: id, isMainComposition: { $ne: true }, isDeleting: { $ne: true } },
+      { $set: { isDeleting: true } }
+    );
 
     if (!asset) {
-      throw new Error('Файл не знайдено');
-    }
+      const existing = await AssetModel.findById(id);
 
-    if (asset.isMainComposition) {
-      throw new Error('Неможливо видалити головну композицію');
+      if (existing?.isMainComposition) {
+        throw new Error('Неможливо видалити головну композицію');
+      }
+
+      throw new Error('Файл не знайдено');
     }
 
     const { filename, folder } = getCloudStoragePath(asset);
 
-    const storageResult = await storage.delete(filename, folder);
+    let storageResult: { success: boolean; error?: string };
+
+    try {
+      storageResult = await storage.delete(filename, folder);
+    } catch (error) {
+      await AssetModel.findByIdAndUpdate(id, { $unset: { isDeleting: '' } });
+      throw error;
+    }
 
     if (!storageResult.success) {
+      await AssetModel.findByIdAndUpdate(id, { $unset: { isDeleting: '' } });
       logger.warn(`Failed to delete file from Cloudflare: ${storageResult.error}`);
       throw new Error('The file was not deleted from cloud storage. Please try again later.');
     }
 
-    await AssetModel.findByIdAndDelete(id);
+    await AssetModel.findOneAndDelete({ _id: id, isMainComposition: { $ne: true } });
 
     return true;
   };
@@ -315,7 +329,7 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
     withTransaction(async (session) => {
       const asset = await AssetModel.findById(id, null, { session });
 
-      if (!asset) {
+      if (!asset || asset.isDeleting) {
         throw new Error('Файл не знайдено');
       }
 
@@ -333,8 +347,8 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
         { session }
       );
 
-      const updatedDoc = await AssetModel.findByIdAndUpdate(
-        id,
+      const updatedDoc = await AssetModel.findOneAndUpdate(
+        { _id: id, type: 'audio', isDeleting: { $ne: true } },
         { $set: { isMainComposition: true } },
         { new: true, session }
       );
