@@ -18,6 +18,7 @@ query AllAssets($filters: AssetsFiltersInput) {
     createdBy
     description
     isStarred
+    isMainComposition
     createdAt
     updatedAt
   }
