@@ -110,7 +110,7 @@ interface FilesCardsLayoutProps {
   gridColumns?: unknown;
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
-  onItemAction: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: TestFileItem) => void;
+  onItemAction: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', item: TestFileItem) => void;
   onItemToggleStar: (item: TestFileItem, next: boolean) => void | Promise<void>;
 }
 
@@ -269,6 +269,7 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
       <div data-testid="files-cards-layout">
         {props.items.map((item) => (
           <div key={item.id} data-testid={`file-item-${item.id}`}>
+            <button onClick={() => props.onItemAction('make-primary', item)}>make-primary-{item.id}</button>
             <button onClick={() => props.onItemClick(item)}>select-{item.id}</button>
             <button onClick={() => props.onItemAction('rename', item)}>rename-{item.id}</button>
             <button onClick={() => props.onItemAction('delete', item)}>delete-{item.id}</button>

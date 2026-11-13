@@ -20,6 +20,7 @@ export type Asset = {
   sizeBytes: number;
   url: string;
   isStarred: boolean;
+  isMainComposition: boolean;
   createdAt: string;
   updatedAt: string;
 };

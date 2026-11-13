@@ -5,6 +5,7 @@ import { UPLOAD_ERRORS } from '../../../uploads/errors';
 import { createStorageAdapter } from '../../../uploads/storage';
 import { preserveOriginalFilenameSafely } from '../../../uploads/utils';
 import { createBaseRepository } from '../baseRepository/baseRepository';
+import { withTransaction } from '../helpers';
 import {
   AssetAlreadyExistsError,
   type AssetType,
@@ -12,7 +13,6 @@ import {
   type CreateAssetData
 } from '~/domain/repositories/assetRepository';
 import logger from '~/src/middleware/logger/logger';
-
 
 export type AssetEntity = {
   id: string;
@@ -27,6 +27,7 @@ export type AssetEntity = {
   createdBy?: string;
   description?: string;
   isStarred: boolean;
+  isMainComposition: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -55,6 +56,8 @@ type DbAsset = {
   createdBy?: Types.ObjectId;
   description?: string;
   isStarred: boolean;
+  isMainComposition?: boolean;
+  isDeleting?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -86,6 +89,7 @@ const toEntity = (doc: DbAsset): AssetEntity => ({
   createdBy: doc.createdBy?.toString(),
   description: doc.description,
   isStarred: doc.isStarred,
+  isMainComposition: doc.isMainComposition ?? false,
   createdAt: dateToIso(doc.createdAt),
   updatedAt: dateToIso(doc.updatedAt)
 });
@@ -115,7 +119,6 @@ const buildAssetQuery = (
     query.isStarred = filters.isStarred;
   }
 
-
   if (filters.tag) {
     query.tags = filters.tag;
   }
@@ -138,10 +141,7 @@ const getAssetSort = (filters?: AssetFilters): Record<string, 1 | -1> => {
 
 export type UpdateAssetData = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'description'>>;
 
-
-type AssetUpdateFields = Partial<
-  Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>
->;
+type AssetUpdateFields = Partial<Pick<AssetEntity, 'isStarred' | 'filename' | 'originalname' | 'description' | 'url'>>;
 
 const INVALID_RENAME_FILENAME_MESSAGE = 'Введіть назву файлу без крапки та розширення';
 
@@ -288,32 +288,84 @@ export const AssetRepository = ({ AssetModel }: AssetRepoDeps) => {
   };
 
   const deleteAsset = async (id: string): Promise<boolean> => {
-    const asset = await AssetModel.findById(id);
+    const asset = await AssetModel.findOneAndUpdate(
+      { _id: id, isMainComposition: { $ne: true }, isDeleting: { $ne: true } },
+      { $set: { isDeleting: true } }
+    );
 
     if (!asset) {
+      const existing = await AssetModel.findById(id);
+
+      if (existing?.isMainComposition) {
+        throw new Error('Неможливо видалити головну композицію');
+      }
+
       throw new Error('Файл не знайдено');
     }
 
-
     const { filename, folder } = getCloudStoragePath(asset);
 
-    const storageResult = await storage.delete(filename, folder);
+    let storageResult: { success: boolean; error?: string };
+
+    try {
+      storageResult = await storage.delete(filename, folder);
+    } catch (error) {
+      await AssetModel.findByIdAndUpdate(id, { $unset: { isDeleting: '' } });
+      throw error;
+    }
 
     if (!storageResult.success) {
+      await AssetModel.findByIdAndUpdate(id, { $unset: { isDeleting: '' } });
       logger.warn(`Failed to delete file from Cloudflare: ${storageResult.error}`);
       throw new Error('The file was not deleted from cloud storage. Please try again later.');
     }
 
-    await AssetModel.findByIdAndDelete(id);
+    await AssetModel.findOneAndDelete({ _id: id, isMainComposition: { $ne: true } });
 
     return true;
   };
+
+  const setMainComposition = async (id: string): Promise<AssetEntity> =>
+    withTransaction(async (session) => {
+      const asset = await AssetModel.findById(id, null, { session });
+
+      if (!asset || asset.isDeleting) {
+        throw new Error('Файл не знайдено');
+      }
+
+      if (asset.type !== 'audio') {
+        throw new Error('Головною композицією може бути лише аудіофайл');
+      }
+
+      if (asset.isMainComposition) {
+        return toEntity(asset);
+      }
+
+      await AssetModel.updateMany(
+        { _id: { $ne: asset._id }, isMainComposition: true },
+        { $set: { isMainComposition: false } },
+        { session }
+      );
+
+      const updatedDoc = await AssetModel.findOneAndUpdate(
+        { _id: id, type: 'audio', isDeleting: { $ne: true } },
+        { $set: { isMainComposition: true } },
+        { new: true, session }
+      );
+
+      if (!updatedDoc) {
+        throw new Error('Файл не знайдено');
+      }
+
+      return toEntity(updatedDoc);
+    });
 
   return {
     ...baseRepo,
     updateAsset,
     createAsset,
     findByUrls,
-    deleteAsset
+    deleteAsset,
+    setMainComposition
   };
 };

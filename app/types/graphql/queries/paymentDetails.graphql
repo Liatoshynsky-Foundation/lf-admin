@@ -1,0 +1,19 @@
+query GetPaymentDetails {
+  paymentDetails {
+    id
+    slug
+    tabs {
+      id
+      name
+      content
+      order
+    }
+    pdfFile {
+      filename
+      url
+      mimeType
+    }
+    createdAt
+    updatedAt
+  }
+}

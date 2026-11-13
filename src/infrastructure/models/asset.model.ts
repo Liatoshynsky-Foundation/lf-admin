@@ -36,7 +36,10 @@ const assetSchema = new Schema(
     createdBy: { type: Schema.Types.ObjectId, required: false },
     description: { type: String, required: false, trim: true, default: '' },
 
-    isStarred: { type: Boolean, required: true, default: false }
+    isStarred: { type: Boolean, required: true, default: false },
+
+    isMainComposition: { type: Boolean, default: false },
+    isDeleting: { type: Boolean, default: false }
   },
   {
     timestamps: true,
@@ -48,6 +51,10 @@ const assetSchema = new Schema(
 assetSchema.index({ mimeType: 1, createdAt: -1 });
 assetSchema.index({ isStarred: 1, createdAt: -1 });
 assetSchema.index({ createdAt: -1 });
+assetSchema.index(
+  { isMainComposition: 1 },
+  { name: 'unique_main_composition', unique: true, partialFilterExpression: { isMainComposition: true } }
+);
 
 export type assetDocument = InferSchemaType<typeof assetSchema> & {
   _id: Types.ObjectId;

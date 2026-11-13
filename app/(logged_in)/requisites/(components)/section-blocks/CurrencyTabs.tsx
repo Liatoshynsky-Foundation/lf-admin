@@ -24,6 +24,7 @@ interface CurrencyTabsProps {
   onUpdateCurrency: (id: string, name: string) => void;
   onDeleteTab: (id: string) => void;
   setEditingId: (id: string | null) => void;
+  readOnly?: boolean;
 }
 
 export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
@@ -34,7 +35,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   onAddTab,
   onUpdateCurrency,
   onDeleteTab,
-  setEditingId
+  setEditingId,
+  readOnly = false
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuTargetId, setMenuTargetId] = useState<null | string>(null);
@@ -237,7 +239,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                   </Box>
                 )}
 
-                {isActive && !isEditing && (
+                {isActive && !isEditing && !readOnly && (
                   <Box
                     component="button"
                     type="button"
@@ -262,6 +264,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
           color="primary"
           size="medium"
           onClick={onAddTab}
+          disabled={readOnly}
           sx={styles.addButton}
         >
           {REQUISITES_MESSAGES.ADD_REQUISITES}

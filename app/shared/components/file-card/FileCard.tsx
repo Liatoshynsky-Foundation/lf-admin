@@ -35,9 +35,10 @@ export interface FileCardData {
   name: string;
   dateAdded: string;
   isStarred?: boolean;
+  isMainComposition?: boolean;
   usageLinks?: number;
   imageSrc?: string;
-  isMainComposition?: boolean;
+  mimeType?: string;
 }
 
 export interface FileCardProps {
@@ -45,7 +46,7 @@ export interface FileCardProps {
   fileData: FileCardData;
   isSelected?: boolean;
   onClick?: () => void;
-  onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', fileId: string) => void;
+  onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }
@@ -59,6 +60,8 @@ const FileCard = ({
   onToggleStar,
   isFileInfoSidebarOpen
 }: FileCardProps) => {
+  const isMp3 = fileType === 'audio' && (fileData.name.toLowerCase().endsWith('.mp3') || fileData.mimeType === 'audio/mpeg');
+  const showMakePrimary = isMp3;
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
   const { id, name, dateAdded, isStarred = false, usageLinks, imageSrc, isMainComposition = false } = fileData;
@@ -164,11 +167,14 @@ const FileCard = ({
   const itemsNode = FileCardMenuItems({
     isStarred,
     isStarLoading: isUpdatingStar,
+    showMakePrimary,
+    isMainComposition: fileData.isMainComposition,
     onOpenDetails: () => onClick?.(),
     onRename: () => onAction?.('rename', id),
     onToggleStar: handleToggleStar,
     onDownload: () => onAction?.('download', id),
     onCopyLink: () => onAction?.('copy-link', id),
+    onMakePrimary: () => onAction?.('make-primary', id),
     onDelete: () => onAction?.('delete', id)
   });
 

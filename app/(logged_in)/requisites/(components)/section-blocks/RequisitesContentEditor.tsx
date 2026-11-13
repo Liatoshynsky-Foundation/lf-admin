@@ -11,11 +11,13 @@ import { CustomFormattingField } from '~/shared/components/custom-formatting-fie
 interface RequisitesContentEditorProps {
   value?: JSONContent;
   onChange: (value: JSONContent) => void;
+  readOnly?: boolean;
 }
 
 export const RequisitesContentEditor: React.FC<RequisitesContentEditorProps> = ({
   value,
-  onChange
+  onChange,
+  readOnly = false
 }) => {
   return (
     <Box sx={styles.container}>
@@ -23,6 +25,10 @@ export const RequisitesContentEditor: React.FC<RequisitesContentEditorProps> = (
         label={REQUISITES_MESSAGES.CONTENT_LABEL}
         value={value}
         onChange={onChange}
+        editable={!readOnly}
+        allowLinks={false}
+        allowUnderline
+        allowTable
       />
     </Box>
   );

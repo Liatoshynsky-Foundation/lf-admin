@@ -1,6 +1,17 @@
 import { render, screen } from '@testing-library/react';
 
+import { MOCK_PAYMENT_DETAILS } from './__mocks__/requisites';
 import RequisitesPage from './page';
+
+const mockPaymentDetails = MOCK_PAYMENT_DETAILS;
+
+jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
+  usePaymentDetails: () => ({
+    data: mockPaymentDetails,
+    loading: false,
+    error: undefined
+  })
+}));
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({ push: jest.fn() }))

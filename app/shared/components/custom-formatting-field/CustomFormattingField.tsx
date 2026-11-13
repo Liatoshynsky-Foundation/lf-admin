@@ -23,6 +23,10 @@ export interface Props {
   error?: boolean;
   helperText?: string;
   onBlur?: () => void;
+  editable?: boolean;
+  allowLinks?: boolean;
+  allowUnderline?: boolean;
+  allowTable?: boolean;
 }
 const FormattingDoc = Document.extend({
   content: 'paragraph+'
@@ -45,7 +49,11 @@ export const CustomFormattingField = ({
   sx,
   error = false,
   helperText,
-  onBlur
+  onBlur,
+  editable = true,
+  allowLinks = true,
+  allowUnderline = false,
+  allowTable = false
 }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -74,16 +82,21 @@ export const CustomFormattingField = ({
       Italic,
       Bold,
       Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          style: 'color: #1976d2; text-decoration: underline;'
-        }
-      })
+      ...(allowLinks
+        ? [
+          Link.configure({
+            openOnClick: false,
+            HTMLAttributes: {
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              style: 'color: #1976d2; text-decoration: underline;'
+            }
+          })
+        ]
+        : [])
     ],
     content: value,
+    editable,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
@@ -177,7 +190,12 @@ export const CustomFormattingField = ({
       >
         {editor && (
           <BubbleMenu editor={editor}>
-            <FormattingToolbar editor={editor} />
+            <FormattingToolbar
+              editor={editor}
+              allowLinks={allowLinks}
+              allowUnderline={allowUnderline}
+              allowTable={allowTable}
+            />
           </BubbleMenu>
         )}
 

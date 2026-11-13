@@ -30,6 +30,8 @@ import {
   FUNDS_LOADING_STATE_DESCRIPTION,
   FUNDS_LOADING_STATE_TITLE
 } from '~/constants/fund';
+import { CaseStatus,FundStatus  } from '~/types/graphql/generated/graphql';
+
 
 type MappedFund = ReturnType<typeof mockFund>;
 
@@ -1150,6 +1152,59 @@ describe('ArchivePageContent', () => {
           { skip: false }
         );
       });
+    });
+
+    it('should map the hidden fund status to the draft case status', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        searchProps: mockSearchProps,
+        appliedSearch: '',
+        statusFilterProps: {
+          ...mockStatusFilterProps,
+          value: [FundStatus.Hidden]
+        }
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(mockUsePaginatedFunds).toHaveBeenCalledWith(
+        1,
+        ARCHIVE_ITEMS_PER_PAGE,
+        {
+          search: undefined,
+          statuses: [FundStatus.Hidden],
+          sort: [{ field: 'fundNumber', order: 'asc' }]
+        },
+        { skip: false }
+      );
+
+      expect(mockUseAllCases).toHaveBeenCalledWith(
+        {
+          search: undefined,
+          statuses: [CaseStatus.Draft]
+        },
+        { skip: false }
+      );
+    });
+
+    it('should map the published fund status to the published case status', () => {
+      mockUseArchiveFiltering.mockReturnValue({
+        searchProps: mockSearchProps,
+        appliedSearch: '',
+        statusFilterProps: {
+          ...mockStatusFilterProps,
+          value: [FundStatus.Published]
+        }
+      });
+
+      render(<ArchivePageContent activeTab="all" />);
+
+      expect(mockUseAllCases).toHaveBeenCalledWith(
+        {
+          search: undefined,
+          statuses: [CaseStatus.Published]
+        },
+        { skip: false }
+      );
     });
   });
 });

@@ -23,16 +23,31 @@ jest.mock('./FileCardMenuItems', () => {
   interface MenuItemsProps {
     isStarred: boolean;
     isStarLoading: boolean;
+    showMakePrimary?: boolean;
+    isMainComposition?: boolean;
     onOpenDetails: () => void;
     onRename: () => void;
     onToggleStar: () => void;
     onDownload: () => void;
     onCopyLink: () => void;
+    onMakePrimary?: () => void;
     onDelete: () => void;
   }
 
   const MockMenuItems = (props: MenuItemsProps) => (
     <Box data-testid="menu-items">
+      <span data-testid="mock-main-composition-state">{String(props.isMainComposition)}</span>
+      {props.showMakePrimary && props.onMakePrimary && (
+        <Button
+          data-testid="menu-btn-make-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.onMakePrimary!();
+          }}
+        >
+          Make Primary
+        </Button>
+      )}
       <Button
         data-testid="menu-btn-details"
         onClick={(e) => {
@@ -451,5 +466,35 @@ describe('FileCard', () => {
     render(<FileCard fileType="image" fileData={starredFileData} />);
 
     expect(screen.getByAltText('Starred file').closest('div')).toHaveStyle({ cursor: 'wait' });
+  });
+
+  it('passes showMakePrimary as true if file is an MP3 audio', () => {
+    const mp3FileData = { ...defaultFileData, name: 'song.mp3' };
+    render(<FileCard fileType="audio" fileData={mp3FileData} />);
+    
+    expect(screen.getByTestId('menu-btn-make-primary')).toBeInTheDocument();
+  });
+
+  it('passes showMakePrimary as false if file is audio but not MP3', () => {
+    const wavFileData = { ...defaultFileData, name: 'song.wav' };
+    render(<FileCard fileType="audio" fileData={wavFileData} />);
+    
+    expect(screen.queryByTestId('menu-btn-make-primary')).not.toBeInTheDocument();
+  });
+
+  it('calls onAction with "make-primary" when make-primary menu item is clicked', () => {
+    const mp3FileData = { ...defaultFileData, id: 'mp3-123', name: 'song.mp3' };
+    render(<FileCard fileType="audio" fileData={mp3FileData} onAction={mockOnAction} />);
+
+    fireEvent.click(screen.getByTestId('menu-btn-make-primary'));
+    
+    expect(mockOnAction).toHaveBeenCalledWith('make-primary', 'mp3-123');
+  });
+
+  it('passes isMainComposition to FileCardMenuItems', () => {
+    const primaryFileData = { ...defaultFileData, isMainComposition: true, name: 'song.mp3' };
+    render(<FileCard fileType="audio" fileData={primaryFileData} />);
+    
+    expect(screen.getByTestId('mock-main-composition-state')).toHaveTextContent('true');
   });
 });

@@ -33,7 +33,6 @@ export const MOCK_PAYMENT_DETAILS_TABS: PaymentDetailsTab[] = [
         'IBAN: UA383510050000026009879189237\n' +
         'Банк: АТ «УКРСИББАНК»'
     ),
-    pdfFile: MOCK_PAYMENT_DETAILS_PDF,
     order: 0
   },
   {
@@ -46,7 +45,6 @@ export const MOCK_PAYMENT_DETAILS_TABS: PaymentDetailsTab[] = [
         'SWIFT: UKSIUA2X\n' +
         'Bank: JSC UKRSIBBANK'
     ),
-    pdfFile: null,
     order: 1
   },
   {
@@ -59,7 +57,6 @@ export const MOCK_PAYMENT_DETAILS_TABS: PaymentDetailsTab[] = [
         'SWIFT: UKSIUA2X\n' +
         'Bank: JSC UKRSIBBANK'
     ),
-    pdfFile: null,
     order: 2
   },
   {
@@ -72,7 +69,6 @@ export const MOCK_PAYMENT_DETAILS_TABS: PaymentDetailsTab[] = [
         'SWIFT: UKSIUA2X\n' +
         'Bank: JSC UKRSIBBANK'
     ),
-    pdfFile: null,
     order: 3
   }
 ];
