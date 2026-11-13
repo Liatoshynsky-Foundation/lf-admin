@@ -12,6 +12,10 @@ jest.mock('../baseRepository/baseRepository', () => ({
   createBaseRepository: jest.fn((config) => config)
 }));
 
+jest.mock('../helpers', () => ({
+  withTransaction: jest.fn((callback: (session: object) => Promise<unknown>) => callback({}))
+}));
+
 jest.mock('../../../config', () => ({
   config: { uploads: { storage: { type: 'local' } } }
 }));
@@ -195,9 +199,11 @@ describe('AssetRepository', () => {
     const mockAssetModel = {
       findById: jest.fn(),
       findByIdAndDelete: jest.fn(),
+      findOneAndDelete: jest.fn(),
       findByIdAndUpdate: jest.fn(),
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
+      updateMany: jest.fn(),
       create: jest.fn()
     };
 
@@ -227,39 +233,78 @@ describe('AssetRepository', () => {
       mockStorageGetMetadata.mockResolvedValue(null);
       mockAssetModel.find.mockResolvedValue([]);
       mockAssetModel.findByIdAndUpdate.mockReset();
+      mockAssetModel.findOneAndUpdate.mockReset();
+      mockAssetModel.findOneAndDelete.mockReset();
+      mockAssetModel.updateMany.mockReset();
     });
 
     describe('deleteAsset', () => {
       it('should throw if asset is not found', async () => {
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce(null);
         mockAssetModel.findById.mockResolvedValueOnce(null);
         await expect(repository.deleteAsset(FAKE_ASSET_ID)).rejects.toThrow('Файл не знайдено');
-        expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndDelete).not.toHaveBeenCalled();
       });
 
-      it('should log warning and throw when storage delete fails', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({ _id: FAKE_ASSET_ID, filename: 'test.jpg', usageRefs: USAGE_REFS });
+      it('should throw if asset is the main composition', async () => {
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce(null);
+        mockAssetModel.findById.mockResolvedValueOnce(
+          buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, { isMainComposition: true })
+        );
+        await expect(repository.deleteAsset(ASSET_ID)).rejects.toThrow('Неможливо видалити головну композицію');
+        expect(mockStorageDelete).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndDelete).not.toHaveBeenCalled();
+      });
+
+      it('should log warning, clear isDeleting and throw when storage delete fails', async () => {
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce({ _id: FAKE_ASSET_ID, filename: 'test.jpg', usageRefs: USAGE_REFS });
         mockStorageDelete.mockResolvedValueOnce({ success: false, error: STORAGE_DELETE_ERROR });
 
         await expect(repository.deleteAsset(FAKE_ASSET_ID)).rejects.toThrow(
           'The file was not deleted from cloud storage. Please try again later.'
         );
+        expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalledWith(FAKE_ASSET_ID, {
+          $unset: { isDeleting: '' }
+        });
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(STORAGE_DELETE_ERROR));
-        expect(mockAssetModel.findByIdAndDelete).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndDelete).not.toHaveBeenCalled();
+      });
+
+      it('should clear isDeleting and rethrow when storage.delete rejects', async () => {
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce({
+          _id: FAKE_ASSET_ID,
+          filename: 'test.jpg',
+          usageRefs: USAGE_REFS
+        });
+        mockStorageDelete.mockRejectedValueOnce(new Error('network error'));
+
+        await expect(repository.deleteAsset(FAKE_ASSET_ID)).rejects.toThrow('network error');
+        expect(mockAssetModel.findByIdAndUpdate).toHaveBeenCalledWith(FAKE_ASSET_ID, {
+          $unset: { isDeleting: '' }
+        });
+        expect(mockAssetModel.findOneAndDelete).not.toHaveBeenCalled();
       });
 
       it('should delete asset and return true when asset has no URL', async () => {
-        mockAssetModel.findById.mockResolvedValueOnce({
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce({
           _id: FAKE_ASSET_ID,
           filename: IMAGE_ASSET_DATA.filename,
           usageRefs: USAGE_REFS
         });
-        mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
+        mockAssetModel.findOneAndDelete.mockResolvedValueOnce({});
 
         const result = await repository.deleteAsset(FAKE_ASSET_ID);
 
         expect(result).toBe(true);
+        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
+          { _id: FAKE_ASSET_ID, isMainComposition: { $ne: true }, isDeleting: { $ne: true } },
+          { $set: { isDeleting: true } }
+        );
         expect(mockStorageDelete).toHaveBeenCalledWith(IMAGE_ASSET_DATA.filename, UPLOADS_FOLDER);
-        expect(mockAssetModel.findByIdAndDelete).toHaveBeenCalledWith(FAKE_ASSET_ID);
+        expect(mockAssetModel.findOneAndDelete).toHaveBeenCalledWith({
+          _id: FAKE_ASSET_ID,
+          isMainComposition: { $ne: true }
+        });
       });
 
       it.each([
@@ -274,8 +319,8 @@ describe('AssetRepository', () => {
       ])(
         'should resolve correct filename and storage folder for deleteAsset (url=%s -> filename=%s, folder=%s)',
         async (url, filename, expectedFolder, type) => {
-          mockAssetModel.findById.mockResolvedValueOnce({ _id: FAKE_ASSET_ID, filename, type, url, usageRefs: USAGE_REFS });
-          mockAssetModel.findByIdAndDelete.mockResolvedValueOnce({});
+          mockAssetModel.findOneAndUpdate.mockResolvedValueOnce({ _id: FAKE_ASSET_ID, filename, type, url, usageRefs: USAGE_REFS });
+          mockAssetModel.findOneAndDelete.mockResolvedValueOnce({});
 
           await repository.deleteAsset(FAKE_ASSET_ID);
 
@@ -566,6 +611,125 @@ describe('AssetRepository', () => {
         expect(mockAssetModel.find).toHaveBeenCalledWith(
           buildFilenameLookupQuery(DUPLICATE_FILENAME)
         );
+      });
+    });
+
+    describe('setMainComposition', () => {
+      it('should throw if asset is not found', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(null);
+
+        await expect(repository.setMainComposition(FAKE_ASSET_ID)).rejects.toThrow('Файл не знайдено');
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should throw if asset is not an audio file', async () => {
+        mockAssetModel.findById.mockResolvedValueOnce(buildAssetDocument(IMAGE_ASSET_DATA));
+
+        await expect(repository.setMainComposition(ASSET_ID)).rejects.toThrow(
+          'Головною композицією може бути лише аудіофайл'
+        );
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should return entity early without updating when asset is already main composition', async () => {
+        const alreadyMainDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: true
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(alreadyMainDoc);
+
+        const result = await repository.setMainComposition(ASSET_ID);
+
+        expect(result).toMatchObject({ id: ASSET_ID, isMainComposition: true });
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndUpdate).not.toHaveBeenCalled();
+      });
+
+      it('should unset previous main composition and set new main composition in transaction', async () => {
+        const targetDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: false
+        });
+        const updatedDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: true
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(targetDoc);
+        mockAssetModel.updateMany.mockResolvedValueOnce({ modifiedCount: 1 });
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce(updatedDoc);
+
+        const result = await repository.setMainComposition(ASSET_ID);
+
+        expect(mockAssetModel.findById).toHaveBeenCalledWith(ASSET_ID, null, { session: {} });
+        expect(mockAssetModel.updateMany).toHaveBeenCalledWith(
+          { _id: { $ne: targetDoc._id }, isMainComposition: true },
+          { $set: { isMainComposition: false } },
+          { session: {} }
+        );
+        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledWith(
+          { _id: ASSET_ID, type: 'audio', isDeleting: { $ne: true } },
+          { $set: { isMainComposition: true } },
+          { new: true, session: {} }
+        );
+        expect(result).toMatchObject({ id: ASSET_ID, isMainComposition: true });
+      });
+
+      it('should throw if findOneAndUpdate returns null', async () => {
+        const targetDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: false
+        });
+        mockAssetModel.findById.mockResolvedValueOnce(targetDoc);
+        mockAssetModel.updateMany.mockResolvedValueOnce({ modifiedCount: 1 });
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce(null);
+
+        await expect(repository.setMainComposition(ASSET_ID)).rejects.toThrow('Файл не знайдено');
+      });
+
+      it('should prevent concurrent setMainComposition while deleteAsset is awaiting storage deletion', async () => {
+        const deletingAssetDoc = buildAssetDocument(AUDIO_ASSET_DATA, ASSET_ID, ASSET_DATE, {
+          isMainComposition: false,
+          isDeleting: true
+        });
+
+        mockAssetModel.findOneAndUpdate.mockResolvedValueOnce(deletingAssetDoc);
+        mockAssetModel.findById.mockResolvedValue(deletingAssetDoc);
+        mockAssetModel.findOneAndDelete.mockResolvedValueOnce(deletingAssetDoc);
+
+        let finishStorageDeletion!: (result: { success: boolean }) => void;
+        let signalStorageDeletionStarted!: () => void;
+
+        const storageDeletionStarted = new Promise<void>((resolve) => {
+          signalStorageDeletionStarted = resolve;
+        });
+
+        mockStorageDelete.mockImplementationOnce(
+          () =>
+            new Promise<{ success: boolean }>((resolve) => {
+              finishStorageDeletion = resolve;
+              signalStorageDeletionStarted();
+            })
+        );
+
+        const deletePromise = repository.deleteAsset(ASSET_ID);
+
+        await storageDeletionStarted;
+
+        expect(mockAssetModel.findOneAndDelete).not.toHaveBeenCalled();
+
+        await expect(repository.setMainComposition(ASSET_ID)).rejects.toThrow('Файл не знайдено');
+
+        expect(mockAssetModel.updateMany).not.toHaveBeenCalled();
+        expect(mockAssetModel.findByIdAndUpdate).not.toHaveBeenCalled();
+        expect(mockAssetModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
+
+        finishStorageDeletion({ success: true });
+
+        await expect(deletePromise).resolves.toBe(true);
+
+        expect(mockStorageDelete).toHaveBeenCalledTimes(1);
+        expect(mockAssetModel.findOneAndDelete).toHaveBeenCalledWith({
+          _id: ASSET_ID,
+          isMainComposition: { $ne: true }
+        });
       });
     });
   });

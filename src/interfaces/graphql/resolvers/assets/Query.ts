@@ -36,6 +36,9 @@ export interface CreateAssetArgs {
 export interface DeleteAssetArgs {
   id: string;
 }
+export interface SetMainCompositionArgs {
+  id: string;
+}
 
 const endpointHandler = endpointRepositoryHandler('assetsRepository');
 
@@ -56,5 +59,8 @@ export const AssetsMutation = {
   }),
   deleteAsset: endpointHandler<DeleteAssetArgs, unknown>(async ({ args: { id }, repo }) => {
     return repo.deleteAsset(id);
+  }),
+  setMainComposition: endpointHandler<SetMainCompositionArgs, unknown>(async ({ args: { id }, repo }) => {
+    return repo.setMainComposition(id);
   })
 };
