@@ -1,5 +1,5 @@
 import { Box, CircularProgress } from '@mui/material';
-import { isValidElement, ReactElement } from 'react';
+import { isValidElement, ReactElement} from 'react';
 
 import FileCardMenuItems, { FileCardMenuProps } from './FileCardMenuItems';
 
@@ -27,6 +27,7 @@ describe('FileCardMenuItems', () => {
   const mockProps: FileCardMenuProps = {
     isStarred: false,
     isStarLoading: false,
+    isMainComposition: false,
     onOpenDetails: jest.fn(),
     onRename: jest.fn(),
     onToggleStar: jest.fn(),
@@ -49,13 +50,58 @@ describe('FileCardMenuItems', () => {
   it('returns items with the correct ids and labels in order', () => {
     const [{ items }] = FileCardMenuItems(mockProps);
 
-    expect(items.map((item) => item.id)).toEqual(['details', 'rename', 'toggle-star', 'download', 'copy-link', 'delete']);
+    expect(items.map((item) => item.id)).toEqual([
+      'details',
+      'rename',
+      'toggle-star',
+      'download',
+      'copy-link',
+      'delete'
+    ]);
     expect(items[0].text.name).toBe('Відкрити деталі');
     expect(items[1].text.name).toBe('Перейменувати');
     expect(items[2].text.name).toBe('Додати в обрані');
     expect(items[3].text.name).toBe('Завантажити');
     expect(items[4].text.name).toBe('Копіювати посилання');
     expect(items[5].text.name).toBe('Видалити');
+  });
+
+  it('renders "make-primary" item when showMakePrimary is true and onMakePrimary is provided', () => {
+    const onMakePrimary = jest.fn();
+    const [{ items }] = FileCardMenuItems({ ...mockProps, showMakePrimary: true, onMakePrimary });
+
+    expect(items).toHaveLength(7);
+    const makePrimaryItem = items.find((item) => item.id === 'make-primary');
+
+    expect(makePrimaryItem).toBeDefined();
+    expect(makePrimaryItem?.text.name).toBe('Зробити головною композицією');
+
+    expect(makePrimaryItem?.text.icon).toBeDefined();
+  });
+
+  it('changes label and icon when isMainComposition is true', () => {
+    const onMakePrimary = jest.fn();
+    const [{ items }] = FileCardMenuItems({
+      ...mockProps,
+      showMakePrimary: true,
+      isMainComposition: true,
+      onMakePrimary
+    });
+
+    const makePrimaryItem = items.find((item) => item.id === 'make-primary');
+
+    expect(makePrimaryItem?.text.name).toBe('Скасувати статус головної');
+
+    expect(makePrimaryItem?.text.icon).toBeDefined();
+  });
+
+  it('calls onMakePrimary when the make-primary item is clicked', () => {
+    const onMakePrimary = jest.fn();
+    const [{ items }] = FileCardMenuItems({ ...mockProps, showMakePrimary: true, onMakePrimary });
+
+    items.find((item) => item.id === 'make-primary')?.onClick?.();
+
+    expect(onMakePrimary).toHaveBeenCalledTimes(1);
   });
 
   it('renders the default (not starred, not loading) star icon', () => {

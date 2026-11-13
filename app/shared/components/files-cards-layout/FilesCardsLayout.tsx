@@ -11,8 +11,10 @@ export type FilesCardsLayoutItem = {
   id: string;
   type: FileType;
   name: string;
+  mimeType?: string;
   dateAdded: string;
   isStarred?: boolean;
+  isMainComposition?: boolean;
   usageLinks?: number;
   imageSrc?: string;
 };
@@ -29,7 +31,10 @@ type FilesCardsLayoutProps = Readonly<{
   };
   setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
-    onItemAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link', item: FilesCardsLayoutItem) => void;
+  onItemAction?: (
+    action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary',
+    item: FilesCardsLayoutItem
+  ) => void;
   onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }>;
@@ -72,8 +77,10 @@ export function FilesCardsLayout({
                 fileType={minimizedTypeMap[item.type]}
                 starred={!!item.isStarred}
                 linked={!!item.usageLinks && item.usageLinks > 0}
+                isMainComposition={item.isMainComposition}
                 name={item.name}
                 date={item.dateAdded}
+                mimeType={item.mimeType}
                 isSelected={item.id === selectedItemId}
                 onClick={() => onItemClick?.(item)}
                 onAction={(action) => onItemAction?.(action, item)}
@@ -103,8 +110,10 @@ export function FilesCardsLayout({
               name: item.name,
               dateAdded: item.dateAdded,
               isStarred: item.isStarred,
+              isMainComposition: item.isMainComposition,
               usageLinks: item.usageLinks,
-              imageSrc: item.imageSrc
+              imageSrc: item.imageSrc,
+              mimeType: item.mimeType
             }}
             isSelected={item.id === selectedItemId}
             onClick={() => onItemClick?.(item)}
