@@ -92,7 +92,9 @@ export const PaymentDetailsRepository = ({
       },
       {
         new: true,
-        runValidators: true
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true
       }
     )
       .lean<DbPaymentDetails>()

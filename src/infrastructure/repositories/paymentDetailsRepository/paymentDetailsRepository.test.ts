@@ -132,7 +132,7 @@ describe('PaymentDetailsRepository', () => {
             pdfFile: paymentDetailsPdfFile
           })
         }),
-        { new: true, runValidators: true }
+        { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
       );
 
       const [, update] = findOneAndUpdateMock.mock.calls[0];
@@ -249,6 +249,16 @@ describe('PaymentDetailsRepository', () => {
     ])('rejects %s', async (_description, input, errorMessage) => {
       await expect(repository.updatePaymentDetails(input)).rejects.toThrow(errorMessage);
       expect(findOneAndUpdateMock).not.toHaveBeenCalled();
+    });
+
+    it('creates the payment details record on the first save', async () => {
+      findOneAndUpdateMock.mockReturnValue(query(paymentDetails));
+
+      await repository.updatePaymentDetails(updatePaymentDetailsInput);
+
+      const [filter, , options] = findOneAndUpdateMock.mock.calls[0];
+      expect(filter).toEqual({ slug: 'payment-details' });
+      expect(options).toEqual(expect.objectContaining({ upsert: true }));
     });
 
     it('throws when the seeded document is missing', async () => {

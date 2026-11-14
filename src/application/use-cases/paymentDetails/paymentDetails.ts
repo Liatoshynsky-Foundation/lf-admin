@@ -1,10 +1,16 @@
 import type { PaymentDetails } from '~/domain/entities/PaymentDetails';
-import type { IPaymentDetailsRepository } from '~/domain/repositories/PaymentDetailsRepository';
+import type {
+  IPaymentDetailsRepository,
+  UpdatePaymentDetailsInput
+} from '~/domain/repositories/PaymentDetailsRepository';
 
 export const paymentDetailsService = ({
   paymentDetailsRepository
 }: {
   paymentDetailsRepository: IPaymentDetailsRepository;
 }) => ({
-  execute: (): Promise<PaymentDetails | null> => paymentDetailsRepository.getPaymentDetails()
+  execute: (): Promise<PaymentDetails | null> => paymentDetailsRepository.getPaymentDetails(),
+  update: (input: UpdatePaymentDetailsInput): Promise<PaymentDetails> =>
+    paymentDetailsRepository.updatePaymentDetails(input)
 });
+  
