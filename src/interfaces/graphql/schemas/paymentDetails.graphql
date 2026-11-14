@@ -20,6 +20,27 @@ type PaymentDetails {
   updatedAt: String!
 }
 
+input PaymentDetailsPdfFileInput {
+  filename: String!
+  url: String!
+  mimeType: String!
+}
+
+input PaymentDetailsTabInput {
+  id: ID
+  name: String!
+  content: JSON!
+}
+
+input UpdatePaymentDetailsInput {
+  tabs: [PaymentDetailsTabInput!]!
+  pdfFile: PaymentDetailsPdfFileInput
+}
+
 extend type Query {
   paymentDetails: PaymentDetails
+}
+
+extend type Mutation {
+  updatePaymentDetails(input: UpdatePaymentDetailsInput!): PaymentDetails!
 }
