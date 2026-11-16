@@ -87,7 +87,7 @@ export const PaymentDetailsRepository = ({
       {
         $set: {
           tabs,
-          pdfFile: input.pdfFile
+          ...(input.pdfFile !== undefined && { pdfFile: input.pdfFile })
         }
       },
       {

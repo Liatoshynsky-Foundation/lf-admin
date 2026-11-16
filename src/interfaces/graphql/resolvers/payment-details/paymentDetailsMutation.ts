@@ -8,14 +8,14 @@ import type { UpdatePaymentDetailsInput } from '~/domain/repositories/PaymentDet
 import { zPaymentDetailsUpdateSchema } from '~/validators/paymentDetails.schema';
 
 type UpdatePaymentDetailsArgs = {
-  input: Omit<UpdatePaymentDetailsInput, 'pdfFile'> & {
-    pdfFile?: UpdatePaymentDetailsInput['pdfFile'];
-  };
+  input: UpdatePaymentDetailsInput;
 };
 
-const validateInput = (input: UpdatePaymentDetailsArgs['input']): UpdatePaymentDetailsInput => {
+const validateInput = ({ pdfFile, ...input }: UpdatePaymentDetailsInput): UpdatePaymentDetailsInput => {
   try {
-    return zPaymentDetailsUpdateSchema.parse({ ...input, pdfFile: input.pdfFile ?? null });
+    const validated = zPaymentDetailsUpdateSchema.parse({ ...input, pdfFile: pdfFile ?? null });
+
+    return pdfFile === undefined ? { tabs: validated.tabs } : validated;
   } catch (error) {
     if (error instanceof ZodError) {
       throw new GraphQLError('Invalid payment details input', {
