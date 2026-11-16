@@ -1,6 +1,20 @@
 import { SxProps, Theme } from '@mui/material';
 
+import { chipsColors } from '~/shared/theme/colors';
+
 export const styles: Record<string, SxProps<Theme>> = {
+  mainCompositionIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    backgroundColor: chipsColors.published,
+    color: 'adminBlue.50'
+  },
+
   imageSection: {
     position: 'relative',
     width: '100%',

@@ -101,6 +101,7 @@ const toFileItemFromAsset = (asset: AssetItem): FilesPageFileItem => ({
   dateAdded: formatDateAdded(asset.createdAt),
   createdAtRaw: asset.createdAt,
   isStarred: asset.isStarred,
+  isMainComposition: asset.isMainComposition,
   usageLinks: 0,
   downloadUrl: asset.url,
   imageSrc: asset.type === AssetType.Image ? asset.url : undefined,

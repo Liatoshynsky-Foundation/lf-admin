@@ -18,6 +18,7 @@ const mongoAsset: AssetItem = {
   createdBy: 'Admin',
   description: 'Mongo description',
   isStarred: true,
+  isMainComposition: false,
   createdAt: '2026-07-08T10:00:00.000Z',
   updatedAt: '2026-07-08T10:00:00.000Z',
   usageRefs: [{ __typename: 'AssetUsageRef', pageId: 'about-us', blockId: 'IntroSection', locale: 'uk' }]
@@ -57,6 +58,14 @@ describe('useHybridFiles', () => {
       usageLinks: 0,
       isOrphan: false
     });
+  });
+
+  it('maps the main composition flag from Mongo asset', () => {
+    const mainAudioAsset: AssetItem = { ...mongoAsset, type: AssetType.Audio, isMainComposition: true };
+
+    const { result } = renderHook(() => useHybridFiles([mainAudioAsset], []));
+
+    expect(result.current[0].isMainComposition).toBe(true);
   });
 
   it('adds R2-only files as orphan items', () => {
