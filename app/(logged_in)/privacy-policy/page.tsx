@@ -92,7 +92,7 @@ export default function Page() {
   };
 
   return (
-    <EditablePageLayout headerTitle="Політика конфіденційності" pageSlug={pageSlug}>
+    <EditablePageLayout headerTitle="Політика конфіденційності" pageSlug={pageSlug} allowPageSections>
       <IntroSection />
       {sortableBlocks && sortableBlocks.length > 0 && (
         <SortableList onDragEnd={handleDragEnd} id="1" items={sortableBlocks}>
