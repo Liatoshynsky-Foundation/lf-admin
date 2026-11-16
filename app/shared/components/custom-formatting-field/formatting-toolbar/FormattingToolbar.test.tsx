@@ -9,7 +9,10 @@ jest.mock('lucide-react', () => ({
   Italic: () => <span data-testid="icon-italic" />,
   Link: () => <span data-testid="icon-link" />,
   Underline: () => <span data-testid="icon-underline" />,
-  Table: () => <span data-testid="icon-table" />
+  Table: () => <span data-testid="icon-table" />,
+  ListPlus: () => <span data-testid="icon-list-plus" />,
+  ListMinus: () => <span data-testid="icon-list-minus" />,
+  Trash2: () => <span data-testid="icon-trash" />
 }));
 
 jest.mock('~/lib/utils/sxToArray', () => ({
@@ -22,6 +25,10 @@ type MockChainParameters = {
   extendMarkRange: jest.Mock;
   setLink: jest.Mock;
   unsetLink: jest.Mock;
+  insertContent: jest.Mock;
+  addRowAfter: jest.Mock;
+  deleteRow: jest.Mock;
+  deleteTable: jest.Mock;
   run: jest.Mock;
 };
 
@@ -34,6 +41,10 @@ const createMockEditor = (
     extendMarkRange: jest.fn().mockReturnThis(),
     setLink: jest.fn().mockReturnThis(),
     unsetLink: jest.fn().mockReturnThis(),
+    insertContent: jest.fn().mockReturnThis(),
+    addRowAfter: jest.fn().mockReturnThis(),
+    deleteRow: jest.fn().mockReturnThis(),
+    deleteTable: jest.fn().mockReturnThis(),
     run: jest.fn()
   };
 
@@ -52,6 +63,7 @@ const createMockEditor = (
       delete handlers[event];
     }),
     chain: jest.fn(() => chainSpies),
+    can: jest.fn(() => ({ deleteRow: () => true })),
     ...overrides
   } as unknown as Editor;
 
@@ -89,11 +101,55 @@ describe('FormattingToolbar', () => {
       expect(screen.getByLabelText('italic')).toBeInTheDocument();
     });
 
-    it('should render a disabled table button when allowed', () => {
-      const { editor } = createMockEditor();
+    it('should insert a two-column requisites table when the table button is clicked', () => {
+      const { editor, chainSpies } = createMockEditor();
       render(<FormattingToolbar editor={editor} allowTable />);
 
-      expect(screen.getByLabelText('table')).toBeDisabled();
+      fireEvent.click(screen.getByLabelText('table'));
+
+      const [insertedContent] = chainSpies.insertContent.mock.calls[0];
+      expect(insertedContent[0].type).toBe('table');
+      insertedContent[0].content.forEach((row: { content: Array<{ type: string }> }) => {
+        expect(row.content.map((cell) => cell.type)).toEqual(['tableHeader', 'tableCell']);
+      });
+      expect(chainSpies.run).toHaveBeenCalled();
+    });
+
+    it('should show row controls instead of the table button when the cursor is in a table', () => {
+      const { editor, chainSpies } = createMockEditor({
+        isActive: jest.fn((name: string) => name === 'table')
+      } as Partial<Editor>);
+      render(<FormattingToolbar editor={editor} allowTable />);
+
+      expect(screen.queryByLabelText('table')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('add table row'));
+      expect(chainSpies.addRowAfter).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByLabelText('delete table row'));
+      expect(chainSpies.deleteRow).toHaveBeenCalled();
+
+      fireEvent.click(screen.getByLabelText('delete table'));
+      expect(chainSpies.deleteTable).toHaveBeenCalled();
+    });
+
+    it('should disable row deletion when the row cannot be deleted', () => {
+      const { editor } = createMockEditor({
+        isActive: jest.fn((name: string) => name === 'table'),
+        can: jest.fn(() => ({ deleteRow: () => false }))
+      } as unknown as Partial<Editor>);
+      render(<FormattingToolbar editor={editor} allowTable />);
+
+      expect(screen.getByLabelText('delete table row')).toBeDisabled();
+    });
+
+    it('should not show table row controls when tables are not allowed', () => {
+      const { editor } = createMockEditor({
+        isActive: jest.fn((name: string) => name === 'table')
+      } as Partial<Editor>);
+      render(<FormattingToolbar editor={editor} />);
+
+      expect(screen.queryByLabelText('add table row')).not.toBeInTheDocument();
     });
 
     it('should render the underline button and toggle underline when allowed', () => {

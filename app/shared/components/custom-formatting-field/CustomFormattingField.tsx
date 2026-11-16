@@ -13,6 +13,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { styles } from './CustomFormattingField.style';
 import { FormattingToolbar } from './formatting-toolbar/FormattingToolbar';
+import { requisitesTableExtensions } from './requisites-table/requisitesTable';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
 export interface Props {
@@ -31,6 +32,14 @@ export interface Props {
 const FormattingDoc = Document.extend({
   content: 'paragraph+'
 });
+
+const TableFormattingDoc = Document.extend({
+  content: '(paragraph | table)+'
+});
+
+type ShouldShowProps = { editor: { isEditable: boolean }; view: { hasFocus: () => boolean } };
+
+const showToolbarWhileFocused = ({ editor, view }: ShouldShowProps) => editor.isEditable && view.hasFocus();
 
 const hasFormattingContent = (content?: JSONContent): boolean => {
   if (!content) return false;
@@ -76,7 +85,7 @@ export const CustomFormattingField = ({
 
   const editor = useEditor({
     extensions: [
-      FormattingDoc,
+      allowTable ? TableFormattingDoc : FormattingDoc,
       Paragraph,
       Text,
       Italic,
@@ -93,7 +102,8 @@ export const CustomFormattingField = ({
             }
           })
         ]
-        : [])
+        : []),
+      ...(allowTable ? requisitesTableExtensions : [])
     ],
     content: value,
     editable,
@@ -189,7 +199,7 @@ export const CustomFormattingField = ({
         sx={styles.contentWrapper}
       >
         {editor && (
-          <BubbleMenu editor={editor}>
+          <BubbleMenu editor={editor} {...(allowTable && { shouldShow: showToolbarWhileFocused })}>
             <FormattingToolbar
               editor={editor}
               allowLinks={allowLinks}

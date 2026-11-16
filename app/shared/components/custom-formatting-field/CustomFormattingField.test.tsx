@@ -79,6 +79,25 @@ describe('CustomFormattingField', () => {
     expect(mockEditorConfig.extensions.some((extension) => extension.name === 'link')).toBe(false);
   });
 
+  it('does not include table extensions by default', () => {
+    render(<CustomFormattingField onChange={mockOnChange} />);
+
+    const documentExtension = mockEditorConfig.extensions.find((extension) => extension.name === 'doc');
+
+    expect(mockEditorConfig.extensions.some((extension) => extension.name === 'table')).toBe(false);
+    expect(documentExtension?.config?.content).toBe('paragraph+');
+  });
+
+  it('allows tables between paragraphs when tables are allowed', () => {
+    render(<CustomFormattingField onChange={mockOnChange} allowTable />);
+
+    const extensionNames = mockEditorConfig.extensions.map((extension) => extension.name);
+    const documentExtension = mockEditorConfig.extensions.find((extension) => extension.name === 'doc');
+
+    expect(extensionNames).toEqual(expect.arrayContaining(['table', 'tableRow', 'tableHeader', 'tableCell']));
+    expect(documentExtension?.config?.content).toBe('(paragraph | table)+');
+  });
+
   it('allows multiple paragraphs in the document schema', () => {
     render(<CustomFormattingField value={defaultJSON} onChange={mockOnChange} />);
 

@@ -39,6 +39,63 @@ export const styles = {
       mt: '12px'
     },
 
+    '& .ProseMirror table': {
+      width: '100%',
+      my: '12px',
+      borderCollapse: 'separate',
+      borderSpacing: '0 8px',
+      tableLayout: 'fixed'
+    },
+
+    '& .ProseMirror th, & .ProseMirror td': {
+      p: '2px 4px',
+      border: '1px dashed',
+      borderColor: 'divider',
+      verticalAlign: 'top',
+      textAlign: 'left',
+      fontSize: '14px',
+      lineHeight: '20px'
+    },
+
+    '& .ProseMirror th': {
+      width: '33%',
+      pr: '16px',
+      fontWeight: 400,
+      color: 'text.secondary'
+    },
+
+    '& .ProseMirror td': {
+      color: 'text.primary'
+    },
+
+    '& .ProseMirror th p, & .ProseMirror td p': {
+      lineHeight: '20px'
+    },
+
+    '& .ProseMirror .selectedCell': {
+      backgroundColor: 'action.selected'
+    },
+
+    '& .ProseMirror .ProseMirror-gapcursor': {
+      display: 'none',
+      position: 'absolute',
+      pointerEvents: 'none'
+    },
+
+    '& .ProseMirror .ProseMirror-gapcursor::after': {
+      content: '""',
+      display: 'block',
+      position: 'absolute',
+      top: '-2px',
+      width: '20px',
+      borderTop: '1px solid',
+      borderColor: 'text.primary'
+    },
+
+    '& .ProseMirror-focused .ProseMirror-gapcursor': {
+      display: 'block'
+    },
+
     '& .ProseMirror p.is-editor-empty:first-of-type::before': {
       color: 'text.disabled',
       content: 'attr(data-placeholder)',

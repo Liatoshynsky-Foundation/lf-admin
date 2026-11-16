@@ -3,9 +3,10 @@ import '@tiptap/extension-italic';
 import '@tiptap/extension-link';
 import { Box, InputBase, Paper, SxProps, Theme, ToggleButton } from '@mui/material';
 import { Editor } from '@tiptap/react';
-import { Bold, Italic, Link, Table, Underline } from 'lucide-react';
+import { Bold, Italic, Link, ListMinus, ListPlus, Table, Trash2, Underline } from 'lucide-react';
 import React, { useEffect, useReducer, useState } from 'react';
 
+import { createRequisitesTable } from '../requisites-table/requisitesTable';
 import { styles } from './FormattingToolbar.style';
 import { sxToArray } from '~/lib/utils/sxToArray';
 
@@ -55,6 +56,7 @@ export const FormattingToolbar = ({
   if (!editor) return null;
 
   const isSelectionEmpty = editor.state.selection.empty;
+  const isInTable = allowTable && editor.isActive('table');
 
   const startLinkEdit = () => {
     setUrl(editor.getAttributes('link').href || '');
@@ -136,10 +138,49 @@ export const FormattingToolbar = ({
             </ToggleButton>
           )}
 
-          {allowTable && (
-            <ToggleButton sx={styles.toggleButton} value="table" disabled aria-label="table">
+          {allowTable && !isInTable && (
+            <ToggleButton
+              sx={styles.toggleButton}
+              value="table"
+              onClick={() => editor.chain().focus().insertContent(createRequisitesTable()).run()}
+              aria-label="table"
+              title="Вставити таблицю"
+            >
               <Table />
             </ToggleButton>
+          )}
+
+          {allowTable && isInTable && (
+            <>
+              <ToggleButton
+                sx={styles.toggleButton}
+                value="add-row"
+                onClick={() => editor.chain().focus().addRowAfter().run()}
+                aria-label="add table row"
+                title="Додати рядок"
+              >
+                <ListPlus />
+              </ToggleButton>
+              <ToggleButton
+                sx={styles.toggleButton}
+                value="delete-row"
+                disabled={!editor.can().deleteRow()}
+                onClick={() => editor.chain().focus().deleteRow().run()}
+                aria-label="delete table row"
+                title="Видалити рядок"
+              >
+                <ListMinus />
+              </ToggleButton>
+              <ToggleButton
+                sx={styles.toggleButton}
+                value="delete-table"
+                onClick={() => editor.chain().focus().deleteTable().run()}
+                aria-label="delete table"
+                title="Видалити таблицю"
+              >
+                <Trash2 />
+              </ToggleButton>
+            </>
           )}
         </Box>
       )}
