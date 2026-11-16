@@ -118,6 +118,25 @@ describe('TipTapDocSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('does not restrict the number of cells in a table row', () => {
+    const cell = (text: string) => ({
+      type: TipTapTableNodeTypes.tableCell,
+      content: [{ type: TipTapNodeTypes.paragraph, content: [{ type: TipTapNodeTypes.text, text }] }]
+    });
+
+    const result = TipTapDocSchema.safeParse({
+      type: TipTapNodeTypes.doc,
+      content: [
+        {
+          type: TipTapTableNodeTypes.table,
+          content: [{ type: TipTapTableNodeTypes.tableRow, content: [cell('First'), cell('Second'), cell('Third')] }]
+        }
+      ]
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it('fails validation when content array is empty', () => {
     const emptyDoc = {
       type: TipTapNodeTypes.doc,
