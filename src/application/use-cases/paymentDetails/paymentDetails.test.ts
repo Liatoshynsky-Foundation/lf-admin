@@ -24,4 +24,23 @@ describe('paymentDetailsService', () => {
     await expect(service.execute()).resolves.toBe(paymentDetails);
     expect(getPaymentDetails).toHaveBeenCalledTimes(1);
   });
+
+  it('saves payment details through repository', async () => {
+    const savedPaymentDetails: PaymentDetails = {
+      id: 'id',
+      slug: 'payment-details',
+      tabs: [{ id: 'tab-1', name: 'UAH', content: { type: 'doc' }, order: 0 }],
+      pdfFile: null,
+      createdAt: 'created',
+      updatedAt: 'updated'
+    };
+    const input = { tabs: [{ name: 'UAH', content: { type: 'doc' } }], pdfFile: null };
+    const updatePaymentDetails = jest.fn().mockResolvedValue(savedPaymentDetails);
+    const service = paymentDetailsService({
+      paymentDetailsRepository: { getPaymentDetails: jest.fn(), updatePaymentDetails }
+    });
+
+    await expect(service.update(input)).resolves.toBe(savedPaymentDetails);
+    expect(updatePaymentDetails).toHaveBeenCalledWith(input);
+  });
 });

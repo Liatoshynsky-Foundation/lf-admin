@@ -8,7 +8,7 @@ export type UpdatePaymentDetailsInput = {
     name: string;
     content: JSONContent;
   }>;
-  pdfFile: PaymentDetailsPdfFile | null;
+  pdfFile?: PaymentDetailsPdfFile | null;
 };
 
 export interface IPaymentDetailsRepository {

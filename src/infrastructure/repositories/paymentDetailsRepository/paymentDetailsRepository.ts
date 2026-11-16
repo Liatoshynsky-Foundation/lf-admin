@@ -87,12 +87,14 @@ export const PaymentDetailsRepository = ({
       {
         $set: {
           tabs,
-          pdfFile: input.pdfFile
+          ...(input.pdfFile !== undefined && { pdfFile: input.pdfFile })
         }
       },
       {
         new: true,
-        runValidators: true
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true
       }
     )
       .lean<DbPaymentDetails>()
