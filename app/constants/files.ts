@@ -1,5 +1,9 @@
 export type FilesTabValue = 'all' | 'image' | 'docs' | 'audio' | 'favorites';
 
+export const MAIN_COMPOSITION_DELETE_ERROR = 'Неможливо видалити головну композицію';
+export const MAIN_COMPOSITION_DELETE_MESSAGE =
+  'Неможливо видалити головну композицію. Спочатку оберіть інший аудіофайл як головну композицію, а потім повторіть видалення.';
+
 export type FilesTabConfig = Readonly<{
   value: FilesTabValue;
   label: string;

@@ -1,4 +1,6 @@
+import { ApolloError } from '@apollo/client';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { GraphQLError } from 'graphql';
 import React from 'react';
 import toast from 'react-hot-toast';
 
@@ -50,6 +52,7 @@ const baseAsset = {
   originalname: 'MyPhoto.png' as string | null,
   createdAt: '2024-01-15T00:00:00.000Z',
   isStarred: false,
+  isMainComposition: false,
   usageRefs: [{ pageId: 'page-1' as string | null }, { pageId: null as string | null }],
   url: 'https://example.com/photo.png',
   mimeType: 'image/png',
@@ -702,6 +705,21 @@ describe('FilesPageContent', () => {
     expect(await screen.findByTestId('rename-modal')).toBeInTheDocument();
   });
 
+  it('blocks deletion of the main composition', async () => {
+    const mainAsset = { ...baseAsset, isMainComposition: true };
+
+    const { deleteAsset } = setupHooks({ assets: [mainAsset] });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('delete-1'));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    expect(deleteAsset).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(
+      'Неможливо видалити головну композицію. Спочатку оберіть інший аудіофайл як головну композицію, а потім повторіть видалення.'
+    );
+  });
+
   it('opens delete modal and successfully deletes a file', async () => {
     setupHooks({ assets: [baseAsset] });
     render(<FilesPageContent activeTab="all" />);
@@ -720,6 +738,29 @@ describe('FilesPageContent', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('file-info-sidebar')).not.toBeInTheDocument();
     });
+  });
+
+  it('preserves the file and explains a server rejection when the main composition status is stale', async () => {
+    const deleteAsset = jest.fn().mockRejectedValue(
+      new ApolloError({ graphQLErrors: [new GraphQLError('Неможливо видалити головну композицію')] })
+    );
+    const { refetch } = setupHooks({ assets: [baseAsset], deleteAsset });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('delete-1'));
+    fireEvent.click(await screen.findByText('confirm-delete'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Неможливо видалити головну композицію. Спочатку оберіть інший аудіофайл як головну композицію, а потім повторіть видалення.'
+      );
+      expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
+    });
+    expect(deleteAsset).toHaveBeenCalledWith(expect.objectContaining({ variables: { id: baseAsset.id } }));
+    expect(screen.getByText('delete-1')).toBeInTheDocument();
+    expect(mockRemoveR2FileByUrl).not.toHaveBeenCalled();
+    expect(refetch).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('deletes an orphan R2 file from cloud storage without creating a Mongo asset first', async () => {
