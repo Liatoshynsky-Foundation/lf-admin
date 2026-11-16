@@ -6,6 +6,7 @@ import { TipTapDocSchema } from '~/validators/tiptap.schema';
 
 const REQUISITES_TABLE_COLUMNS = 2;
 const MERGED_CELL_ATTRIBUTES = ['colspan', 'rowspan'] as const;
+const REQUISITES_ROW_CELL_TYPES = [TipTapTableNodeTypes.tableHeader, TipTapTableNodeTypes.tableCell];
 
 type RawTipTapNode = {
   type?: unknown;
@@ -49,6 +50,12 @@ const requisitesContentSchema = z
             code: 'custom',
             path: rowPath,
             message: PAYMENT_DETAILS_MESSAGES.tableRowCellsCount
+          });
+        } else if (cells.some((cell, cellIndex) => cell?.type !== REQUISITES_ROW_CELL_TYPES[cellIndex])) {
+          ctx.addIssue({
+            code: 'custom',
+            path: rowPath,
+            message: PAYMENT_DETAILS_MESSAGES.tableRowCellOrder
           });
         }
 

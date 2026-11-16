@@ -131,7 +131,11 @@ describe('payment details schemas', () => {
       ...(attrs && { attrs }),
       content: [paragraph(text)]
     });
-    const header = (text: string) => ({ type: 'tableHeader', content: [paragraph(text)] });
+    const header = (text: string, attrs?: Record<string, unknown>) => ({
+      type: 'tableHeader',
+      ...(attrs && { attrs }),
+      content: [paragraph(text)]
+    });
     const row = (...cells: object[]) => ({ type: 'tableRow', content: cells });
     const table = (...rows: object[]) => ({ type: 'table', content: rows });
     const parseTab = (tabContent: object) =>
@@ -153,7 +157,7 @@ describe('payment details schemas', () => {
     it('accepts default TipTap cell attributes without merged cells', () => {
       const result = parseTab({
         type: 'doc',
-        content: [table(row(cell('Name', { colspan: 1, rowspan: 1, colwidth: null }), cell('Value')))]
+        content: [table(row(header('Name', { colspan: 1, rowspan: 1, colwidth: null }), cell('Value')))]
       });
 
       expect(result.success).toBe(true);
@@ -178,13 +182,29 @@ describe('payment details schemas', () => {
       ['colspan', { colspan: 2 }],
       ['rowspan', { rowspan: 2 }]
     ])('rejects merged cells with %s', (_attribute, attrs) => {
-      const result = parseTab({ type: 'doc', content: [table(row(cell('Merged', attrs), cell('Value')))] });
+      const result = parseTab({ type: 'doc', content: [table(row(header('Merged', attrs), cell('Value')))] });
 
       expect(result.success).toBe(false);
       expect(result.error?.issues).toContainEqual(
         expect.objectContaining({
           path: ['tabs', 0, 'content', 'content', 0, 'content', 0, 'content', 0, 'attrs'],
           message: PAYMENT_DETAILS_MESSAGES.tableMergedCells
+        })
+      );
+    });
+
+    it.each([
+      ['two value cells', row(cell('IBAN'), cell('UA00 0000'))],
+      ['two header cells', row(header('IBAN'), header('UA00 0000'))],
+      ['the header on the right', row(cell('UA00 0000'), header('IBAN'))]
+    ])('rejects a row with %s', (_description, invalidRow) => {
+      const result = parseTab({ type: 'doc', content: [table(invalidRow)] });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['tabs', 0, 'content', 'content', 0, 'content', 0],
+          message: PAYMENT_DETAILS_MESSAGES.tableRowCellOrder
         })
       );
     });
