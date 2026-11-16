@@ -1,5 +1,6 @@
 'use client';
 
+import { ApolloError } from '@apollo/client';
 import { Box, Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,7 +27,9 @@ import {
   FILES_UPLOAD_BUTTON_LABEL,
   FILES_UPLOAD_ERROR,
   FILES_UPLOAD_FAILED_ERROR,
-  type FilesTabValue
+  type FilesTabValue,
+  MAIN_COMPOSITION_DELETE_ERROR,
+  MAIN_COMPOSITION_DELETE_MESSAGE
 } from '~/constants/files';
 import { downloadFile } from '~/lib/utils/downloadFile';
 import FavouriteStarIcon from '~/public/icons/favourite-star.svg';
@@ -347,6 +350,12 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
         throw new Error('Файл не знайдено');
       }
 
+      if (fileToDelete.isMainComposition === true) {
+        toast.error(MAIN_COMPOSITION_DELETE_MESSAGE);
+        handleCloseDeleteModal();
+        return;
+      }
+
       const fileUrlToDelete = fileToDelete.downloadUrl ?? fileToDelete.id;
 
       if (fileToDelete.isOrphan) {
@@ -373,6 +382,17 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
       removeR2FileByUrl(fileUrlToDelete);
       await refetch();
     } catch (error: unknown) {
+      const isMainCompositionError =
+        (error instanceof Error && error.message === MAIN_COMPOSITION_DELETE_ERROR) ||
+        (error instanceof ApolloError &&
+          error.graphQLErrors.some(({ message }) => message === MAIN_COMPOSITION_DELETE_ERROR));
+
+      if (isMainCompositionError) {
+        toast.error(MAIN_COMPOSITION_DELETE_MESSAGE);
+        handleCloseDeleteModal();
+        return;
+      }
+
       const message = error instanceof Error ? error.message : 'Не вдалося видалити файл. Спробуйте пізніше.';
       toast.error(message);
     }
