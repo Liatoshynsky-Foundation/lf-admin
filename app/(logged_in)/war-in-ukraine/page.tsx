@@ -38,7 +38,7 @@ export default function WarInUkraineReorderingPage() {
   };
 
   return (
-    <EditablePageLayout headerTitle="Війна в Україні" pageSlug={pageSlug}>
+    <EditablePageLayout headerTitle="Війна в Україні" pageSlug={pageSlug} allowPageSections>
       
       <WarInfo />
 

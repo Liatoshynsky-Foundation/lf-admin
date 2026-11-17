@@ -37,7 +37,7 @@ export default function ArtistryReorderingPage() {
   };
 
   return (
-    <EditablePageLayout headerTitle="Творчість" pageSlug={pageSlug}>
+    <EditablePageLayout headerTitle="Творчість" pageSlug={pageSlug} allowPageSections>
       {sortableBlocks && sortableBlocks.length > 0 && (
         <SortableList onDragEnd={handleDragEnd} id="artistry-sortable-list" items={sortableBlocks}>
           {sortableBlocks.map((blockId) => {

@@ -86,16 +86,24 @@ const runSimulation = ({
   title = headerTitle,
   childrenText: textVal = childrenText,
   variant,
-  validateBeforeSave
+  validateBeforeSave,
+  allowPageSections = true
 }: {
   slug?: string;
   title?: string;
   childrenText?: string;
   variant?: 'default' | 'simple-layout';
   validateBeforeSave?: () => boolean | 'uk' | 'en';
+  allowPageSections?: boolean;
 } = {}) => {
   return render(
-    <EditablePageLayout pageSlug={slug} headerTitle={title} variant={variant} validateBeforeSave={validateBeforeSave}>
+    <EditablePageLayout
+      pageSlug={slug}
+      headerTitle={title}
+      variant={variant}
+      validateBeforeSave={validateBeforeSave}
+      allowPageSections={allowPageSections}
+    >
       <div data-testid="child-content">{textVal}</div>
     </EditablePageLayout>
   );
@@ -138,6 +146,23 @@ describe('EditablePageLayout', () => {
       expect(screen.getByTestId('header')).toBeInTheDocument();
       expect(screen.getByTestId('title')).toHaveTextContent(headerTitle);
       expect(screen.queryByTestId('child-content')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
+    });
+
+    it('should not render the sections editor when page sections are not allowed', () => {
+      runSimulation({ allowPageSections: false });
+
+      expect(screen.getByTestId('child-content')).toBeInTheDocument();
+      expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
+    });
+
+    it('should not render the sections editor by default', () => {
+      render(
+        <EditablePageLayout pageSlug={pageSlug} headerTitle={headerTitle}>
+          <div data-testid="child-content">{childrenText}</div>
+        </EditablePageLayout>
+      );
+
       expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
     });
 
@@ -334,6 +359,13 @@ describe('EditablePageLayout', () => {
   });
 
   describe('simple-layout variant', () => {
+    it('should not render the sections editor in simple-layout when page sections are not allowed', () => {
+      runSimulation({ variant: 'simple-layout', allowPageSections: false });
+
+      expect(screen.getByTestId('child-content')).toBeInTheDocument();
+      expect(screen.queryByTestId('page-sections-editor')).not.toBeInTheDocument();
+    });
+
     it('should render correctly with simple-layout', () => {
       runSimulation({ variant: 'simple-layout' });
 

@@ -24,6 +24,7 @@ interface EditablePageLayoutProps {
   validateBeforeSave?: () => boolean | 'uk' | 'en';
   blockIdToPublish?: string;
   backHref?: string;
+  allowPageSections?: boolean;
 }
 
 export const EditablePageLayout = ({
@@ -33,7 +34,8 @@ export const EditablePageLayout = ({
   variant = 'default',
   validateBeforeSave,
   blockIdToPublish,
-  backHref
+  backHref,
+  allowPageSections = false
 }: EditablePageLayoutProps) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] = useState(false);
@@ -161,9 +163,11 @@ export const EditablePageLayout = ({
         ) : (
           <>
             {content}
-            <Box sx={{ px: '32px', pb: '32px' }}>
-              <PageSectionsEditor pageSlug={pageSlug} />
-            </Box>
+            {allowPageSections && (
+              <Box sx={{ px: '32px', pb: '32px' }}>
+                <PageSectionsEditor pageSlug={pageSlug} />
+              </Box>
+            )}
           </>
         )}
         <DiscardChangesModal
@@ -189,7 +193,7 @@ export const EditablePageLayout = ({
         onLanguageChange={handleLocaleChange}
       />
       {content}
-      {!isLoading && <PageSectionsEditor pageSlug={pageSlug} />}
+      {!isLoading && allowPageSections && <PageSectionsEditor pageSlug={pageSlug} />}
       <DiscardChangesModal
         open={isDiscardChangesModalOpen}
         description={discardChangesModalDescription}
