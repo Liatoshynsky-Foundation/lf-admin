@@ -161,4 +161,24 @@ describe('MainPagesContent Component', () => {
     expect(screen.getByText('/privacy-policy')).toBeInTheDocument();
     expect(screen.getByText('/research-page')).toBeInTheDocument();
   });
+  
+  it('should display the Biography card with its editor and SEO links', () => {
+    (useGetPagesQuery as jest.Mock).mockReturnValue({
+      loading: false,
+      data: {
+        pages: [
+          ...MOCK_BASE_PAGES,
+          { id: '4', slug: 'biography', title: 'Біографія', coverImage: 'biography.png', updatedAt: '2026-11-17' }
+        ]
+      }
+    });
+
+    render(<MainPagesContent activeTab="all" />);
+
+    expect(screen.getAllByTestId('mock-page-card')).toHaveLength(4);
+    expect(screen.getByText('Біографія')).toBeInTheDocument();
+    expect(screen.getByText('biography.png')).toBeInTheDocument();
+    expect(screen.getByText('/biography-page')).toBeInTheDocument();
+    expect(screen.getByText('/main-page/pages/biography/seo')).toBeInTheDocument();
+  });
 });
