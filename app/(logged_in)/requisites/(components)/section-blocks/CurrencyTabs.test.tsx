@@ -26,7 +26,7 @@ const renderCurrencyTabs = (props: Partial<React.ComponentProps<typeof CurrencyT
       editingId={null}
       onSelectTab={jest.fn()}
       onAddTab={jest.fn()}
-      onUpdateCurrency={jest.fn()}
+      onUpdateCurrency={jest.fn(() => true)}
       onDeleteTab={jest.fn()}
       setEditingId={jest.fn()}
       {...props}
@@ -87,7 +87,7 @@ describe('CurrencyTabs', () => {
     { value: 'EUR', expected: 'EUR' },
     { value: '   ', expected: 'Без назви' }
   ])('commits currency on Enter ($value -> $expected)', ({ value, expected }) => {
-    const handleUpdate = jest.fn();
+    const handleUpdate = jest.fn(() => true);
     const setEditingId = jest.fn();
     renderCurrencyTabs({ editingId: '1', onUpdateCurrency: handleUpdate, setEditingId });
 
@@ -193,5 +193,55 @@ describe('CurrencyTabs', () => {
     renderCurrencyTabs({ editingId: 'non-existent' });
 
     expect(screen.queryByPlaceholderText('Без назви')).not.toBeInTheDocument();
+  });
+
+  it('displays and updates the character counter while editing', () => {
+    renderCurrencyTabs({ editingId: '1' });
+
+    const input = screen.getByDisplayValue('UAH');
+
+    expect(screen.getByText('3/40')).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'US Dollar' } });
+
+    expect(screen.getByText('9/40')).toBeInTheDocument();
+  });
+
+  it('counts spaces in the character counter', () => {
+    renderCurrencyTabs({ editingId: '1' });
+
+    const input = screen.getByDisplayValue('UAH');
+
+    fireEvent.change(input, { target: { value: 'USD ' } });
+
+    expect(screen.getByText('4/40')).toBeInTheDocument();
+  });
+
+  it('sets a maximum input length of 40 characters', () => {
+    renderCurrencyTabs({ editingId: '1' });
+
+    const input = screen.getByDisplayValue('UAH');
+
+    expect(input).toHaveAttribute('maxLength', '40');
+  });
+
+  it('keeps editing open when the rename is rejected', () => {
+    const handleUpdate = jest.fn(() => false);
+    const setEditingId = jest.fn();
+
+    renderCurrencyTabs({
+      editingId: '1',
+      onUpdateCurrency: handleUpdate,
+      setEditingId
+    });
+
+    const input = screen.getByDisplayValue('UAH');
+
+    fireEvent.change(input, { target: { value: 'USD' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(handleUpdate).toHaveBeenCalledWith('1', 'USD');
+    expect(setEditingId).not.toHaveBeenCalledWith(null);
+    expect(screen.getByDisplayValue('USD')).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { EllipsisVertical, Pencil, Trash2 } from 'lucide-react';
 import React, {
   useCallback,
@@ -21,7 +21,7 @@ interface CurrencyTabsProps {
   editingId: string | null;
   onSelectTab: (id: string) => void;
   onAddTab: () => void;
-  onUpdateCurrency: (id: string, name: string) => void;
+  onUpdateCurrency: (id: string, name: string) => boolean;
   onDeleteTab: (id: string) => void;
   setEditingId: (id: string | null) => void;
   readOnly?: boolean;
@@ -108,6 +108,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
     }
   }, [editingId, items]);
 
+  const CURRENCY_MAX: number = 40;
+
   const handleOpenMenu = (event: React.MouseEvent<HTMLElement>, id: string) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
@@ -140,9 +142,15 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
       isEscapedRef.current = false;
       return;
     }
-    if (editingId) {
-      const trimmed = editingValue.trim();
-      onUpdateCurrency(editingId, trimmed || REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY);
+
+    if (!editingId) return;
+
+    const trimmed = editingValue.trim();
+    const nameToCommit = trimmed || REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY;
+
+    const isUpdated = onUpdateCurrency(editingId, nameToCommit);
+
+    if (isUpdated) {
       setEditingId(null);
     }
   };
@@ -213,21 +221,28 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                 ]}
               >
                 {isEditing ? (
-                  <input
-                    ref={inputRef}
-                    style={{
-                      ...(styles.tabInput as React.CSSProperties),
-                      width: `${Math.max(64, Math.min(200, (editingValue.length + 1) * 9))}px`
-                    }}
-                    value={editingValue}
-                    onChange={(e) => {
-                      setEditingValue(e.target.value);
-                    }}
-                    onBlur={handleCommitEdit}
-                    onKeyDown={handleKeyDown}
-                    placeholder={REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <>
+                    <input
+                      ref={inputRef}
+                      style={{
+                        ...(styles.tabInput as React.CSSProperties),
+                        width: `${Math.max(64, Math.min(200, (editingValue.length + 1) * 9))}px`
+                      }}
+                      value={editingValue}
+                      maxLength={CURRENCY_MAX}
+                      onChange={(e) => {
+                        setEditingValue(e.target.value);
+                      }}
+                      onBlur={handleCommitEdit}
+                      onKeyDown={handleKeyDown}
+                      placeholder={REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+
+                    <Typography component="span" variant="caption" sx={{ whiteSpace: 'nowrap', ml: 0.5 }}>
+                      {editingValue.length}/{CURRENCY_MAX}
+                    </Typography>
+                  </>
                 ) : (
                   <Box
                     component="button"

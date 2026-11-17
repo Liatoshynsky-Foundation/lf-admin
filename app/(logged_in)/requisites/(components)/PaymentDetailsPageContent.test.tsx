@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import toast from 'react-hot-toast';
 
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
+import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import {
   REQUISITES_EMPTY,
   REQUISITES_ERROR,
@@ -174,13 +176,6 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.queryByRole('button', { name: /зберегти/i })).not.toBeInTheDocument();
   });
 
-  it('renders tab editing controls as unavailable', () => {
-    render(<PaymentDetailsPageContent />);
-
-    expect(screen.getByRole('button', { name: /додати реквізити/i })).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
-  });
-
   it('renders the editor as non-editable', () => {
     render(<PaymentDetailsPageContent />);
 
@@ -192,5 +187,38 @@ describe('PaymentDetailsPageContent', () => {
 
     expect(screen.getByRole('button', { name: /додати файл/i })).toBeDisabled();
     expect(screen.getByTestId('delete-pdf-button')).toBeDisabled();
+  });
+
+  it('rejects renaming a tab to an existing name regardless of case', () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText('Редагувати назву'));
+
+    const input = screen.getByDisplayValue('UAH');
+
+    fireEvent.change(input, { target: { value: 'usd' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(toast.error).toHaveBeenCalledWith(PAYMENT_DETAILS_MESSAGES.tabNameDuplicate);
+
+    expect(screen.getByDisplayValue('usd')).toBeInTheDocument();
+  });
+
+  it('successfully renames a tab when the new name is unique', () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText('Редагувати назву'));
+
+    const input = screen.getByDisplayValue('UAH');
+
+    fireEvent.change(input, { target: { value: 'CAD' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(screen.getByText('CAD')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('CAD')).not.toBeInTheDocument();
+
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });
