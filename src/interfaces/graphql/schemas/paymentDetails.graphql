@@ -2,6 +2,7 @@ type PaymentDetailsPdfFile {
   filename: String!
   url: String!
   mimeType: String!
+  sizeBytes: Int
 }
 
 type PaymentDetailsTab {
@@ -24,6 +25,7 @@ input PaymentDetailsPdfFileInput {
   filename: String!
   url: String!
   mimeType: String!
+  sizeBytes: Int!
 }
 
 input PaymentDetailsTabInput {

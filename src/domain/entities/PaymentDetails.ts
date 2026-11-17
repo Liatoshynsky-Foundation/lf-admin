@@ -4,7 +4,13 @@ export type PaymentDetailsPdfFile = {
   filename: string;
   url: string;
   mimeType: string;
+  sizeBytes?: number | null;
 };
+
+export type PaymentDetailsPdfFileInput = Omit<PaymentDetailsPdfFile, 'sizeBytes'> & {
+  sizeBytes: number;
+};
+
 export type PaymentDetailsTab = {
   id: string;
   name: string;
