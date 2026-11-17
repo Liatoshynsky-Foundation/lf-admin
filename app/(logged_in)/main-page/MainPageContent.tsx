@@ -22,12 +22,22 @@ const MAIN_PAGE_TABS: readonly PageHeaderTab[] = [
   { value: PageCategory.Other, label: 'Інші', href: '/main-page/other' }
 ];
 
-const ALLOWED_SLUGS = new Set(['about-us', 'privacy-policy', 'artistry', 'war-in-ukraine', 'archive', 'research', 'news']);
+const ALLOWED_SLUGS = new Set([
+  'about-us',
+  'privacy-policy',
+  'artistry',
+  'war-in-ukraine',
+  'archive',
+  'research',
+  'news',
+  'biography'
+]);
 
 const PAGE_EDIT_ROUTES: Record<string, string> = {
   archive: '/archive-page',
   research: '/research-page',
-  news: '/publications-page'
+  news: '/publications-page',
+  biography: '/biography-page'
 };
 
 export function MainPagesContent({ activeTab }: MainPagesContentProps) {
