@@ -10,6 +10,7 @@ import { styles } from './PaymentDetailsPageContent.styles';
 import { CurrencyTabs } from './section-blocks/CurrencyTabs';
 import { PdfAttachmentBlock } from './section-blocks/PdfAttachmentBlock';
 import { RequisitesContentEditor } from './section-blocks/RequisitesContentEditor';
+import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import {
   type PaymentDetailsPdfFile,
   type PaymentDetailsTab,
@@ -102,10 +103,31 @@ const PaymentDetailsPageContent = () => {
     setEditingTabId(newId);
   };
 
-  const handleUpdateTabName = (id: string, newName: string) => {
-    setTabs((prev) =>
-      prev.map((tab) => (tab.id === id ? { ...tab, name: newName } : tab))
+  const handleUpdateTabName = (id: string, newName: string): boolean => {
+    const trimmedName = newName.trim();
+
+    if (!trimmedName || trimmedName.length > 40) {
+      return false;
+    }
+
+    const isDuplicate = tabs.some(
+      (tab) =>
+        tab.id !== id &&
+      tab.name.trim().toLowerCase() === trimmedName.toLowerCase()
     );
+
+    if (isDuplicate) {
+      toast.error(PAYMENT_DETAILS_MESSAGES.tabNameDuplicate);
+      return false;
+    }
+
+    setTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === id ? { ...tab, name: trimmedName } : tab
+      )
+    );
+
+    return true;
   };
 
   const handleDeleteTab = (id: string) => {
@@ -171,7 +193,6 @@ const PaymentDetailsPageContent = () => {
             onUpdateCurrency={handleUpdateTabName}
             onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
-            readOnly
           />
 
           <RequisitesContentEditor
