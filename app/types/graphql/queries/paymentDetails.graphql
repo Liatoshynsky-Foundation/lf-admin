@@ -12,6 +12,7 @@ query GetPaymentDetails {
       filename
       url
       mimeType
+      sizeBytes
     }
     createdAt
     updatedAt

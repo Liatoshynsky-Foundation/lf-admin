@@ -21,7 +21,8 @@ export const paymentDetailsContent = {
 export const paymentDetailsPdfFile = {
   filename: 'payment-details.pdf',
   url: 'https://cdn.example.com/payment-details.pdf',
-  mimeType: 'application/pdf'
+  mimeType: 'application/pdf',
+  sizeBytes: 1024
 };
 
 export const paymentDetails: DbPaymentDetails = {

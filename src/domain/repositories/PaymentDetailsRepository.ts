@@ -1,6 +1,6 @@
 import type { JSONContent } from '@tiptap/react';
 
-import type { PaymentDetails, PaymentDetailsPdfFile } from '~/domain/entities/PaymentDetails';
+import type { PaymentDetails,PaymentDetailsPdfFileInput } from '~/domain/entities/PaymentDetails';
 
 export type UpdatePaymentDetailsInput = {
   tabs: Array<{
@@ -8,7 +8,7 @@ export type UpdatePaymentDetailsInput = {
     name: string;
     content: JSONContent;
   }>;
-  pdfFile?: PaymentDetailsPdfFile | null;
+  pdfFile?: PaymentDetailsPdfFileInput | null;
 };
 
 export interface IPaymentDetailsRepository {

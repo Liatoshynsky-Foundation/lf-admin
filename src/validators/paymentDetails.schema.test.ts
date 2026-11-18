@@ -1,6 +1,8 @@
 import { zPaymentDetailsSchema, zPaymentDetailsUpdateSchema } from './paymentDetails.schema';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 
+const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
+
 const content = {
   type: 'doc',
   content: [
@@ -27,6 +29,23 @@ describe('payment details schemas', () => {
     expect(result.success).toBe(true);
   });
 
+  it.each([undefined, null])(
+    'accepts a legacy persisted payment details document when sizeBytes is %s',
+    (sizeBytes) => {
+      const result = zPaymentDetailsSchema.safeParse({
+        tabs: [{ name: 'UAH', content, order: 0 }],
+        pdfFile: {
+          filename: 'payment-details.pdf',
+          url: 'https://example.com/payment-details.pdf',
+          mimeType: 'application/pdf',
+          ...(sizeBytes !== undefined && { sizeBytes })
+        }
+      });
+
+      expect(result.success).toBe(true);
+    }
+  );
+
   it('accepts an aggregate update with new and existing tabs', () => {
     const result = zPaymentDetailsUpdateSchema.safeParse({
       tabs: [
@@ -38,6 +57,47 @@ describe('payment details schemas', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('accepts an update with a PDF file up to 20 MB', () => {
+    const result = zPaymentDetailsUpdateSchema.safeParse({
+      tabs: [{ name: 'UAH', content }],
+      pdfFile: { ...pdfFile, sizeBytes: MAX_PDF_SIZE_BYTES }
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a PDF file exceeding 20 MB', () => {
+    const result = zPaymentDetailsUpdateSchema.safeParse({
+      tabs: [{ name: 'UAH', content }],
+      pdfFile: { ...pdfFile, sizeBytes: MAX_PDF_SIZE_BYTES + 1 }
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({
+        path: ['pdfFile', 'sizeBytes'],
+        message: PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize
+      })
+    );
+  });
+
+  it.each([undefined, null, -1, 10.5])(
+    'rejects an update PDF file with invalid sizeBytes (%s)',
+    (sizeBytes) => {
+      const result = zPaymentDetailsUpdateSchema.safeParse({
+        tabs: [{ name: 'UAH', content }],
+        pdfFile: {
+          filename: 'payment-details.pdf',
+          url: 'https://example.com/payment-details.pdf',
+          mimeType: 'application/pdf',
+          ...(sizeBytes !== undefined && { sizeBytes })
+        }
+      });
+
+      expect(result.success).toBe(false);
+    }
+  );
 
   it('rejects duplicate tab names case-insensitively and after trimming', () => {
     const result = zPaymentDetailsUpdateSchema.safeParse({
@@ -112,8 +172,8 @@ describe('payment details schemas', () => {
   });
 
   it.each([
-    [{ filename: 'payment-details.docx', url: 'https://example.com/file', mimeType: 'application/pdf' }],
-    [{ filename: 'payment-details.pdf', url: 'https://example.com/file', mimeType: 'text/plain' }]
+    [{ filename: 'payment-details.docx', url: 'https://example.com/file', mimeType: 'application/pdf',sizeBytes: 1024 }],
+    [{ filename: 'payment-details.pdf', url: 'https://example.com/file', mimeType: 'text/plain',sizeBytes: 1024 }]
   ])('rejects a non-PDF payment details file', (file) => {
     const result = zPaymentDetailsUpdateSchema.safeParse({
       tabs: [{ name: 'UAH', content }],

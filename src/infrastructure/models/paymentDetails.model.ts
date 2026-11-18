@@ -6,7 +6,8 @@ const paymentDetailsPdfFileSchema = new Schema(
   {
     filename: { type: String, required: true },
     url: { type: String, required: true },
-    mimeType: { type: String, required: true }
+    mimeType: { type: String, required: true },
+    sizeBytes: { type: Number, default: null }
   },
   { _id: false }
 );

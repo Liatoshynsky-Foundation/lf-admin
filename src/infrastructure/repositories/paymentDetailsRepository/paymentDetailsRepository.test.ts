@@ -117,6 +117,18 @@ describe('PaymentDetailsRepository', () => {
 
       expect(result?.pdfFile).toEqual(paymentDetailsPdfFile);
     });
+
+    it('preserves compatibility with legacy PDF records without sizeBytes', async () => {
+      const legacyPdfFile = {
+        filename: 'legacy.pdf',
+        url: 'https://cdn.example.com/legacy.pdf',
+        mimeType: 'application/pdf'
+      };
+
+      const result = await mockAndFetchPaymentDetails({ pdfFile: legacyPdfFile });
+
+      expect(result?.pdfFile).toEqual(legacyPdfFile);
+    });
   });
 
   describe('updatePaymentDetails', () => {

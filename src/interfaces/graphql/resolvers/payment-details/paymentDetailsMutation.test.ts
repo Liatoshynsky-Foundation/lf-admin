@@ -1,5 +1,8 @@
 import { PaymentDetailsMutation } from './paymentDetailsMutation';
+import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import { createMockContext } from '~/interfaces/graphql/resolvers/testUtils';
+
+const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
 
 describe('PaymentDetailsMutation', () => {
   const content = { type: 'doc', content: [{ type: 'paragraph' }] };
@@ -50,7 +53,7 @@ describe('PaymentDetailsMutation', () => {
 
   it('passes the PDF file when it is provided', async () => {
     update.mockResolvedValue(savedPaymentDetails);
-    const pdfFile = { filename: 'details.pdf', url: '/details.pdf', mimeType: 'application/pdf' };
+    const pdfFile = { filename: 'details.pdf', url: '/details.pdf', mimeType: 'application/pdf',sizeBytes: 2048 };
 
     await PaymentDetailsMutation.updatePaymentDetails({}, { input: { tabs: [{ name: 'UAH', content }], pdfFile } }, context);
 
@@ -75,6 +78,27 @@ describe('PaymentDetailsMutation', () => {
     );
 
     expect(update).toHaveBeenCalledWith({ tabs: [{ name: 'UAH', content }], pdfFile: null });
+  });
+
+  it('rejects a PDF file exceeding 20 MB with BAD_USER_INPUT', async () => {
+    const pdfFile = {
+      filename: 'details.pdf',
+      url: '/details.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: MAX_PDF_SIZE_BYTES + 1
+    };
+
+    await expect(
+      PaymentDetailsMutation.updatePaymentDetails({}, { input: { tabs: [{ name: 'UAH', content }], pdfFile } }, context)
+    ).rejects.toMatchObject({
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        issues: expect.arrayContaining([
+          expect.objectContaining({ message: PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize })
+        ])
+      }
+    });
+    expect(update).not.toHaveBeenCalled();
   });
 
   it.each([

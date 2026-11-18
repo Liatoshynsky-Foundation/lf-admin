@@ -7,6 +7,7 @@ import { TipTapDocSchema } from '~/validators/tiptap.schema';
 const REQUISITES_TABLE_COLUMNS = 2;
 const MERGED_CELL_ATTRIBUTES = ['colspan', 'rowspan'] as const;
 const REQUISITES_ROW_CELL_TYPES = [TipTapTableNodeTypes.tableHeader, TipTapTableNodeTypes.tableCell];
+const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
 
 type RawTipTapNode = {
   type?: unknown;
@@ -86,13 +87,37 @@ const withUniqueTabNames = <T extends z.ZodType<{ tabs: Array<{ name: string }> 
     }
   });
 };
+
+const pdfSizeBytesSchema = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(MAX_PDF_SIZE_BYTES, PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize);
+
+const pdfFileFields = {
+  filename: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+  mimeType: z.string().trim().min(1)
+};
+
+const isPdfFile = (file: { mimeType: string; filename: string }) =>
+  file.mimeType === 'application/pdf' && file.filename.toLowerCase().endsWith('.pdf');
+
+const pdfFileInputSchema = z
+  .object({
+    ...pdfFileFields,
+    sizeBytes: pdfSizeBytesSchema
+  })
+  .refine(isPdfFile, {
+    message: PAYMENT_DETAILS_MESSAGES.pdfInvalidType
+  });
+
 const pdfFileSchema = z
   .object({
-    filename: z.string().trim().min(1),
-    url: z.string().trim().min(1),
-    mimeType: z.string().trim().min(1)
+    ...pdfFileFields,
+    sizeBytes: pdfSizeBytesSchema.nullable().optional()
   })
-  .refine((file) => file.mimeType === 'application/pdf' && file.filename.toLowerCase().endsWith('.pdf'), {
+  .refine(isPdfFile, {
     message: PAYMENT_DETAILS_MESSAGES.pdfInvalidType
   });
 
@@ -123,6 +148,6 @@ export const zPaymentDetailsSchema = withUniqueTabNames(
 export const zPaymentDetailsUpdateSchema = withUniqueTabNames(
   z.object({
     tabs: z.array(paymentDetailsTabUpdateSchema).min(1, PAYMENT_DETAILS_MESSAGES.atLeastOneTabRequired),
-    pdfFile: pdfFileSchema.nullable()
+    pdfFile: pdfFileInputSchema.nullable().optional()
   })
 );
