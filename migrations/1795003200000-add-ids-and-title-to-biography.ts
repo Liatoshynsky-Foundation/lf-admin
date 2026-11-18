@@ -26,28 +26,30 @@ export const addBiographyIds = (biographyContent: BiographyYear[] = []): Biograp
 const hasMissingIds = (biographyContent: BiographyYear[] = []) =>
   biographyContent.some((year) => !year.id || (year.items ?? []).some((item) => !item.id));
 
-export async function up(db: Db): Promise<void> {
-  for (const collectionName of TARGET_COLLECTIONS) {
-    const collection = db.collection(collectionName);
-    const page = await collection.findOne<{ blocks?: BiographyBlocks }>({ slug: BIOGRAPHY_SLUG });
-    const blocks = page?.blocks;
+const migrateCollection = async (db: Db, collectionName: string): Promise<void> => {
+  const collection = db.collection(collectionName);
+  const page = await collection.findOne<{ blocks?: BiographyBlocks }>({ slug: BIOGRAPHY_SLUG });
+  const blocks = page?.blocks;
 
-    if (!blocks) continue;
+  if (!blocks) return;
 
-    const $set: Record<string, unknown> = {};
+  const $set: Record<string, unknown> = {};
 
-    if (hasMissingIds(blocks.biographyContent)) {
-      $set['blocks.biographyContent'] = addBiographyIds(blocks.biographyContent);
-    }
-
-    if (blocks.heroSection && !blocks.heroSection.title) {
-      $set['blocks.heroSection.title'] = BIOGRAPHY_HERO_TITLE;
-    }
-
-    if (Object.keys($set).length > 0) {
-      await collection.updateOne({ slug: BIOGRAPHY_SLUG }, { $set });
-    }
+  if (hasMissingIds(blocks.biographyContent)) {
+    $set['blocks.biographyContent'] = addBiographyIds(blocks.biographyContent);
   }
+
+  if (blocks.heroSection && !blocks.heroSection.title) {
+    $set['blocks.heroSection.title'] = BIOGRAPHY_HERO_TITLE;
+  }
+
+  if (Object.keys($set).length > 0) {
+    await collection.updateOne({ slug: BIOGRAPHY_SLUG }, { $set });
+  }
+};
+
+export async function up(db: Db): Promise<void> {
+  await Promise.all(TARGET_COLLECTIONS.map((collectionName) => migrateCollection(db, collectionName)));
 }
 
 export async function down(_db: Db): Promise<void> {
