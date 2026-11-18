@@ -22,7 +22,7 @@ interface CurrencyTabsProps {
   onSelectTab: (id: string) => void;
   onAddTab: () => void;
   onUpdateCurrency: (id: string, name: string) => boolean;
-  onDeleteTab: (id: string) => void;
+  onDeleteTab?: (id: string) => void;
   setEditingId: (id: string | null) => void;
   readOnly?: boolean;
 }
@@ -132,7 +132,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
 
   const handleDelete = () => {
     if (menuTargetId) {
-      onDeleteTab(menuTargetId);
+      onDeleteTab?.(menuTargetId);
     }
     handleCloseMenu();
   };
@@ -176,14 +176,18 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
           },
           onClick: handleStartRename
         },
-        {
-          id: 'delete',
-          text: {
-            name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU,
-            icon: <Trash2 size={18} />
-          },
-          onClick: handleDelete
-        }
+        ...(onDeleteTab
+          ? [
+            {
+              id: 'delete',
+              text: {
+                name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU,
+                icon: <Trash2 size={18} />
+              },
+              onClick: handleDelete
+            }
+          ]
+          : [])
       ]
     }
   ];

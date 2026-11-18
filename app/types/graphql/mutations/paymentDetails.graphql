@@ -1,0 +1,20 @@
+mutation UpdatePaymentDetails($input: UpdatePaymentDetailsInput!) {
+  updatePaymentDetails(input: $input) {
+    id
+    slug
+    tabs {
+      id
+      name
+      content
+      order
+    }
+    pdfFile {
+      filename
+      url
+      mimeType
+      sizeBytes
+    }
+    createdAt
+    updatedAt
+  }
+}

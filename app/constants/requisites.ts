@@ -30,6 +30,7 @@ export const REQUISITES_MESSAGES = {
   EDIT_TITLE_MENU: 'Редагувати назву',
   DELETE_REQUISITE_MENU: 'Видалити реквізит',
   SAVE_SUCCESS: 'Реквізити успішно збережено',
+  SAVE_ERROR: 'Не вдалося зберегти реквізити. Спробуйте ще раз.',
   DELETE_CONFIRMATION: 'Видалити цю вкладку реквізитів?',
   DEFAULT_NEW_CURRENCY: 'Без назви'
 } as const;
