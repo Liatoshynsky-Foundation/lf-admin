@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
@@ -258,6 +258,44 @@ describe('PaymentDetailsPageContent', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_SUCCESS));
     expect(screen.getByText('UAH saved')).toBeInTheDocument();
     expect(screen.queryByText('USD')).not.toBeInTheDocument();
+  });
+
+  it('disables editing, adding and renaming tabs while saving', async () => {
+    let resolveSave: (value: unknown) => void = () => {};
+    mockUpdatePaymentDetails.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSave = resolve;
+      })
+    );
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'false');
+    expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveSave({ data: { updatePaymentDetails: MOCK_PAYMENT_DETAILS } });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'true')
+    );
+    expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Опції реквізиту' })).toBeInTheDocument();
+  });
+
+  it('shows an error and keeps local edits when the response has no saved record', async () => {
+    mockUpdatePaymentDetails.mockResolvedValue({ data: undefined });
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES }));
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_ERROR));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.getByDisplayValue(REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY)).toBeInTheDocument();
   });
 
   it('keeps local edits and shows an error when saving fails', async () => {

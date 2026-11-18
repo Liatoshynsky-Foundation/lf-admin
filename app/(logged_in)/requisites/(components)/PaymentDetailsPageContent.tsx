@@ -44,7 +44,8 @@ const PaymentDetailsPageContent = () => {
   const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [savedTabIds, setSavedTabIds] = useState<ReadonlySet<string>>(new Set());
-  const [updatePaymentDetails, { loading: saving }] = useUpdatePaymentDetailsMutation();
+  const [isSaving, setIsSaving] = useState(false);
+  const [updatePaymentDetails] = useUpdatePaymentDetailsMutation();
   const localBlobUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -157,6 +158,8 @@ const PaymentDetailsPageContent = () => {
       0
     );
 
+    setIsSaving(true);
+
     try {
       const { data: response } = await updatePaymentDetails({
         variables: { input: buildPaymentDetailsInput(tabs, savedTabIds, pdfFile) }
@@ -165,17 +168,21 @@ const PaymentDetailsPageContent = () => {
         response ? { paymentDetails: response.updatePaymentDetails } : undefined
       );
 
-      if (saved) {
-        setTabs(saved.tabs);
-        setPdfFile(saved.pdfFile ?? null);
-        setSavedTabIds(new Set(saved.tabs.map((tab) => tab.id)));
-        setActiveTabId(saved.tabs[activeTabIndex]?.id ?? saved.tabs[0]?.id ?? '');
-        setEditingTabId(null);
+      if (!saved) {
+        toast.error(REQUISITES_MESSAGES.SAVE_ERROR);
+        return;
       }
 
+      setTabs(saved.tabs);
+      setPdfFile(saved.pdfFile ?? null);
+      setSavedTabIds(new Set(saved.tabs.map((tab) => tab.id)));
+      setActiveTabId(saved.tabs[activeTabIndex]?.id ?? saved.tabs[0]?.id ?? '');
+      setEditingTabId(null);
       toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
     } catch (saveError) {
       toast.error(getSaveErrorMessage(saveError));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -183,7 +190,7 @@ const PaymentDetailsPageContent = () => {
     <ContentPageLayout
       title={<Typography variant="h4">{REQUISITES_MESSAGES.PAGE_TITLE}</Typography>}
       showBackButton={false}
-      rightActions={<PaymentHeaderActions onSave={() => void handleSave()} saving={saving} />}
+      rightActions={<PaymentHeaderActions onSave={() => void handleSave()} saving={isSaving} />}
     >
       <CollapsibleBlock title={REQUISITES_MESSAGES.BLOCK_TITLE} defaultExpanded>
         <Box sx={styles.content}>
@@ -195,12 +202,14 @@ const PaymentDetailsPageContent = () => {
             onAddTab={handleAddTab}
             onUpdateCurrency={handleUpdateTabName}
             setEditingId={setEditingTabId}
+            readOnly={isSaving}
           />
 
           <RequisitesContentEditor
             key={activeTab.id}
             value={activeTab.content}
             onChange={handleContentChange}
+            readOnly={isSaving}
           />
 
           <PdfAttachmentBlock

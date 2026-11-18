@@ -126,6 +126,12 @@ export const CustomFormattingField = ({
   });
 
   useEffect(() => {
+    if (!editor || editor.isEditable === editable) return;
+
+    editor.setEditable(editable, false);
+  }, [editor, editable]);
+
+  useEffect(() => {
     if (!editor) return;
 
     const isValueEmpty =
