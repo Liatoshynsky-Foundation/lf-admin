@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './PaymentDetailsPageContent.styles';
-// import { PaymentHeaderActions } from './PaymentHeaderActions';
+import { buildPaymentDetailsInput, getSaveErrorMessage } from './paymentDetailsSave';
+import { PaymentHeaderActions } from './PaymentHeaderActions';
 import { CurrencyTabs } from './section-blocks/CurrencyTabs';
 import { PdfAttachmentBlock } from './section-blocks/PdfAttachmentBlock';
 import { RequisitesContentEditor } from './section-blocks/RequisitesContentEditor';
@@ -22,7 +23,8 @@ import {
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
 import { EmptyState } from '~/shared/components/empty-state';
-import { usePaymentDetails } from '~/shared/hooks/use-payment-details/usePaymentDetails';
+import { normalizePaymentDetails, usePaymentDetails } from '~/shared/hooks/use-payment-details/usePaymentDetails';
+import { useUpdatePaymentDetailsMutation } from '~/types/graphql/generated/graphql';
 
 const resolveActiveTabId = (
   tabs: PaymentDetailsTab[],
@@ -41,7 +43,9 @@ const PaymentDetailsPageContent = () => {
   const [pdfFile, setPdfFile] = useState<PaymentDetailsPdfFile | null>(null);
   const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
-  // const [saving, setSaving] = useState(false);
+  const [savedTabIds, setSavedTabIds] = useState<ReadonlySet<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [updatePaymentDetails] = useUpdatePaymentDetailsMutation();
   const localBlobUrlsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -49,6 +53,7 @@ const PaymentDetailsPageContent = () => {
 
     setTabs(data.tabs);
     setPdfFile(data.pdfFile ?? null);
+    setSavedTabIds(new Set(data.tabs.map((tab) => tab.id)));
     setActiveTabId((currentId) => resolveActiveTabId(data.tabs, currentId));
   }, [data]);
 
@@ -130,22 +135,6 @@ const PaymentDetailsPageContent = () => {
     return true;
   };
 
-  const handleDeleteTab = (id: string) => {
-    if (tabs.length <= 1) {
-      toast.error('Неможливо видалити останню вкладку');
-      return;
-    }
-
-    setTabs((prev) => {
-      const filtered = prev.filter((tab) => tab.id !== id);
-      if (activeTabId === id) {
-        setActiveTabId(filtered[0].id);
-      }
-      return filtered;
-    });
-    setEditingTabId(null);
-  };
-
   const handleContentChange = (newContent: JSONContent) => {
     setTabs((prev) =>
       prev.map((tab) => (tab.id === activeTabId ? { ...tab, content: newContent } : tab))
@@ -163,24 +152,45 @@ const PaymentDetailsPageContent = () => {
     setPdfFile(file);
   };
 
-  // const handleSave = async () => {
-  //   setSaving(true);
-  //   try {
-  //     await new Promise((resolve) => setTimeout(resolve, 600));
-  //     toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
-  //   } finally {
-  //     setSaving(false);
-  //   }
-  // };
+  const handleSave = async () => {
+    const activeTabIndex = Math.max(
+      tabs.findIndex((tab) => tab.id === activeTabId),
+      0
+    );
 
-  // rightActions={
-  //   <PaymentHeaderActions onSave={() => void handleSave()} saving={saving} />
-  // }
+    setIsSaving(true);
+
+    try {
+      const { data: response } = await updatePaymentDetails({
+        variables: { input: buildPaymentDetailsInput(tabs, savedTabIds, pdfFile) }
+      });
+      const saved = normalizePaymentDetails(
+        response ? { paymentDetails: response.updatePaymentDetails } : undefined
+      );
+
+      if (!saved) {
+        toast.error(REQUISITES_MESSAGES.SAVE_ERROR);
+        return;
+      }
+
+      setTabs(saved.tabs);
+      setPdfFile(saved.pdfFile ?? null);
+      setSavedTabIds(new Set(saved.tabs.map((tab) => tab.id)));
+      setActiveTabId(saved.tabs[activeTabIndex]?.id ?? saved.tabs[0]?.id ?? '');
+      setEditingTabId(null);
+      toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
+    } catch (saveError) {
+      toast.error(getSaveErrorMessage(saveError));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <ContentPageLayout
       title={<Typography variant="h4">{REQUISITES_MESSAGES.PAGE_TITLE}</Typography>}
       showBackButton={false}
+      rightActions={<PaymentHeaderActions onSave={() => void handleSave()} saving={isSaving} />}
     >
       <CollapsibleBlock title={REQUISITES_MESSAGES.BLOCK_TITLE} defaultExpanded>
         <Box sx={styles.content}>
@@ -191,15 +201,15 @@ const PaymentDetailsPageContent = () => {
             onSelectTab={handleSelectTab}
             onAddTab={handleAddTab}
             onUpdateCurrency={handleUpdateTabName}
-            onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
+            readOnly={isSaving}
           />
 
           <RequisitesContentEditor
             key={activeTab.id}
             value={activeTab.content}
             onChange={handleContentChange}
-            readOnly
+            readOnly={isSaving}
           />
 
           <PdfAttachmentBlock

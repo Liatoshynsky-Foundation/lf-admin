@@ -18,10 +18,13 @@ let mockEditorConfig: EditorConfig;
 const mockFocus = jest.fn();
 const mockSetContent = jest.fn();
 const mockGetJSON = jest.fn();
+const mockSetEditable = jest.fn();
 
 const mockEditor = {
   getJSON: mockGetJSON,
   isEmpty: true,
+  isEditable: true,
+  setEditable: mockSetEditable,
   commands: {
     focus: mockFocus,
     setContent: mockSetContent
@@ -65,6 +68,16 @@ describe('CustomFormattingField', () => {
     jest.clearAllMocks();
     Object.defineProperty(mockEditor, 'isEmpty', { value: true, configurable: true });
     mockGetJSON.mockReturnValue(defaultJSON);
+  });
+
+  it('updates the editable state of the editor when the prop changes', () => {
+    const { rerender } = render(<CustomFormattingField onChange={mockOnChange} />);
+
+    expect(mockSetEditable).not.toHaveBeenCalled();
+
+    rerender(<CustomFormattingField onChange={mockOnChange} editable={false} />);
+
+    expect(mockSetEditable).toHaveBeenCalledWith(false, false);
   });
 
   it('includes the link extension by default', () => {
