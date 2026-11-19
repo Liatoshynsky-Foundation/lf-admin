@@ -1,4 +1,5 @@
-import { Box, SxProps, Theme } from '@mui/material';
+import { Box, FormControl, FormHelperText, InputLabel, OutlinedInput, SxProps, Theme } from '@mui/material';
+import type { InputBaseComponentProps } from '@mui/material/InputBase';
 import Bold from '@tiptap/extension-bold';
 import Document from '@tiptap/extension-document';
 import Italic from '@tiptap/extension-italic';
@@ -6,10 +7,10 @@ import Link from '@tiptap/extension-link';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import Underline from '@tiptap/extension-underline';
-import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
+import { Editor, EditorContent, JSONContent, useEditor } from '@tiptap/react';
 // @ts-expect-error - Skip legacy node10 resolution checks for this specific modern subpath
 import { BubbleMenu } from '@tiptap/react/menus';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { styles } from './CustomFormattingField.style';
 import { FormattingToolbar } from './formatting-toolbar/FormattingToolbar';
@@ -28,7 +29,9 @@ export interface Props {
   allowLinks?: boolean;
   allowUnderline?: boolean;
   allowTable?: boolean;
+  variant?: 'multiline' | 'singleLine';
 }
+
 const FormattingDoc = Document.extend({
   content: 'paragraph+'
 });
@@ -37,9 +40,24 @@ const TableFormattingDoc = Document.extend({
   content: '(paragraph | table)+'
 });
 
-type ShouldShowProps = { editor: { isEditable: boolean }; view: { hasFocus: () => boolean } };
+type ShouldShowProps = {
+  editor: { isEditable: boolean };
+  view: { hasFocus: () => boolean };
+};
 
 const showToolbarWhileFocused = ({ editor, view }: ShouldShowProps) => editor.isEditable && view.hasFocus();
+
+interface EditorInputHandle {
+  focus: () => void;
+}
+
+interface EditorInputProps extends InputBaseComponentProps {
+  editor: Editor | null;
+  allowLinks: boolean;
+  allowUnderline: boolean;
+  allowTable: boolean;
+  variant: 'multiline' | 'singleLine';
+}
 
 const hasFormattingContent = (content?: JSONContent): boolean => {
   if (!content) return false;
@@ -50,6 +68,32 @@ const hasFormattingContent = (content?: JSONContent): boolean => {
 
   return Array.isArray(content.content) && content.content.some(hasFormattingContent);
 };
+
+const EditorInput = React.forwardRef<EditorInputHandle, EditorInputProps>(function EditorInput(
+  { editor, className, allowLinks, allowUnderline, allowTable, variant },
+  ref
+) {
+  useImperativeHandle(ref, () => ({
+    focus: () => editor?.commands.focus()
+  }));
+
+  return (
+    <Box className={className} sx={styles.input(variant)}>
+      {editor && (
+        <BubbleMenu editor={editor} {...(allowTable && { shouldShow: showToolbarWhileFocused })}>
+          <FormattingToolbar
+            editor={editor}
+            allowLinks={allowLinks}
+            allowUnderline={allowUnderline}
+            allowTable={allowTable}
+          />
+        </BubbleMenu>
+      )}
+
+      <EditorContent editor={editor} />
+    </Box>
+  );
+});
 
 export const CustomFormattingField = ({
   value,
@@ -62,7 +106,8 @@ export const CustomFormattingField = ({
   editable = true,
   allowLinks = true,
   allowUnderline = false,
-  allowTable = false
+  allowTable = false,
+  variant = 'multiline'
 }: Props) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -77,6 +122,7 @@ export const CustomFormattingField = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+
     if (pendingUpdateRef.current) {
       onChangeRef.current(pendingUpdateRef.current);
       pendingUpdateRef.current = null;
@@ -175,50 +221,32 @@ export const CustomFormattingField = ({
   }, []);
 
   const isActive = Boolean(
-    isFocused || 
-    (editor && !editor.isEmpty) || 
-    (typeof value === 'string' ? value.trim().length > 0 : hasFormattingContent(value))
+    isFocused ||
+      (editor && !editor.isEmpty) ||
+      (typeof value === 'string' ? value.trim().length > 0 : hasFormattingContent(value))
   );
 
   return (
-    <Box sx={[styles.container(error), ...sxToArray(sx)]}>
-      <Box component="label" onClick={() => editor?.commands.focus()} sx={styles.label(isActive, error)}>
+    <FormControl fullWidth error={error} focused={isFocused} sx={[styles.container(error), ...sxToArray(sx)]}>
+      <InputLabel shrink={isActive} onClick={() => editor?.commands.focus()}>
         {label}
-      </Box>
+      </InputLabel>
 
-      <Box component="fieldset" sx={styles.fieldset(isFocused, error)}>
-        <Box
-          component="legend"
-          sx={styles.legend(isActive, error)}
-        >
-          <span>{label}</span>
-        </Box>
-      </Box>
+      <OutlinedInput
+        label={label}
+        notched={isActive}
+        inputComponent={EditorInput}
+        inputProps={{
+          editor,
+          allowLinks,
+          allowUnderline,
+          allowTable,
+          variant
+        }}
+        sx={styles.outlined(variant)}
+      />
 
-      <Box
-        sx={styles.contentWrapper}
-      >
-        {editor && (
-          <BubbleMenu editor={editor} {...(allowTable && { shouldShow: showToolbarWhileFocused })}>
-            <FormattingToolbar
-              editor={editor}
-              allowLinks={allowLinks}
-              allowUnderline={allowUnderline}
-              allowTable={allowTable}
-            />
-          </BubbleMenu>
-        )}
-
-        <Box sx={styles.input}>
-          <EditorContent editor={editor} />
-        </Box>
-      </Box>
-
-      {error && helperText && (
-        <Box sx={styles.helperText} data-testid="formatting-field-error">
-          {helperText}
-        </Box>
-      )}
-    </Box>
+      {error && helperText && <FormHelperText data-testid="formatting-field-error">{helperText}</FormHelperText>}
+    </FormControl>
   );
 };

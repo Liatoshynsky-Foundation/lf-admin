@@ -3,7 +3,6 @@ import { Editor, JSONContent } from '@tiptap/react';
 import React from 'react';
 
 import { CustomFormattingField } from './CustomFormattingField';
-import { styles } from './CustomFormattingField.style';
 
 type EditorConfig = {
   content: JSONContent;
@@ -107,7 +106,6 @@ describe('CustomFormattingField', () => {
   });
 
   it('keeps the label active when the value already contains loaded text', () => {
-    const labelSpy = jest.spyOn(styles, 'label');
     const loadedJSON: JSONContent = {
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Опис фонду' }] }]
@@ -115,8 +113,11 @@ describe('CustomFormattingField', () => {
 
     render(<CustomFormattingField value={loadedJSON} onChange={mockOnChange} label="Опис фонду" />);
 
-    expect(labelSpy).toHaveBeenCalledWith(true, false);
-    labelSpy.mockRestore();
+    const label = screen
+      .getAllByText('Опис фонду')
+      .find((element) => element.closest('label'))
+      ?.closest('label');
+    expect(label).toHaveAttribute('data-shrink', 'true');
   });
 
   describe('1. Mounting & Rendering', () => {
