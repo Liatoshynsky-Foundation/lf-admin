@@ -56,7 +56,6 @@ interface EditorInputProps extends InputBaseComponentProps {
   allowLinks: boolean;
   allowUnderline: boolean;
   allowTable: boolean;
-  variant: 'multiline' | 'singleLine';
 }
 
 const hasFormattingContent = (content?: JSONContent): boolean => {
@@ -70,7 +69,7 @@ const hasFormattingContent = (content?: JSONContent): boolean => {
 };
 
 const EditorInput = React.forwardRef<EditorInputHandle, EditorInputProps>(function EditorInput(
-  { editor, className, allowLinks, allowUnderline, allowTable, variant },
+  { editor, className, allowLinks, allowUnderline, allowTable },
   ref
 ) {
   useImperativeHandle(ref, () => ({
@@ -78,7 +77,7 @@ const EditorInput = React.forwardRef<EditorInputHandle, EditorInputProps>(functi
   }));
 
   return (
-    <Box className={className} sx={styles.input(variant)}>
+    <Box className={className} sx={styles.input()}>
       {editor && (
         <BubbleMenu editor={editor} {...(allowTable && { shouldShow: showToolbarWhileFocused })}>
           <FormattingToolbar
@@ -240,8 +239,7 @@ export const CustomFormattingField = ({
           editor,
           allowLinks,
           allowUnderline,
-          allowTable,
-          variant
+          allowTable
         }}
         sx={styles.outlined(variant)}
       />
