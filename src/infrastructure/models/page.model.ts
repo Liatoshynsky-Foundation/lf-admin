@@ -75,5 +75,49 @@ const archiveDetailsSchema = new Schema({
 
 export const ArchivePageModel =
   mongoose.models.ArchivePage || PageModel.discriminator('ArchivePage', archiveDetailsSchema);
+export const BIOGRAPHY_SECTION_TYPES = ['chronologyList', 'excerptBlockItem', 'OnlyImageBlock', 'fullWidthImage'] as const;
+
+const biographySectionSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    type: { type: String, enum: BIOGRAPHY_SECTION_TYPES, required: true }
+  },
+  { _id: false, strict: false }
+);
+
+const biographyYearSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    yearTitle: { type: String, default: null },
+    items: { type: [biographySectionSchema], default: [] }
+  },
+  { _id: false }
+);
+
+const biographyHeroSectionSchema = new Schema(
+  {
+    title: {
+      uk: { type: String, required: true },
+      en: { type: String, required: true }
+    }
+  },
+  { _id: false, strict: false }
+);
+
+const biographyBlocksSchema = new Schema(
+  {
+    heroSection: { type: biographyHeroSectionSchema, required: true },
+    biographyContent: { type: [biographyYearSchema], default: [] },
+    LiatoshynskyOffice: { type: Schema.Types.Mixed }
+  },
+  { _id: false, strict: false }
+);
+
+const biographyDetailsSchema = new Schema({
+  blocks: { type: biographyBlocksSchema, required: true }
+});
+
+export const BiographyPageModel =
+  mongoose.models.BiographyPage || PageModel.discriminator('BiographyPage', biographyDetailsSchema);
 
 export default PageModel;
