@@ -63,7 +63,7 @@ const config: Config = {
     '^~/(.*)$': '<rootDir>/app/$1'
   },
   modulePaths: ['<rootDir>/app', '<rootDir>/src'],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/coverage/', '<rootDir>/e2e/'],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['ts-jest', { useESM: true }]
   },

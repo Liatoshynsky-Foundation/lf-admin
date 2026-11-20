@@ -12,6 +12,8 @@ interface SortableItemWrapperProps {
   children: React.ReactNode;
   gripHandle?: boolean;
   gripPosition?: GripPosition;
+  style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
 export const SortableItemContext = createContext<{ id: SortableItemId, attributes: DraggableAttributes, listeners: SyntheticListenerMap | undefined } | null>(null);
@@ -28,7 +30,9 @@ export const SortableItemWrapper = ({
   id,
   children,
   gripHandle = false,
-  gripPosition = 'center'
+  gripPosition = 'center',
+  style,
+  disabled = false
 }: SortableItemWrapperProps) => {
   const {
     attributes,
@@ -37,13 +41,19 @@ export const SortableItemWrapper = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled });
 
 
   const defaultValue = useMemo(() => ({ id, attributes, listeners }), [id, attributes, listeners]);
 
   return (
-    <div ref={setNodeRef} style={styles.getItemStyles(transform, isDragging, transition, gripHandle, gripPosition)}>
+    <div
+      ref={setNodeRef}
+      style={{
+        ...styles.getItemStyles(transform, isDragging, transition, gripHandle, gripPosition),
+        ...style
+      }}
+    >
       <SortableItemContext.Provider value={defaultValue}>
         {gripHandle && <Grip gripPosition={gripPosition} />}
         {children}
