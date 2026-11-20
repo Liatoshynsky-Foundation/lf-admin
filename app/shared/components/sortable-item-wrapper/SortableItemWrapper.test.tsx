@@ -51,6 +51,17 @@ describe('SortableItemWrapper', () => {
     expect(screen.getByTestId('grip-mock')).toBeInTheDocument();
   });
 
+  it('passes disabled to dnd-kit and allows overriding the default full width', () => {
+    const { container } = render(
+      <SortableItemWrapper id="currency-uah" gripHandle disabled style={{ width: 'auto' }}>
+        <TestChild />
+      </SortableItemWrapper>
+    );
+
+    expect(useSortable).toHaveBeenCalledWith({ id: 'currency-uah', disabled: true });
+    expect(container.firstChild).toHaveStyle({ width: 'auto' });
+  });
+
   it('should throw error when context hook is used outside provider', () => {
     const TestFaultyComponent = () => {
       useSortableItemContext();

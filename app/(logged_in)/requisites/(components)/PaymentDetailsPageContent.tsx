@@ -200,6 +200,7 @@ const PaymentDetailsPageContent = () => {
             editingId={editingTabId}
             onSelectTab={handleSelectTab}
             onAddTab={handleAddTab}
+            onReorder={setTabs}
             onUpdateCurrency={handleUpdateTabName}
             setEditingId={setEditingTabId}
             readOnly={isSaving}
