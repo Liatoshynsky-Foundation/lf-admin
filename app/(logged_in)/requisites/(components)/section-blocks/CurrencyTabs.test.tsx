@@ -1,9 +1,9 @@
 import type { DragEndEvent } from '@dnd-kit/core';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 
 import { CurrencyTabs } from './CurrencyTabs';
 import { createDragEndEvent } from '~/__mocks__/utils';
-import { PaymentDetailsTab } from '~/constants/requisites';
+import { PaymentDetailsTab, REQUISITES_MESSAGES } from '~/constants/requisites';
 
 let mockDragEnd: (event: DragEndEvent) => void;
 
@@ -88,22 +88,60 @@ describe('CurrencyTabs', () => {
     expect(handleAdd).toHaveBeenCalledTimes(1);
   });
 
-  it('opens menu on 3-dots click and handles rename action', () => {
-    const setEditingId = jest.fn();
-    renderCurrencyTabs({ setEditingId });
-
-    openActionMenu();
-    fireEvent.click(screen.getByText('Редагувати назву'));
-    expect(setEditingId).toHaveBeenCalledWith('1');
-  });
-
-  it('opens menu on 3-dots click and handles delete action', () => {
+  it('opens confirmation modal on delete click and calls onDeleteTab after confirmation', () => {
     const handleDelete = jest.fn();
     renderCurrencyTabs({ onDeleteTab: handleDelete });
 
     openActionMenu();
-    fireEvent.click(screen.getByText('Видалити реквізит'));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(handleDelete).not.toHaveBeenCalled();
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_DESCRIPTION('UAH'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    expect(handleDelete).toHaveBeenCalledTimes(1);
     expect(handleDelete).toHaveBeenCalledWith('1');
+  });
+
+  it('closes confirmation modal without calling onDeleteTab when canceled', async() => {
+    const handleDelete = jest.fn();
+    renderCurrencyTabs({ onDeleteTab: handleDelete });
+
+    openActionMenu();
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CANCEL }));
+
+    expect(handleDelete).not.toHaveBeenCalled();
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+  });
+
+  it('disables delete action and shows tooltip when only one tab remains', async () => {
+    const handleDelete = jest.fn();
+    renderCurrencyTabs({
+      items: [mockItems[0]],
+      onDeleteTab: handleDelete
+    });
+
+    openActionMenu();
+
+    const deleteMenuItem = screen.getByRole('menuitem', {
+      name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU
+    });
+
+    expect(deleteMenuItem).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.mouseOver(deleteMenuItem.parentElement ?? deleteMenuItem);
+    expect(await screen.findByText(REQUISITES_MESSAGES.LAST_TAB_TOOLTIP)).toBeInTheDocument();
+
+    fireEvent.click(deleteMenuItem);
+    expect(screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).not.toBeInTheDocument();
+    expect(handleDelete).not.toHaveBeenCalled();
   });
 
   it.each([

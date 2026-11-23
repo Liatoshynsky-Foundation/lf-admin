@@ -201,4 +201,51 @@ describe('ActionMenu', () => {
     expect(stopPropagationSpy).toHaveBeenCalledTimes(1);
     expect(preventDefaultSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('should disable menu item and prevent onClick and onClose when disabled is true', () => {
+    const groupsWithDisabled: ActionMenuGroups = [
+      {
+        items: [
+          {
+            id: 'disabled-item',
+            text: { name: 'Disabled Item' },
+            disabled: true,
+            onClick: mockOnClickItem
+          }
+        ]
+      }
+    ];
+
+    render(<ActionMenu anchorEl={anchorEl} onClose={mockOnClose} menuItems={groupsWithDisabled} />);
+
+    const menuItem = screen.getByRole('menuitem', { name: 'Disabled Item' });
+    expect(menuItem).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.click(menuItem);
+
+    expect(mockOnClickItem).not.toHaveBeenCalled();
+    expect(mockHandleClose).not.toHaveBeenCalled();
+  });
+
+  it('should render tooltip when tooltip prop is provided on a menu item', async () => {
+    const groupsWithTooltip: ActionMenuGroups = [
+      {
+        items: [
+          {
+            id: 'tooltip-item',
+            text: { name: 'Tooltip Item' },
+            disabled: true,
+            tooltip: 'Cannot delete the last tab'
+          }
+        ]
+      }
+    ];
+
+    render(<ActionMenu anchorEl={anchorEl} onClose={mockOnClose} menuItems={groupsWithTooltip} />);
+
+    const menuItem = screen.getByRole('menuitem', { name: 'Tooltip Item' });
+    fireEvent.mouseOver(menuItem.parentElement ?? menuItem);
+
+    expect(await screen.findByText('Cannot delete the last tab')).toBeInTheDocument();
+  });
 });
