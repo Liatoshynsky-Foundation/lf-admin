@@ -18,6 +18,8 @@ export interface RequisitesData {
   items: PaymentDetailsTab[];
 }
 
+export const PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES = 20 * 1024 * 1024;
+
 export const REQUISITES_MESSAGES = {
   PAGE_TITLE: 'Реквізити',
   BLOCK_TITLE: 'Реквізити',
@@ -27,6 +29,8 @@ export const REQUISITES_MESSAGES = {
   CONTENT_PLACEHOLDER: 'Введіть текст реквізитів...',
   PDF_SECTION_LABEL: 'PDF файл',
   ADD_FILE_BUTTON: 'Додати файл',
+  PDF_UPLOAD_FAILED: 'Не вдалося завантажити PDF файл',
+  PDF_SIZE_UNKNOWN: 'Не вдалося визначити розмір PDF файлу',
   EDIT_TITLE_MENU: 'Редагувати назву',
   DELETE_REQUISITE_MENU: 'Видалити реквізит',
   SAVE_SUCCESS: 'Реквізити успішно збережено',
