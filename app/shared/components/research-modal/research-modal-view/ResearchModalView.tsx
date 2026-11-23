@@ -89,13 +89,11 @@ export const ResearchModalView = ({
   onSave,
   sx
 }: ResearchModalViewProps) => {
-  const [bibliographicDescription, setBibliographicDescription] = useState<TipTapValue>(
-    () => parseSerializedProse(initialData?.bibliographicDescription)
+  const [bibliographicDescription, setBibliographicDescription] = useState<TipTapValue>(() =>
+    parseSerializedProse(initialData?.bibliographicDescription)
   );
   const [caseDates, setCaseDates] = useState(initialData?.caseDates ?? DEFAULT_DATA.caseDates);
-  const [keywords, setKeywords] = useState<TipTapValue | null>(() =>
-    parseSerializedProse(initialData?.keywords)
-  );
+  const [keywords, setKeywords] = useState<TipTapValue | null>(() => parseSerializedProse(initialData?.keywords));
   const [url, setUrl] = useState(initialData?.url ?? DEFAULT_DATA.url);
   const [isVisibleOnSite, setIsVisibleOnSite] = useState(initialData?.isVisibleOnSite ?? DEFAULT_DATA.isVisibleOnSite);
   const [isSaving, setIsSaving] = useState(false);
@@ -149,9 +147,7 @@ export const ResearchModalView = ({
 
   const urlError = touched.url && !isUrlValid ? RESEARCH_VALIDATION_MESSAGES.urlInvalid : undefined;
 
-  const isFormValid = Boolean(
-    !isRichTextEmpty(bibliographicDescription) && caseDates.trim() && isUrlValid
-  );
+  const isFormValid = Boolean(!isRichTextEmpty(bibliographicDescription) && caseDates.trim() && isUrlValid);
   const hasAttachedFile = Boolean(attachedFileName);
 
   return (
@@ -168,6 +164,7 @@ export const ResearchModalView = ({
         <Stack spacing={3} sx={styles.contentContainer}>
           <CustomTextField
             fieldType="formatting"
+            variant="singleLine"
             label="Бібліографічний опис *"
             value={bibliographicDescription}
             onChange={(value: JSONContent) => setBibliographicDescription(value)}
@@ -192,6 +189,7 @@ export const ResearchModalView = ({
 
           <CustomTextField
             fieldType="formatting"
+            variant="singleLine"
             label="Ключові слова"
             value={keywords ?? ''}
             onChange={(value: JSONContent) => setKeywords(value)}
