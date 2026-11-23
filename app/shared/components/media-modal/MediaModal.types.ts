@@ -13,6 +13,7 @@ export type GalleryMedia = {
   fileName: string;
   src: string;
   locale: Locale;
+  sizeBytes?: number;
 };
 
 export type UsedMedia = {
@@ -21,6 +22,7 @@ export type UsedMedia = {
   fileName: string;
   src: string;
   locale: Locale;
+  sizeBytes?: number;
 };
 
 export type UploadMedia = {
