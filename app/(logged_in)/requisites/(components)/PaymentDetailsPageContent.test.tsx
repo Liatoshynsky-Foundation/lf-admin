@@ -1,8 +1,10 @@
+import type { DragEndEvent } from '@dnd-kit/core';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
+import { createDragEndEvent } from '~/__mocks__/utils';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import {
   REQUISITES_EMPTY,
@@ -14,6 +16,19 @@ import {
 const mockUsePaymentDetails = jest.fn();
 
 const mockUpdatePaymentDetails = jest.fn();
+let mockDragEnd: (event: DragEndEvent) => void;
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => {
+  const actual = jest.requireActual('~/shared/components/sortable-list/SortableList');
+  return {
+    SortableList: (
+      props: React.ComponentProps<typeof import('~/shared/components/sortable-list/SortableList').SortableList>
+    ) => {
+      mockDragEnd = props.onDragEnd;
+      return <actual.SortableList {...props} />;
+    }
+  };
+});
 
 jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
   ...jest.requireActual('~/shared/hooks/use-payment-details/usePaymentDetails'),
@@ -101,6 +116,38 @@ describe('PaymentDetailsPageContent', () => {
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
     expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
+  });
+
+  it('keeps reordering local until save, preserves tab data and sends the reordered mutation input', async () => {
+    const [first, second, ...remaining] = MOCK_PAYMENT_DETAILS.tabs;
+    const reordered = [second, first, ...remaining];
+    const saved = {
+      ...MOCK_PAYMENT_DETAILS,
+      tabs: reordered.map((tab, order) => ({ ...tab, order }))
+    };
+    mockUpdatePaymentDetails.mockResolvedValue({ data: { updatePaymentDetails: saved } });
+    const { rerender } = render(<PaymentDetailsPageContent />);
+
+    act(() => mockDragEnd(createDragEndEvent(first.id, second.id)));
+
+    const getTabNames = () => screen.getAllByRole('button')
+      .map((button) => button.textContent)
+      .filter((name) => MOCK_PAYMENT_DETAILS.tabs.some((tab) => tab.name === name));
+    expect(getTabNames()).toEqual(reordered.map((tab) => tab.name));
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_SUCCESS));
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input.tabs).toEqual(
+      reordered.map(({ id, name, content }) => ({ id, name, content }))
+    );
+    expect(getTabNames()).toEqual(reordered.map((tab) => tab.name));
+
+    mockUsePaymentDetails.mockReturnValue({ data: saved, loading: false, error: undefined });
+    rerender(<PaymentDetailsPageContent />);
+    expect(getTabNames()).toEqual(reordered.map((tab) => tab.name));
   });
 
   it('renders currency tabs in configured order', () => {
