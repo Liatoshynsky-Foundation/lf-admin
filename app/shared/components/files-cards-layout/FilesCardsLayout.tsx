@@ -6,6 +6,7 @@ import MinimizedFileCard from '../minimized-file-card/MinimizedFileCard';
 import { styles } from './FilesCardsLayout.styles';
 
 export type FilesCardsLayoutView = 'grid' | 'list';
+export type FilesCardsLayoutAction = 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary';
 
 export type FilesCardsLayoutItem = {
   id: string;
@@ -32,7 +33,7 @@ type FilesCardsLayoutProps = Readonly<{
   setItemRef?: (itemId: string, node: HTMLDivElement | null) => void;
   onItemClick?: (item: FilesCardsLayoutItem) => void;
   onItemAction?: (
-    action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary',
+    action: FilesCardsLayoutAction,
     item: FilesCardsLayoutItem
   ) => void;
   onItemToggleStar?: (item: FilesCardsLayoutItem, next: boolean) => Promise<void> | void;
