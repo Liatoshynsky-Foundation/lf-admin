@@ -12,7 +12,7 @@ export const toPaymentDetailsPdfFile = ({ pdf, sizeBytes }: ResolvePdfAttachment
     throw new Error(PAYMENT_DETAILS_MESSAGES.pdfInvalidType);
   }
 
-  if (typeof sizeBytes !== 'number') {
+  if (sizeBytes === null) {
     throw new Error(REQUISITES_MESSAGES.PDF_SIZE_UNKNOWN);
   }
 
