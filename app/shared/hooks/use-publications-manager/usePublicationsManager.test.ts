@@ -138,6 +138,17 @@ describe('usePublicationManager Hook', () => {
   });
 
   describe('updateResource Mutation Logic', () => {
+    it.each(['news', 'events'] as const)('updates only article content on the existing %s record', async (type) => {
+      const { result } = renderHook(() => usePublicationManager(type, '123'));
+      const content = { uk: { content: { blocks: [{ type: 'paragraph' }] } } };
+
+      await result.current.updateResource(undefined, { content });
+
+      const update = type === 'news' ? mockUpdateNews : mockUpdateEvent;
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(update.mock.calls[0][0]).toStrictEqual({ id: '123', input: { content } });
+    });
+
     it('should call updateNews for news type', async () => {
       const { result } = renderHook(() => usePublicationManager('news', '1'));
 
@@ -228,6 +239,39 @@ describe('usePublicationManager Hook', () => {
   });
 
   describe('State Reset Logic', () => {
+    it('clears the dirty flag after saving and preserves edits made while a save was pending', () => {
+      (useNewsById as jest.Mock).mockReturnValue({ data: { newsById: {} }, loading: false });
+      const { result } = renderHook(() => usePublicationManager('news', '1'));
+      const original = result.current.editedContent!;
+      const saved: LocalizedEditorState = {
+        ...original,
+        uk: {
+          content: {
+            version: '1',
+            lastModified: '',
+            blocks: [{
+              id: 'paragraph-1',
+              type: 'paragraph',
+              props: { backgroundColor: 'default', textColor: 'default', textAlignment: 'left' },
+              content: [{ type: 'text', text: 'Saved text', styles: {} }],
+              children: []
+            }]
+          }
+        }
+      };
+      const latest = { ...saved, en: saved.uk };
+
+      act(() => result.current.setEditedContent(saved));
+      expect(result.current.hasUnsavedChanges).toBe(true);
+      act(() => result.current.setEditedContent(latest));
+      act(() => result.current.markContentSaved(saved));
+      expect(result.current.hasUnsavedChanges).toBe(true);
+      expect(result.current.editedContent).toEqual(latest);
+
+      act(() => result.current.markContentSaved(latest));
+      expect(result.current.hasUnsavedChanges).toBe(false);
+    });
+
     it('should overwrite editedContent and increment editorResetKey', () => {
       const { result } = renderHook(() => usePublicationManager('news', '1'));
 

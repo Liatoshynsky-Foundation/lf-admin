@@ -97,6 +97,17 @@ describe('HeaderRightActions Component', () => {
       expect(screen.getByRole('button', { name: 'Відкрити меню параметрів' })).toBeDisabled();
     });
 
+    it('uses Save as the primary action when provided', () => {
+      const onSave = jest.fn();
+      render(<HeaderRightActions mode="edit" onSave={onSave} onPublish={mockOnPublish} onMenuOpen={mockOnMenuOpen} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(mockOnPublish).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Відкрити меню параметрів' }));
+      expect(mockOnMenuOpen).toHaveBeenCalledTimes(1);
+    });
+
     it('should hide only the publish button when showPublish is false', () => {
       render(<HeaderRightActions mode="edit" showPublish={false} onMenuOpen={mockOnMenuOpen} />);
 

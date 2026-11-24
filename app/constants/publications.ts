@@ -205,7 +205,7 @@ export type MutationResponse<TData = unknown> = {
 };
 
 export type PublicationResource = (
-  status: BaseContentStatuses,
+  status: BaseContentStatuses | undefined,
   extra?: Record<string, unknown>
 ) => Promise<MutationResponse>;
 

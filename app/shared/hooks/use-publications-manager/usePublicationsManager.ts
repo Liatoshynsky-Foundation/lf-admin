@@ -13,7 +13,7 @@ import { isContentEmpty } from '~/shared/components/content-editor';
 import { useDeleteEvent, useEventById, useUpdateEvent } from '~/shared/hooks/use-events/useEvents';
 import { useDeleteMediaMention, useMediaMentionById, useUpdateMediaMention } from '~/shared/hooks/use-media-mentions/useMediaMentions';
 import { useDeleteNews, useNewsById, useUpdateNews } from '~/shared/hooks/use-news/useNews';
-import { type EventStatus, type MediaStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
+import { type EventStatus, type NewsStatus } from '~/types/graphql/generated/graphql';
 
 export function usePublicationManager(type: PublicationsItemType, id: string) {
   const news = useNewsById(id, { skip: type !== 'news' });
@@ -86,22 +86,21 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
   }, [editedContent, initialContent]);
 
   const updateResource: PublicationResource = async (status, extra = {}) => {
+    const input = status === undefined ? extra : { ...extra, status };
+
     switch (type) {
     case 'news':
       return updateNews({
         id,
-        input: { ...extra, status: status as unknown as NewsStatus }
+        input
       });
     case 'events':
       return updateEvent({
         id,
-        input: { ...extra, status: status as unknown as EventStatus }
+        input
       });
     case 'media':
-      return updateMedia(id, {
-        ...extra,
-        status: status as unknown as MediaStatus
-      });
+      return updateMedia(id, input);
     default:
       throw new Error(`Unsupported publication type for mutation: ${type}`);
     }
@@ -149,6 +148,7 @@ export function usePublicationManager(type: PublicationsItemType, id: string) {
 
     editedContent,
     setEditedContent,
+    markContentSaved: setInitialContent,
     hasUnsavedChanges,
     currentLanguage,
     setCurrentLanguage,

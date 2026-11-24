@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound, useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import CreatePublicationsView from '../../create/CreatePublicationsView';
@@ -38,34 +38,16 @@ export default function EditPublicationsPage() {
 
   const publicationData = useUpsertPublication({ type, id });
 
-  const latestBlocksRef = useRef<SerializedContent | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { navigate, navigateBack } = useNavigationGuard();
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    };
-  }, []);
 
   if (!manager.isLoading && manager.currentData === null && !manager.hasError) {
     notFound();
   }
 
   const handleEditorChange = (content: SerializedContent, localeKey: 'uk' | 'en') => {
-    latestBlocksRef.current = content;
-
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-
-    debounceTimerRef.current = setTimeout(() => {
-      if (latestBlocksRef.current) {
-        manager.setEditedContent((prev) => {
-          const next = prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev;
-          return next;
-        });
-      }
-    }, 500);
+    manager.setEditedContent((prev) => (prev ? { ...prev, [localeKey]: { content } } : prev));
   };
 
   const handlePreview = async () => {
@@ -114,6 +96,29 @@ export default function EditPublicationsPage() {
       await fetchPreview({ slug: previewSlug, lang: locale, draftId: id });
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const handleSave = async () => {
+    const content = manager.editedContent;
+    if (isSaving || !content) return;
+
+    setIsSaving(true);
+    const errorMessage = 'Не вдалося зберегти зміни. Спробуйте ще раз.';
+
+    try {
+      const { data } = await manager.updateResource(undefined, { content });
+      if (!data) {
+        toast.error(errorMessage);
+        return;
+      }
+
+      manager.markContentSaved(content);
+      toast.success('Зміни збережено.');
+    } catch {
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -177,6 +182,8 @@ export default function EditPublicationsPage() {
           onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
           onBackClick={navigateBack}
           onPreview={handlePreview}
+          onSave={handleSave}
+          isSaving={isSaving}
         />
       )}
     </>
