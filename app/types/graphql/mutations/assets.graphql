@@ -8,6 +8,13 @@ mutation UpdateAsset($id: ID!, $input: UpdateAssetInput!) {
   }
 }
 
+mutation SetMainComposition($id: ID!) {
+  setMainComposition(id: $id) {
+    id
+    isMainComposition
+  }
+}
+
 mutation CreateAsset($input: CreateAssetInput!) {
   createAsset(input: $input) {
     id

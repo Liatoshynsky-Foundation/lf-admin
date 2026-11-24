@@ -15,6 +15,7 @@ import {
   FILES_UPLOAD_FAILED_ERROR
 } from '~/constants/files';
 import { downloadFile } from '~/lib/utils/downloadFile';
+import type { FilesCardsLayoutAction } from '~/shared/components/files-cards-layout';
 import { useAllAssets } from '~/shared/hooks/use-assets/useAssets';
 import { useFilesFiltering } from '~/shared/hooks/use-files';
 import type { GalleryFile } from '~/shared/hooks/use-galllery-photo/useGallery';
@@ -22,6 +23,7 @@ import {
   AssetType,
   useCreateAssetMutation,
   useDeleteAssetMutation,
+  useSetMainCompositionMutation,
   useUpdateAssetMutation
 } from '~/types/graphql/generated/graphql';
 
@@ -78,6 +80,7 @@ interface SetupHooksParams {
   createAsset?: jest.Mock;
   deleteAsset?: jest.Mock;
   updateAsset?: jest.Mock;
+  setMainComposition?: jest.Mock;
   deleteLoading?: boolean;
   filteredFiles?: TestFileItem[];
 }
@@ -113,7 +116,7 @@ interface FilesCardsLayoutProps {
   gridColumns?: unknown;
   setItemRef: (id: string, node: HTMLDivElement | null) => void;
   onItemClick: (item: TestFileItem) => void;
-  onItemAction: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', item: TestFileItem) => void;
+  onItemAction: (action: FilesCardsLayoutAction, item: TestFileItem) => void;
   onItemToggleStar: (item: TestFileItem, next: boolean) => void | Promise<void>;
 }
 
@@ -214,6 +217,7 @@ jest.mock('~/types/graphql/generated/graphql', () => {
     ...actual,
     useCreateAssetMutation: jest.fn(),
     useDeleteAssetMutation: jest.fn(),
+    useSetMainCompositionMutation: jest.fn(),
     useUpdateAssetMutation: jest.fn()
   };
 });
@@ -386,6 +390,9 @@ function setupHooks({
   refetch = jest.fn(),
   createAsset = jest.fn().mockResolvedValue({ data: { createAsset: { id: 'new-1' } } }),
   updateAsset = jest.fn().mockResolvedValue({ data: { updateAsset: { id: '1' } } }),
+  setMainComposition = jest.fn().mockResolvedValue({
+    data: { setMainComposition: { id: '1', isMainComposition: true } }
+  }),
   deleteAsset = jest.fn().mockImplementation(async (options) => {
     if (options?.update) {
       const mockCache = {
@@ -409,6 +416,7 @@ function setupHooks({
 
   (useCreateAssetMutation as jest.Mock).mockReturnValue([createAsset]);
   (useDeleteAssetMutation as jest.Mock).mockReturnValue([deleteAsset, { loading: deleteLoading }]);
+  (useSetMainCompositionMutation as jest.Mock).mockReturnValue([setMainComposition]);
   (useUpdateAssetMutation as jest.Mock).mockReturnValue([updateAsset]);
 
   (useFilesFiltering as jest.Mock).mockImplementation((allFiles: TestFileItem[]) => ({
@@ -417,7 +425,7 @@ function setupHooks({
     sortProps: {}
   }));
 
-  return { refetch, createAsset, deleteAsset, updateAsset };
+  return { refetch, createAsset, deleteAsset, setMainComposition, updateAsset };
 }
 
 beforeEach(() => {
@@ -1208,6 +1216,97 @@ describe('FilesPageContent', () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Посилання на завантаження відсутнє');
+    });
+  });
+
+  it('sets an existing audio asset as the main composition and refreshes files', async () => {
+    const audioAsset = {
+      ...baseAsset,
+      id: 'audio-1',
+      type: AssetType.Audio,
+      filename: 'track.mp3',
+      mimeType: 'audio/mpeg'
+    };
+    const refetch = jest.fn();
+    const setMainComposition = jest.fn().mockResolvedValue({
+      data: { setMainComposition: { id: 'audio-1', isMainComposition: true } }
+    });
+
+    setupHooks({ assets: [audioAsset], refetch, setMainComposition });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('make-primary-audio-1'));
+
+    await waitFor(() => {
+      expect(setMainComposition).toHaveBeenCalledWith({
+        variables: { id: 'audio-1' }
+      });
+      expect(refetch).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith('Файл встановлено як основну композицію.');
+    });
+  });
+
+  it('shows an error toast when setting the main composition fails', async () => {
+    const audioAsset = {
+      ...baseAsset,
+      id: 'audio-1',
+      type: AssetType.Audio,
+      filename: 'track.mp3',
+      mimeType: 'audio/mpeg'
+    };
+    const refetch = jest.fn();
+    const setMainComposition = jest.fn().mockRejectedValue(new Error('Network error'));
+
+    setupHooks({ assets: [audioAsset], refetch, setMainComposition });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('make-primary-audio-1'));
+
+    await waitFor(() => {
+      expect(setMainComposition).toHaveBeenCalledWith({
+        variables: { id: 'audio-1' }
+      });
+      expect(refetch).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith(
+        'Не вдалося встановити файл як основну композицію. Спробуйте ще раз.'
+      );
+    });
+  });
+
+  it('persists an orphan R2 audio file before setting it as main composition', async () => {
+    mockR2Files = [{
+      ...orphanR2File,
+      filename: 'orphan-track.mp3',
+      originalName: 'orphan-track.mp3',
+      mimeType: 'audio/mpeg'
+    }];
+    const refetch = jest.fn();
+    const createAsset = jest.fn().mockResolvedValue({
+      data: { createAsset: { id: 'created-audio-1' } }
+    });
+    const setMainComposition = jest.fn().mockResolvedValue({
+      data: { setMainComposition: { id: 'created-audio-1', isMainComposition: true } }
+    });
+
+    setupHooks({ assets: [], refetch, createAsset, setMainComposition });
+    render(<FilesPageContent activeTab="all" />);
+
+    fireEvent.click(screen.getByText('make-primary-https://r2.example.com/photos/orphan-stored.jpg'));
+
+    await waitFor(() => {
+      expect(createAsset).toHaveBeenCalledWith({
+        variables: {
+          input: expect.objectContaining({
+            filename: 'orphan-track.mp3',
+            mimeType: 'audio/mpeg',
+            type: AssetType.Audio
+          })
+        }
+      });
+      expect(setMainComposition).toHaveBeenCalledWith({
+        variables: { id: 'created-audio-1' }
+      });
+      expect(refetch).toHaveBeenCalled();
     });
   });
 

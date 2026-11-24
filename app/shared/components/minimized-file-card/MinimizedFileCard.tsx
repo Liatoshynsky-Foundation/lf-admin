@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 import ActionMenu from '../dropdown-menu/ActionMenu';
 import FileCardMenuItems from '../file-card/FileCardMenuItems';
+import type { FilesCardsLayoutAction } from '../files-cards-layout/FilesCardsLayout';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
 import LinkIcon from '~/public/icons/link.svg';
 import StarIcon from '~/public/icons/star-1.svg';
@@ -40,7 +41,7 @@ interface MinimizedFileCardProps {
   mimeType?: string;
   isSelected?: boolean;
   onClick?: () => void;
-  onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', fileId: string) => void;
+  onAction?: (action: FilesCardsLayoutAction, fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   onMenuClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }

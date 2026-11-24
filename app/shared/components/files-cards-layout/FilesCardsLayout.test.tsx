@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { FilesCardsLayout, type FilesCardsLayoutItem } from './FilesCardsLayout';
+import { FilesCardsLayout, type FilesCardsLayoutAction, type FilesCardsLayoutItem } from './FilesCardsLayout';
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
   ...jest.requireActual('~/types/graphql/generated/graphql'),
@@ -16,7 +16,7 @@ jest.mock('~/shared/components/file-card', () => ({
     onToggleStar
   }: {
     isSelected?: boolean;
-    onAction?: (action: 'rename' | 'delete' | 'download') => void;
+    onAction?: (action: FilesCardsLayoutAction) => void;
     onClick?: () => void;
     onToggleStar?: (id: string, next: boolean) => void;
   }) => (
@@ -43,7 +43,7 @@ jest.mock('~/shared/components/minimized-file-card/MinimizedFileCard', () => ({
     onToggleStar
   }: {
     isSelected?: boolean;
-    onAction?: (action: 'rename' | 'delete' | 'download') => void;
+    onAction?: (action: FilesCardsLayoutAction) => void;
     onClick?: () => void;
     onToggleStar?: (id: string, next: boolean) => void;
   }) => (

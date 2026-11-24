@@ -38,6 +38,7 @@ import { EmptyState } from '~/shared/components/empty-state';
 import { type FileDetailsSidebarFile, FileInfoSidebar } from '~/shared/components/file-info-sidebar/FileInfoSidebar';
 import {
   FilesCardsLayout,
+  type FilesCardsLayoutAction,
   type FilesCardsLayoutItem,
   type FilesCardsLayoutView
 } from '~/shared/components/files-cards-layout';
@@ -60,6 +61,7 @@ import {
   AssetType,
   useCreateAssetMutation,
   useDeleteAssetMutation,
+  useSetMainCompositionMutation,
   useUpdateAssetMutation
 } from '~/types/graphql/generated/graphql';
 
@@ -167,6 +169,7 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
   const [createAsset] = useCreateAssetMutation();
   const [updateAsset] = useUpdateAssetMutation();
   const [deleteAsset, { loading: isDeleting }] = useDeleteAssetMutation();
+  const [setMainComposition] = useSetMainCompositionMutation();
   const loading = assetsLoading || r2Loading;
   const error = assetsError || r2Error;
 
@@ -320,25 +323,54 @@ export function FilesPageContent({ activeTab }: FilesPageContentProps) {
     setDeleteModalState({ open: false, fileId: null });
   };
 
-  const handleItemAction = (
-    action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary',
-    item: FilesCardsLayoutItem
-  ) => {
-    if (action === 'rename') {
+  const handleMakePrimary = async (fileId: string) => {
+    try {
+      const persistedId = await ensureAssetPersisted(fileId);
+      await setMainComposition({
+        variables: {
+          id: persistedId
+        }
+      });
+      await refetch();
+      toast.success('Файл встановлено як основну композицію.');
+    }
+    catch {
+      toast.error('Не вдалося встановити файл як основну композицію. Спробуйте ще раз.');
+    }
+  };
+
+  const handleItemAction = (action: FilesCardsLayoutAction, item: FilesCardsLayoutItem) => {
+    switch (action) {
+    case 'rename':
       setRenameModalState({ open: true, fileId: item.id, currentFilename: item.name });
-    } else if (action === 'delete') {
+      return;
+
+    case 'delete':
       setDeleteModalState({ open: true, fileId: item.id });
-    } else if (action === 'download') {
-      const file = allFiles.find((f) => f.id === item.id);
+      return;
+
+    case 'download': {
+      const file = allFiles.find((file) => file.id === item.id);
       if (file?.downloadUrl) {
-        handleDownload(file.downloadUrl, file.name);
+        void handleDownload(file.downloadUrl, file.name);
       } else {
         toast.error('Посилання на завантаження відсутнє');
       }
-    } else if (action === 'copy-link') {
+      return;
+    }
+
+    case 'copy-link':
       void handleCopyLink(item);
-    } else if (action === 'make-primary') {
-      // TODO: Implement logic to set the main composition here
+      return;
+
+    case 'make-primary':
+      void handleMakePrimary(item.id);
+      return;
+
+    default: {
+      const exhaustiveCheck: never = action;
+      return exhaustiveCheck;
+    }
     }
   };
 
