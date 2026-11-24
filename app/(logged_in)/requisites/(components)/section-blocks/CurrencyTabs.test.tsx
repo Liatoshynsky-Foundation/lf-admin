@@ -1,7 +1,29 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { act, fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 
 import { CurrencyTabs } from './CurrencyTabs';
-import { PaymentDetailsTab } from '~/constants/requisites';
+import { createDragEndEvent } from '~/__mocks__/utils';
+import { PaymentDetailsTab, REQUISITES_MESSAGES } from '~/constants/requisites';
+
+let mockDragEnd: (event: DragEndEvent) => void;
+
+jest.mock('~/shared/components/sortable-list/SortableList', () => {
+  const actual = jest.requireActual('~/shared/components/sortable-list/SortableList');
+  return {
+    SortableList: (
+      props: React.ComponentProps<typeof import('~/shared/components/sortable-list/SortableList').SortableList>
+    ) => {
+      mockDragEnd = props.onDragEnd;
+      return <actual.SortableList {...props} />;
+    }
+  };
+});
+
+jest.mock('~/public/icons/grip-vertical.svg', () => {
+  return function MockGripVertical() {
+    return <svg />;
+  };
+});
 
 const mockItems: PaymentDetailsTab[] = [
   {
@@ -26,6 +48,7 @@ const renderCurrencyTabs = (props: Partial<React.ComponentProps<typeof CurrencyT
       editingId={null}
       onSelectTab={jest.fn()}
       onAddTab={jest.fn()}
+      onReorder={jest.fn()}
       onUpdateCurrency={jest.fn(() => true)}
       onDeleteTab={jest.fn()}
       setEditingId={jest.fn()}
@@ -65,22 +88,60 @@ describe('CurrencyTabs', () => {
     expect(handleAdd).toHaveBeenCalledTimes(1);
   });
 
-  it('opens menu on 3-dots click and handles rename action', () => {
-    const setEditingId = jest.fn();
-    renderCurrencyTabs({ setEditingId });
-
-    openActionMenu();
-    fireEvent.click(screen.getByText('Редагувати назву'));
-    expect(setEditingId).toHaveBeenCalledWith('1');
-  });
-
-  it('opens menu on 3-dots click and handles delete action', () => {
+  it('opens confirmation modal on delete click and calls onDeleteTab after confirmation', () => {
     const handleDelete = jest.fn();
     renderCurrencyTabs({ onDeleteTab: handleDelete });
 
     openActionMenu();
-    fireEvent.click(screen.getByText('Видалити реквізит'));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(handleDelete).not.toHaveBeenCalled();
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_DESCRIPTION('UAH'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    expect(handleDelete).toHaveBeenCalledTimes(1);
     expect(handleDelete).toHaveBeenCalledWith('1');
+  });
+
+  it('closes confirmation modal without calling onDeleteTab when canceled', async() => {
+    const handleDelete = jest.fn();
+    renderCurrencyTabs({ onDeleteTab: handleDelete });
+
+    openActionMenu();
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CANCEL }));
+
+    expect(handleDelete).not.toHaveBeenCalled();
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+  });
+
+  it('disables delete action and shows tooltip when only one tab remains', async () => {
+    const handleDelete = jest.fn();
+    renderCurrencyTabs({
+      items: [mockItems[0]],
+      onDeleteTab: handleDelete
+    });
+
+    openActionMenu();
+
+    const deleteMenuItem = screen.getByRole('menuitem', {
+      name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU
+    });
+
+    expect(deleteMenuItem).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.mouseOver(deleteMenuItem.parentElement ?? deleteMenuItem);
+    expect(await screen.findByText(REQUISITES_MESSAGES.LAST_TAB_TOOLTIP)).toBeInTheDocument();
+
+    fireEvent.click(deleteMenuItem);
+    expect(screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).not.toBeInTheDocument();
+    expect(handleDelete).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -243,5 +304,74 @@ describe('CurrencyTabs', () => {
     expect(handleUpdate).toHaveBeenCalledWith('1', 'USD');
     expect(setEditingId).not.toHaveBeenCalledWith(null);
     expect(screen.getByDisplayValue('USD')).toBeInTheDocument();
+  });
+
+  it('calls onReorder with tabs in the new order after dragging', () => {
+    const onReorder = jest.fn();
+    const onSelectTab = jest.fn();
+    const setEditingId = jest.fn();
+    const originalItems = JSON.stringify(mockItems);
+
+    renderCurrencyTabs({ onReorder, onSelectTab, setEditingId });
+
+    act(() => mockDragEnd(createDragEndEvent('1', '2')));
+
+    expect(onReorder).toHaveBeenCalledTimes(1);
+    expect(onReorder).toHaveBeenCalledWith([mockItems[1], mockItems[0]]);
+    expect(onReorder.mock.calls[0][0][0]).toBe(mockItems[1]);
+    expect(onReorder.mock.calls[0][0][1]).toBe(mockItems[0]);
+    expect(JSON.stringify(mockItems)).toBe(originalItems);
+    expect(onSelectTab).not.toHaveBeenCalled();
+    expect(setEditingId).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['1', null],
+    ['1', '1'],
+    ['missing', '2'],
+    ['1', 'missing']
+  ])('does not reorder for an invalid or unchanged drop (%s, %s)', (activeId, overId) => {
+    const onReorder = jest.fn();
+    renderCurrencyTabs({ onReorder });
+
+    act(() => mockDragEnd(createDragEndEvent(activeId, overId)));
+
+    expect(onReorder).not.toHaveBeenCalled();
+  });
+
+  it('blocks dragging and an already-open rename input while saving', () => {
+    const onReorder = jest.fn();
+    const { rerender } = renderCurrencyTabs({ onReorder });
+    const grips = screen.getAllByRole('button', { description: /To pick up a draggable item/i });
+    expect(grips).toHaveLength(mockItems.length);
+
+    rerender(
+      <CurrencyTabs
+        items={mockItems}
+        activeId="1"
+        editingId="1"
+        onSelectTab={jest.fn()}
+        onAddTab={jest.fn()}
+        onReorder={onReorder}
+        onUpdateCurrency={jest.fn()}
+        setEditingId={jest.fn()}
+        readOnly
+      />
+    );
+    act(() => mockDragEnd(createDragEndEvent('1', '2')));
+
+    expect(onReorder).not.toHaveBeenCalled();
+    expect(screen.getByDisplayValue('UAH')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /додати реквізити/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
+  });
+
+  it('does not reorder while a tab name is being edited', () => {
+    const onReorder = jest.fn();
+    renderCurrencyTabs({ onReorder, editingId: '1' });
+
+    act(() => mockDragEnd(createDragEndEvent('1', '2')));
+
+    expect(onReorder).not.toHaveBeenCalled();
   });
 });

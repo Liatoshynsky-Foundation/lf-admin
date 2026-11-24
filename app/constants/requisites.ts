@@ -36,7 +36,13 @@ export const REQUISITES_MESSAGES = {
   SAVE_SUCCESS: 'Реквізити успішно збережено',
   SAVE_ERROR: 'Не вдалося зберегти реквізити. Спробуйте ще раз.',
   DELETE_CONFIRMATION: 'Видалити цю вкладку реквізитів?',
-  DEFAULT_NEW_CURRENCY: 'Без назви'
+  DEFAULT_NEW_CURRENCY: 'Без назви',
+  DELETE_TAB_TITLE: 'Видалити вкладку',
+  DELETE_TAB_DESCRIPTION: (currencyCode: string) =>
+    `Ви дійсно бажаєте видалити вкладку ${currencyCode} та всі пов'язані реквізити?`,
+  DELETE_TAB_CONFIRM: 'Видалити',
+  DELETE_TAB_CANCEL: 'Скасувати',
+  LAST_TAB_TOOLTIP: 'Секція повинна містити щонайменше одну вкладку з реквізитами'
 } as const;
 
 export const REQUISITES_LOADING = {

@@ -22,7 +22,8 @@
     "generate:docker": "yarn generate",
     "typecheck": "rm -rf .next/types && tsc -p tsconfig.json --noEmit",
     "storybook": "node .storybook/prepare-package-json-shims.cjs && storybook dev -p 6006",
-    "build-storybook": "node .storybook/prepare-package-json-shims.cjs && storybook build"
+    "build-storybook": "node .storybook/prepare-package-json-shims.cjs && storybook build",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -94,6 +95,7 @@
     "@eslint/js": "^9.26.0",
     "@fontsource/mulish": "^5.2.8",
     "@fontsource/oswald": "^5.2.8",
+    "@playwright/test": "^1.65.1",
     "@storybook/addon-essentials": "^8.6.18",
     "@storybook/addon-interactions": "^8.6.18",
     "@storybook/blocks": "^8.6.18",
