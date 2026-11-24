@@ -1,17 +1,12 @@
 import type { DragEndEvent } from '@dnd-kit/core';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
 import { createDragEndEvent } from '~/__mocks__/utils';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
-import {
-  REQUISITES_EMPTY,
-  REQUISITES_ERROR,
-  REQUISITES_LOADING,
-  REQUISITES_MESSAGES
-} from '~/constants/requisites';
+import { REQUISITES_EMPTY, REQUISITES_ERROR, REQUISITES_LOADING, REQUISITES_MESSAGES } from '~/constants/requisites';
 
 const mockUsePaymentDetails = jest.fn();
 
@@ -78,9 +73,7 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
   }) => (
     <div data-testid="custom-formatting-field" data-editable={String(editable)}>
       <span>{label}</span>
-      <span data-testid="editor-preview">
-        {value?.content?.[0]?.content?.[0]?.text ?? ''}
-      </span>
+      <span data-testid="editor-preview">{value?.content?.[0]?.content?.[0]?.text ?? ''}</span>
       <button
         type="button"
         onClick={() =>
@@ -130,9 +123,11 @@ describe('PaymentDetailsPageContent', () => {
 
     act(() => mockDragEnd(createDragEndEvent(first.id, second.id)));
 
-    const getTabNames = () => screen.getAllByRole('button')
-      .map((button) => button.textContent)
-      .filter((name) => MOCK_PAYMENT_DETAILS.tabs.some((tab) => tab.name === name));
+    const getTabNames = () =>
+      screen
+        .getAllByRole('button')
+        .map((button) => button.textContent)
+        .filter((name) => MOCK_PAYMENT_DETAILS.tabs.some((tab) => tab.name === name));
     expect(getTabNames()).toEqual(reordered.map((tab) => tab.name));
     expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
     expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
@@ -159,9 +154,9 @@ describe('PaymentDetailsPageContent', () => {
 
     render(<PaymentDetailsPageContent />);
 
-    const tabs = screen.getAllByRole('button').filter((button) =>
-      ['UAH', 'USD', 'EUR', 'GBP'].includes(button.textContent ?? '')
-    );
+    const tabs = screen
+      .getAllByRole('button')
+      .filter((button) => ['UAH', 'USD', 'EUR', 'GBP'].includes(button.textContent ?? ''));
     expect(tabs.map((tab) => tab.textContent)).toEqual(['UAH', 'USD', 'EUR', 'GBP']);
   });
 
@@ -175,9 +170,7 @@ describe('PaymentDetailsPageContent', () => {
     render(<PaymentDetailsPageContent />);
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
-    expect(
-      screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')
-    ).toBeInTheDocument();
+    expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
   });
 
   it('renders loading state while payment details are being fetched', () => {
@@ -246,13 +239,116 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'true');
   });
 
-  it('does not offer tab deletion', () => {
+
+  it('deletes a tab on confirmation, preserves remaining tabs data and excludes deleted tab from save payload', async () => {
+    const remainingTabs = MOCK_PAYMENT_DETAILS.tabs.slice(1);
+    const saved = {
+      ...MOCK_PAYMENT_DETAILS,
+      tabs: remainingTabs.map((tab, order) => ({ ...tab, order }))
+    };
+    mockUpdatePaymentDetails.mockResolvedValue({ data: { updatePaymentDetails: saved } });
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_DESCRIPTION('UAH'))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+
+    expect(screen.queryByRole('button', { name: 'UAH' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_SUCCESS));
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input.tabs).toEqual(
+      remainingTabs.map(({ id, name, content }) => ({ id, name, content }))
+    );
+  });
+
+  it('cancels tab deletion without modifying the working draft', async () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+
+    expect(screen.getByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CANCEL }));
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+
+    expect(screen.getByRole('button', { name: 'UAH' })).toBeInTheDocument();
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
+  });
+
+  it('falls back to the previous tab when the last active tab in the list is deleted', async () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'GBP' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+
+    expect(screen.queryByRole('button', { name: 'GBP' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'EUR' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Опції реквізиту' })).toBeInTheDocument();
+  });
+
+  it('prevents deleting the last remaining tab and displays tooltip', async () => {
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs: [MOCK_PAYMENT_DETAILS.tabs[0]] },
+      loading: false,
+      error: undefined
+    });
+
     render(<PaymentDetailsPageContent />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
 
-    expect(screen.getByText('Редагувати назву')).toBeInTheDocument();
-    expect(screen.queryByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU)).not.toBeInTheDocument();
+    const deleteMenuItem = screen.getByRole('menuitem', {
+      name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU
+    });
+    expect(deleteMenuItem).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.mouseOver(deleteMenuItem.parentElement ?? deleteMenuItem);
+    expect(await screen.findByText(REQUISITES_MESSAGES.LAST_TAB_TOOLTIP)).toBeInTheDocument();
+
+    fireEvent.click(deleteMenuItem);
+    expect(screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE)).not.toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape', code: 'Escape' });
+
+    expect(screen.getByRole('button', { name: 'UAH' })).toBeInTheDocument();
+  });
+
+  it('retains the deleted-tab state in the working draft when saving fails', async () => {
+    mockUpdatePaymentDetails.mockRejectedValue(new Error('Network error'));
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+
+    expect(screen.queryByRole('button', { name: 'UAH' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_ERROR));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'UAH' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('Beneficiary');
   });
 
   it('saves edited content, new tabs in display order and the loaded PDF', async () => {
@@ -326,9 +422,7 @@ describe('PaymentDetailsPageContent', () => {
       resolveSave({ data: { updatePaymentDetails: MOCK_PAYMENT_DETAILS } });
     });
 
-    await waitFor(() =>
-      expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'true')
-    );
+    await waitFor(() => expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'true'));
     expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Опції реквізиту' })).toBeInTheDocument();
   });
