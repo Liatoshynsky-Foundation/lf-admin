@@ -1,6 +1,6 @@
 'use client';
 
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ import {
   CONTENT_MUTATION_RESULTS,
   MENU_ACTION_CONFIGS,
   MenuActionId,
+  PUBLICATION_CREATION_PARAM,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
@@ -31,8 +32,12 @@ type Params = {
 export default function EditPublicationsPage() {
   const { type, id } = useParams<Params>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const manager = usePublicationManager(type, id);
+  const isCreating = searchParams.has(PUBLICATION_CREATION_PARAM) &&
+    manager.currentData?.status === 'draft';
+  const publicationPath = `${PUBLICATIONS_BASE_PATH}/${type}/${id}`;
 
   useUnsavedChanges(manager.hasUnsavedChanges);
 
@@ -144,6 +149,12 @@ export default function EditPublicationsPage() {
   ]);
 
   const handleMenuAction = async (actionId: MenuActionId) => {
+    if (isSaving) return;
+
+    const content = manager.editedContent;
+    const isFirstPublish = isCreating && actionId === MenuActionId.PUBLISH;
+    if (isFirstPublish) setIsSaving(true);
+
     try {
       const { data, toastErrorMessage, toastMessage } = actionId === MenuActionId.DELETE ? await performDeleteAction() : await performUpdateAction(actionId);
 
@@ -156,10 +167,15 @@ export default function EditPublicationsPage() {
       
       if (NAVIGATE_AFTER_ACTIONS.has(actionId)) {
         router.push(PUBLICATIONS_BASE_PATH);
+      } else if (isFirstPublish && content) {
+        manager.markContentSaved(content);
+        router.replace(`${publicationPath}/edit`);
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
       console.error(`Action ${actionId} failed`, err);
+    } finally {
+      if (isFirstPublish) setIsSaving(false);
     }
   };
 
@@ -179,10 +195,10 @@ export default function EditPublicationsPage() {
           onEditorChange={handleEditorChange}
           onAction={handleMenuAction}
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
-          onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
+          onSeoClick={() => navigate(`${publicationPath}/seo`)}
           onBackClick={navigateBack}
           onPreview={handlePreview}
-          onSave={handleSave}
+          onSave={isCreating ? undefined : handleSave}
           isSaving={isSaving}
         />
       )}

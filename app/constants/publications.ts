@@ -62,6 +62,7 @@ export const PUBLICATIONS_ERROR_STATE_DESCRIPTION = 'Спробуйте онов
 export const PUBLICATION_EDIT_ERROR_STATE = 'Щось пішло не так';
 
 export const PUBLICATIONS_BASE_PATH = '/publications';
+export const PUBLICATION_CREATION_PARAM = 'fromCreate';
 
 const PUBLICATIONS_CATEGORIES: ReadonlyArray<PublicationsCategoryConfig> = [
   {

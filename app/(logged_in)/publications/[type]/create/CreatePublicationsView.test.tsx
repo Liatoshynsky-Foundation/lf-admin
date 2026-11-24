@@ -545,9 +545,9 @@ describe('CreatePublicationsView Component', () => {
   });
 
   describe('onEdit action', () => {
-    it('should save draft and redirect to edit page when edit button is clicked', async () => {
-      const handleSave = jest.fn().mockResolvedValue({ id: 'news-456' });
-      const mockData = createMockData({ publicationType: 'news', handleSave });
+    it.each(['news', 'events'] as const)('opens the %s editor in creation mode after saving the draft', async (type) => {
+      const handleSave = jest.fn().mockResolvedValue({ id: '456' });
+      const mockData = createMockData({ publicationType: type, handleSave });
 
       render(<CreatePublicationsView data={mockData} />);
       fireEvent.click(screen.getByTestId('btn-edit'));
@@ -555,7 +555,7 @@ describe('CreatePublicationsView Component', () => {
       await waitFor(() => {
         expect(handleSave).toHaveBeenCalledWith(BaseContentStatuses.Draft);
         expect(mockPush).not.toHaveBeenCalled();
-        expect(mockReplace).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/news/news-456/edit`);
+        expect(mockReplace).toHaveBeenCalledWith(`${PUBLICATIONS_BASE_PATH}/${type}/456/edit?fromCreate`);
       });
     });
 
