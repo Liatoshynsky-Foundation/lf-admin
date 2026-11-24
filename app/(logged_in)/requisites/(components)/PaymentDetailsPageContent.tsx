@@ -88,6 +88,29 @@ const PaymentDetailsPageContent = () => {
     setEditingTabId(null);
   };
 
+  const handleDeleteTab = (id: string) => {
+    if (tabs.length <= 1) return;
+
+    setTabs((previousTabs) => {
+      const deletedIndex = previousTabs.findIndex((tab) => tab.id === id);
+
+      if (deletedIndex === -1) return previousTabs;
+
+      const remainingTabs = previousTabs.filter((tab) => tab.id !== id);
+
+      if (activeTabId === id) {
+        const fallbackTab =
+          remainingTabs[deletedIndex] ?? remainingTabs[deletedIndex - 1];
+
+        setActiveTabId(fallbackTab?.id ?? '');
+      }
+
+      setEditingTabId((editingId) => (editingId === id ? null : editingId));
+
+      return remainingTabs;
+    });
+  };
+
   const handleAddTab = () => {
     const newId = `req-${Date.now()}`;
     const newTab: PaymentDetailsTab = {
@@ -201,7 +224,9 @@ const PaymentDetailsPageContent = () => {
             editingId={editingTabId}
             onSelectTab={handleSelectTab}
             onAddTab={handleAddTab}
+            onReorder={setTabs}
             onUpdateCurrency={handleUpdateTabName}
+            onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
             readOnly={isSaving}
           />

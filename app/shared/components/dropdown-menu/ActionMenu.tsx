@@ -5,6 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import styles from './ActionMenu.styles';
 import DropdownMenu from './DropdownMenu';
+import TooltipCustom from '~/shared/components/design-system/tooltip/Tooltip';
 import { useMenuScrollClose } from '~/shared/hooks/use-menu-scroll-close/useMenuScrollClose';
 
 export interface MenuItemConfig {
@@ -17,6 +18,8 @@ export interface MenuItemConfig {
   href?: string;
   onClick?: () => void;
   selected?: boolean;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export interface MenuGroup {
@@ -52,7 +55,7 @@ function MenuItemComponent({ item, onClose, isSelectable }: Readonly<MenuItemCom
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLLIElement>) => {
       e.stopPropagation();
-
+      if (item.disabled) return;
       item.onClick?.();
       onClose();
     },
@@ -74,17 +77,28 @@ function MenuItemComponent({ item, onClose, isSelectable }: Readonly<MenuItemCom
     </Box>
   );
 
-  return (
+  const menuItem = (
     <MenuItem
       component={item.href ? Link : 'li'}
       href={item.href}
       selected={item.selected}
+      disabled={item.disabled}
       sx={styles.menuItem}
       onClick={handleClick}
     >
       {content}
     </MenuItem>
   );
+
+  if (item.tooltip) {
+    return (
+      <TooltipCustom title={item.tooltip}>
+        <span style={{ display: 'block' }}>{menuItem}</span>
+      </TooltipCustom>
+    );
+  }
+
+  return menuItem;
 }
 function deriveGroupId(group: readonly MenuItemConfig[]): string {
   return group.map((item) => item.id).join('-');
@@ -148,7 +162,6 @@ const ActionMenu = ({
       sx={styles.menu}
       disableAutoFocusItem
       disableScrollLock
-      
       slotProps={{
         backdrop: {
           onClick: handleBackdropClick

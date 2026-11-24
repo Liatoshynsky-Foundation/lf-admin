@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import Page from './page';
+import type { FilesCardsLayoutAction } from '~/shared/components/files-cards-layout';
 
 const mockRefetch = jest.fn();
 const mockUseAllAssets = jest.fn();
@@ -9,6 +10,7 @@ const mockFetch = jest.fn();
 const mockCreateAsset = jest.fn();
 const mockUpdateAsset = jest.fn();
 const mockDeleteAsset = jest.fn();
+const mockSetMainComposition = jest.fn();
 
 let mockAllAssets: Array<Record<string, unknown>> = [];
 
@@ -28,7 +30,8 @@ jest.mock('~/types/graphql/generated/graphql', () => ({
   },
   useUpdateAssetMutation: () => [mockUpdateAsset, { loading: false }],
   useCreateAssetMutation: () => [mockCreateAsset, { loading: false }],
-  useDeleteAssetMutation: () => [mockDeleteAsset, { loading: false }]
+  useDeleteAssetMutation: () => [mockDeleteAsset, { loading: false }],
+  useSetMainCompositionMutation: () => [mockSetMainComposition]
 }));
 
 jest.mock('~/shared/components/file-info-sidebar/FileInfoSidebar', () => ({
@@ -67,7 +70,7 @@ jest.mock('~/shared/components/files-cards-layout', () => ({
   }: {
     items: Array<{ id: string; name: string; isStarred?: boolean }>;
     onItemClick: (item: { id: string; name: string }) => void;
-    onItemAction?: (action: 'rename' | 'delete' | 'download', item: { id: string; name: string }) => void;
+    onItemAction?: (action: FilesCardsLayoutAction, item: { id: string; name: string }) => void;
     onItemToggleStar?: (item: { id: string; name: string; isStarred?: boolean }, next: boolean) => void;
   }) => (
     <div data-testid="files-cards-layout">

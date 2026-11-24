@@ -1,19 +1,19 @@
 'use client';
 
+import type { DragEndEvent } from '@dnd-kit/core';
+import { rectSortingStrategy } from '@dnd-kit/sortable';
 import { Box, Typography } from '@mui/material';
 import { EllipsisVertical, Pencil, Trash2 } from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState
-} from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { styles } from './CurrencyTabs.styles';
 import { type PaymentDetailsTab, REQUISITES_MESSAGES } from '~/constants/requisites';
 import Button from '~/ds-components/button/Button';
+import { handleSortableDragEnd } from '~/lib/utils/sortableDragEndHelper';
+import DeleteCardModal from '~/shared/components/delete-card-modal/DeleteCardModal';
 import ActionMenu, { ActionMenuGroups } from '~/shared/components/dropdown-menu/ActionMenu';
+import { SortableItemWrapper } from '~/shared/components/sortable-item-wrapper/SortableItemWrapper';
+import { SortableList } from '~/shared/components/sortable-list/SortableList';
 
 interface CurrencyTabsProps {
   items: PaymentDetailsTab[];
@@ -21,6 +21,7 @@ interface CurrencyTabsProps {
   editingId: string | null;
   onSelectTab: (id: string) => void;
   onAddTab: () => void;
+  onReorder: (items: PaymentDetailsTab[]) => void;
   onUpdateCurrency: (id: string, name: string) => boolean;
   onDeleteTab?: (id: string) => void;
   setEditingId: (id: string | null) => void;
@@ -33,6 +34,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   editingId,
   onSelectTab,
   onAddTab,
+  onReorder,
   onUpdateCurrency,
   onDeleteTab,
   setEditingId,
@@ -40,9 +42,13 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuTargetId, setMenuTargetId] = useState<null | string>(null);
+  const [deleteTabId, setDeleteTabId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const isEscapedRef = useRef(false);
+
+  const canDelete = items.length > 1;
+  const tabToDelete = items.find((tab) => tab.id === deleteTabId);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -131,10 +137,23 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   };
 
   const handleDelete = () => {
+    if (!canDelete) return;
+  
     if (menuTargetId) {
-      onDeleteTab?.(menuTargetId);
+      setDeleteTabId(menuTargetId);
     }
     handleCloseMenu();
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTabId || items.length <= 1) return;
+
+    onDeleteTab?.(deleteTabId);
+    setDeleteTabId(null);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteTabId(null);
   };
 
   const handleCommitEdit = () => {
@@ -180,6 +199,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
           ? [
             {
               id: 'delete',
+              disabled: !canDelete,
+              tooltip: !canDelete ? REQUISITES_MESSAGES.LAST_TAB_TOOLTIP : undefined,
               text: {
                 name: REQUISITES_MESSAGES.DELETE_REQUISITE_MENU,
                 icon: <Trash2 size={18} />
@@ -191,6 +212,13 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
       ]
     }
   ];
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (readOnly || editingId) {
+      return;
+    }
+    handleSortableDragEnd(event, items, onReorder);
+  };
 
   return (
     <Box sx={styles.wrapper}>
@@ -209,69 +237,76 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
             }}
           />
 
-          {items.map((item) => {
-            const isActive = item.id === activeId;
-            const isEditing = item.id === editingId;
+          <SortableList
+            onDragEnd={handleDragEnd}
+            id="currency-tabs"
+            items={items.map((item) => item.id)}
+            strategy={rectSortingStrategy}
+          >
+            {items.map((item) => {
+              const isActive = item.id === activeId;
+              const isEditing = item.id === editingId;
 
-            return (
-              <Box
-                key={item.id}
-                ref={(el: HTMLDivElement | null) => {
-                  tabRefs.current[item.id] = el;
-                }}
-                sx={[
-                  styles.tabItem,
-                  isActive ? styles.tabItemActive : styles.tabItemInactive
-                ]}
-              >
-                {isEditing ? (
-                  <>
-                    <input
-                      ref={inputRef}
-                      style={{
-                        ...(styles.tabInput as React.CSSProperties),
-                        width: `${Math.max(64, Math.min(200, (editingValue.length + 1) * 9))}px`
-                      }}
-                      value={editingValue}
-                      maxLength={CURRENCY_MAX}
-                      onChange={(e) => {
-                        setEditingValue(e.target.value);
-                      }}
-                      onBlur={handleCommitEdit}
-                      onKeyDown={handleKeyDown}
-                      placeholder={REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-
-                    <Typography component="span" variant="caption" sx={{ whiteSpace: 'nowrap', ml: 0.5 }}>
-                      {editingValue.length}/{CURRENCY_MAX}
-                    </Typography>
-                  </>
-                ) : (
+              return (
+                <SortableItemWrapper
+                  id={item.id}
+                  key={item.id}
+                  gripHandle
+                  style={{ width: 'auto' }}
+                  disabled={readOnly || Boolean(editingId)}
+                >
                   <Box
-                    component="button"
-                    type="button"
-                    sx={styles.tabButton}
-                    onClick={() => onSelectTab(item.id)}
+                    ref={(el: HTMLDivElement | null) => {
+                      tabRefs.current[item.id] = el;
+                    }}
+                    sx={[styles.tabItem, isActive ? styles.tabItemActive : styles.tabItemInactive]}
                   >
-                    {item.name}
-                  </Box>
-                )}
+                    {isEditing ? (
+                      <>
+                        <input
+                          ref={inputRef}
+                          style={{
+                            ...(styles.tabInput as React.CSSProperties),
+                            width: `${Math.max(64, Math.min(200, (editingValue.length + 1) * 9))}px`
+                          }}
+                          value={editingValue}
+                          disabled={readOnly}
+                          maxLength={CURRENCY_MAX}
+                          onChange={(e) => {
+                            setEditingValue(e.target.value);
+                          }}
+                          onBlur={handleCommitEdit}
+                          onKeyDown={handleKeyDown}
+                          placeholder={REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY}
+                          onClick={(e) => e.stopPropagation()}
+                        />
 
-                {isActive && !isEditing && !readOnly && (
-                  <Box
-                    component="button"
-                    type="button"
-                    sx={styles.menuTrigger}
-                    onClick={(e) => handleOpenMenu(e, item.id)}
-                    aria-label="Опції реквізиту"
-                  >
-                    <EllipsisVertical size={16} />
+                        <Typography component="span" variant="caption" sx={{ whiteSpace: 'nowrap', ml: 0.5 }}>
+                          {editingValue.length}/{CURRENCY_MAX}
+                        </Typography>
+                      </>
+                    ) : (
+                      <Box component="button" type="button" sx={styles.tabButton} onClick={() => onSelectTab(item.id)}>
+                        {item.name}
+                      </Box>
+                    )}
+
+                    {isActive && !isEditing && !readOnly && (
+                      <Box
+                        component="button"
+                        type="button"
+                        sx={styles.menuTrigger}
+                        onClick={(e) => handleOpenMenu(e, item.id)}
+                        aria-label="Опції реквізиту"
+                      >
+                        <EllipsisVertical size={16} />
+                      </Box>
+                    )}
                   </Box>
-                )}
-              </Box>
-            );
-          })}
+                </SortableItemWrapper>
+              );
+            })}
+          </SortableList>
         </Box>
       </Box>
 
@@ -290,13 +325,16 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
         </Button>
       </Box>
 
-      {anchorEl && (
-        <ActionMenu
-          anchorEl={anchorEl}
-          onClose={handleCloseMenu}
-          menuItems={menuGroups}
-        />
-      )}
+      {anchorEl && <ActionMenu anchorEl={anchorEl} onClose={handleCloseMenu} menuItems={menuGroups} />}
+      <DeleteCardModal
+        open={Boolean(tabToDelete)}
+        onClose={handleCloseDeleteModal}
+        onDelete={handleConfirmDelete}
+        title={REQUISITES_MESSAGES.DELETE_TAB_TITLE}
+        description={REQUISITES_MESSAGES.DELETE_TAB_DESCRIPTION(tabToDelete?.name ?? '')}
+        confirmButtonText={REQUISITES_MESSAGES.DELETE_TAB_CONFIRM}
+        cancelButtonText={REQUISITES_MESSAGES.DELETE_TAB_CANCEL}
+      />
     </Box>
   );
 };

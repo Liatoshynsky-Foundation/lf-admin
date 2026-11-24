@@ -32,6 +32,17 @@ describe('buildPaymentDetailsInput', () => {
     ]);
   });
 
+  it('excludes deleted tabs from the payload while preserving IDs, names and content of remaining tabs', () => {
+    const remainingTabs = tabs.filter((tab) => tab.id !== 'saved-usd');
+
+    const input = buildPaymentDetailsInput(remainingTabs, savedTabIds, null);
+
+    expect(input.tabs).toEqual([
+      { id: 'saved-uah', name: 'UAH', content },
+      { name: 'GBP', content }
+    ]);
+  });
+
   it('sends the currently loaded PDF without extra fields', () => {
     const input = buildPaymentDetailsInput(tabs, savedTabIds, { ...pdfFile, __typename: 'PaymentDetailsPdfFile' } as never);
 

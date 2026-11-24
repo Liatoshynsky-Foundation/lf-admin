@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 import CardLayout from '../card-layout/CardLayout';
 import TitleWithTooltip from '../card-layout/TitleWithTooltip';
+import type { FilesCardsLayoutAction } from '../files-cards-layout/FilesCardsLayout';
 import { styles } from './FileCard.styles';
 import FileCardMenuItems from './FileCardMenuItems';
 import TooltipCustom from '~/ds-components/tooltip/Tooltip';
@@ -46,7 +47,7 @@ export interface FileCardProps {
   fileData: FileCardData;
   isSelected?: boolean;
   onClick?: () => void;
-  onAction?: (action: 'rename' | 'delete' | 'download' | 'copy-link' | 'make-primary', fileId: string) => void;
+  onAction?: (action: FilesCardsLayoutAction, fileId: string) => void;
   onToggleStar?: (fileId: string, next: boolean) => Promise<void> | void;
   isFileInfoSidebarOpen?: boolean;
 }
