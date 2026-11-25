@@ -23,6 +23,7 @@ type EditModeProps = BaseProps & {
   onPublish?: () => void;
   onMenuOpen?: (event: MouseEvent<HTMLButtonElement>) => void;
   onPreview?: () => void;
+  onSave?: () => void;
   hidePreview?: boolean;
   showPublish?: boolean;
 };
@@ -72,13 +73,13 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
             {showPublish && (
               <Button
                 disabled={disabled}
-                onClick={props.onPublish}
+                onClick={props.onSave ?? props.onPublish}
                 variant="contained"
                 color="tertiary"
                 disableElevation
                 sx={styles.groupLeft}
               >
-                  Опублікувати
+                {props.onSave ? 'Зберегти' : 'Опублікувати'}
               </Button>
             )}
             <Button

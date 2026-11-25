@@ -16,6 +16,7 @@ import {   ADMIN_TITLE_LABELS,
   MENU_ACTION_CONFIGS,
   MenuActionId,
   PAGE_TITLES,
+  PUBLICATION_CREATION_PARAM,
   PUBLICATION_SEO_LABELS,
   PUBLICATION_SEO_REQUIRED,
   PUBLICATIONS_BASE_PATH} from '~/constants/publications';
@@ -175,7 +176,7 @@ export default function CreatePublicationsView({
   const onEdit = async () => {
     const result = await handleSave(BaseContentStatuses.Draft);
     if (result?.id) {
-      router.replace(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${result.id}/edit`);
+      router.replace(`${PUBLICATIONS_BASE_PATH}/${publicationType}/${result.id}/edit?${PUBLICATION_CREATION_PARAM}`);
     }
   };
 

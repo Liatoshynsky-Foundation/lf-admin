@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import toast from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ import { BaseContentStatuses } from '~/types/enums/common.enums';
 jest.mock('next/navigation', () => ({
   useParams: jest.fn(),
   useRouter: jest.fn(),
+  useSearchParams: jest.fn(),
   notFound: jest.fn(),
   usePathname: jest.fn(() => '/publications/news/123/edit')
 }));
@@ -46,6 +47,7 @@ const baseMockManager = {
     en: { content: { blocks: [], version: '1', lastModified: '' } }
   },
   setEditedContent: jest.fn(),
+  markContentSaved: jest.fn(),
   currentLanguage: 'UA',
   setCurrentLanguage: jest.fn(),
   editorResetKey: 0,
@@ -58,16 +60,23 @@ const baseMockManager = {
 jest.mock('./EditPublicationsView', () => ({
   EditPublicationsView: (props: EditPublicationsViewProps) => (
     <div data-testid="mock-edit-view">
-      <button
-        data-testid="trigger-editor-change"
-        onClick={() =>
-          props.onEditorChange(
-            { blocks: [{ type: 'paragraph', content: 'new' }] } as unknown as SerializedContent,
-            'uk'
-          )
-        }
-      />
-      <button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} />
+      {(['uk', 'en'] as const).map((locale) => (
+        <button
+          key={locale}
+          data-testid={`edit-${locale}`}
+          onClick={() =>
+            props.onEditorChange(
+              { blocks: [{ type: 'paragraph', content: `Updated ${locale}` }] } as unknown as SerializedContent,
+              locale
+            )
+          }
+        />
+      ))}
+      {props.onSave ? (
+        <button data-testid="trigger-save" onClick={props.onSave} disabled={props.isSaving} />
+      ) : (
+        <button data-testid="trigger-publish" onClick={() => props.onAction(MenuActionId.PUBLISH)} disabled={props.isSaving} />
+      )}
       <button data-testid="trigger-save-exit" onClick={() => props.onAction(MenuActionId.PUBLICATE_AND_EXIT)} />
       <button data-testid="trigger-delete" onClick={props.onDeleteConfirm} />
       <button data-testid="trigger-seo" onClick={props.onSeoClick} />
@@ -94,6 +103,7 @@ const mockHandlePreviewSave = jest.fn().mockResolvedValue({ id: 11, slug: handle
 
 describe('EditPublicationsPage Container', () => {
   const mockPush = jest.fn();
+  const mockReplace = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -103,7 +113,8 @@ describe('EditPublicationsPage Container', () => {
     baseMockManager.updatePreviewResource.mockResolvedValue({ data: { id: '1' } });
     baseMockManager.deleteResource.mockResolvedValue({ data: { id: '1' } });
     (useParams as jest.Mock).mockReturnValue({ type: 'news', id: '123' });
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
+    (useRouter as jest.Mock).mockReturnValue({ push: mockPush, replace: mockReplace });
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
     (usePublicationManager as jest.Mock).mockReturnValue(baseMockManager);
     (useUpsertPublication as jest.Mock).mockReturnValue({
       mockUpsertData: true,
@@ -216,38 +227,105 @@ describe('EditPublicationsPage Container', () => {
     expect(fetchPreview).toHaveBeenCalledTimes(1);
   });
 
-  it('should debounce editor changes and update state after 500ms', () => {
-    jest.useFakeTimers();
-    render(<EditPublicationsPage />);
-
-    fireEvent.click(screen.getByTestId('trigger-editor-change'));
-    fireEvent.click(screen.getByTestId('trigger-editor-change'));
-
-    expect(baseMockManager.setEditedContent).not.toHaveBeenCalled();
-
-    act(() => {
-      jest.advanceTimersByTime(500);
+  it.each([
+    ['news', BaseContentStatuses.Published],
+    ['news', BaseContentStatuses.Hidden],
+    ['events', BaseContentStatuses.Published],
+    ['events', BaseContentStatuses.Hidden]
+  ])('saves both locales immediately for %s with status %s', async (type, status) => {
+    (useParams as jest.Mock).mockReturnValue({ type, id: '123' });
+    (usePublicationManager as jest.Mock).mockImplementation(function useMockPublicationManager() {
+      const [editedContent, setEditedContent] = React.useState<LocalizedEditorState>(baseMockManager.editedContent);
+      return { ...baseMockManager, editedContent, setEditedContent, currentData: { ...baseMockManager.currentData, status } };
     });
 
-    expect(baseMockManager.setEditedContent).toHaveBeenCalledTimes(1);
+    render(<EditPublicationsPage />);
+    fireEvent.click(screen.getByTestId('edit-uk'));
+    fireEvent.click(screen.getByTestId('edit-en'));
+    fireEvent.click(screen.getByTestId('trigger-save'));
 
-    const stateUpdater = baseMockManager.setEditedContent.mock.calls[0][0] as (
-      prev: LocalizedEditorState | null
-    ) => LocalizedEditorState | null;
-    const prevState = baseMockManager.editedContent;
-    const newState = stateUpdater(prevState);
+    const content = {
+      uk: { content: { blocks: [{ type: 'paragraph', content: 'Updated uk' }] } },
+      en: { content: { blocks: [{ type: 'paragraph', content: 'Updated en' }] } }
+    };
+    expect(baseMockManager.updateResource).toHaveBeenCalledTimes(1);
+    expect(baseMockManager.updateResource).toHaveBeenCalledWith(undefined, { content });
+    expect(baseMockManager.updatePreviewResource).not.toHaveBeenCalled();
+    expect(mockHandlePreviewSave).not.toHaveBeenCalled();
 
-    expect(newState?.uk?.content.blocks[0].content).toBe('new');
-
-    const nullState = stateUpdater(null);
-    expect(nullState).toBeNull();
-
-    jest.useRealTimers();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Зміни збережено.'));
+    expect(baseMockManager.markContentSaved).toHaveBeenCalledWith(content);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('should handle PUBLISH action correctly', async () => {
-    render(<EditPublicationsPage />);
+  it('disables Save during the request and marks the submitted content as saved', async () => {
+    let resolveSave!: (value: { data: { id: string } }) => void;
+    baseMockManager.updateResource.mockReturnValueOnce(new Promise((resolve) => { resolveSave = resolve; }));
 
+    render(<EditPublicationsPage />);
+    const saveButton = screen.getByTestId('trigger-save');
+    fireEvent.click(saveButton);
+    expect(saveButton).toBeDisabled();
+    fireEvent.click(saveButton);
+    expect(baseMockManager.updateResource).toHaveBeenCalledTimes(1);
+    expect(baseMockManager.markContentSaved).not.toHaveBeenCalled();
+
+    await act(async () => resolveSave({ data: { id: '123' } }));
+    expect(baseMockManager.markContentSaved).toHaveBeenCalledWith(baseMockManager.editedContent);
+    expect(saveButton).toBeEnabled();
+  });
+
+  it('allows navigation after saving the pending edits', async () => {
+    (usePublicationManager as jest.Mock).mockImplementation(function useMockPublicationManager() {
+      const [editedContent, setEditedContent] = React.useState<LocalizedEditorState>(baseMockManager.editedContent);
+      const [savedContent, markContentSaved] = React.useState(editedContent);
+      return {
+        ...baseMockManager,
+        editedContent,
+        setEditedContent,
+        markContentSaved,
+        hasUnsavedChanges: editedContent !== savedContent
+      };
+    });
+
+    render(<EditPublicationsPage />);
+    fireEvent.click(screen.getByTestId('edit-uk'));
+    fireEvent.click(screen.getByTestId('trigger-seo'));
+    expect(mockPush).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('trigger-save'));
+    await waitFor(() => expect(screen.getByTestId('trigger-save')).toBeEnabled());
+
+    fireEvent.click(screen.getByTestId('trigger-seo'));
+    expect(mockPush).toHaveBeenCalledWith('/publications/news/123/seo');
+  });
+
+  it.each(['empty response', 'rejected request'])('shows an error and allows retry after a %s', async (failure) => {
+    if (failure === 'empty response') {
+      baseMockManager.updateResource.mockResolvedValueOnce({ data: null });
+    } else {
+      baseMockManager.updateResource.mockRejectedValueOnce(new Error('Request failed'));
+    }
+
+    render(<EditPublicationsPage />);
+    const saveButton = screen.getByTestId('trigger-save');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Не вдалося зберегти зміни. Спробуйте ще раз.'));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(baseMockManager.markContentSaved).not.toHaveBeenCalled();
+    expect(saveButton).toBeEnabled();
+
+    fireEvent.click(saveButton);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Зміни збережено.'));
+  });
+
+  it.each(['news', 'events'])('publishes the new %s and then offers Save for later edits', async (type) => {
+    (useParams as jest.Mock).mockReturnValue({ type, id: '123' });
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('fromCreate'));
+    const { rerender } = render(<EditPublicationsPage />);
+
+    expect(screen.queryByTestId('trigger-save')).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('trigger-publish'));
 
     await waitFor(() => {
@@ -255,7 +333,31 @@ describe('EditPublicationsPage Container', () => {
         content: baseMockManager.editedContent
       });
       expect(toast.success).toHaveBeenCalledWith(CONTENT_MUTATION_RESULTS.publicationPublished);
+      expect(mockReplace).toHaveBeenCalledWith(`/publications/${type}/123/edit`);
     });
+    expect(baseMockManager.markContentSaved).toHaveBeenCalledWith(baseMockManager.editedContent);
+
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
+    rerender(<EditPublicationsPage />);
+    expect(screen.getByTestId('trigger-save')).toBeInTheDocument();
+  });
+
+  it('offers Save when reopening an existing draft', () => {
+    render(<EditPublicationsPage />);
+    expect(screen.getByTestId('trigger-save')).toBeInTheDocument();
+    expect(screen.queryByTestId('trigger-publish')).not.toBeInTheDocument();
+  });
+
+  it('offers Save when a published article is opened with the creation URL', () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('fromCreate'));
+    (usePublicationManager as jest.Mock).mockReturnValue({
+      ...baseMockManager,
+      currentData: { ...baseMockManager.currentData, status: BaseContentStatuses.Published }
+    });
+
+    render(<EditPublicationsPage />);
+    expect(screen.getByTestId('trigger-save')).toBeInTheDocument();
+    expect(screen.queryByTestId('trigger-publish')).not.toBeInTheDocument();
   });
 
   it('should handle PUBLICATE_AND_EXIT action and redirect router', async () => {
@@ -290,6 +392,7 @@ describe('EditPublicationsPage Container', () => {
       [MenuActionId.PUBLICATE_AND_EXIT, 'trigger-save-exit', MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage],
       [MenuActionId.CANCEL_PUBLICATION, 'trigger-cancel-publication', MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage]
     ])('should trigger toast.error and not call mockPush when %s returns data null', async (_, triggerId, expectedToast) => {
+      (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('fromCreate'));
       baseMockManager.updateResource.mockResolvedValue({ data: null });
 
       render(<EditPublicationsPage />);
@@ -383,6 +486,7 @@ describe('EditPublicationsPage Container', () => {
   });
 
   it('should catch non-Error mutation errors and trigger a toast.error', async () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('fromCreate'));
     (usePublicationManager as jest.Mock).mockReturnValue({
       ...baseMockManager,
       updateResource: jest.fn().mockRejectedValue('String Mutation Error')

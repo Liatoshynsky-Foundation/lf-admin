@@ -42,6 +42,8 @@ export type EditPublicationsViewProps = {
   onSeoClick: () => void;
   onBackClick: () => void;
   onPreview?: () => void;
+  onSave?: () => void;
+  isSaving?: boolean;
 };
 
 export function EditPublicationsView({
@@ -57,7 +59,9 @@ export function EditPublicationsView({
   onDeleteConfirm,
   onBackClick,
   onSeoClick,
-  onPreview
+  onPreview,
+  onSave,
+  isSaving
 }: Readonly<EditPublicationsViewProps>) {
   const [anchors, setAnchors] = useState<MenuAnchor>({
     navigation: null,
@@ -91,6 +95,8 @@ export function EditPublicationsView({
           <HeaderRightActions
             mode={type === 'media' ? 'seo' : 'edit'}
             onPreview={type === 'media' ? undefined : onPreview}
+            onSave={onSave}
+            disabled={isSaving}
             onMenuOpen={(e) => handleOpen(e, 'publish')}
             onPublish={() => handlePublishActionClick(MenuActionId.PUBLISH)}
           />

@@ -1,7 +1,7 @@
 'use client';
 
-import { notFound, useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 import CreatePublicationsView from '../../create/CreatePublicationsView';
@@ -11,6 +11,7 @@ import {
   CONTENT_MUTATION_RESULTS,
   MENU_ACTION_CONFIGS,
   MenuActionId,
+  PUBLICATION_CREATION_PARAM,
   PUBLICATIONS_BASE_PATH,
   PublicationsItemType
 } from '~/constants/publications';
@@ -31,41 +32,27 @@ type Params = {
 export default function EditPublicationsPage() {
   const { type, id } = useParams<Params>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const manager = usePublicationManager(type, id);
+  const isCreating = searchParams.has(PUBLICATION_CREATION_PARAM) &&
+    manager.currentData?.status === 'draft';
+  const publicationPath = `${PUBLICATIONS_BASE_PATH}/${type}/${id}`;
 
   useUnsavedChanges(manager.hasUnsavedChanges);
 
   const publicationData = useUpsertPublication({ type, id });
 
-  const latestBlocksRef = useRef<SerializedContent | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { navigate, navigateBack } = useNavigationGuard();
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    };
-  }, []);
 
   if (!manager.isLoading && manager.currentData === null && !manager.hasError) {
     notFound();
   }
 
   const handleEditorChange = (content: SerializedContent, localeKey: 'uk' | 'en') => {
-    latestBlocksRef.current = content;
-
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-
-    debounceTimerRef.current = setTimeout(() => {
-      if (latestBlocksRef.current) {
-        manager.setEditedContent((prev) => {
-          const next = prev ? { ...prev, [localeKey]: { content: latestBlocksRef.current! } } : prev;
-          return next;
-        });
-      }
-    }, 500);
+    manager.setEditedContent((prev) => (prev ? { ...prev, [localeKey]: { content } } : prev));
   };
 
   const handlePreview = async () => {
@@ -117,6 +104,29 @@ export default function EditPublicationsPage() {
     }
   };
 
+  const handleSave = async () => {
+    const content = manager.editedContent;
+    if (isSaving || !content) return;
+
+    setIsSaving(true);
+    const errorMessage = 'Не вдалося зберегти зміни. Спробуйте ще раз.';
+
+    try {
+      const { data } = await manager.updateResource(undefined, { content });
+      if (!data) {
+        toast.error(errorMessage);
+        return;
+      }
+
+      manager.markContentSaved(content);
+      toast.success('Зміни збережено.');
+    } catch {
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const performUpdateAction = async (actionId: keyof typeof MENU_ACTION_CONFIGS) => {
     const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS[actionId];
     const { data } = await manager.updateResource(status, { content: manager.editedContent });
@@ -139,6 +149,12 @@ export default function EditPublicationsPage() {
   ]);
 
   const handleMenuAction = async (actionId: MenuActionId) => {
+    if (isSaving) return;
+
+    const content = manager.editedContent;
+    const isFirstPublish = isCreating && actionId === MenuActionId.PUBLISH;
+    if (isFirstPublish) setIsSaving(true);
+
     try {
       const { data, toastErrorMessage, toastMessage } = actionId === MenuActionId.DELETE ? await performDeleteAction() : await performUpdateAction(actionId);
 
@@ -151,10 +167,15 @@ export default function EditPublicationsPage() {
       
       if (NAVIGATE_AFTER_ACTIONS.has(actionId)) {
         router.push(PUBLICATIONS_BASE_PATH);
+      } else if (isFirstPublish && content) {
+        manager.markContentSaved(content);
+        router.replace(`${publicationPath}/edit`);
       }
     } catch (err) {
       toast.error(`Помилка: ${err instanceof Error ? err.message : String(err)}`);
       console.error(`Action ${actionId} failed`, err);
+    } finally {
+      if (isFirstPublish) setIsSaving(false);
     }
   };
 
@@ -174,9 +195,11 @@ export default function EditPublicationsPage() {
           onEditorChange={handleEditorChange}
           onAction={handleMenuAction}
           onDeleteConfirm={() => handleMenuAction(MenuActionId.DELETE)}
-          onSeoClick={() => navigate(`${PUBLICATIONS_BASE_PATH}/${type}/${id}/seo`)}
+          onSeoClick={() => navigate(`${publicationPath}/seo`)}
           onBackClick={navigateBack}
           onPreview={handlePreview}
+          onSave={isCreating ? undefined : handleSave}
+          isSaving={isSaving}
         />
       )}
     </>
