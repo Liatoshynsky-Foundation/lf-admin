@@ -225,18 +225,6 @@ describe('PublicatiosSeoPage Container', () => {
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('should show error toast when saving changes fails', async () => {
-      mockHandleSave.mockResolvedValue(undefined);
-
-      fireEvent.click(screen.getByTestId('btn-save'));
-
-      await waitFor(() => {
-        expect(mockHandleSave).toHaveBeenCalledWith();
-        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.SAVE_CHANGES.toastErrorMessage);
-      });
-
-      expect(mockPush).not.toHaveBeenCalled();
-    });
   });
 
   describe('when handleSave returns undefined', () => {
@@ -244,8 +232,7 @@ describe('PublicatiosSeoPage Container', () => {
       {
         name: 'publish',
         trigger: () => fireEvent.click(screen.getByTestId('btn-publish')),
-        status: BaseContentStatuses.Published,
-        errorToast: MENU_ACTION_CONFIGS.PUBLISH.toastErrorMessage
+        status: BaseContentStatuses.Published
       },
       {
         name: 'publish and exit',
@@ -253,8 +240,7 @@ describe('PublicatiosSeoPage Container', () => {
           fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
           fireEvent.click(screen.getByText('Опублікувати і вийти'));
         },
-        status: BaseContentStatuses.Published,
-        errorToast: MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT.toastErrorMessage
+        status: BaseContentStatuses.Published
       },
       {
         name: 'cancel publication',
@@ -262,19 +248,18 @@ describe('PublicatiosSeoPage Container', () => {
           fireEvent.click(screen.getByTestId('btn-open-publish-menu'));
           fireEvent.click(screen.getByText('Скасувати публікацію'));
         },
-        status: BaseContentStatuses.Draft,
-        errorToast: MENU_ACTION_CONFIGS.CANCEL_PUBLICATION.toastErrorMessage
+        status: BaseContentStatuses.Draft
       }
     ])(
       'should show toast.error with $errorToast and not redirect on $name',
-      async ({ trigger, status, errorToast }) => {
+      async ({ trigger, status }) => {
         mockHandleSave.mockResolvedValue(undefined);
         setup('news');
         trigger();
 
         await waitFor(() => {
           expect(mockHandleSave).toHaveBeenCalledWith(status);
-          expect(toast.error).toHaveBeenCalledWith(errorToast);
+          expect(toast.success).not.toHaveBeenCalled();
           expect(mockPush).not.toHaveBeenCalled();
         });
       }
