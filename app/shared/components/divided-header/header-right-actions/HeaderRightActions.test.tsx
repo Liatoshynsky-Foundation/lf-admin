@@ -122,7 +122,7 @@ describe('HeaderRightActions Component', () => {
         render(<HeaderRightActions mode="seo" isPageSeo onCancel={jest.fn()} onPublish={jest.fn()} />);
 
         expect(screen.getByRole('button', { name: 'Скасувати' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Зберегти' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Відкрити меню параметрів' })).not.toBeInTheDocument();
       });
 
@@ -135,15 +135,26 @@ describe('HeaderRightActions Component', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Скасувати' }));
         expect(mockOnCancel).toHaveBeenCalledTimes(1);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Опублікувати' }));
         expect(mockOnPublish).toHaveBeenCalledTimes(1);
       });
 
       it('should disable save and cancel buttons when disabled prop is true', () => {
         render(<HeaderRightActions mode="seo" isPageSeo disabled onCancel={jest.fn()} onPublish={jest.fn()} />);
 
-        expect(screen.getByRole('button', { name: 'Зберегти' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Опублікувати' })).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Скасувати' })).toBeDisabled();
+      });
+
+      it('uses Save as the primary action when provided', () => {
+        const onSave = jest.fn();
+        render(<HeaderRightActions mode="seo" onSave={onSave} onPublish={mockOnPublish} onMenuOpen={mockOnMenuOpen} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Зберегти' }));
+        expect(onSave).toHaveBeenCalledTimes(1);
+        expect(mockOnPublish).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Відкрити меню параметрів' }));
+        expect(mockOnMenuOpen).toHaveBeenCalledTimes(1);
       });
     });
 

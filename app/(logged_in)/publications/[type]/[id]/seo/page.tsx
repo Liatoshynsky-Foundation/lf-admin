@@ -42,35 +42,29 @@ export default function PublicatiosSeoPage() {
   const handleClosePublish = () => setPublishAnchor(null);
 
   const handlePublishAndExit = async () => {
-    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLICATE_AND_EXIT;
     const id = await publicationData?.handleSave(status);
     if (id) {
       toast.success(toastMessage);
       router.push(PUBLICATIONS_BASE_PATH);
-    } else {
-      toast.error(toastErrorMessage);
     }
   };
 
   const handlePublish = async () => {
-    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.PUBLISH;
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.PUBLISH;
     const id = await publicationData?.handleSave(status);
     if (id) {
       toast.success(toastMessage);
-    } else {
-      toast.error(toastErrorMessage);
     }
   };
 
   const handleUnpublish = async () => {
-    const { status, toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
+    const { status, toastMessage } = MENU_ACTION_CONFIGS.CANCEL_PUBLICATION;
     const id = await publicationData?.handleSave(status);
     if (id) {
       handleClosePublish();
       toast.success(toastMessage);
       router.push(PUBLICATIONS_BASE_PATH);
-    } else {
-      toast.error(toastErrorMessage);
     }
   };
 
@@ -91,12 +85,21 @@ export default function PublicatiosSeoPage() {
     handleClosePublish();
   };
 
+  const handleSaveClick = async () => {
+    const { toastMessage } = MENU_ACTION_CONFIGS.SAVE_CHANGES;
+    const id = await publicationData?.handleSave();
+
+    if (id) {
+      toast.success(toastMessage);
+    }
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <DividedHeader
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
-          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} />
+          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} onSave={handleSaveClick} />
         }
       >
         <TitleDropdown
