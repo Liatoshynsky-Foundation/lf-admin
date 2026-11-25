@@ -154,7 +154,7 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
     [form, id, saveEventCoverImageAlt, saveNewsCoverImageAlt, type]
   );
 
-  const handleSave = async (status: BaseContentStatuses, locale: 'uk' | 'en' = 'uk') => {
+  const handleSave = async (status?: BaseContentStatuses, locale: 'uk' | 'en' = 'uk') => {
     if (!isValidType) return;
 
     const { adminTitle, seoValue, publishDate } = form.latestDataRef.current;
@@ -182,7 +182,21 @@ export const useUpsertPublication = ({ type, id }: UseUpsertPublicationProps) =>
       const targetId = (isEditing && id) ? id : undefined;
       const formState = { adminTitle, publishDate: getDateIsoString(publishDate) ?? null, seoValue, crop: form.latestDataRef.current.crop };
 
-      const result = await strategy.saveDocument(status, payload, formState, targetId);
+      const currentStatus = status ?? strategy.data?.status;
+
+      if (!currentStatus) return;
+
+      const result = await strategy.saveDocument(
+        currentStatus,
+        payload,
+        formState,
+        targetId
+      );
+
+      if (result) {
+        form.setInitialState(formState);
+      }
+
       form.setSourceUrlError('');
 
       return { id: result?.id, slug: result?.slug };

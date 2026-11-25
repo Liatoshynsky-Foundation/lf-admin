@@ -213,6 +213,30 @@ describe('PublicatiosSeoPage Container', () => {
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
+
+    it('should save changes and show success toast when save is triggered', async () => {
+      fireEvent.click(screen.getByTestId('btn-save'));
+
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith();
+        expect(toast.success).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.SAVE_CHANGES.toastMessage);
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('should show error toast when saving changes fails', async () => {
+      mockHandleSave.mockResolvedValue(undefined);
+
+      fireEvent.click(screen.getByTestId('btn-save'));
+
+      await waitFor(() => {
+        expect(mockHandleSave).toHaveBeenCalledWith();
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.SAVE_CHANGES.toastErrorMessage);
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
   });
 
   describe('when handleSave returns undefined', () => {

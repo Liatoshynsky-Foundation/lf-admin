@@ -301,6 +301,63 @@ describe('useUpsertPublication', () => {
         expect.objectContaining({ adminTitle: MOCK_PUBLICATION.adminTitle }),
         undefined
       );
+      expect(mockSetInitialState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminTitle: MOCK_PUBLICATION.adminTitle,
+          publishDate: null,
+          seoValue: expect.any(Object),
+          crop: null
+        })
+      );
+    });
+    it('should not update initial state when saveDocument returns no result', async () => {
+      mockSaveDocument.mockResolvedValue(null);
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      await act(async () => {
+        await result.current.handleSave(BaseContentStatuses.Published);
+      });
+
+      expect(mockSetInitialState).not.toHaveBeenCalled();
+    });
+    it('should use the current publication status when status is not provided', async () => {
+      (usePublicationStrategy as jest.Mock).mockReturnValue({
+        data: { status: BaseContentStatuses.Draft },
+        loading: false,
+        saveDocument: mockSaveDocument,
+        extractDate: mockExtractDate
+      });
+
+      mockSaveDocument.mockResolvedValue({
+        id: MOCK_PUBLICATION.newsId,
+        slug: MOCK_PUBLICATION.newsSlug
+      });
+
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      await act(async () => {
+        await result.current.handleSave();
+      });
+
+      expect(mockSaveDocument).toHaveBeenCalledWith(
+        BaseContentStatuses.Draft,
+        expect.anything(),
+        expect.anything(),
+        undefined
+      );
+    });
+    it('should not save when status is not provided and strategy has no status', async () => {
+      const { result } = renderHook(() => useUpsertPublication({ type: 'news' }));
+
+      let saveResult;
+
+      await act(async () => {
+        saveResult = await result.current.handleSave();
+      });
+
+      expect(saveResult).toBeUndefined();
+      expect(mockSaveDocument).not.toHaveBeenCalled();
     });
 
     it.each([

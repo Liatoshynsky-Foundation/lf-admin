@@ -179,6 +179,17 @@ export default function CreatePublicationsView({
     }
   };
 
+  const handleSaveClick = async () => {
+    const { toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.SAVE_CHANGES;
+    const id = await handleSave();
+
+    if (id) {
+      toast.success(toastMessage);
+    } else {
+      toast.error(toastErrorMessage);
+    }
+  };
+
   return (
     <>
       {mode !== 'seo' && (
@@ -187,12 +198,17 @@ export default function CreatePublicationsView({
           onBackClick={navigateBack}
           rightActionsComponent={
             publicationType === 'media' ? (
-              <HeaderRightActions
-                mode="edit"
+              mode == 'edit' ? (<HeaderRightActions
+                mode="seo"
+                onSave={handleSaveClick}
                 onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
                 onMenuOpen={handleOpen}
-                hidePreview
-              />
+              />) : (<HeaderRightActions
+                mode="seo"
+                onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
+                onMenuOpen={handleOpen}
+              />)
+              
             ) : (
               <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview} />
             )

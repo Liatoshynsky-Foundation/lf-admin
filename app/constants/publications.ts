@@ -140,7 +140,8 @@ export enum MenuActionId {
   PUBLISH = 'PUBLISH',
   PUBLICATE_AND_EXIT = 'PUBLICATE_AND_EXIT',
   CANCEL_PUBLICATION = 'CANCEL_PUBLICATION',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
+  SAVE_CHANGES = 'SAVE_CHANGES'
 }
 
 export type ACTIONS_TYPE = {
@@ -155,11 +156,13 @@ export const CONTENT_MUTATION_RESULTS: MUTATION_RESULT = {
   publicationPublished: 'Публікацію опубліковано успішно',
   publicationPublishError: 'Виникла помилка при публікації. Спробуйте ще раз.',
   publicationUnpublishError: 'Виникла помилка при скасуванні публікації. Спробуйте ще раз.',
-  publicationDeleteError: 'Виникла помилка при видаленні публікації. Спробуйте ще раз.'
+  publicationDeleteError: 'Виникла помилка при видаленні публікації. Спробуйте ще раз.',
+  publicationChangesSaved: 'Зміни успішно збережено',
+  publicationChangesSavedError: 'Виникла помилка при збереженні змін. Спробуйте ще раз.'
 } as const;
 
 export type MenuActionConfig = {
-  status: BaseContentStatuses;
+  status?: BaseContentStatuses;
   toastMessage: string;
   toastErrorMessage: string;
 };
@@ -179,6 +182,10 @@ export const MENU_ACTION_CONFIGS: Record<Exclude<MenuActionId, MenuActionId.DELE
     status: BaseContentStatuses.Draft,
     toastMessage: CONTENT_MUTATION_RESULTS.publicationUnpublished,
     toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationUnpublishError
+  },
+  [MenuActionId.SAVE_CHANGES]: {
+    toastMessage: CONTENT_MUTATION_RESULTS.publicationChangesSaved,
+    toastErrorMessage: CONTENT_MUTATION_RESULTS.publicationChangesSavedError
   }
 } as const;
 
@@ -241,6 +248,7 @@ export interface FetchedPublicationData {
     uk?: boolean | null;
     en?: boolean | null;
   } | null;
+  status?: BaseContentStatuses | null;
 }
 
 export type ImageCropData = NonNullable<FetchedPublicationData['coverImage']>['crop'];

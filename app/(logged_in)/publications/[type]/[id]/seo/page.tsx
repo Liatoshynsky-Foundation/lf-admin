@@ -91,12 +91,23 @@ export default function PublicatiosSeoPage() {
     handleClosePublish();
   };
 
+  const handleSaveClick = async () => {
+    const { toastMessage, toastErrorMessage } = MENU_ACTION_CONFIGS.SAVE_CHANGES;
+    const id = await publicationData?.handleSave();
+
+    if (id) {
+      toast.success(toastMessage);
+    } else {
+      toast.error(toastErrorMessage);
+    }
+  };
+
   return (
     <Box sx={{ width: '100%' }}>
       <DividedHeader
         originUrl={PUBLICATIONS_BASE_PATH}
         rightActionsComponent={
-          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} />
+          <HeaderRightActions mode="seo" onPublish={handlePublish} onMenuOpen={handleOpenPublish} onSave={handleSaveClick} />
         }
       >
         <TitleDropdown

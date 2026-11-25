@@ -38,23 +38,32 @@ jest.mock('~/shared/hooks/use-unsaved-changes/useUnsavedChanges', () => ({
 
 jest.mock('~/shared/components/divided-header/header-right-actions/HeaderRightActions', () => {
   return function MockHeaderRightActions({
+    mode,
     onMenuOpen,
     onPublish,
     onPreview,
+    onSave,
     hidePreview,
     onEdit
   }: {
+    mode: 'create' | 'edit' | 'seo';
     onMenuOpen?: (e: MouseEvent<HTMLButtonElement>) => void;
     onPublish?: () => void;
     onPreview?: () => void;
+    onSave?: () => void;
     hidePreview?: boolean;
     onEdit?: () => void;
   }) {
     return (
       <div>
-        {!hidePreview && (
+        {mode !== 'seo' && !hidePreview && (
           <button data-testid="btn-preview" onClick={onPreview}>
             Preview
+          </button>
+        )}
+        {onSave && (
+          <button data-testid="btn-save" onClick={onSave}>
+            Save
           </button>
         )}
         <button data-testid="btn-publish" onClick={onPublish}>
@@ -610,6 +619,49 @@ describe('CreatePublicationsView Component', () => {
       expect(screen.queryByTestId('mock-delete-modal')).not.toBeInTheDocument();
     });
   });
+
+  describe('Save actions', () => {
+    it('should save changes and show success toast in media edit mode', async () => {
+      const handleSave = jest.fn().mockResolvedValue({ id: 'media-123' });
+      const mockData = createMockData({
+        publicationType: 'media',
+        handleSave
+      });
+
+      render(<CreatePublicationsView data={mockData} mode="edit" />);
+
+      fireEvent.click(screen.getByTestId('btn-save'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith();
+        expect(toast.success).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.SAVE_CHANGES.toastMessage);
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
+
+    it('should show error toast when saving changes fails', async () => {
+      const handleSave = jest.fn().mockResolvedValue(null);
+      const mockData = createMockData({
+        publicationType: 'media',
+        handleSave
+      });
+
+      render(<CreatePublicationsView data={mockData} mode="edit" />);
+
+      fireEvent.click(screen.getByTestId('btn-save'));
+
+      await waitFor(() => {
+        expect(handleSave).toHaveBeenCalledWith();
+        expect(toast.error).toHaveBeenCalledWith(MENU_ACTION_CONFIGS.SAVE_CHANGES.toastErrorMessage);
+      });
+
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+  });
+
   it('should force-show start date errors after the start date field is blurred (events)', () => {
     const mockData = createMockData({ publicationType: 'events', forceShowErrors: false });
 
@@ -639,7 +691,7 @@ describe('CreatePublicationsView Component', () => {
     const mockData = createMockData({ publicationType: 'news', setPublishDate: mockSetPublishDate });
 
     render(<CreatePublicationsView data={mockData} />);
-    
+
     fireEvent.change(screen.getByTestId('date-picker-input'), {
       target: { value: 'not-a-valid-date' }
     });
@@ -656,5 +708,33 @@ describe('CreatePublicationsView Component', () => {
     render(<CreatePublicationsView data={mockData} />);
 
     expect(screen.getByTestId('date-picker-error')).toHaveTextContent(publicationErrors.invalidPublicationDate);
+  });
+
+  it('should render save and publish actions for media in edit mode', () => {
+    const mockData = createMockData({ publicationType: 'media' });
+
+    render(<CreatePublicationsView data={mockData} mode="edit" />);
+
+    expect(screen.getByTestId('btn-save')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-publish')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-open-menu')).toBeInTheDocument();
+  });
+
+  it('should not render save action for media in create mode', () => {
+    const mockData = createMockData({ publicationType: 'media' });
+
+    render(<CreatePublicationsView data={mockData} mode="create" />);
+
+    expect(screen.queryByTestId('btn-save')).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-publish')).toBeInTheDocument();
+  });
+
+  it('should not render save action for news in edit mode', () => {
+    const mockData = createMockData({ publicationType: 'news' });
+
+    render(<CreatePublicationsView data={mockData} mode="edit" />);
+
+    expect(screen.queryByTestId('btn-save')).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-edit')).toBeInTheDocument();
   });
 });

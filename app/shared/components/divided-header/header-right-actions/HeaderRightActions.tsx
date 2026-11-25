@@ -116,13 +116,13 @@ export default function HeaderRightActions(props: HeaderRightActionsProps) {
 
             <Button
               disabled={disabled}
-              onClick={props.onPublish}
+              onClick={props.onSave ?? props.onPublish}
               variant="contained"
               color="tertiary"
               disableElevation
-              sx={props.isPageSeo ? {} : styles.groupLeft}
+              sx={styles.groupLeft}
             >
-              {props.isPageSeo ? 'Зберегти' : 'Опублікувати'}
+              {props.onSave ? 'Зберегти' : 'Опублікувати'}
             </Button>
 
             {props.onMenuOpen && (
