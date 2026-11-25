@@ -190,6 +190,8 @@ export default function CreatePublicationsView({
     }
   };
 
+  const isMediaEditMode = publicationType === 'media' && mode === 'edit';
+
   return (
     <>
       {mode !== 'seo' && (
@@ -198,17 +200,12 @@ export default function CreatePublicationsView({
           onBackClick={navigateBack}
           rightActionsComponent={
             publicationType === 'media' ? (
-              mode == 'edit' ? (<HeaderRightActions
+              <HeaderRightActions
                 mode="seo"
-                onSave={handleSaveClick}
+                onSave={isMediaEditMode ? handleSaveClick : undefined}
                 onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
                 onMenuOpen={handleOpen}
-              />) : (<HeaderRightActions
-                mode="seo"
-                onPublish={() => handleMenuAction(MenuActionId.PUBLISH)}
-                onMenuOpen={handleOpen}
-              />)
-              
+              />
             ) : (
               <HeaderRightActions mode="create" onEdit={onEdit} onPreview={onPreview} />
             )
