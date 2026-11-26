@@ -2,7 +2,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { act, fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
-import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
+import { MOCK_PAYMENT_DETAILS, MOCK_PAYMENT_DETAILS_PDF } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
 import { createDragEndEvent } from '~/__mocks__/utils';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
@@ -559,44 +559,51 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.queryByTestId('mock-media-modal')).not.toBeInTheDocument();
   });
 
-  it('replaces the attachment with a PDF selected from the library and saves it', async () => {
-    mockUpdatePaymentDetails.mockResolvedValue({ data: undefined });
-    render(<PaymentDetailsPageContent />);
+  it('saves a replacement PDF after detaching the original and shows it after reload', async () => {
+    const replacementPdf = {
+      filename: 'new-requisites.pdf',
+      url: 'https://example.com/new-requisites.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 2 * 1024 * 1024
+    };
+    const savedDetails = { ...MOCK_PAYMENT_DETAILS, pdfFile: replacementPdf };
+    mockUpdatePaymentDetails.mockResolvedValue({ data: { updatePaymentDetails: savedDetails } });
+    const { unmount } = render(<PaymentDetailsPageContent />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
     await act(async () => {
       await latestMediaApply?.({
         selected: {
           kind: 'gallery',
           id: 'asset-1',
-          fileName: 'new-requisites.pdf',
-          src: 'https://example.com/new-requisites.pdf',
+          fileName: replacementPdf.filename,
+          src: replacementPdf.url,
           locale: 'uk',
-          sizeBytes: 2 * 1024 * 1024
+          sizeBytes: replacementPdf.sizeBytes
         },
         crop: null
       });
     });
 
     await waitFor(() =>
-      expect(screen.getByRole('link', { name: 'new-requisites.pdf' })).toHaveAttribute(
-        'href',
-        'https://example.com/new-requisites.pdf'
-      )
+      expect(screen.getByRole('link', { name: replacementPdf.filename })).toHaveAttribute('href', replacementPdf.url)
     );
     expect(screen.queryByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).not.toBeInTheDocument();
     expect(mockCreateAsset).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
 
-    await waitFor(() => expect(mockUpdatePaymentDetails).toHaveBeenCalledTimes(1));
-    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input.pdfFile).toEqual({
-      filename: 'new-requisites.pdf',
-      url: 'https://example.com/new-requisites.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: 2 * 1024 * 1024
-    });
-    expect(screen.getByText('new-requisites.pdf')).toBeInTheDocument();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_SUCCESS));
+    expect(mockUpdatePaymentDetails).toHaveBeenCalledTimes(1);
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input.pdfFile).toEqual(replacementPdf);
+
+    unmount();
+    mockUsePaymentDetails.mockReturnValue({ data: savedDetails, loading: false, error: undefined });
+    render(<PaymentDetailsPageContent />);
+    expect(screen.getByRole('link', { name: replacementPdf.filename })).toHaveAttribute('href', replacementPdf.url);
+    expect(screen.queryByText(MOCK_PAYMENT_DETAILS_PDF.filename)).not.toBeInTheDocument();
   });
 
   it('creates an asset for an uploaded PDF and attaches it', async () => {
