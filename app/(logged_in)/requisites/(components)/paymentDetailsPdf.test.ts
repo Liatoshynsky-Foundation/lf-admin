@@ -17,7 +17,7 @@ describe('isPaymentDetailsPdfFile', () => {
   it.each([
     ['application/pdf with .pdf extension', 'requisites.pdf', 'application/pdf', true],
     ['uppercase .PDF extension', 'REQUISITES.PDF', 'application/pdf', true],
-    ['empty MIME type with .pdf extension', 'requisites.pdf', '', true],
+    ['empty MIME type with .pdf extension', 'requisites.pdf', '', false],
     ['application/pdf without .pdf extension', 'requisites', 'application/pdf', false],
     ['application/pdf with non-PDF extension', 'requisites.txt', 'application/pdf', false],
     ['non-PDF MIME type with .pdf extension', 'requisites.pdf', 'image/png', false]

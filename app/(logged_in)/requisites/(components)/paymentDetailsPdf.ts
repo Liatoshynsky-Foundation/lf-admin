@@ -9,13 +9,11 @@ import type { ResolvePdfAttachmentResult } from '~/shared/components/media-modal
 const PDF_MIME_TYPE = 'application/pdf';
 const PDF_EXTENSION = '.pdf';
 
-const hasPdfExtension = (filename: string): boolean => filename.toLowerCase().endsWith(PDF_EXTENSION);
-
-export const isPaymentDetailsPdfFile = (file: File): boolean =>
-  hasPdfExtension(file.name) && (!file.type || file.type === PDF_MIME_TYPE);
+export const isPaymentDetailsPdfFile = (file: Pick<File, 'name' | 'type'>): boolean =>
+  file.type === PDF_MIME_TYPE && file.name.toLowerCase().endsWith(PDF_EXTENSION);
 
 export const toPaymentDetailsPdfFile = ({ pdf, sizeBytes }: ResolvePdfAttachmentResult): PaymentDetailsPdfFile => {
-  if (pdf.mimeType !== PDF_MIME_TYPE || !hasPdfExtension(pdf.filename)) {
+  if (!isPaymentDetailsPdfFile({ name: pdf.filename, type: pdf.mimeType })) {
     throw new Error(PAYMENT_DETAILS_MESSAGES.pdfInvalidType);
   }
 
