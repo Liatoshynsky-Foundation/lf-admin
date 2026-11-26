@@ -85,11 +85,47 @@ describe('ContactsMutation', () => {
       );
     });
 
-    it('checks the social network link schema rule inside the mutation', async () => {
+    it('requires a non-whitespace social network link', async () => {
       await expectValidationError(
-        { ...validInput, socialNetworks: [{ icon: 'facebook', link: 'invalid-link' }] },
-        contactsValidationErrors.LINK_INVALID
+        { ...validInput, socialNetworks: [{ icon: 'facebook', link: '   ' }] },
+        contactsValidationErrors.LINK_REQUIRED
       );
+    });
+
+    it('rejects social network links longer than 150 trimmed characters', async () => {
+      await expectValidationError(
+        { ...validInput, socialNetworks: [{ icon: 'facebook', link: ` https://${'a'.repeat(143)} ` }] },
+        contactsValidationErrors.LINK_TOO_LONG
+      );
+    });
+
+    it('trims social network links and does not require URL syntax or a protocol', async () => {
+      updateContacts.mockResolvedValue(updatedContacts);
+      const input = {
+        ...validInput,
+        socialNetworks: [{ icon: 'facebook' as const, link: ' example.com/social ' }]
+      };
+
+      await expect(ContactsMutation.updateContacts({}, { input }, authorizedContext)).resolves.toEqual(updatedContacts);
+      expect(updateContacts).toHaveBeenCalledWith({
+        ...validInput,
+        socialNetworks: [{ icon: 'facebook', link: 'example.com/social' }]
+      });
+    });
+
+    it('accepts a social network link exactly 150 trimmed characters long', async () => {
+      updateContacts.mockResolvedValue(updatedContacts);
+      const link = `https://${'a'.repeat(142)}`;
+      const input = {
+        ...validInput,
+        socialNetworks: [{ icon: 'facebook' as const, link: ` ${link} ` }]
+      };
+
+      await expect(ContactsMutation.updateContacts({}, { input }, authorizedContext)).resolves.toEqual(updatedContacts);
+      expect(updateContacts).toHaveBeenCalledWith({
+        ...validInput,
+        socialNetworks: [{ icon: 'facebook', link }]
+      });
     });
 
     it('rethrows unexpected validation errors', async () => {

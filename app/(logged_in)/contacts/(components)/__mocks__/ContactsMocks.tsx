@@ -3,7 +3,7 @@ import type { SocialNetworkFormItem } from '~/constants/contacts';
 import type { IconPickerMenuProps } from '~/shared/components/icon-picker-menu/IconPickerMenu';
 import type { IconTextFieldProps } from '~/shared/components/icon-text-field/IconTextField';
 
-export const SOCIAL_NETWORK_ADD_LABEL = 'add network';
+export const SOCIAL_NETWORK_ADD_LABEL = 'Додати посилання';
 export const SOCIAL_NETWORK_UPDATE_LABEL = 'update';
 export const SOCIAL_NETWORK_DELETE_LABEL = 'delete';
 export const SOCIAL_NETWORK_ICON_LABEL = 'choose icon';
@@ -28,7 +28,11 @@ export const MockConfigurableList = ({
   onCreate,
   onChange,
   onDelete,
-  renderItem
+  renderItem,
+  addBtnLabel,
+  showAddButton = true,
+  addButtonDisabled,
+  addButtonMessage
 }: ConfigurableListProps<SocialNetworkFormItem>) => (
   <div>
     {items.map((item, index) => (
@@ -45,7 +49,14 @@ export const MockConfigurableList = ({
         >{`${SOCIAL_NETWORK_UPDATE_LABEL}-${item.id}`}</button>
       </div>
     ))}
-    <button onClick={onCreate}>{SOCIAL_NETWORK_ADD_LABEL}</button>
+    {showAddButton && (
+      <>
+        <button disabled={addButtonDisabled} onClick={onCreate}>
+          {addBtnLabel}
+        </button>
+        {addButtonMessage && <div role="status">{addButtonMessage}</div>}
+      </>
+    )}
   </div>
 );
 
