@@ -41,6 +41,7 @@ input UpdatePaymentDetailsInput {
 
 extend type Query {
   paymentDetails: PaymentDetails
+  publicPaymentDetails: PaymentDetails
 }
 
 extend type Mutation {
