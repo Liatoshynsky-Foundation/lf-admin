@@ -647,6 +647,53 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.queryByText('broken.pdf')).not.toBeInTheDocument();
   });
 
+  it('keeps the previous attachment when the media dialog is closed before createAsset completes', async () => {
+    let resolveCreateAsset: (value: unknown) => void = () => {};
+    mockCreateAsset.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreateAsset = resolve;
+      })
+    );
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+
+    const applyPromise = latestMediaApply?.({
+      selected: {
+        kind: 'upload',
+        id: 'upload-3',
+        fileName: 'cancelled.pdf',
+        file: new File(['pdf'], 'cancelled.pdf', { type: 'application/pdf' })
+      },
+      crop: null,
+      uploadResult: {
+        url: 'https://example.com/cancelled.pdf',
+        filename: 'cancelled.pdf',
+        originalName: 'cancelled.pdf',
+        mimeType: 'application/pdf',
+        size: 1024
+      }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'close-media' }));
+
+    await act(async () => {
+      resolveCreateAsset({
+        data: {
+          createAsset: {
+            filename: 'cancelled.pdf',
+            url: 'https://example.com/cancelled.pdf',
+            mimeType: 'application/pdf'
+          }
+        }
+      });
+      await applyPromise;
+    });
+
+    expect(screen.queryByText('cancelled.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
+  });
+
   it('rejects renaming a tab to an existing name regardless of case', () => {
     render(<PaymentDetailsPageContent />);
 

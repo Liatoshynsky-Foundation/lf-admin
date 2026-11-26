@@ -1,4 +1,4 @@
-import { toPaymentDetailsPdfFile } from './paymentDetailsPdf';
+import { isPaymentDetailsPdfFile, toPaymentDetailsPdfFile } from './paymentDetailsPdf';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import { PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES, REQUISITES_MESSAGES } from '~/constants/requisites';
 import type { ResolvePdfAttachmentResult } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
@@ -12,6 +12,19 @@ const mockResolvedPdf: ResolvePdfAttachmentResult = {
   source: 'library',
   sizeBytes: 2048
 };
+
+describe('isPaymentDetailsPdfFile', () => {
+  it.each([
+    ['application/pdf with .pdf extension', 'requisites.pdf', 'application/pdf', true],
+    ['uppercase .PDF extension', 'REQUISITES.PDF', 'application/pdf', true],
+    ['empty MIME type with .pdf extension', 'requisites.pdf', '', true],
+    ['application/pdf without .pdf extension', 'requisites', 'application/pdf', false],
+    ['application/pdf with non-PDF extension', 'requisites.txt', 'application/pdf', false],
+    ['non-PDF MIME type with .pdf extension', 'requisites.pdf', 'image/png', false]
+  ])('validates %s', (_description, filename, type, expected) => {
+    expect(isPaymentDetailsPdfFile(new File(['pdf'], filename, { type }))).toBe(expected);
+  });
+});
 
 describe('toPaymentDetailsPdfFile', () => {
   it.each([
@@ -36,11 +49,14 @@ describe('toPaymentDetailsPdfFile', () => {
     ).toThrow(PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize);
   });
 
-  it('rejects non-PDF files', () => {
+  it.each([
+    ['a non-PDF MIME type', { filename: 'requisites.pdf', mimeType: 'image/png' }],
+    ['a missing .pdf extension', { filename: 'requisites', mimeType: 'application/pdf' }]
+  ])('rejects files with %s', (_, pdfOverrides) => {
     expect(() =>
       toPaymentDetailsPdfFile({
         ...mockResolvedPdf,
-        pdf: { ...mockResolvedPdf.pdf, filename: 'requisites.png', mimeType: 'image/png' }
+        pdf: { ...mockResolvedPdf.pdf, ...pdfOverrides }
       })
     ).toThrow(PAYMENT_DETAILS_MESSAGES.pdfInvalidType);
   });

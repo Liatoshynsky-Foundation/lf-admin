@@ -4,11 +4,18 @@ import {
   type PaymentDetailsPdfFile,
   REQUISITES_MESSAGES
 } from '~/constants/requisites';
-import { matchesPdf } from '~/shared/components/media-modal/MediaModal.utils';
 import type { ResolvePdfAttachmentResult } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
 
+const PDF_MIME_TYPE = 'application/pdf';
+const PDF_EXTENSION = '.pdf';
+
+const hasPdfExtension = (filename: string): boolean => filename.toLowerCase().endsWith(PDF_EXTENSION);
+
+export const isPaymentDetailsPdfFile = (file: File): boolean =>
+  hasPdfExtension(file.name) && (!file.type || file.type === PDF_MIME_TYPE);
+
 export const toPaymentDetailsPdfFile = ({ pdf, sizeBytes }: ResolvePdfAttachmentResult): PaymentDetailsPdfFile => {
-  if (!matchesPdf(pdf.mimeType, pdf.filename)) {
+  if (pdf.mimeType !== PDF_MIME_TYPE || !hasPdfExtension(pdf.filename)) {
     throw new Error(PAYMENT_DETAILS_MESSAGES.pdfInvalidType);
   }
 
