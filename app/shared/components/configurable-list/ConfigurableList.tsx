@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, SxProps, Theme } from '@mui/material';
+import { Box, SxProps, Theme, Typography } from '@mui/material';
 
 import { styles } from './ConfigurableList.styles';
 import ItemWrapper from '~/components/configurable-list/item-wrapper/ItemWrapper';
@@ -32,6 +32,8 @@ export interface ConfigurableListProps<T extends ConfigurableListItem> {
   allowFirstItemDeletion?: boolean;
   addButtonSx?: SxProps<Theme>;
   showAddButton?: boolean;
+  addButtonDisabled?: boolean;
+  addButtonMessage?: string;
 }
 
 const ConfigurableList = <T extends ConfigurableListItem>({
@@ -47,7 +49,9 @@ const ConfigurableList = <T extends ConfigurableListItem>({
   editable,
   allowFirstItemDeletion = false,
   addButtonSx,
-  showAddButton = true
+  showAddButton = true,
+  addButtonDisabled = false,
+  addButtonMessage
 }: ConfigurableListProps<T>) => {
   const withSeparator = (index: number) => Boolean(separator && index < items.length - 1);
 
@@ -92,15 +96,23 @@ const ConfigurableList = <T extends ConfigurableListItem>({
     <Box sx={{ width: '100%', ...addButtonSx }}>
       <Box sx={styles.container}>{listContent}</Box>
       {showAddButton && (
-        <Button
-          sx={{ width: 'fit-content', mx: 'auto' }}
-          startIcon={<PlusIcon />}
-          variant="outlined"
-          color="primary"
-          onClick={onCreate}
-        >
-          {addBtnLabel}
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            sx={{ width: 'fit-content' }}
+            startIcon={<PlusIcon />}
+            variant="outlined"
+            color="primary"
+            disabled={addButtonDisabled}
+            onClick={onCreate}
+          >
+            {addBtnLabel}
+          </Button>
+          {addButtonMessage && (
+            <Typography variant="body2" role="status">
+              {addButtonMessage}
+            </Typography>
+          )}
+        </Box>
       )}
     </Box>
   );
