@@ -50,7 +50,7 @@ const SocialNetworkField = ({
         ) : undefined
       }
       onIconClick={(event) => onPlatformMenuOpen(index, event.currentTarget)}
-      label="URL"
+      label="Посилання"
       value={item.link}
       placeholder="Вставте повне посилання"
       onChange={(link) => {
