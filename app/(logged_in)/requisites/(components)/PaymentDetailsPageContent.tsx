@@ -6,13 +6,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { styles } from './PaymentDetailsPageContent.styles';
+import { isPaymentDetailsPdfFile, toPaymentDetailsPdfFile } from './paymentDetailsPdf';
 import { buildPaymentDetailsInput, getSaveErrorMessage } from './paymentDetailsSave';
 import { PaymentHeaderActions } from './PaymentHeaderActions';
 import { CurrencyTabs } from './section-blocks/CurrencyTabs';
 import { PdfAttachmentBlock } from './section-blocks/PdfAttachmentBlock';
 import { RequisitesContentEditor } from './section-blocks/RequisitesContentEditor';
+import { PDF_FILE_ACCEPT } from '~/constants/archive';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
 import {
+  PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES,
   type PaymentDetailsPdfFile,
   type PaymentDetailsTab,
   REQUISITES_EMPTY,
@@ -21,10 +24,15 @@ import {
   REQUISITES_MESSAGES
 } from '~/constants/requisites';
 import CollapsibleBlock from '~/ds-components/collapsible-block/CollapsibleBlock';
+import { resolveErrorMessage } from '~/lib/utils/resolveErrorMessage';
 import { ContentPageLayout } from '~/shared/components/content-page-layout/ContentPageLayout';
 import { EmptyState } from '~/shared/components/empty-state';
+import { MediaModal } from '~/shared/components/media-modal/MediaModal';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
+import { resolvePdfAttachmentFromMediaModal } from '~/shared/components/media-modal/resolvePdfAttachmentFromMediaModal';
+import UploadView from '~/shared/components/media-modal/views/upload-view/UploadView';
 import { normalizePaymentDetails, usePaymentDetails } from '~/shared/hooks/use-payment-details/usePaymentDetails';
-import { useUpdatePaymentDetailsMutation } from '~/types/graphql/generated/graphql';
+import { useCreateAssetMutation, useUpdatePaymentDetailsMutation } from '~/types/graphql/generated/graphql';
 
 const resolveActiveTabId = (
   tabs: PaymentDetailsTab[],
@@ -45,8 +53,10 @@ const PaymentDetailsPageContent = () => {
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [savedTabIds, setSavedTabIds] = useState<ReadonlySet<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
   const [updatePaymentDetails] = useUpdatePaymentDetailsMutation();
-  const localBlobUrlsRef = useRef<Set<string>>(new Set());
+  const [createAsset] = useCreateAssetMutation();
+  const pdfApplyRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (!data) return;
@@ -56,23 +66,6 @@ const PaymentDetailsPageContent = () => {
     setSavedTabIds(new Set(data.tabs.map((tab) => tab.id)));
     setActiveTabId((currentId) => resolveActiveTabId(data.tabs, currentId));
   }, [data]);
-
-  const revokeBlobUrl = (url?: string | null) => {
-    if (url && localBlobUrlsRef.current.has(url)) {
-      URL.revokeObjectURL(url);
-      localBlobUrlsRef.current.delete(url);
-    }
-  };
-
-  useEffect(() => {
-    const urls = localBlobUrlsRef.current;
-    return () => {
-      urls.forEach((url) => {
-        URL.revokeObjectURL(url);
-      });
-      urls.clear();
-    };
-  }, []);
 
   const activeTab = useMemo(() => {
     return tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
@@ -164,15 +157,34 @@ const PaymentDetailsPageContent = () => {
     );
   };
 
-  const handlePdfChange = (file: PaymentDetailsPdfFile | null) => {
-    if (file?.url?.startsWith('blob:')) {
-      localBlobUrlsRef.current.add(file.url);
-    }
+  const handleCloseMediaModal = () => {
+    pdfApplyRequestIdRef.current += 1;
+    setIsMediaOpen(false);
+  };
 
-    if (pdfFile?.url && pdfFile.url !== file?.url) {
-      revokeBlobUrl(pdfFile.url);
+  const handleApplyPdf = async (result: MediaModalResult) => {
+    const requestId = ++pdfApplyRequestIdRef.current;
+
+    try {
+      const resolved = await resolvePdfAttachmentFromMediaModal(
+        result,
+        createAsset,
+        REQUISITES_MESSAGES.PDF_UPLOAD_FAILED
+      );
+
+      if (!resolved || pdfApplyRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setPdfFile(toPaymentDetailsPdfFile(resolved));
+      setIsMediaOpen(false);
+    } catch (pdfError) {
+      if (pdfApplyRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      toast.error(resolveErrorMessage(pdfError, REQUISITES_MESSAGES.PDF_UPLOAD_FAILED));
     }
-    setPdfFile(file);
   };
 
   const handleSave = async () => {
@@ -239,11 +251,32 @@ const PaymentDetailsPageContent = () => {
 
           <PdfAttachmentBlock
             file={pdfFile}
-            onFileChange={handlePdfChange}
-            disabled
+            onAddFile={() => setIsMediaOpen(true)}
+            disabled={isSaving}
           />
         </Box>
       </CollapsibleBlock>
+
+      <MediaModal
+        open={isMediaOpen}
+        initial={{ tab: 'GALLERY' }}
+        mediaKind="pdf"
+        persistUploadAsAsset={false}
+        onClose={handleCloseMediaModal}
+        onApply={handleApplyPdf}
+        renderers={{
+          upload: (props) => (
+            <UploadView
+              {...props}
+              accept={PDF_FILE_ACCEPT}
+              invalidFileError={PAYMENT_DETAILS_MESSAGES.pdfInvalidType}
+              isAllowedFile={isPaymentDetailsPdfFile}
+              maxSizeBytes={PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES}
+              fileTooLargeError={PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize}
+            />
+          )
+        }}
+      />
     </ContentPageLayout>
   );
 };

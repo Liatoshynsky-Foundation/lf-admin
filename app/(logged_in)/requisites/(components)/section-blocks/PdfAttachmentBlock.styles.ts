@@ -62,7 +62,8 @@ export const styles = {
     color: 'text.primary',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    textOverflow: 'ellipsis',
+    textDecoration: 'none'
   },
   deleteButton: {
     color: 'adminBlue.700',

@@ -6,11 +6,20 @@ import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
 import PaymentDetailsPageContent from './PaymentDetailsPageContent';
 import { createDragEndEvent } from '~/__mocks__/utils';
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
-import { REQUISITES_EMPTY, REQUISITES_ERROR, REQUISITES_LOADING, REQUISITES_MESSAGES } from '~/constants/requisites';
+import {
+  PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES,
+  REQUISITES_EMPTY,
+  REQUISITES_ERROR,
+  REQUISITES_LOADING,
+  REQUISITES_MESSAGES
+} from '~/constants/requisites';
+import type { MediaModalResult } from '~/shared/components/media-modal/MediaModal.types';
 
 const mockUsePaymentDetails = jest.fn();
 
 const mockUpdatePaymentDetails = jest.fn();
+const mockCreateAsset = jest.fn();
+let latestMediaApply: ((result: MediaModalResult) => Promise<void>) | null = null;
 let mockDragEnd: (event: DragEndEvent) => void;
 
 jest.mock('~/shared/components/sortable-list/SortableList', () => {
@@ -31,7 +40,36 @@ jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  useUpdatePaymentDetailsMutation: () => [mockUpdatePaymentDetails, { loading: false }]
+  AssetType: { Pdf: 'PDF' },
+  useUpdatePaymentDetailsMutation: () => [mockUpdatePaymentDetails, { loading: false }],
+  useCreateAssetMutation: () => [mockCreateAsset, { loading: false }]
+}));
+
+jest.mock('~/shared/components/media-modal/MediaModal', () => ({
+  MediaModal: ({
+    open,
+    onApply,
+    onClose
+  }: {
+    open: boolean;
+    onApply: (result: MediaModalResult) => Promise<void>;
+    onClose: () => void;
+  }) => {
+    latestMediaApply = onApply;
+    if (!open) return null;
+    return (
+      <div data-testid="mock-media-modal">
+        <button type="button" onClick={onClose}>
+          close-media
+        </button>
+      </div>
+    );
+  }
+}));
+
+jest.mock('~/shared/components/media-modal/views/upload-view/UploadView', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-upload-view" />
 }));
 
 jest.mock('next/navigation', () => ({
@@ -89,6 +127,7 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
 describe('PaymentDetailsPageContent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    latestMediaApply = null;
     mockUsePaymentDetails.mockReturnValue({
       data: MOCK_PAYMENT_DETAILS,
       loading: false,
@@ -416,6 +455,7 @@ describe('PaymentDetailsPageContent', () => {
 
     expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'false');
     expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES })).toBeDisabled();
+    expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
 
     await act(async () => {
@@ -451,11 +491,207 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByDisplayValue(REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY)).toBeInTheDocument();
   });
 
-  it('renders PDF controls as disabled', () => {
+  it('enables adding a PDF and keeps delete button disabled', () => {
     render(<PaymentDetailsPageContent />);
 
-    expect(screen.getByRole('button', { name: /додати файл/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /додати файл/i })).toBeEnabled();
     expect(screen.getByTestId('delete-pdf-button')).toBeDisabled();
+  });
+
+  it('opens the PDF media dialog from "Додати файл" and closes it', () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+
+    expect(screen.getByTestId('mock-media-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'close-media' }));
+
+    expect(screen.queryByTestId('mock-media-modal')).not.toBeInTheDocument();
+  });
+
+  it('replaces the attachment with a PDF selected from the library and saves it', async () => {
+    mockUpdatePaymentDetails.mockResolvedValue({ data: undefined });
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+    await act(async () => {
+      await latestMediaApply?.({
+        selected: {
+          kind: 'gallery',
+          id: 'asset-1',
+          fileName: 'new-requisites.pdf',
+          src: 'https://example.com/new-requisites.pdf',
+          locale: 'uk',
+          sizeBytes: 2 * 1024 * 1024
+        },
+        crop: null
+      });
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'new-requisites.pdf' })).toHaveAttribute(
+        'href',
+        'https://example.com/new-requisites.pdf'
+      )
+    );
+    expect(screen.queryByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).not.toBeInTheDocument();
+    expect(mockCreateAsset).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => expect(mockUpdatePaymentDetails).toHaveBeenCalledTimes(1));
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input.pdfFile).toEqual({
+      filename: 'new-requisites.pdf',
+      url: 'https://example.com/new-requisites.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 2 * 1024 * 1024
+    });
+    expect(screen.getByText('new-requisites.pdf')).toBeInTheDocument();
+  });
+
+  it('creates an asset for an uploaded PDF and attaches it', async () => {
+    mockCreateAsset.mockResolvedValue({
+      data: {
+        createAsset: {
+          filename: 'uploaded.pdf',
+          url: 'https://example.com/stored.pdf',
+          mimeType: 'application/pdf'
+        }
+      }
+    });
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+    await act(async () => {
+      await latestMediaApply?.({
+        selected: {
+          kind: 'upload',
+          id: 'upload-1',
+          fileName: 'uploaded.pdf',
+          file: new File(['pdf'], 'uploaded.pdf', { type: 'application/pdf' })
+        },
+        crop: null,
+        uploadResult: {
+          url: 'https://example.com/stored.pdf',
+          filename: 'stored.pdf',
+          originalName: 'uploaded.pdf',
+          mimeType: 'application/pdf',
+          size: 4096
+        }
+      });
+    });
+
+    await waitFor(() => expect(screen.getByText('uploaded.pdf')).toBeInTheDocument());
+    expect(mockCreateAsset).toHaveBeenCalledWith({
+      variables: {
+        input: {
+          filename: 'uploaded.pdf',
+          url: 'https://example.com/stored.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 4096,
+          type: 'PDF'
+        }
+      }
+    });
+  });
+
+  it('rejects library PDFs larger than 20 MB and keeps the current attachment', async () => {
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+    await act(async () => {
+      await latestMediaApply?.({
+        selected: {
+          kind: 'gallery',
+          id: 'asset-2',
+          fileName: 'huge.pdf',
+          src: 'https://example.com/huge.pdf',
+          locale: 'uk',
+          sizeBytes: PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES + 1
+        },
+        crop: null
+      });
+    });
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize));
+    expect(screen.queryByText('huge.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
+  });
+
+  it('shows an upload error when the PDF asset cannot be created', async () => {
+    mockCreateAsset.mockResolvedValue({ data: { createAsset: null } });
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+    await act(async () => {
+      await latestMediaApply?.({
+        selected: {
+          kind: 'upload',
+          id: 'upload-2',
+          fileName: 'broken.pdf',
+          file: new File(['pdf'], 'broken.pdf', { type: 'application/pdf' })
+        },
+        crop: null,
+        uploadResult: {
+          url: 'https://example.com/broken.pdf',
+          filename: 'broken.pdf',
+          originalName: 'broken.pdf',
+          mimeType: 'application/pdf',
+          size: 10
+        }
+      });
+    });
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REQUISITES_MESSAGES.PDF_UPLOAD_FAILED));
+    expect(screen.queryByText('broken.pdf')).not.toBeInTheDocument();
+  });
+
+  it('keeps the previous attachment when the media dialog is closed before createAsset completes', async () => {
+    let resolveCreateAsset: (value: unknown) => void = () => {};
+    mockCreateAsset.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreateAsset = resolve;
+      })
+    );
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON }));
+
+    const applyPromise = latestMediaApply?.({
+      selected: {
+        kind: 'upload',
+        id: 'upload-3',
+        fileName: 'cancelled.pdf',
+        file: new File(['pdf'], 'cancelled.pdf', { type: 'application/pdf' })
+      },
+      crop: null,
+      uploadResult: {
+        url: 'https://example.com/cancelled.pdf',
+        filename: 'cancelled.pdf',
+        originalName: 'cancelled.pdf',
+        mimeType: 'application/pdf',
+        size: 1024
+      }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'close-media' }));
+
+    await act(async () => {
+      resolveCreateAsset({
+        data: {
+          createAsset: {
+            filename: 'cancelled.pdf',
+            url: 'https://example.com/cancelled.pdf',
+            mimeType: 'application/pdf'
+          }
+        }
+      });
+      await applyPromise;
+    });
+
+    expect(screen.queryByText('cancelled.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText('IMSLP912906-PMLP804595-Rondo-Basset_Clarinet.pdf')).toBeInTheDocument();
   });
 
   it('rejects renaming a tab to an existing name regardless of case', () => {

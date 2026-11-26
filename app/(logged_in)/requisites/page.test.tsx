@@ -14,7 +14,9 @@ jest.mock('~/shared/hooks/use-payment-details/usePaymentDetails', () => ({
 }));
 
 jest.mock('~/types/graphql/generated/graphql', () => ({
-  useUpdatePaymentDetailsMutation: () => [jest.fn(), { loading: false }]
+  ...jest.requireActual('~/types/graphql/generated/graphql'),
+  useUpdatePaymentDetailsMutation: () => [jest.fn(), { loading: false }],
+  useCreateAssetMutation: () => [jest.fn(), { loading: false }]
 }));
 
 jest.mock('next/navigation', () => ({

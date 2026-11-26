@@ -1,13 +1,13 @@
 import z from 'zod';
 
 import { PAYMENT_DETAILS_MESSAGES } from '~/constants/paymentDetails';
+import { PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES } from '~/constants/requisites';
 import { TipTapTableNodeTypes } from '~/types/enums/common.enums';
 import { TipTapDocSchema } from '~/validators/tiptap.schema';
 
 const REQUISITES_TABLE_COLUMNS = 2;
 const MERGED_CELL_ATTRIBUTES = ['colspan', 'rowspan'] as const;
 const REQUISITES_ROW_CELL_TYPES = [TipTapTableNodeTypes.tableHeader, TipTapTableNodeTypes.tableCell];
-const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
 
 type RawTipTapNode = {
   type?: unknown;
@@ -92,7 +92,7 @@ const pdfSizeBytesSchema = z
   .number()
   .int()
   .nonnegative()
-  .max(MAX_PDF_SIZE_BYTES, PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize);
+  .max(PAYMENT_DETAILS_PDF_MAX_SIZE_BYTES, PAYMENT_DETAILS_MESSAGES.pdfFileMaxSize);
 
 const pdfFileFields = {
   filename: z.string().trim().min(1),

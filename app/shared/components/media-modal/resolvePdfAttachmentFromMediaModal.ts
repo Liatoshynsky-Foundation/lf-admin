@@ -10,6 +10,7 @@ export type PdfAttachment = {
 export type ResolvePdfAttachmentResult = {
   pdf: PdfAttachment;
   source: 'upload' | 'library';
+  sizeBytes: number | null;
 };
 
 type CreatePdfAsset = (options: {
@@ -55,7 +56,8 @@ export async function resolvePdfAttachmentFromMediaModal(
         url: asset.url,
         mimeType: asset.mimeType
       },
-      source: 'upload'
+      source: 'upload',
+      sizeBytes: size
     };
   }
 
@@ -66,7 +68,8 @@ export async function resolvePdfAttachmentFromMediaModal(
         url: result.selected.src,
         mimeType: 'application/pdf'
       },
-      source: 'library'
+      source: 'library',
+      sizeBytes: result.selected.sizeBytes ?? null
     };
   }
 

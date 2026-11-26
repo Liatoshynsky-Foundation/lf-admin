@@ -53,7 +53,8 @@ describe('resolvePdfAttachmentFromMediaModal', () => {
         url: 'https://cdn.example.com/asset.pdf',
         mimeType: 'application/pdf'
       },
-      source: 'upload'
+      source: 'upload',
+      sizeBytes: 100
     });
   });
 
@@ -108,9 +109,14 @@ describe('resolvePdfAttachmentFromMediaModal', () => {
   });
 
   it.each([
-    ['gallery', { kind: 'gallery' as const, id: 'g1', fileName: 'g.pdf', src: 'https://ex/g.pdf', locale: 'uk' as const }],
-    ['used', { kind: 'used' as const, id: 'u1', fileName: 'u.pdf', src: 'https://ex/u.pdf', locale: 'uk' as const }]
-  ])('maps %s selection without createAsset', async (_, selected) => {
+    [
+      'gallery',
+      { kind: 'gallery' as const, id: 'g1', fileName: 'g.pdf', src: 'https://ex/g.pdf', locale: 'uk' as const, sizeBytes: 512 },
+      512
+    ],
+    ['gallery without size', { kind: 'gallery' as const, id: 'g2', fileName: 'g.pdf', src: 'https://ex/g.pdf', locale: 'uk' as const }, null],
+    ['used', { kind: 'used' as const, id: 'u1', fileName: 'u.pdf', src: 'https://ex/u.pdf', locale: 'uk' as const }, null]
+  ])('maps %s selection without createAsset', async (_, selected, sizeBytes) => {
     const createAsset = jest.fn();
 
     const resolved = await resolvePdfAttachmentFromMediaModal(
@@ -126,7 +132,8 @@ describe('resolvePdfAttachmentFromMediaModal', () => {
         url: selected.src,
         mimeType: 'application/pdf'
       },
-      source: 'library'
+      source: 'library',
+      sizeBytes
     });
   });
 

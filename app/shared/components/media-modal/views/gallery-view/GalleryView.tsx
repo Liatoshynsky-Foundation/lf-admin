@@ -63,6 +63,7 @@ type GalleryItem = {
   filename: string;
   originalname?: string;
   url: string;
+  sizeBytes?: number;
   isStarred: boolean;
   tags: string[];
   usageRefs: {
@@ -119,6 +120,7 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
     mimeType: string;
     filename: string;
     originalname?: string;
+    sizeBytes?: number | null;
     isStarred: boolean;
     tags: string[];
     usageRefs: {
@@ -154,6 +156,7 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
             filename: asset?.filename ?? file.filename,
             originalname: asset?.originalname ?? undefined,
             url: file.url,
+            sizeBytes: asset?.sizeBytes ?? file.size,
             isStarred: asset?.isStarred ?? false,
             tags: asset?.tags ?? [],
             usageRefs: [],
@@ -180,7 +183,8 @@ export function GalleryView({ selected, onPick, filters, onFiltersChange, mediaK
       id: item.id,
       fileName: item.originalname || item.filename,
       src: item.url,
-      locale: 'uk'
+      locale: 'uk',
+      sizeBytes: item.sizeBytes
     });
   };
 
