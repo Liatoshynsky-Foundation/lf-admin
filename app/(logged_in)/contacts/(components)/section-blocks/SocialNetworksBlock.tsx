@@ -4,6 +4,8 @@ import { Box } from '@mui/material';
 import { useState } from 'react';
 
 import {
+  ALL_SOCIAL_NETWORK_OPTIONS,
+  MAX_SOCIAL_NETWORKS_COUNT,
   SOCIAL_NETWORK_OPTIONS,
   SocialNetworkFormItem,
   SocialNetworkOption,
@@ -14,6 +16,7 @@ import { IconPickerMenu } from '../../../../shared/components/icon-picker-menu/I
 import { IconTextField } from '../../../../shared/components/icon-text-field/IconTextField';
 import { styles } from './SocialNetworksBlock.styles';
 import ConfigurableList from '~/components/configurable-list/ConfigurableList';
+import { contactsValidationErrors } from '~/src/constants/errors';
 
 type SocialNetworkFieldProps = Readonly<{
   item: SocialNetworkFormItem;
@@ -34,7 +37,7 @@ const SocialNetworkField = ({
   onFieldChange,
   onFieldBlur
 }: SocialNetworkFieldProps) => {
-  const selectedOption = SOCIAL_NETWORK_OPTIONS.find((option) => option.value === item.platform);
+  const selectedOption = ALL_SOCIAL_NETWORK_OPTIONS.find((option) => option.value === item.platform);
   const Icon = selectedOption?.icon;
 
   return (
@@ -49,6 +52,7 @@ const SocialNetworkField = ({
       onIconClick={(event) => onPlatformMenuOpen(index, event.currentTarget)}
       label="URL"
       value={item.link}
+      placeholder="Вставте повне посилання"
       onChange={(link) => {
         onItemChange({ ...item, link });
         onFieldChange(index);
@@ -88,10 +92,12 @@ export const SocialNetworksBlock = ({
 }: SocialNetworksBlockProps) => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+  const isLimitReached = items.length >= MAX_SOCIAL_NETWORKS_COUNT;
 
   const addSocialNetwork = () => {
-    const nextId = (items.at(-1)?.id ?? -1) + 1;
+    if (isLimitReached) return;
 
+    const nextId = (items.at(-1)?.id ?? -1) + 1;
     onChange([...items, { id: nextId, link: '' }]);
   };
 
@@ -139,7 +145,9 @@ export const SocialNetworksBlock = ({
             onFieldBlur={onFieldBlur}
           />
         )}
-        addBtnLabel="Додати соціальну мережу"
+        addBtnLabel="Додати посилання"
+        addButtonDisabled={isLimitReached}
+        addButtonMessage={isLimitReached ? contactsValidationErrors.SOCIAL_NETWORKS_LIMIT_REACHED : undefined}
         editable
         allowFirstItemDeletion
         onCreate={addSocialNetwork}
