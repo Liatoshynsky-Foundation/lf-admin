@@ -9,7 +9,8 @@ type ValidationIssue = { message?: string };
 export const buildPaymentDetailsInput = (
   tabs: PaymentDetailsTab[],
   savedTabIds: ReadonlySet<string>,
-  pdfFile: PaymentDetailsPdfFile | null
+  pdfFile: PaymentDetailsPdfFile | null,
+  isPdfDetached = false
 ): UpdatePaymentDetailsInput => ({
   tabs: tabs.map(({ id, name, content }) => ({
     ...(savedTabIds.has(id) && { id }),
@@ -24,7 +25,8 @@ export const buildPaymentDetailsInput = (
       mimeType: pdfFile.mimeType,
       sizeBytes: pdfFile.sizeBytes
     }
-  })
+  }),
+  ...(pdfFile === null && isPdfDetached && { pdfFile: null })
 });
 
 export const getSaveErrorMessage = (error: unknown): string => {

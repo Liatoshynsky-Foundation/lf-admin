@@ -49,6 +49,7 @@ const PaymentDetailsPageContent = () => {
   const { data, loading, error } = usePaymentDetails();
   const [tabs, setTabs] = useState<PaymentDetailsTab[]>([]);
   const [pdfFile, setPdfFile] = useState<PaymentDetailsPdfFile | null>(null);
+  const [isPdfDetached, setIsPdfDetached] = useState(false);
   const [activeTabId, setActiveTabId] = useState('');
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [savedTabIds, setSavedTabIds] = useState<ReadonlySet<string>>(new Set());
@@ -63,6 +64,7 @@ const PaymentDetailsPageContent = () => {
 
     setTabs(data.tabs);
     setPdfFile(data.pdfFile ?? null);
+    setIsPdfDetached(false);
     setSavedTabIds(new Set(data.tabs.map((tab) => tab.id)));
     setActiveTabId((currentId) => resolveActiveTabId(data.tabs, currentId));
   }, [data]);
@@ -177,6 +179,7 @@ const PaymentDetailsPageContent = () => {
       }
 
       setPdfFile(toPaymentDetailsPdfFile(resolved));
+      setIsPdfDetached(false);
       setIsMediaOpen(false);
     } catch (pdfError) {
       if (pdfApplyRequestIdRef.current !== requestId) {
@@ -185,6 +188,11 @@ const PaymentDetailsPageContent = () => {
 
       toast.error(resolveErrorMessage(pdfError, REQUISITES_MESSAGES.PDF_UPLOAD_FAILED));
     }
+  };
+
+  const handleDetachPdf = () => {
+    setPdfFile(null);
+    setIsPdfDetached(true);
   };
 
   const handleSave = async () => {
@@ -197,7 +205,7 @@ const PaymentDetailsPageContent = () => {
 
     try {
       const { data: response } = await updatePaymentDetails({
-        variables: { input: buildPaymentDetailsInput(tabs, savedTabIds, pdfFile) }
+        variables: { input: buildPaymentDetailsInput(tabs, savedTabIds, pdfFile, isPdfDetached) }
       });
       const saved = normalizePaymentDetails(
         response ? { paymentDetails: response.updatePaymentDetails } : undefined
@@ -210,6 +218,7 @@ const PaymentDetailsPageContent = () => {
 
       setTabs(saved.tabs);
       setPdfFile(saved.pdfFile ?? null);
+      setIsPdfDetached(false);
       setSavedTabIds(new Set(saved.tabs.map((tab) => tab.id)));
       setActiveTabId(saved.tabs[activeTabIndex]?.id ?? saved.tabs[0]?.id ?? '');
       setEditingTabId(null);
@@ -252,6 +261,7 @@ const PaymentDetailsPageContent = () => {
           <PdfAttachmentBlock
             file={pdfFile}
             onAddFile={() => setIsMediaOpen(true)}
+            onDetachFile={handleDetachPdf}
             disabled={isSaving}
           />
         </Box>

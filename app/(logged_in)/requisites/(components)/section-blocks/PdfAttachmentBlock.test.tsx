@@ -19,6 +19,7 @@ const renderPdfBlock = (props: Partial<React.ComponentProps<typeof PdfAttachment
     <PdfAttachmentBlock
       file={null}
       onAddFile={jest.fn()}
+      onDetachFile={jest.fn()}
       {...props}
     />
   );
@@ -39,7 +40,7 @@ describe('PdfAttachmentBlock', () => {
     expect(handleAddFile).toHaveBeenCalledTimes(1);
   });
 
-  it('renders attached PDF card with disabled delete button and opens preview in a new tab on filename click', () => {
+  it('renders the attached PDF with a preview link and an enabled detach button', () => {
     renderPdfBlock({ file: mockPdfFile });
 
     expect(screen.getByTestId('attached-pdf-card')).toBeInTheDocument();
@@ -47,15 +48,27 @@ describe('PdfAttachmentBlock', () => {
     expect(previewLink).toHaveAttribute('href', mockPdfFile.url);
     expect(previewLink).toHaveAttribute('target', '_blank');
     expect(previewLink).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(screen.getByTestId('delete-pdf-button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Видалити файл' })).toBeEnabled();
+  });
+
+  it('calls onDetachFile when the detach button is clicked', () => {
+    const onDetachFile = jest.fn();
+    renderPdfBlock({ file: mockPdfFile, onDetachFile });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
+
+    expect(onDetachFile).toHaveBeenCalledTimes(1);
   });
 
   it('does nothing when disabled', () => {
     const handleAddFile = jest.fn();
-    renderPdfBlock({ file: mockPdfFile, onAddFile: handleAddFile, disabled: true });
+    const onDetachFile = jest.fn();
+    renderPdfBlock({ file: mockPdfFile, onAddFile: handleAddFile, onDetachFile, disabled: true });
 
     fireEvent.click(screen.getByRole('button', { name: 'Додати файл' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
 
     expect(handleAddFile).not.toHaveBeenCalled();
+    expect(onDetachFile).not.toHaveBeenCalled();
   });
 });

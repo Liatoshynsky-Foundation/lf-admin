@@ -456,6 +456,7 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'false');
     expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_REQUISITES })).toBeDisabled();
     expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Видалити файл' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Опції реквізиту' })).not.toBeInTheDocument();
 
     await act(async () => {
@@ -491,11 +492,59 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.getByDisplayValue(REQUISITES_MESSAGES.DEFAULT_NEW_CURRENCY)).toBeInTheDocument();
   });
 
-  it('enables adding a PDF and keeps delete button disabled', () => {
+  it('enables adding or detaching a PDF when the form is editable', () => {
     render(<PaymentDetailsPageContent />);
 
     expect(screen.getByRole('button', { name: /додати файл/i })).toBeEnabled();
-    expect(screen.getByTestId('delete-pdf-button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Видалити файл' })).toBeEnabled();
+  });
+
+  it('detaches a PDF only on save and clears the pending removal after success', async () => {
+    const savedDetails = { ...MOCK_PAYMENT_DETAILS, pdfFile: null };
+    mockUpdatePaymentDetails.mockResolvedValue({ data: { updatePaymentDetails: savedDetails } });
+    const { unmount } = render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
+
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: REQUISITES_MESSAGES.ADD_FILE_BUTTON })).toBeEnabled();
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input).toHaveProperty('pdfFile', null);
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+
+    fireEvent.click(saveButton);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(2));
+    expect(mockUpdatePaymentDetails.mock.calls[1][0].variables.input).not.toHaveProperty('pdfFile');
+
+    unmount();
+    mockUsePaymentDetails.mockReturnValue({ data: savedDetails, loading: false, error: undefined });
+    render(<PaymentDetailsPageContent />);
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+  });
+
+  it('keeps a detached PDF out of the draft and retries the removal after save fails', async () => {
+    mockUpdatePaymentDetails
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ data: { updatePaymentDetails: { ...MOCK_PAYMENT_DETAILS, pdfFile: null } } });
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Видалити файл' }));
+    const saveButton = screen.getByRole('button', { name: /зберегти/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(REQUISITES_MESSAGES.SAVE_ERROR));
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('attached-pdf-card')).not.toBeInTheDocument();
+    expect(mockUpdatePaymentDetails.mock.calls[0][0].variables.input).toHaveProperty('pdfFile', null);
+
+    fireEvent.click(saveButton);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(mockUpdatePaymentDetails.mock.calls[1][0].variables.input).toHaveProperty('pdfFile', null);
   });
 
   it('opens the PDF media dialog from "Додати файл" and closes it', () => {

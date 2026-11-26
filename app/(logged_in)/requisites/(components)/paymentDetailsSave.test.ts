@@ -49,11 +49,24 @@ describe('buildPaymentDetailsInput', () => {
     expect(input.pdfFile).toEqual(pdfFile);
   });
 
-  it.each([
-    ['there is no PDF', null],
-    ['the PDF has no size', { ...pdfFile, sizeBytes: null }]
-  ])('omits the PDF when %s, so the stored file is kept', (_description, file) => {
-    const input = buildPaymentDetailsInput(tabs, savedTabIds, file);
+  it('sends pdfFile: null when the PDF is detached', () => {
+    const input = buildPaymentDetailsInput(tabs, savedTabIds, null, true);
+
+    expect(input).toHaveProperty('pdfFile', null);
+  });
+
+  it('omits pdfFile when no attachment was loaded or detached', () => {
+    const input = buildPaymentDetailsInput(tabs, savedTabIds, null);
+
+    expect(input).not.toHaveProperty('pdfFile');
+  });
+
+  it('omits the PDF when its size is unknown', () => {
+    const input = buildPaymentDetailsInput(
+      tabs,
+      savedTabIds,
+      { ...pdfFile, sizeBytes: null }
+    );
 
     expect(input).not.toHaveProperty('pdfFile');
   });
