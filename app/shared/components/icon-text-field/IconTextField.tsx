@@ -16,6 +16,7 @@ export type IconTextFieldProps = Readonly<{
   error?: boolean;
   helperText?: string;
   onBlur?: () => void;
+  placeholder?: string;
 }>;
 
 const defaultIcon = <Plus size={40} strokeWidth={1} />;
@@ -29,6 +30,7 @@ export const IconTextField = ({
   iconButtonVariant,
   error,
   helperText,
+  placeholder,
   onBlur
 }: IconTextFieldProps) => (
   <Box sx={styles.container}>
@@ -36,6 +38,8 @@ export const IconTextField = ({
     <CustomTextField
       label={label}
       value={value}
+      placeholder={placeholder}
+      slotProps={{ inputLabel: placeholder ? { shrink: true } : undefined }}
       onChange={(event) => onChange(event.target.value)}
       error={error}
       helperText={helperText}
