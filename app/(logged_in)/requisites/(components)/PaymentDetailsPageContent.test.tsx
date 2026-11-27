@@ -1,5 +1,6 @@
 import type { DragEndEvent } from '@dnd-kit/core';
 import { act, fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import type { JSONContent } from '@tiptap/react';
 import toast from 'react-hot-toast';
 
 import { MOCK_PAYMENT_DETAILS } from '../__mocks__/requisites';
@@ -141,40 +142,7 @@ const createTextContent = (text: string) => ({
 
 const WHITESPACE_CONTENT = createTextContent('   \n   ');
 
-const TABLE_WHITESPACE_CONTENT = {
-  type: 'doc',
-  content: [
-    {
-      type: 'table',
-      content: [
-        {
-          type: 'tableRow',
-          content: [
-            {
-              type: 'tableHeader',
-              content: [
-                {
-                  type: 'paragraph'
-                }
-              ]
-            },
-            {
-              type: 'tableCell',
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: '   ' }]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
-};
-
-const TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT = {
+const createTableContent = (valueCellContent: JSONContent[]) => ({
   type: 'doc',
   content: [
     {
@@ -189,14 +157,27 @@ const TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT = {
             },
             {
               type: 'tableCell',
-              content: [{ type: 'paragraph' }, { type: 'paragraph' }, { type: 'paragraph' }]
+              content: valueCellContent
             }
           ]
         }
       ]
     }
   ]
-};
+});
+
+const TABLE_WHITESPACE_CONTENT = createTableContent([
+  {
+    type: 'paragraph',
+    content: [{ type: 'text', text: '   ' }]
+  }
+]);
+
+const TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT = createTableContent([
+  { type: 'paragraph' },
+  { type: 'paragraph' },
+  { type: 'paragraph' }
+]);
 
 describe('PaymentDetailsPageContent', () => {
   beforeEach(() => {
