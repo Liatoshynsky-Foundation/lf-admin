@@ -5,6 +5,7 @@ import type { JSONContent } from '@tiptap/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { isPaymentDetailsTabValid } from './paymentDetailsContentValidation';
 import { styles } from './PaymentDetailsPageContent.styles';
 import { isPaymentDetailsPdfFile, toPaymentDetailsPdfFile } from './paymentDetailsPdf';
 import { buildPaymentDetailsInput, getSaveErrorMessage } from './paymentDetailsSave';
@@ -54,6 +55,7 @@ const PaymentDetailsPageContent = () => {
   const [savedTabIds, setSavedTabIds] = useState<ReadonlySet<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [invalidTabIds, setInvalidTabIds] = useState<ReadonlySet<string>>(new Set());
   const [updatePaymentDetails] = useUpdatePaymentDetailsMutation();
   const [createAsset] = useCreateAssetMutation();
   const pdfApplyRequestIdRef = useRef(0);
@@ -90,6 +92,12 @@ const PaymentDetailsPageContent = () => {
 
   const handleDeleteTab = (id: string) => {
     if (tabs.length <= 1) return;
+
+    setInvalidTabIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
 
     setTabs((previousTabs) => {
       const deletedIndex = previousTabs.findIndex((tab) => tab.id === id);
@@ -155,6 +163,17 @@ const PaymentDetailsPageContent = () => {
     setTabs((prev) =>
       prev.map((tab) => (tab.id === activeTabId ? { ...tab, content: newContent } : tab))
     );
+
+    if (isPaymentDetailsTabValid(newContent)) {
+      setInvalidTabIds((prev) => {
+        if (!prev.has(activeTabId)) return prev;
+
+        const next = new Set(prev);
+        next.delete(activeTabId);
+
+        return next;
+      });
+    }
   };
 
   const handleCloseMediaModal = () => {
@@ -188,6 +207,19 @@ const PaymentDetailsPageContent = () => {
   };
 
   const handleSave = async () => {
+    const invalidIds = new Set(
+      tabs
+        .filter((tab) => !isPaymentDetailsTabValid(tab.content))
+        .map((tab) => tab.id)
+    );
+
+    setInvalidTabIds(invalidIds);
+
+    if (invalidIds.size > 0) {
+      toast.error(PAYMENT_DETAILS_MESSAGES.contentValidationError);
+      return;
+    }
+
     const activeTabIndex = Math.max(
       tabs.findIndex((tab) => tab.id === activeTabId),
       0
@@ -213,6 +245,8 @@ const PaymentDetailsPageContent = () => {
       setSavedTabIds(new Set(saved.tabs.map((tab) => tab.id)));
       setActiveTabId(saved.tabs[activeTabIndex]?.id ?? saved.tabs[0]?.id ?? '');
       setEditingTabId(null);
+      setInvalidTabIds(new Set());
+
       toast.success(REQUISITES_MESSAGES.SAVE_SUCCESS);
     } catch (saveError) {
       toast.error(getSaveErrorMessage(saveError));
@@ -240,6 +274,7 @@ const PaymentDetailsPageContent = () => {
             onDeleteTab={handleDeleteTab}
             setEditingId={setEditingTabId}
             readOnly={isSaving}
+            invalidTabIds={invalidTabIds}
           />
 
           <RequisitesContentEditor

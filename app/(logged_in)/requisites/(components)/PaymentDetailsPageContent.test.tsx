@@ -108,21 +108,63 @@ jest.mock('~/shared/components/custom-formatting-field/CustomFormattingField', (
     value?: { content?: Array<{ content?: Array<{ text?: string }> }> };
     onChange?: (value: unknown) => void;
     editable?: boolean;
-  }) => (
-    <div data-testid="custom-formatting-field" data-editable={String(editable)}>
-      <span>{label}</span>
-      <span data-testid="editor-preview">{value?.content?.[0]?.content?.[0]?.text ?? ''}</span>
-      <button
-        type="button"
-        onClick={() =>
-          onChange?.({ type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Edited' }] }] })
-        }
-      >
-        Edit content
-      </button>
-    </div>
-  )
+  }) => {
+    return (
+      <div data-testid="custom-formatting-field" data-editable={String(editable)}>
+        <span>{label}</span>
+        <span data-testid="editor-preview">{value?.content?.[0]?.content?.[0]?.text ?? ''}</span>
+        <button
+          type="button"
+          onClick={() =>
+            onChange?.({
+              type: 'doc',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Edited' }] }]
+            })
+          }
+        >
+          Edit content
+        </button>
+      </div>
+    );
+  }
 }));
+
+const createTextContent = (text: string) => ({
+  type: 'doc',
+  content: [
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text }]
+    }
+  ]
+});
+
+const WHITESPACE_CONTENT = createTextContent('   \n   ');
+
+const TABLE_WHITESPACE_CONTENT = {
+  type: 'doc',
+  content: [
+    {
+      type: 'table',
+      content: [
+        {
+          type: 'tableRow',
+          content: [
+            {
+              type: 'tableCell',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: '   ' }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
 describe('PaymentDetailsPageContent', () => {
   beforeEach(() => {
@@ -277,7 +319,6 @@ describe('PaymentDetailsPageContent', () => {
 
     expect(screen.getByTestId('custom-formatting-field')).toHaveAttribute('data-editable', 'true');
   });
-
 
   it('deletes a tab on confirmation, preserves remaining tabs data and excludes deleted tab from save payload', async () => {
     const remainingTabs = MOCK_PAYMENT_DETAILS.tabs.slice(1);
@@ -725,5 +766,96 @@ describe('PaymentDetailsPageContent', () => {
     expect(screen.queryByDisplayValue('CAD')).not.toBeInTheDocument();
 
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('prevents saving when the active tab contains only whitespace', () => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
+      index === 0 ? { ...tab, content: WHITESPACE_CONTENT } : tab
+    );
+
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+
+    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
+  });
+
+  it('prevents saving when an inactive tab contains only whitespace', () => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
+      index === 1 ? { ...tab, content: WHITESPACE_CONTENT } : tab
+    );
+
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
+  });
+
+  it('prevents saving when a table cell contains only whitespace', () => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
+      index === 1 ? { ...tab, content: TABLE_WHITESPACE_CONTENT } : tab
+    );
+
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
+  });
+
+  it('allows saving after deleting an invalid tab', async () => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
+      index === 1 ? { ...tab, content: WHITESPACE_CONTENT } : tab
+    );
+
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs },
+      loading: false,
+      error: undefined
+    });
+
+    mockUpdatePaymentDetails.mockResolvedValue({ data: undefined });
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'USD' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Опції реквізиту' }));
+    fireEvent.click(screen.getByText(REQUISITES_MESSAGES.DELETE_REQUISITE_MENU));
+    fireEvent.click(screen.getByRole('button', { name: REQUISITES_MESSAGES.DELETE_TAB_CONFIRM }));
+
+    await waitForElementToBeRemoved(() => screen.queryByText(REQUISITES_MESSAGES.DELETE_TAB_TITLE));
+
+    expect(screen.queryByRole('button', { name: 'USD' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    await waitFor(() => {
+      expect(mockUpdatePaymentDetails).toHaveBeenCalledTimes(1);
+    });
   });
 });
