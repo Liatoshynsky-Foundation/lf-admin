@@ -781,10 +781,30 @@ describe('PaymentDetailsPageContent', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('prevents saving when the active tab contains only whitespace', () => {
-    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
-      index === 0 ? { ...tab, content: WHITESPACE_CONTENT } : tab
-    );
+  it.each([
+    {
+      description: 'the active tab contains only whitespace',
+      tabIndex: 0,
+      content: WHITESPACE_CONTENT
+    },
+    {
+      description: 'an inactive tab contains only whitespace',
+      tabIndex: 1,
+      content: WHITESPACE_CONTENT,
+      expectedPreview: 'ФУНДАЦІЯ ЛЯТОШИНСЬКОГО'
+    },
+    {
+      description: 'a table cell contains only whitespace',
+      tabIndex: 1,
+      content: TABLE_WHITESPACE_CONTENT
+    },
+    {
+      description: 'a table cell contains multiple empty paragraphs',
+      tabIndex: 1,
+      content: TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT
+    }
+  ])('prevents saving when $description', ({ tabIndex, content, expectedPreview }) => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) => (index === tabIndex ? { ...tab, content } : tab));
 
     mockUsePaymentDetails.mockReturnValue({
       data: { ...MOCK_PAYMENT_DETAILS, tabs },
@@ -794,65 +814,9 @@ describe('PaymentDetailsPageContent', () => {
 
     render(<PaymentDetailsPageContent />);
 
-    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
-
-    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
-
-    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
-  });
-
-  it('prevents saving when an inactive tab contains only whitespace', () => {
-    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
-      index === 1 ? { ...tab, content: WHITESPACE_CONTENT } : tab
-    );
-
-    mockUsePaymentDetails.mockReturnValue({
-      data: { ...MOCK_PAYMENT_DETAILS, tabs },
-      loading: false,
-      error: undefined
-    });
-
-    render(<PaymentDetailsPageContent />);
-
-    expect(screen.getByTestId('editor-preview')).toHaveTextContent('ФУНДАЦІЯ ЛЯТОШИНСЬКОГО');
-
-    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
-
-    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
-  });
-
-  it('prevents saving when a table cell contains only whitespace', () => {
-    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
-      index === 1 ? { ...tab, content: TABLE_WHITESPACE_CONTENT } : tab
-    );
-
-    mockUsePaymentDetails.mockReturnValue({
-      data: { ...MOCK_PAYMENT_DETAILS, tabs },
-      loading: false,
-      error: undefined
-    });
-
-    render(<PaymentDetailsPageContent />);
-
-    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
-
-    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
-  });
-
-  it('prevents saving when a table cell contains multiple empty paragraphs', () => {
-    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
-      index === 1 ? { ...tab, content: TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT } : tab
-    );
-
-    mockUsePaymentDetails.mockReturnValue({
-      data: { ...MOCK_PAYMENT_DETAILS, tabs },
-      loading: false,
-      error: undefined
-    });
-
-    render(<PaymentDetailsPageContent />);
+    if (expectedPreview) {
+      expect(screen.getByTestId('editor-preview')).toHaveTextContent(expectedPreview);
+    }
 
     fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
 
