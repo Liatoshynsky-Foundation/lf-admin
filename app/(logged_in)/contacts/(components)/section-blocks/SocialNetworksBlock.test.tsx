@@ -11,6 +11,8 @@ import {
   SOCIAL_NETWORK_UPDATE_LABEL
 } from '../__mocks__/ContactsMocks';
 import { SocialNetworksBlock } from './SocialNetworksBlock';
+import { MAX_SOCIAL_NETWORKS_COUNT } from '~/constants/contacts';
+import { contactsValidationErrors } from '~/src/constants/errors';
 
 jest.mock('~/components/configurable-list/ConfigurableList', () => {
   const { MockConfigurableList } = jest.requireActual('../__mocks__/ContactsMocks');
@@ -70,6 +72,39 @@ describe('SocialNetworksBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: SOCIAL_NETWORK_ADD_LABEL }));
 
     expect(onChange).toHaveBeenCalledWith([EMPTY_SOCIAL_NETWORK]);
+  });
+
+  it('preserves overlength links for correction', () => {
+    const onChange = jest.fn();
+    const overlengthLink = `https://${'a'.repeat(143)}`;
+    render(<SocialNetworksBlock items={SOCIAL_NETWORKS} onChange={onChange} />);
+
+    fireEvent.change(screen.getAllByRole('textbox', { name: SOCIAL_NETWORK_FIELD_LABEL })[0], {
+      target: { value: overlengthLink }
+    });
+
+    expect(onChange).toHaveBeenCalledWith([
+      { ...SOCIAL_NETWORKS[0], link: overlengthLink },
+      SOCIAL_NETWORKS[1]
+    ]);
+  });
+
+  it('disables adding at the row limit and re-enables it after a row is removed', () => {
+    const onChange = jest.fn();
+    const itemsAtLimit = Array.from({ length: MAX_SOCIAL_NETWORKS_COUNT }, (_, id) => ({
+      ...SOCIAL_NETWORKS[0],
+      id
+    }));
+    const { rerender } = render(<SocialNetworksBlock items={itemsAtLimit} onChange={onChange} />);
+    const addButton = screen.getByRole('button', { name: SOCIAL_NETWORK_ADD_LABEL });
+
+    expect(addButton).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent(contactsValidationErrors.SOCIAL_NETWORKS_LIMIT_REACHED);
+
+    rerender(<SocialNetworksBlock items={itemsAtLimit.slice(1)} onChange={onChange} />);
+
+    expect(screen.getByRole('button', { name: SOCIAL_NETWORK_ADD_LABEL })).toBeEnabled();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('updates a network when field callbacks are not provided', () => {

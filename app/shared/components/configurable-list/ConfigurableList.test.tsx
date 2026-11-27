@@ -87,6 +87,25 @@ describe('ConfigurableList', () => {
     expect(screen.getByRole('button', { name: /add new item/i })).toBeInTheDocument();
   });
 
+  it('should disable the add button and render its message', () => {
+    render(
+      <ConfigurableList
+        items={items}
+        renderItem={renderItem}
+        addBtnLabel="Add"
+        editable={true}
+        onCreate={jest.fn()}
+        onChange={jest.fn()}
+        onDelete={jest.fn()}
+        addButtonDisabled
+        addButtonMessage="Maximum items reached"
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /add/i })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('Maximum items reached');
+  });
+
   it('should call onCreate when add button is clicked', () => {
     const onCreate = jest.fn();
     render(

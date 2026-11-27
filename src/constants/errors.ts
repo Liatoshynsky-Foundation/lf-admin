@@ -103,5 +103,7 @@ export const contactsValidationErrors = {
   EMAIL_INVALID: 'Некоректна електронна адреса',
   PHONE_INVALID: 'Телефон має відповідати формату +38 XXX XXX XXXX',
   PLATFORM_INVALID: 'Оберіть зображення соціальної мережі',
-  LINK_INVALID: 'Посилання на соціальну мережу має бути коректною URL-адресою'
+  LINK_REQUIRED: 'Введіть посилання',
+  LINK_TOO_LONG: 'Посилання не може перевищувати 150 символів',
+  SOCIAL_NETWORKS_LIMIT_REACHED: 'Можна додати не більше 12 посилань. Щоб додати нове, видаліть одне з наявних.'
 } as const;

@@ -6,6 +6,7 @@ const FIELD_LABEL = 'URL';
 const INITIAL_VALUE = 'https://example.com';
 const UPDATED_VALUE = 'https://updated.example';
 const EMPTY_VALUE = '';
+const PLACEHOLDER = 'Paste full link';
 const PROVIDED_ICON_TEST_ID = 'provided-icon';
 const ICON_CONTENT = 'icon';
 
@@ -35,5 +36,22 @@ describe('IconTextField', () => {
     );
 
     expect(screen.getByTestId(PROVIDED_ICON_TEST_ID)).toBeInTheDocument();
+  });
+
+  it('shows placeholder without using it as the field value', () => {
+    render(
+      <IconTextField
+        label={FIELD_LABEL}
+        value={EMPTY_VALUE}
+        placeholder={PLACEHOLDER}
+        onChange={jest.fn()}
+        onIconClick={jest.fn()}
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: FIELD_LABEL });
+    expect(input).toHaveAttribute('placeholder', PLACEHOLDER);
+    expect(input).toHaveValue(EMPTY_VALUE);
+    expect(input.closest('.MuiFormControl-root')?.querySelector('label')).toHaveClass('MuiInputLabel-shrink');
   });
 });
