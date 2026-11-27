@@ -119,4 +119,59 @@ describe('isPaymentDetailsTabValid', () => {
 
     expect(isPaymentDetailsTabValid(content)).toBe(true);
   });
+  it('considers an untouched two-column requisites table valid', () => {
+    const content: JSONContent = {
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [
+                {
+                  type: 'tableCell',
+                  content: [createParagraph()]
+                },
+                {
+                  type: 'tableCell',
+                  content: [createParagraph()]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(isPaymentDetailsTabValid(content)).toBe(true);
+  });
+
+  it('considers multiple empty paragraphs inside a table cell invalid', () => {
+    const content: JSONContent = {
+      type: 'doc',
+      content: [
+        {
+          type: 'table',
+          content: [
+            {
+              type: 'tableRow',
+              content: [
+                {
+                  type: 'tableCell',
+                  content: [createParagraph(), createParagraph()]
+                },
+                {
+                  type: 'tableCell',
+                  content: [createParagraph()]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(isPaymentDetailsTabValid(content)).toBe(false);
+  });
 });

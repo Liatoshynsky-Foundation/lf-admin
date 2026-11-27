@@ -30,6 +30,19 @@ const inspectContent = (node: JSONContent): ContentValidationResult => {
   };
 };
 
+const hasMultipleEmptyParagraphs = (node: JSONContent): boolean => {
+  const children = node.content ?? [];
+
+  const emptyParagraphCount = children.filter(
+    (child) => child.type === 'paragraph' && !child.content?.length
+  ).length;
+
+  return (
+    emptyParagraphCount > 1 ||
+    children.some(hasMultipleEmptyParagraphs)
+  );
+};
+
 export const isPaymentDetailsTabValid = (content: JSONContent): boolean => {
   const result = inspectContent(content);
 
@@ -37,9 +50,5 @@ export const isPaymentDetailsTabValid = (content: JSONContent): boolean => {
     return true;
   }
 
-  const paragraphs = content.content ?? [];
-  const hasMultipleEmptyParagraphs =
-    paragraphs.filter((node) => node.type === 'paragraph' && !node.content?.length).length > 1;
-
-  return !result.hasContent && !hasMultipleEmptyParagraphs;
+  return !result.hasContent && !hasMultipleEmptyParagraphs(content);
 };
