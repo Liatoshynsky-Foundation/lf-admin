@@ -151,6 +151,14 @@ const TABLE_WHITESPACE_CONTENT = {
           type: 'tableRow',
           content: [
             {
+              type: 'tableHeader',
+              content: [
+                {
+                  type: 'paragraph'
+                }
+              ]
+            },
+            {
               type: 'tableCell',
               content: [
                 {
@@ -158,6 +166,30 @@ const TABLE_WHITESPACE_CONTENT = {
                   content: [{ type: 'text', text: '   ' }]
                 }
               ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT = {
+  type: 'doc',
+  content: [
+    {
+      type: 'table',
+      content: [
+        {
+          type: 'tableRow',
+          content: [
+            {
+              type: 'tableHeader',
+              content: [{ type: 'paragraph' }]
+            },
+            {
+              type: 'tableCell',
+              content: [{ type: 'paragraph' }, { type: 'paragraph' }, { type: 'paragraph' }]
             }
           ]
         }
@@ -812,6 +844,25 @@ describe('PaymentDetailsPageContent', () => {
   it('prevents saving when a table cell contains only whitespace', () => {
     const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
       index === 1 ? { ...tab, content: TABLE_WHITESPACE_CONTENT } : tab
+    );
+
+    mockUsePaymentDetails.mockReturnValue({
+      data: { ...MOCK_PAYMENT_DETAILS, tabs },
+      loading: false,
+      error: undefined
+    });
+
+    render(<PaymentDetailsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: /зберегти/i }));
+
+    expect(mockUpdatePaymentDetails).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Заповніть інформацію про реквізити для цієї валюти.');
+  });
+
+  it('prevents saving when a table cell contains multiple empty paragraphs', () => {
+    const tabs = MOCK_PAYMENT_DETAILS.tabs.map((tab, index) =>
+      index === 1 ? { ...tab, content: TABLE_MULTIPLE_EMPTY_PARAGRAPHS_CONTENT } : tab
     );
 
     mockUsePaymentDetails.mockReturnValue({
