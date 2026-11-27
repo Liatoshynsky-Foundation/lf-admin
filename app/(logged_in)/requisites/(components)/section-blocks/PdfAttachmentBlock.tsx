@@ -12,12 +12,14 @@ import PdfIcon from '~/public/icons/type-pdf.svg';
 interface PdfAttachmentBlockProps {
   file?: PaymentDetailsPdfFile | null;
   onAddFile: () => void;
+  onDetachFile: () => void;
   disabled?: boolean;
 }
 
 export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
   file,
   onAddFile,
+  onDetachFile,
   disabled = false
 }) => {
   const PdfBadgeIcon = PdfIcon as React.ComponentType;
@@ -59,9 +61,10 @@ export const PdfAttachmentBlock: React.FC<PdfAttachmentBlockProps> = ({
           <IconButton
             size="small"
             aria-label="Видалити файл"
-            disabled
+            disabled={disabled}
             data-testid="delete-pdf-button"
             sx={styles.deleteButton}
+            onClick={onDetachFile}
           >
             <Trash2 size={20} />
           </IconButton>
