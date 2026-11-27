@@ -1,20 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import toast from 'react-hot-toast';
 
-import { CONTACT_INFORMATION, CONTACT_LOCALES, CONTACTS_DATA, SOCIAL_NETWORKS } from '../__mocks__/contacts';
+import { CONTACT_INFORMATION, CONTACTS_DATA, SOCIAL_NETWORKS } from '../__mocks__/contacts';
 import ContactsPageContent from './ContactsPageContent';
 import {
   type ContactInformation,
   CONTACTS_ERROR,
   CONTACTS_LOADING,
   CONTACTS_VALIDATION_ERROR,
-  type ContactsLocale,
   INITIAL_CONTACT_INFORMATION
 } from '~/constants/contacts';
 
 const mockUseContacts = jest.fn();
 const mockUpdateContacts = jest.fn();
-const LANGUAGE_BUTTON_LABEL = 'change language';
 const SAVE_BUTTON_LABEL = 'save contacts';
 const CONTACT_INFORMATION_ID = 'contacts-page-content';
 const CONTACT_NAME_INPUT_LABEL = 'contact name';
@@ -59,15 +57,8 @@ jest.mock('~/shared/components/empty-state', () => ({
 }));
 jest.mock('./ContactsHeaderActions', () => ({
   __esModule: true,
-  ContactsHeaderActions: ({
-    onLanguageChange,
-    onSave
-  }: {
-    onLanguageChange: (locale: ContactsLocale) => void;
-    onSave: () => void;
-  }) => (
+  ContactsHeaderActions: ({ onSave }: { onSave: () => void }) => (
     <div>
-      <button onClick={() => onLanguageChange(CONTACT_LOCALES.en)}>{LANGUAGE_BUTTON_LABEL}</button>
       <button onClick={onSave}>{SAVE_BUTTON_LABEL}</button>
     </div>
   )
@@ -76,24 +67,22 @@ jest.mock('./section-blocks/ContactInformationBlock', () => ({
   __esModule: true,
   ContactInformationBlock: ({
     data,
-    locale,
     errors,
     onFieldChange,
     onFieldBlur
   }: {
     data: ContactInformation;
-    locale: ContactsLocale;
     errors?: Record<string, string>;
-    onFieldChange?: (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => void;
-    onFieldBlur?: (field: keyof ContactInformation, fieldLocale?: ContactsLocale) => void;
+    onFieldChange?: (field: keyof ContactInformation, fieldLocale?: 'uk' | 'en') => void;
+    onFieldBlur?: (field: keyof ContactInformation, fieldLocale?: 'uk' | 'en') => void;
   }) => (
     <div data-testid={CONTACT_INFORMATION_ID}>
-      <span>{locale}</span>
-      <input aria-label={CONTACT_NAME_INPUT_LABEL} value={data.foundationName[locale]} readOnly />
+      <input aria-label={CONTACT_NAME_INPUT_LABEL} value={data.foundationName.uk} readOnly />
+      <input aria-label="English contact name" value={data.foundationName.en} readOnly />
       {errors && Object.keys(errors).length > 0 && <span data-testid="contact-errors">errors</span>}
-      <button onClick={() => onFieldChange?.('foundationName', locale)}>{LOCALIZED_FIELD_CHANGE_LABEL}</button>
+      <button onClick={() => onFieldChange?.('foundationName', 'uk')}>{LOCALIZED_FIELD_CHANGE_LABEL}</button>
       <button onClick={() => onFieldChange?.('email')}>{PLAIN_FIELD_CHANGE_LABEL}</button>
-      <button onClick={() => onFieldBlur?.('foundationName', locale)}>{LOCALIZED_FIELD_BLUR_LABEL}</button>
+      <button onClick={() => onFieldBlur?.('foundationName', 'uk')}>{LOCALIZED_FIELD_BLUR_LABEL}</button>
       <button onClick={() => onFieldBlur?.('email')}>{PLAIN_FIELD_BLUR_LABEL}</button>
     </div>
   )
@@ -141,11 +130,26 @@ describe('ContactsPageContent', () => {
     expect(screen.getByRole('textbox', { name: CONTACT_NAME_INPUT_LABEL })).toHaveValue('');
   });
 
+  it('allows saving when all optional contact fields are empty', () => {
+    mockUseContacts.mockReturnValue({
+      data: { ...CONTACTS_DATA, contactInformation: INITIAL_CONTACT_INFORMATION },
+      loading: false
+    });
+    render(<ContactsPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
+
+    expect(mockUpdateContacts).toHaveBeenCalledWith({
+      contactInformation: INITIAL_CONTACT_INFORMATION,
+      socialNetworks: SOCIAL_NETWORKS.map((item, id) => ({ ...item, id }))
+    });
+  });
+
   it('does not update contacts when validation fails', () => {
     mockUseContacts.mockReturnValue({
       data: {
         ...CONTACTS_DATA,
-        contactInformation: { ...CONTACT_INFORMATION, email: '' }
+        contactInformation: { ...CONTACT_INFORMATION, email: 'invalid-email' }
       },
       loading: false
     });
@@ -157,13 +161,12 @@ describe('ContactsPageContent', () => {
     expect(toast.error).toHaveBeenCalledWith(CONTACTS_VALIDATION_ERROR);
   });
 
-  it('renders content, changes locale and saves the current data', async () => {
+  it('renders both language versions and saves the current data', async () => {
     mockUseContacts.mockReturnValue({ data: CONTACTS_DATA, loading: false });
     render(<ContactsPageContent />);
 
-    expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.uk);
-    fireEvent.click(screen.getByRole('button', { name: LANGUAGE_BUTTON_LABEL }));
-    expect(screen.getByTestId(CONTACT_INFORMATION_ID)).toHaveTextContent(CONTACT_LOCALES.en);
+    expect(screen.getByRole('textbox', { name: CONTACT_NAME_INPUT_LABEL })).toHaveValue(CONTACT_INFORMATION.foundationName.uk);
+    expect(screen.getByRole('textbox', { name: 'English contact name' })).toHaveValue(CONTACT_INFORMATION.foundationName.en);
 
     fireEvent.click(screen.getByRole('button', { name: SAVE_BUTTON_LABEL }));
 
@@ -186,7 +189,7 @@ describe('ContactsPageContent', () => {
     mockUseContacts.mockReturnValue({
       data: {
         ...CONTACTS_DATA,
-        contactInformation: { ...CONTACT_INFORMATION, email: '' }
+        contactInformation: { ...CONTACT_INFORMATION, email: 'invalid-email' }
       },
       loading: false
     });

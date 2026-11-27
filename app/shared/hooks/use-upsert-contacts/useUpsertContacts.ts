@@ -25,10 +25,10 @@ export const mapContactsInput = ({
   socialNetworks
 }: ContactsUpdateInput): GraphQLUpdateContactsInput => ({
   contactInformation: {
-    foundationName: { uk: foundationName.uk, en: foundationName.en },
-    address: { uk: address.uk, en: address.en },
-    phone,
-    email
+    foundationName: { uk: foundationName.uk.trim(), en: foundationName.en.trim() },
+    address: { uk: address.uk.trim(), en: address.en.trim() },
+    phone: phone.trim().replace(/\s/g, ''),
+    email: email.trim()
   },
   socialNetworks: socialNetworks.map(({ platform, link }) => ({
     icon: platform as SocialNetworkTypes,

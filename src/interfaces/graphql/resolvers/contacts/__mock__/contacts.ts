@@ -5,7 +5,7 @@ export const validInput: UpdateContactsInput = {
     foundationName: { uk: 'Фонд', en: 'Foundation' },
     address: { uk: 'Київ', en: 'Kyiv' },
     email: 'contact@example.com',
-    phone: '+38 044 123 4567'
+    phone: '+380441234567'
   },
   socialNetworks: [{ icon: 'facebook', link: 'https://facebook.com/foundation' }]
 };

@@ -99,9 +99,9 @@ export const contactsErrors = {
 };
 
 export const contactsValidationErrors = {
-  LOCALIZED_FIELD_REQUIRED: 'Поле обов’язкове для заповнення',
+  LOCALIZED_FIELD_TOO_LONG: 'Поле має містити не більше 150 символів',
   EMAIL_INVALID: 'Некоректна електронна адреса',
-  PHONE_INVALID: 'Телефон має відповідати формату +38 XXX XXX XXXX',
+  PHONE_INVALID: 'Введіть повний український номер у форматі +380671234567',
   PLATFORM_INVALID: 'Оберіть зображення соціальної мережі',
   LINK_INVALID: 'Посилання на соціальну мережу має бути коректною URL-адресою'
 } as const;
