@@ -33,8 +33,25 @@ describe('useUpsertContacts', () => {
   describe('mapContactsInput', () => {
     it('maps form values and removes GraphQL typenames and form-only social-network ids', () => {
       expect(mapContactsInput({ contactInformation: CONTACT_INFORMATION_WITH_TYPENAME, socialNetworks: SOCIAL_NETWORKS })).toEqual({
-        contactInformation: CONTACT_INFORMATION,
+        contactInformation: { ...CONTACT_INFORMATION, phone: '+380000000001' },
         socialNetworks: SOCIAL_NETWORKS.map(({ id: _id, platform, link }) => ({ icon: platform, link }))
+      });
+    });
+
+    it('trims contact values and converts whitespace-only values to empty strings', () => {
+      const input = {
+        ...CONTACT_INFORMATION,
+        foundationName: { uk: '  ', en: ' Foundation ' },
+        address: { uk: ' Kyiv ', en: '' },
+        phone: ' +38 067 123 4567 ',
+        email: ' contact@example.com '
+      };
+
+      expect(mapContactsInput({ contactInformation: input, socialNetworks: [] }).contactInformation).toEqual({
+        foundationName: { uk: '', en: 'Foundation' },
+        address: { uk: 'Kyiv', en: '' },
+        phone: '+380671234567',
+        email: 'contact@example.com'
       });
     });
   });
@@ -49,7 +66,7 @@ describe('useUpsertContacts', () => {
       mutate,
       {
         input: {
-          contactInformation: CONTACT_INFORMATION,
+          contactInformation: { ...CONTACT_INFORMATION, phone: '+380000000001' },
           socialNetworks: SOCIAL_NETWORKS.map(({ id: _id, platform, link }) => ({ icon: platform, link }))
         }
       },

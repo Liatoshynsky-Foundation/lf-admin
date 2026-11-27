@@ -30,15 +30,12 @@ import {
   getFormErrorsByPrefix,
   useZodFormValidation
 } from '~/shared/hooks/use-zod-form-validation/useZodFormValidation';
-import { useStore } from '~/store';
 import { zContactsSchema } from '~/validators/contacts.schema';
 
 const ContactsPageContent = () => {
   const { data, loading } = useContacts();
   const { updateContacts, loading: saving } = useUpsertContacts();
 
-  const locale = useStore((state) => state.locale);
-  const setLocale = useStore((state) => state.setLocale);
   const [contactInformation, setContactInformation] = useState<ContactInformation>(INITIAL_CONTACT_INFORMATION);
   const [socialNetworks, setSocialNetworks] = useState<SocialNetworkFormItem[]>([]);
   const { errors, validateOnSubmit, revalidateFields, clearFieldErrors, resetValidation } =
@@ -102,15 +99,12 @@ const ContactsPageContent = () => {
     <ContentPageLayout
       title={<Typography variant="h4">Контакти</Typography>}
       showBackButton={false}
-      rightActions={
-        <ContactsHeaderActions onLanguageChange={setLocale} onSave={() => void handleSave()} saving={saving} />
-      }
+      rightActions={<ContactsHeaderActions onSave={() => void handleSave()} saving={saving} />}
     >
       <CollapsibleBlock title="Контакти" defaultExpanded>
         <Box sx={styles.content}>
           <ContactInformationBlock
             data={contactInformation}
-            locale={locale}
             onChange={setContactInformation}
             errors={contactInformationErrors}
             onFieldChange={handleContactFieldChange}

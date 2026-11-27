@@ -21,6 +21,18 @@ describe('useContacts', () => {
     expect(normalizeContactsData(CONTACTS_QUERY_RESPONSE)).toEqual(CONTACTS_DATA);
   });
 
+  it('preserves the phone number formatting used by the contacts form', () => {
+    const response = {
+      ...CONTACTS_QUERY_RESPONSE,
+      contactInformation: {
+        ...CONTACTS_QUERY_RESPONSE.contactInformation,
+        phone: '+38 067 123 4567'
+      }
+    };
+
+    expect(normalizeContactsData(response)?.contactInformation.phone).toBe('+38 067 123 4567');
+  });
+
   it('returns null when the query has no contacts', () => {
     expect(normalizeContactsData(null)).toBeNull();
   });

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 import { FoundationInfo } from './foundationInfoBase';
-import { translatedFieldSchema } from '~/infrastructure/models/commonSchemas';
+import { translatedFieldUnrequiredSchema } from '~/infrastructure/models/commonSchemas';
 
 export const BrandingInfo =
   FoundationInfo.discriminators?.['branding-info'] ??
@@ -9,7 +9,7 @@ export const BrandingInfo =
     'branding-info',
     new mongoose.Schema(
       {
-        foundationName: translatedFieldSchema,
+        foundationName: translatedFieldUnrequiredSchema,
         supportButtonLink: { type: String, required: true }
       },
       { _id: false, timestamps: true }

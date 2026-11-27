@@ -6,10 +6,22 @@ import {
   SocialNetworkIcon
 } from '~/domain/entities/Contacts';
 
+const localizedTextSchema = z.string().trim().max(150, contactsValidationErrors.LOCALIZED_FIELD_TOO_LONG);
+
 const localizedStringSchema = z.object({
-  uk: z.string().trim().min(1, contactsValidationErrors.LOCALIZED_FIELD_REQUIRED),
-  en: z.string().trim().min(1, contactsValidationErrors.LOCALIZED_FIELD_REQUIRED)
+  uk: localizedTextSchema,
+  en: localizedTextSchema
 });
+
+const emailSchema = z.string().trim().refine(
+  (value) => value === '' || z.email().safeParse(value).success,
+  contactsValidationErrors.EMAIL_INVALID
+);
+
+const phoneSchema = z.string().trim().refine(
+  (value) => value === '' || /^\+380\d{9}$/.test(value),
+  contactsValidationErrors.PHONE_INVALID
+);
 
 const socialNetworkIconSchema = z.enum(
   SOCIAL_NETWORK_PLATFORMS.map(({ icon }) => icon) as [SocialNetworkIcon, ...SocialNetworkIcon[]],
@@ -20,8 +32,8 @@ export const zContactsSchema = z.object({
   contactInformation: z.object({
     foundationName: localizedStringSchema,
     address: localizedStringSchema,
-    email: z.string().trim().pipe(z.email({ error: contactsValidationErrors.EMAIL_INVALID })),
-    phone: z.string().regex(/^\+38 \d{3} \d{3} \d{4}$/, contactsValidationErrors.PHONE_INVALID)
+    email: emailSchema,
+    phone: phoneSchema
   }),
   socialNetworks: z.array(
     z.object({

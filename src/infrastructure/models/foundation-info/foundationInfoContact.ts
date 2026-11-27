@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 import { FoundationInfo } from './foundationInfoBase';
-import { translatedFieldSchema } from '~/infrastructure/models/commonSchemas';
+import { translatedFieldUnrequiredSchema } from '~/infrastructure/models/commonSchemas';
 
 const socialLinkSchema = new mongoose.Schema(
   {
@@ -19,7 +19,7 @@ export const ContactInfo =
     new mongoose.Schema({
       phone: String,
       email: String,
-      address: translatedFieldSchema,
+      address: translatedFieldUnrequiredSchema,
       socialLinks: [socialLinkSchema]
     })
   );

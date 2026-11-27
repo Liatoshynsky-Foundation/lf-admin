@@ -57,10 +57,40 @@ describe('ContactsMutation', () => {
       );
     });
 
-    it('checks the localized foundation name schema rule inside the mutation', async () => {
+    it('accepts empty optional contact fields and trims their values before persistence', async () => {
+      updateContacts.mockResolvedValue(updatedContacts);
+      const input = {
+        ...validInput,
+        contactInformation: {
+          foundationName: { uk: '  ', en: ' Foundation ' },
+          address: { uk: '', en: ' Kyiv ' },
+          phone: '  ',
+          email: ' contact@example.com '
+        }
+      };
+
+      await expect(ContactsMutation.updateContacts({}, { input }, authorizedContext)).resolves.toEqual(updatedContacts);
+      expect(updateContacts).toHaveBeenCalledWith({
+        ...validInput,
+        contactInformation: {
+          foundationName: { uk: '', en: 'Foundation' },
+          address: { uk: '', en: 'Kyiv' },
+          phone: '',
+          email: 'contact@example.com'
+        }
+      });
+    });
+
+    it('rejects localized text longer than 150 characters', async () => {
       await expectValidationError(
-        { ...validInput, contactInformation: { ...validInput.contactInformation, foundationName: { uk: ' ', en: 'Foundation' } } },
-        contactsValidationErrors.LOCALIZED_FIELD_REQUIRED
+        {
+          ...validInput,
+          contactInformation: {
+            ...validInput.contactInformation,
+            foundationName: { uk: 'x'.repeat(151), en: 'Foundation' }
+          }
+        },
+        contactsValidationErrors.LOCALIZED_FIELD_TOO_LONG
       );
     });
 
@@ -73,9 +103,27 @@ describe('ContactsMutation', () => {
 
     it('checks the phone schema rule inside the mutation', async () => {
       await expectValidationError(
-        { ...validInput, contactInformation: { ...validInput.contactInformation, phone: '+38 044 123' } },
+        { ...validInput, contactInformation: { ...validInput.contactInformation, phone: '+38044123' } },
         contactsValidationErrors.PHONE_INVALID
       );
+    });
+
+    it('rejects a phone number containing only one digit', async () => {
+      await expectValidationError(
+        { ...validInput, contactInformation: { ...validInput.contactInformation, phone: '+381' } },
+        contactsValidationErrors.PHONE_INVALID
+      );
+    });
+
+    it('accepts an empty optional phone number', async () => {
+      updateContacts.mockResolvedValue(updatedContacts);
+      const input = {
+        ...validInput,
+        contactInformation: { ...validInput.contactInformation, phone: '' }
+      };
+
+      await expect(ContactsMutation.updateContacts({}, { input }, authorizedContext)).resolves.toEqual(updatedContacts);
+      expect(updateContacts).toHaveBeenCalledWith(input);
     });
 
     it('checks the social network icon schema rule inside the mutation', async () => {
