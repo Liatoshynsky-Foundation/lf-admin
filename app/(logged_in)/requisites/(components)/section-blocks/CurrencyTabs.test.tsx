@@ -52,6 +52,7 @@ const renderCurrencyTabs = (props: Partial<React.ComponentProps<typeof CurrencyT
       onUpdateCurrency={jest.fn(() => true)}
       onDeleteTab={jest.fn()}
       setEditingId={jest.fn()}
+      invalidTabIds={new Set()}
       {...props}
     />
   );
@@ -356,6 +357,7 @@ describe('CurrencyTabs', () => {
         onUpdateCurrency={jest.fn()}
         setEditingId={jest.fn()}
         readOnly
+        invalidTabIds={new Set()}
       />
     );
     act(() => mockDragEnd(createDragEndEvent('1', '2')));
@@ -373,5 +375,16 @@ describe('CurrencyTabs', () => {
     act(() => mockDragEnd(createDragEndEvent('1', '2')));
 
     expect(onReorder).not.toHaveBeenCalled();
+  });
+  it('applies invalid styling to tabs whose IDs are in invalidTabIds', () => {
+    renderCurrencyTabs({
+      invalidTabIds: new Set(['1'])
+    });
+
+    const invalidTab = screen.getByTestId('currency-tab-1');
+
+    expect(invalidTab).toHaveStyle({
+      border: '2px solid'
+    });
   });
 });

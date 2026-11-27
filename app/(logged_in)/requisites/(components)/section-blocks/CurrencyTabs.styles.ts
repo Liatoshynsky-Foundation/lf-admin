@@ -71,6 +71,10 @@ export const styles = {
       color: 'text.primary'
     }
   },
+  tabItemInvalid: {
+    border: '2px solid',
+    borderColor: 'error.main'
+  },
   tabButton: {
     background: 'none',
     border: 'none',

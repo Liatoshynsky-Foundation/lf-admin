@@ -26,6 +26,7 @@ interface CurrencyTabsProps {
   onDeleteTab?: (id: string) => void;
   setEditingId: (id: string | null) => void;
   readOnly?: boolean;
+  invalidTabIds: ReadonlySet<string>;
 }
 
 export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
@@ -38,7 +39,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
   onUpdateCurrency,
   onDeleteTab,
   setEditingId,
-  readOnly = false
+  readOnly = false,
+  invalidTabIds = new Set()
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuTargetId, setMenuTargetId] = useState<null | string>(null);
@@ -246,6 +248,7 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
             {items.map((item) => {
               const isActive = item.id === activeId;
               const isEditing = item.id === editingId;
+              const isInvalid = invalidTabIds.has(item.id);
 
               return (
                 <SortableItemWrapper
@@ -259,7 +262,8 @@ export const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
                     ref={(el: HTMLDivElement | null) => {
                       tabRefs.current[item.id] = el;
                     }}
-                    sx={[styles.tabItem, isActive ? styles.tabItemActive : styles.tabItemInactive]}
+                    sx={[styles.tabItem, isActive ? styles.tabItemActive : styles.tabItemInactive, isInvalid && styles.tabItemInvalid]}
+                    data-testid={`currency-tab-${item.id}`}
                   >
                     {isEditing ? (
                       <>
